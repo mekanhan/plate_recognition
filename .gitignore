@@ -4,3 +4,5 @@ output_videos
 cropped_images
 datasets
 runs
+temp_stream.mp4
+utils/__pycache__

@@ -30,6 +30,15 @@ pip freeze >> requirements.txt
 pyinstaller --onefile --windowed --name TalkieBud --icon=src/images/icon.ico --paths=src --add-data "TalkieBud_Portable/dependencies/ffmpeg.exe;dependencies" src/components/gui.py
 
 
-# Windows setup
-# Install OpenALPR: https://github.com/openalpr/openalpr/releases
-# Add OpenALPR path to the environment system variables: "C:\OpenALPR\"
+# To run the training script, run the following commands:
+yolo train model=models/yolo11m_best.pt data=datasets/license_plate_data/dataset.yaml epochs=20
+
+
+# To view the logs in tensorboard, run the following commands:
+# Convert the logs to tensorboard format:
+python utils\convert_to_tensorboard.py
+# Run the tensorboard server:
+tensorboard --logdir runs/detect/train13/tb_logs/ 
+# opens the tensorboard dashboard in the browser
+http://localhost:6006/
+

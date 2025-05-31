@@ -6,3 +6,5 @@ datasets
 runs
 temp_stream.mp4
 utils/__pycache__
+.venv
+data/license_plates/*

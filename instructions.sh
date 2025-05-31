@@ -1,14 +1,14 @@
-# Deactivate the virtual environment if it's active
-deactivate
-
-# Remove the existing virtual environment
-rm -rf .venv
-
 # Create a new virtual environment
 python -m venv .venv
 
 # Activate the new virtual environment
 source .venv/Scripts/activate
+
+# Deactivate the virtual environment if it's active
+deactivate
+
+# Remove the existing virtual environment
+rm -rf .venv
 
 # Update pip and setuptools
 python -m pip install --upgrade pip

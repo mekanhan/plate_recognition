@@ -1,0 +1,139 @@
+{
+  "session_start": "20250531_232811",
+  "enhanced_results": [
+    {
+      "plate_text": "VBR7660",
+      "confidence": 1.0,
+      "confidence_category": "HIGH",
+      "match_type": "known_plate",
+      "original_detections": [
+        {
+          "plate_text": "VBP7660",
+          "timestamp": "2025-05-31 23:28:32",
+          "unix_timestamp": 1748752112.071058,
+          "ocr_confidence": 0.547251699253343,
+          "detection_confidence": 0.824859082698822,
+          "class_name": "License_Plate",
+          "bbox": [
+            85,
+            373,
+            298,
+            497
+          ]
+        },
+        {
+          "plate_text": "VBR7660",
+          "timestamp": "2025-05-31 23:28:33",
+          "unix_timestamp": 1748752113.1680195,
+          "ocr_confidence": 0.2985495454320546,
+          "detection_confidence": 0.821848452091217,
+          "class_name": "License_Plate",
+          "bbox": [
+            77,
+            381,
+            285,
+            501
+          ]
+        },
+        {
+          "plate_text": "VBR76607",
+          "timestamp": "2025-05-31 23:28:34",
+          "unix_timestamp": 1748752114.1268983,
+          "ocr_confidence": 0.27013604844132677,
+          "detection_confidence": 0.8092930316925049,
+          "class_name": "License_Plate",
+          "bbox": [
+            133,
+            382,
+            334,
+            493
+          ]
+        },
+        {
+          "plate_text": "VBR7660",
+          "timestamp": "2025-05-31 23:28:35",
+          "unix_timestamp": 1748752115.0946584,
+          "ocr_confidence": 0.3325194581421877,
+          "detection_confidence": 0.8377703428268433,
+          "class_name": "License_Plate",
+          "bbox": [
+            205,
+            372,
+            417,
+            491
+          ]
+        },
+        {
+          "plate_text": "VBR7660",
+          "timestamp": "2025-05-31 23:28:36",
+          "unix_timestamp": 1748752116.2153525,
+          "ocr_confidence": 0.9537072662580298,
+          "detection_confidence": 0.8499029874801636,
+          "class_name": "License_Plate",
+          "bbox": [
+            292,
+            326,
+            531,
+            455
+          ]
+        },
+        {
+          "plate_text": "VBR7660",
+          "timestamp": "2025-05-31 23:28:37",
+          "unix_timestamp": 1748752117.2550974,
+          "ocr_confidence": 0.9007809713018785,
+          "detection_confidence": 0.8625401258468628,
+          "class_name": "License_Plate",
+          "bbox": [
+            300,
+            235,
+            570,
+            381
+          ]
+        },
+        {
+          "plate_text": "VBR7660",
+          "timestamp": "2025-05-31 23:28:38",
+          "unix_timestamp": 1748752118.3352535,
+          "ocr_confidence": 0.29087776315188535,
+          "detection_confidence": 0.866104006767273,
+          "class_name": "License_Plate",
+          "bbox": [
+            232,
+            208,
+            541,
+            372
+          ]
+        },
+        {
+          "plate_text": "VBR7660",
+          "timestamp": "2025-05-31 23:28:39",
+          "unix_timestamp": 1748752119.3443708,
+          "ocr_confidence": 0.4738361338794603,
+          "detection_confidence": 0.8701971173286438,
+          "class_name": "License_Plate",
+          "bbox": [
+            213,
+            213,
+            520,
+            379
+          ]
+        },
+        {
+          "plate_text": "VBR76601",
+          "timestamp": "2025-05-31 23:28:40",
+          "unix_timestamp": 1748752120.5214207,
+          "ocr_confidence": 0.4514153059136019,
+          "detection_confidence": 0.8613054752349854,
+          "class_name": "License_Plate",
+          "bbox": [
+            241,
+            276,
+            509,
+            430
+          ]
+        }
+      ]
+    }
+  ]
+}

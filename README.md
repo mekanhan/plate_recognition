@@ -63,3 +63,14 @@ Contributions, issues, and feature requests are welcome. Feel free to check [iss
 
 ## Contact
 For more information, contact [Your Name/Your Organization] at [email@example.com].
+
+
+## Running the Script
+### For USB cameras
+python scripts/lpr_live.py usb --id 0
+
+### For IP cameras (like Android phone)
+python scripts/lpr_live.py ip --ip 192.168.1.100 --port 8080
+
+### For CSI cameras (Jetson/Raspberry Pi)
+python scripts/lpr_live.py csi

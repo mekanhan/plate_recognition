@@ -1,0 +1,14 @@
+{
+  "plates": [
+    {
+      "plate_number": "VBR7660",
+      "first_seen": "2025-05-31",
+      "metadata": {
+        "vehicle_type": "SUV",
+        "owner": "John Doe"
+      }
+    }
+   
+  ],
+  "last_updated": "2025-05-31"
+}

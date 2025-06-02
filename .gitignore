@@ -8,3 +8,7 @@ temp_stream.mp4
 utils/__pycache__
 .venv
 data/license_plates/*
+scripts/__init__.py
+tests/__init__.py
+scripts/__pycache__
+tests/__pycache__

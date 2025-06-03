@@ -9,6 +9,13 @@ utils/__pycache__
 .venv
 data/license_plates/*
 scripts/__init__.py
-tests/__init__.py
 scripts/__pycache__
+tests/__init__.py
 tests/__pycache__
+app/__pycache__
+app/routers/__init__.py
+app/routers/__pycache__
+app/services/__init__.py
+app/services/__pycache__
+app/utils/__init__.py
+app/utils/__pycache__

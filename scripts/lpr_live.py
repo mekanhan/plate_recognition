@@ -225,7 +225,7 @@ def load_model() -> YOLO:
     """
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"Using device: {device}")
-    return YOLO("models/yolo11m_best.pt").to(device)
+    return YOLO("app/models/yolo11m_best.pt").to(device)
 
 def clean_plate_text(text: str) -> Optional[str]:
     """

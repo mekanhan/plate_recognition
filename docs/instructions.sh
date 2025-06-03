@@ -1,8 +1,11 @@
 # Create a new virtual environment
 python -m venv .venv
 
-# Activate the new virtual environment
+# Activate the virtual environment on Unix or MacOS
 source .venv/Scripts/activate
+
+# If you're on Windows, use the following command to activate the virtual environment
+.venv\Scripts\activate
 
 # Deactivate the virtual environment if it's active
 deactivate

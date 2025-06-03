@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LPR Detection Testing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .button:hover {
+            background: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .menu a {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .file-upload {
+            margin: 20px 0;
+        }
+        .detection-info {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>License Plate Detection Testing</h1>
+        
+        <div class="menu">
+            <a href="/">Home</a>
+            <a href="/stream">Live Stream</a>
+            <a href="/results/latest">Latest Results</a>
+        </div>
+        
+        <div class="card">
+            <h2>Camera Detection</h2>
+            <p>Detect license plate from the current camera frame</p>
+            <button id="detectBtn" class="button">Detect from Camera</button>
+        </div>
+        
+        <div class="card">
+            <h2>Upload Detection</h2>
+            <p>Detect license plate from an uploaded image</p>
+            <div class="file-upload">
+                <input type="file" id="imageUpload" accept="image/*">
+            </div>
+            <button id="uploadBtn" class="button">Detect from Upload</button>
+        </div>
+        
+        <div class="card">
+            <h2>Detection Status</h2>
+            <button id="statusBtn" class="button">Check Status</button>
+        </div>
+        
+        <div id="result">Results will appear here...</div>
+    </div>
+    
+    <script>
+        // Update the result display function to show more information
+        function displayDetectionResult(data) {
+            const resultDiv = document.getElementById('result');
+
+            // Format the JSON for display
+            const formattedJson = JSON.stringify(data, null, 2);
+
+            // Create HTML content with enhanced information
+            let htmlContent = `<h3>Detection Result</h3>
+                <div class="detection-info">
+                    <p><strong>Plate Text:</strong> ${data.plate_text || 'None'}</p>
+                    <p><strong>Confidence:</strong> ${(data.confidence * 100).toFixed(2)}%</p>`;
+
+            if (data.state) {
+                htmlContent += `<p><strong>State:</strong> ${data.state}</p>`;
+            }
+
+            if (data.plate_type) {
+                htmlContent += `<p><strong>Plate Type:</strong> ${data.plate_type}</p>`;
+            }
+
+            if (data.raw_text) {
+                htmlContent += `<p><strong>Raw OCR Text:</strong> ${data.raw_text}</p>`;
+            }
+
+            htmlContent += `<p><strong>Full JSON:</strong></p>
+                <pre>${formattedJson}</pre>
+                </div>`;
+
+            resultDiv.innerHTML = htmlContent;
+        }
+
+        document.getElementById('detectBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/detection/detect', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                displayDetectionResult(data);
+            } catch (error) {
+                document.getElementById('result').textContent = `Error: ${error.message}`;
+            }
+        });
+        
+        document.getElementById('uploadBtn').addEventListener('click', async () => {
+            const fileInput = document.getElementById('imageUpload');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                document.getElementById('result').textContent = 'Please select an image to upload';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            try {
+                const response = await fetch('/detection/detect/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                displayDetectionResult(data);
+            } catch (error) {
+                document.getElementById('result').textContent = `Error: ${error.message}`;
+            }
+        });
+        
+        document.getElementById('statusBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/detection/status');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

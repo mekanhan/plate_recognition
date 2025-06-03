@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Stream - License Plate Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .video-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .video-feed {
+            max-width: 100%;
+            border: 2px solid #333;
+            border-radius: 8px;
+        }
+        .menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .menu a {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .menu a:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Live Camera Stream</h1>
+        
+        <div class="menu">
+            <a href="/">Home</a>
+            <a href="/results/latest">Latest Results</a>
+        </div>
+        
+        <div class="video-container">
+            <img src="/stream/video" alt="Video Stream" class="video-feed">
+        </div>
+        
+        <div>
+            <p>If the stream doesn't appear, check that your camera is properly connected and accessible.</p>
+        </div>
+    </div>
+</body>
+</html>

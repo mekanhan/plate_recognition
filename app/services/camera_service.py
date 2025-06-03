@@ -2,13 +2,11 @@ import cv2
 import asyncio
 import time
 import numpy as np
-from fastapi import HTTPException
 from typing import Optional, Dict, Any, Tuple
 
 class CameraService:
     """
     Service for managing camera operations.
-    Provides thread-safe access to camera frames.
     """
     
     def __init__(self):
@@ -28,7 +26,8 @@ class CameraService:
         self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         
         if not self.camera.isOpened():
-            raise HTTPException(status_code=500, detail=f"Could not open camera {camera_id}")
+            print(f"Warning: Could not open camera {camera_id}")
+            return
         
         # Start frame capture loop
         self.running = True
@@ -40,7 +39,11 @@ class CameraService:
         """Shutdown the camera service"""
         self.running = False
         if self.task:
-            await self.task
+            self.task.cancel()
+            try:
+                await self.task
+            except asyncio.CancelledError:
+                pass
         
         if self.camera:
             self.camera.release()
@@ -51,7 +54,7 @@ class CameraService:
     async def _capture_frames(self) -> None:
         """Capture frames in a loop"""
         while self.running:
-            if self.camera:
+            if self.camera and self.camera.isOpened():
                 ret, frame = self.camera.read()
                 
                 if ret:
@@ -72,8 +75,9 @@ class CameraService:
         """
         async with self.frame_lock:
             if self.frame_buffer is None:
-                raise HTTPException(status_code=500, detail="No frame available")
-            
+                # Return a black frame if no frame is available
+                frame = np.zeros((480, 640, 3), dtype=np.uint8)
+                return frame, time.time()
             # Return a copy to prevent modification of the buffer
             return self.frame_buffer.copy(), self.last_frame_time
     

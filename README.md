@@ -74,3 +74,12 @@ python scripts/lpr_live.py ip --ip 192.168.1.100 --port 8080
 
 ### For CSI cameras (Jetson/Raspberry Pi)
 python scripts/lpr_live.py csi
+
+## Docker Compose
+To run the service using Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+The API will be available at `http://localhost:8000`.

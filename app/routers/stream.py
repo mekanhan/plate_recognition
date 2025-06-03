@@ -4,16 +4,12 @@ from fastapi.templating import Jinja2Templates
 import cv2
 import asyncio
 from app.services.camera_service import CameraService
+from app.dependencies.camera import get_camera_service
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
-# This will be initialized in the main app
-camera_service = None
-
-async def get_camera_service():
-    """Dependency to get the camera service"""
-    return camera_service
+# This will be initialized in the main app if run directly
 
 async def generate_frames(camera: CameraService):
     """Generate video frames for streaming"""

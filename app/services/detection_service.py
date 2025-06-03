@@ -193,17 +193,12 @@ class DetectionService:
         self.detections_processed += 1
         self.last_detection_time = time.time()
         
-        print(f"Processed detection {detection_id}: {detection_result['plate_text']}")
+print(f"Processed detection {detection_id}: {detection_result['plate_text']}")
 
 # Router part stays the same
 router = APIRouter()
 
-# This will be initialized in the main app
-detection_service = None
-
-async def get_detection_service():
-    """Dependency to get the detection service"""
-    return detection_service
+from app.dependencies.detection import get_detection_service
 
 @router.get("/status")
 async def detection_status(

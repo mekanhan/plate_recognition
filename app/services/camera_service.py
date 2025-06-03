@@ -3,6 +3,9 @@ import asyncio
 import time
 import numpy as np
 from typing import Optional, Dict, Any, Tuple
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CameraService:
     """
@@ -26,14 +29,14 @@ class CameraService:
         self.camera.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         
         if not self.camera.isOpened():
-            print(f"Warning: Could not open camera {camera_id}")
+            logger.warning("Could not open camera %s", camera_id)
             return
         
         # Start frame capture loop
         self.running = True
         self.task = asyncio.create_task(self._capture_frames())
         
-        print(f"Camera initialized: {width}x{height}")
+        logger.info("Camera initialized: %sx%s", width, height)
     
     async def shutdown(self) -> None:
         """Shutdown the camera service"""
@@ -49,7 +52,7 @@ class CameraService:
             self.camera.release()
             self.camera = None
         
-        print("Camera service shutdown")
+        logger.info("Camera service shutdown")
     
     async def _capture_frames(self) -> None:
         """Capture frames in a loop"""

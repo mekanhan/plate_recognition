@@ -13,6 +13,7 @@ from collections import Counter, defaultdict
 from ultralytics import YOLO
 import argparse
 from typing import Optional, Tuple, List, Dict, Any, Set
+from app.utils.plate_database import PlateDatabase
 
 class LicensePlateValidator:
     """
@@ -149,72 +150,6 @@ class LicensePlateValidator:
         else:
             return "LOW"
 
-class PlateDatabase:
-    """Handler for the local plate database"""
-    
-    def __init__(self, db_file: str = "data/known_plates.json"):
-        self.db_file = db_file
-        self.plates = []
-        self._load_database()
-        
-    def _load_database(self) -> None:
-        """Load the database from file"""
-        # Create data directory if it doesn't exist
-        os.makedirs(os.path.dirname(self.db_file), exist_ok=True)
-        
-        if os.path.exists(self.db_file):
-            try:
-                with open(self.db_file, 'r') as f:
-                    data = json.load(f)
-                    self.plates = [plate["plate_number"] for plate in data.get("plates", [])]
-                    self.full_data = data
-                print(f"Loaded {len(self.plates)} known plates from database")
-            except (json.JSONDecodeError, KeyError) as e:
-                print(f"Error loading database: {e}")
-                self.plates = []
-                self.full_data = {"plates": [], "last_updated": datetime.datetime.now().strftime("%Y-%m-%d")}
-        else:
-            # Initialize with VBR7660 as requested
-            self.plates = ["VBR7660"]
-            self.full_data = {
-                "plates": [{"plate_number": "VBR7660", "first_seen": datetime.datetime.now().strftime("%Y-%m-%d"), "metadata": {}}],
-                "last_updated": datetime.datetime.now().strftime("%Y-%m-%d")
-            }
-            print("Created new plate database with VBR7660")
-            self._save_database()
-    
-    def _save_database(self) -> None:
-        """Save the database to file"""
-        self.full_data["last_updated"] = datetime.datetime.now().strftime("%Y-%m-%d")
-        with open(self.db_file, 'w') as f:
-            json.dump(self.full_data, f, indent=2)
-            
-    def get_all_plates(self) -> List[str]:
-        """Get all known plates"""
-        return self.plates
-    
-    def add_plate(self, plate_number: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Add a new plate to the database"""
-        if plate_number in self.plates:
-            return False  # Already exists
-            
-        new_plate = {
-            "plate_number": plate_number,
-            "first_seen": datetime.datetime.now().strftime("%Y-%m-%d"),
-            "metadata": metadata or {}
-        }
-        
-        self.full_data["plates"].append(new_plate)
-        self.plates.append(plate_number)
-        self._save_database()
-        return True
-        
-    def auto_add_high_confidence_plates(self, plate_text: str, confidence: float, min_confidence: float = 0.8) -> bool:
-        """Automatically add plates with high confidence to the database"""
-        if confidence >= min_confidence and plate_text not in self.plates:
-            print(f"Auto-adding high confidence plate to database: {plate_text} ({confidence:.2f})")
-            return self.add_plate(plate_text)
-        return False
 
 def load_model() -> YOLO:
     """

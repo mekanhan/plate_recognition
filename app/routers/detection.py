@@ -4,16 +4,11 @@ from typing import List, Dict, Any, Optional
 import asyncio
 import time
 import uuid
+from app.dependencies.detection import get_detection_service
 
 # Initialize router
 router = APIRouter()
 
-# This will be initialized in the main app
-detection_service = None
-
-async def get_detection_service():
-    """Dependency to get the detection service"""
-    return detection_service
 
 @router.post("/detect")
 async def detect_license_plate(

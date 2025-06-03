@@ -10,17 +10,13 @@ from app.services.detection_service import DetectionService
 from app.services.storage_service import StorageService
 from app.services.enhancer_service import EnhancerService
 from app.routers import stream, detection, results
+from app.utils.logging_config import setup_logging
+from config.settings import Config
 
-os.makedirs("logs", exist_ok=True)
+setup_logging()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("logs/app.log"),
-        logging.StreamHandler()
-    ]
-)
+config = Config()
+app.state.config = config
 
 app = FastAPI(
     title="License Plate Recognition Microservice",
@@ -39,10 +35,10 @@ detection_service = DetectionService()
 storage_service = StorageService()
 enhancer_service = EnhancerService()
 
-stream.camera_service = camera_service
-detection.detection_service = detection_service
-results.detection_service = detection_service
-results.storage_service = storage_service
+app.state.camera_service = camera_service
+app.state.detection_service = detection_service
+app.state.storage_service = storage_service
+app.state.enhancer_service = enhancer_service
 
 @app.on_event("startup")
 async def startup_event():

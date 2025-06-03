@@ -6,6 +6,7 @@ import os
 from typing import List, Dict, Any, Optional, Tuple
 from fastapi import APIRouter, Depends, HTTPException
 from app.services.license_plate_recognition_service import LicensePlateRecognitionService
+from app.utils.license_plate_processor import process_detection_result
 
 class DetectionService:
     """License plate detection service"""
@@ -84,13 +85,17 @@ class DetectionService:
         # Add timestamp to the frame
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         cv2.putText(display_frame, timestamp, (10, 30),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
         # Create a mock detection result
         height, width = frame.shape[:2]
         x1, y1 = int(width * 0.4), int(height * 0.6)
         x2, y2 = int(width * 0.6), int(height * 0.7)
+        
+        # Draw rectangle and text
         cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(display_frame, "ABC123", (x1, y1-10),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         
         detections = [{
             "plate_text": "ABC123", 
@@ -100,7 +105,7 @@ class DetectionService:
             "ocr_confidence": 0.85,
             "state": "CA"
         }]
-        
+
         return display_frame, detections
     
     async def detect_from_camera(self) -> Dict[str, Any]:
@@ -165,6 +170,18 @@ class DetectionService:
             detection_id: Unique detection ID
             detection_result: Detection result dict
         """
+        # Apply the enhanced license plate processor
+        if detection_result and 'raw_text' in detection_result:
+            better_plate, better_confidence = process_detection_result({
+                "detection": detection_result
+            })
+
+            # Update with the improved plate text if available
+            if better_plate:
+                detection_result['plate_text'] = better_plate
+                detection_result['confidence'] = better_confidence
+                detection_result['processed_by'] = 'enhanced_processor'
+
         # Store the processed detection
         self.processed_detections[detection_id] = {
             "detection": detection_result,

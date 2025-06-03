@@ -239,6 +239,8 @@ rm -rf venv
 ### Running with Different Camera Sources
 
 ```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
 # Use USB camera with ID 1
 CAMERA_ID=1 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 

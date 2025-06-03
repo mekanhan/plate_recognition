@@ -1,11 +1,13 @@
 # detector.py
 import cv2
 import easyocr
+import torch
 from ultralytics import YOLO
 from datetime import datetime
 import numpy as np
 import re
 import logging
+from typing import List, Dict, Any
 
 class PlateDetector:
     def __init__(self, model_path: str, language: str = 'en'):
@@ -37,7 +39,11 @@ class PlateDetector:
             cropped_plate = frame[y1:y2, x1:x2]
             ocr_results = self.reader.readtext(cropped_plate)
 
+            # Collect all raw text from OCR for improved processing
+            all_raw_text = []
+
             for bbox, text, ocr_conf in ocr_results:
+                all_raw_text.append(text)
                 cleaned_text = self.clean_plate_text(text)
                 if cleaned_text:
                     detection = {
@@ -46,7 +52,8 @@ class PlateDetector:
                         "ocr_confidence": float(ocr_conf),
                         "detection_confidence": conf,
                         "class_name": class_name,
-                        "bbox": [x1, y1, x2, y2]
+                        "bbox": [x1, y1, x2, y2],
+                        "raw_text": " ".join(all_raw_text)  # Add the raw text
                     }
                     detected_plates.append(detection)
                     

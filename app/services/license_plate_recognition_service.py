@@ -98,72 +98,76 @@ class LicensePlateRecognitionService:
         loop = asyncio.get_event_loop()
         self.ocr_reader = await loop.run_in_executor(None, load_ocr)
 
-    async def detect_and_recognize(self, image: np.ndarray) -> List[Dict[str, Any]]:
+    async def detect_and_recognize(self, image: np.ndarray) -> Tuple[List[Dict[str, Any]], np.ndarray]:
         """
         Detect and recognize license plates in an image.
+        
         Args:
             image: Input image as numpy array
+            
         Returns:
-            List of detection results with plate text and metadata
+            Tuple of (list of detection results, annotated image)
         """
         if not self.initialized:
             await self.initialize()
-
+            
         if self.detector_model is None or self.ocr_reader is None:
             raise RuntimeError("Models not properly initialized")
-
+            
         # Create a copy of the image for visualization
         display_image = image.copy()
-
+        
         # Run the detector
         try:
             loop = asyncio.get_event_loop()
             detections = await loop.run_in_executor(None, lambda: self.detector_model(image)[0])
+            
             results = []
             
             # Process each detection
             for det in detections.boxes.data.cpu().numpy():
                 x1, y1, x2, y2, conf, cls = det
-
+                
                 # Skip low confidence detections
                 if conf < 0.3:
                     continue
-
+                    
                 # Extract license plate region
                 plate_roi = image[int(y1):int(y2), int(x1):int(x2)]
-
+                
                 if plate_roi.size == 0:
                     continue
-
+                
                 # Process the plate region with OCR
                 plate_result = await self._recognize_plate_text(plate_roi)
-
+                
                 # Skip if no valid text found
                 if not plate_result["plate_text"]:
                     continue
-
+                
                 # Add bounding box to results
                 plate_result["box"] = [int(x1), int(y1), int(x2), int(y2)]
                 plate_result["detection_confidence"] = float(conf)
                 plate_result["timestamp"] = time.time()
-
+                
                 # Draw on the display image
                 cv2.rectangle(display_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-
+                
                 text_to_show = f"{plate_result['plate_text']}"
                 if 'state' in plate_result and plate_result['state']:
                     text_to_show = f"{plate_result['state']}: {text_to_show}"
-
+                    
                 cv2.putText(display_image, text_to_show, (int(x1), int(y1)-10),
                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-
+                
                 results.append(plate_result)
-
+            
             return results, display_image
-
+            
         except Exception as e:
             print(f"Error in license plate detection: {e}")
             return [], display_image
+
 
     async def _recognize_plate_text(self, plate_image: np.ndarray) -> Dict[str, Any]:
         """

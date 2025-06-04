@@ -1,0 +1,28 @@
+{
+  "slug": "license-plate-detection",
+  "title": "License Plate Detection and Streaming",
+  "status": "in-progress",
+  "plan": "docs/plans/plan_p1.md",
+  "flowchart": "docs/flowcharts/flowchart_p1.md",
+  "rules": "docs/rules.md",
+  "files": [
+    "app/dependencies/camera.py",
+    "app/dependencies/detection.py",
+    "app/routers/detection.py",
+    "app/routers/results.py",
+    "app/routers/stream.py",
+    "app/services/detection_service.py",
+    "app/services/camera_service.py",
+    "app/services/enhancer_service.py",
+    "app/services/license_plate_recognition_service.py",
+    "app/services/plate_processor.py",
+    "app/services/storage_service.py",
+    "app/services/tracker.py",
+    "scripts/update_features.py"
+ ],
+  "author": "Mekan Hanov",
+  "created_at": "2025-06-04T18:00:00Z",
+  "merged_at": "2025-06-05T12:00:00Z",
+  "tags": ["lpr", "streaming", "detection", "camera"],
+  "review_notes": "Need to revisit auto-retry logic if gate fails to respond."
+}

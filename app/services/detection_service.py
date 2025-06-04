@@ -19,6 +19,7 @@ class DetectionService:
         self.camera_service = None
         self.processed_detections = {}
         self.license_plate_service = None
+        self.storage_service = None
 
     async def initialize(self, camera_service=None):
         """Initialize the detection service"""
@@ -193,8 +194,25 @@ class DetectionService:
         self.detections_processed += 1
         self.last_detection_time = time.time()
         
-print(f"Processed detection {detection_id}: {detection_result['plate_text']}")
+        print(f"Processed detection {detection_id}: {detection_result['plate_text']}")
 
+        # Save to storage service if available
+        if hasattr(self, 'storage_service') and self.storage_service:
+            print(f"Sending detection {detection_id} to storage service")
+            try:
+                detection_record = {
+                    "detection_id": detection_id,
+                    "timestamp": time.time(),
+                    "plate_text": detection_result.get('plate_text', ''),
+                    "confidence": detection_result.get('confidence', 0),
+                    "raw_text": detection_result.get('raw_text', ''),
+                    "state": detection_result.get('state', None),
+                    "box": detection_result.get('box', []),
+                    "processed_at": time.time()
+                }
+                await self.storage_service.add_detections([detection_record])
+            except Exception as e:
+                print(f"Error saving detection to storage: {e}")
 # Router part stays the same
 router = APIRouter()
 

@@ -26,3 +26,57 @@
 2025-06-03 01:56:57,833 - WARNING - Using CPU. Note: This module is much faster with a GPU.
 2025-06-03 01:57:14,812 - WARNING - Using CPU. Note: This module is much faster with a GPU.
 2025-06-03 01:57:30,731 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 18:40:52,757 - INFO - Camera initialized: 1280x720
+2025-06-03 18:40:54,102 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 18:40:58,981 - INFO - Storage service initialized
+2025-06-03 18:40:58,981 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_184058.json
+2025-06-03 18:40:58,982 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_184058.json
+2025-06-03 19:16:05,704 - INFO - Camera service shutdown
+2025-06-03 19:16:05,704 - INFO - Storage service shutdown
+2025-06-03 19:17:50,766 - INFO - Camera initialized: 1280x720
+2025-06-03 19:17:51,643 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 19:17:54,699 - INFO - Storage service initialized
+2025-06-03 19:17:54,699 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_191754.json
+2025-06-03 19:17:54,700 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_191754.json
+2025-06-03 19:37:04,341 - INFO - Camera service shutdown
+2025-06-03 19:37:04,342 - INFO - Storage service shutdown
+2025-06-03 19:39:26,384 - INFO - Camera initialized: 1280x720
+2025-06-03 19:39:27,955 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 19:39:33,944 - INFO - Storage service initialized
+2025-06-03 19:39:33,944 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_193933.json
+2025-06-03 19:39:33,944 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_193933.json
+2025-06-03 19:41:11,599 - INFO - Camera service shutdown
+2025-06-03 19:41:11,602 - INFO - Storage service shutdown
+2025-06-03 19:45:04,096 - INFO - Camera initialized: 1280x720
+2025-06-03 19:45:05,174 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 19:45:08,266 - INFO - Storage service initialized
+2025-06-03 19:45:08,267 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_194508.json
+2025-06-03 19:45:08,267 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_194508.json
+2025-06-03 19:51:45,135 - INFO - Camera service shutdown
+2025-06-03 19:51:45,137 - INFO - Storage service shutdown
+2025-06-03 20:02:29,752 - INFO - Camera initialized: 1280x720
+2025-06-03 20:02:30,716 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 20:02:34,304 - INFO - Storage service initialized
+2025-06-03 20:02:34,304 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_200234.json
+2025-06-03 20:02:34,305 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_200234.json
+2025-06-03 23:19:53,288 - INFO - Camera initialized: 1280x720
+2025-06-03 23:19:54,442 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 23:19:57,909 - INFO - Storage service initialized
+2025-06-03 23:19:57,909 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_231957.json
+2025-06-03 23:19:57,909 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_231957.json
+2025-06-03 23:23:55,070 - INFO - Camera service shutdown
+2025-06-03 23:23:55,073 - INFO - Storage service shutdown
+2025-06-03 23:32:25,165 - INFO - Camera initialized: 1280x720
+2025-06-03 23:32:25,972 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 23:32:28,582 - INFO - Storage service initialized
+2025-06-03 23:32:28,582 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_233228.json
+2025-06-03 23:32:28,582 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_233228.json
+2025-06-03 23:34:30,004 - INFO - Camera service shutdown
+2025-06-03 23:34:30,004 - INFO - Storage service shutdown
+2025-06-03 23:51:04,149 - INFO - Storage service initialized
+2025-06-03 23:51:04,150 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250603_235104.json
+2025-06-03 23:51:04,150 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250603_235104.json
+2025-06-03 23:51:07,549 - INFO - Camera initialized: 1280x720
+2025-06-03 23:51:08,393 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-03 23:52:35,682 - INFO - Camera service shutdown
+2025-06-03 23:52:35,682 - INFO - Storage service shutdown

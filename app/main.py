@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.services.camera_service import CameraService
 from app.services.detection_service import DetectionService
-from app.services.storage_service import StorageService
+from app.services.storage_service_fixed import StorageService
 from app.services.enhancer_service import EnhancerService
 from app.routers import stream, detection, results
 from app.utils.logging_config import setup_logging
@@ -149,6 +149,17 @@ async def startup_event():
         if hasattr(storage_service, 'task') and storage_service.task:
             storage_service.task.add_done_callback(handle_task_exception)
             background_tasks.append(storage_service.task)
+
+        # Set processing parameters
+        # Increase the frame skip count to process fewer frames
+        if hasattr(stream, 'frame_processor'):
+            stream.frame_processor["process_every_n_frames"] = 5  # Only process every 5th frame
+            logger.info(f"Set frame processing interval to every {stream.frame_processor['process_every_n_frames']} frames")
+
+        # Set queue processing interval
+        if hasattr(stream, 'plate_tracker'):
+            stream.plate_tracker["process_interval"] = 1.0  # Process queue every 1 second
+            logger.info(f"Set detection queue processing interval to {stream.plate_tracker['process_interval']}s")
 
     except Exception as e:
         logger.error(f"Error during startup: {e}")

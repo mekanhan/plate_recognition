@@ -34,7 +34,7 @@ plate_tracker = {
 # Frame processing control
 frame_processor = {
     "frame_count": 0,
-    "process_every_n_frames": 3,  # Only process every Nth frame
+    "process_every_n_frames": 5,  # Only process every Nth frame - increased from 3 to 5
     "last_frame_time": 0,
     "processing_time_ms": 0
 }
@@ -58,60 +58,62 @@ async def process_detection_queue():
         return
 
     # Try to acquire the lock, but don't block if already processing
-    if not plate_tracker["processing_lock"].locked():
-        async with plate_tracker["processing_lock"]:
-            # Update last process time
-            plate_tracker["last_process_time"] = current_time
+    if plate_tracker["processing_lock"].locked():
+        return  # Skip if already processing
 
-    # Get the current queue and clear it
+    async with plate_tracker["processing_lock"]:
+        # Update last process time
+        plate_tracker["last_process_time"] = current_time
+
+        # Get the current queue and clear it
         queue = plate_tracker["detection_queue"].copy()
         plate_tracker["detection_queue"] = []
 
-    if not queue:
-        return
+        if not queue:
+            return
 
-    logger.info(f"Processing {len(queue)} detections from queue")
+        logger.info(f"Processing {len(queue)} detections from queue")
 
-    # Group by plate text to find the best confidence for each plate
-    plates_to_process = {}
-    for detection in queue:
-        plate_text = detection.get("plate_text", "").upper()
-        if not plate_text:
-            continue
+        # Group by plate text to find the best confidence for each plate
+        plates_to_process = {}
+        for detection in queue:
+            plate_text = detection.get("plate_text", "").upper()
+            if not plate_text:
+                continue
 
-        # Check if this is a better detection than what we already have
-        current_confidence = detection.get("confidence", 0)
-        if (plate_text not in plates_to_process or
-            current_confidence > plates_to_process[plate_text].get("confidence", 0)):
-            plates_to_process[plate_text] = detection
+            # Check if this is a better detection than what we already have
+            current_confidence = detection.get("confidence", 0)
+            if (plate_text not in plates_to_process or
+                current_confidence > plates_to_process[plate_text].get("confidence", 0)):
+                plates_to_process[plate_text] = detection
 
-    # Process each unique plate (best confidence version)
-    for plate_text, detection in plates_to_process.items():
-        # Skip low confidence detections
-        confidence = detection.get("confidence", 0)
-        if confidence < plate_tracker["confidence_threshold"]:
-                    logger.debug(f"Skipping low confidence detection: {plate_text} ({confidence:.2f})")
-                    continue
+        # Process each unique plate (best confidence version)
+        for plate_text, detection in plates_to_process.items():
+            # Skip low confidence detections
+            confidence = detection.get("confidence", 0)
+            if confidence < plate_tracker["confidence_threshold"]:
+                logger.debug(f"Skipping low confidence detection: {plate_text} ({confidence:.2f})")
+                continue
 
-        # Check cooldown period
-        last_seen = plate_tracker["last_seen"].get(plate_text, 0)
-        if current_time - last_seen < plate_tracker["cooldown_period"]:
-                    logger.debug(f"Skipping plate in cooldown: {plate_text}")
-                    continue
+            # Check cooldown period
+            last_seen = plate_tracker["last_seen"].get(plate_text, 0)
+            if current_time - last_seen < plate_tracker["cooldown_period"]:
+                logger.debug(f"Skipping plate in cooldown: {plate_text}")
+                continue
 
-        # Update last seen time
-        plate_tracker["last_seen"][plate_text] = current_time
+            # Update last seen time
+            plate_tracker["last_seen"][plate_text] = current_time
 
-        # Process this detection (which also saves it to storage)
-        if detection_service:
-            try:
-                detection_id = str(uuid.uuid4())
-                logger.info(f"Processing plate: {plate_text} (Confidence: {confidence:.2f})")
+            # Process this detection (which also saves it to storage)
+            if detection_service:
+                try:
+                    detection_id = str(uuid.uuid4())
+                    logger.info(f"Processing plate: {plate_text} (Confidence: {confidence:.2f})")
 
-                # Process detection
-                await detection_service.process_detection(detection_id, detection)
-            except Exception as e:
-                logger.error(f"Error processing detection: {e}")
+                    # Create a background task for processing to avoid blocking
+                    asyncio.create_task(detection_service.process_detection(detection_id, detection))
+                except Exception as e:
+                    logger.error(f"Error processing detection: {e}")
 
 async def generate_frames(camera: CameraService, detection_svc=None):
     """Generate video frames for streaming with license plate detection"""
@@ -136,31 +138,40 @@ async def generate_frames(camera: CameraService, detection_svc=None):
             if detection_svc and should_process:
                 try:
                     # Process frame with license plate detection
-                    processed_frame, detections = await detection_svc.process_frame(raw_frame)
-                    # Add valid detections to the queue
-                    if detections:
-                        for detection in detections:
-                            if detection.get("plate_text") and detection.get("confidence", 0) > 0:
-                                # Add timestamp if not present
-                                if "timestamp" not in detection:
-                                    detection["timestamp"] = time.time()
-
-                                # Add to queue
-                                plate_tracker["detection_queue"].append(detection)
-
-                    # Process the detection queue (non-blocking)
-                    asyncio.create_task(process_detection_queue())
-
-                    # Use the processed frame (with annotations)
-                    frame = processed_frame
-
+                    process_task = asyncio.create_task(detection_svc.process_frame(raw_frame))
+                    
+                    # Set a timeout to avoid blocking for too long
+                    try:
+                        processed_frame, detections = await asyncio.wait_for(process_task, timeout=0.5)
+                        
+                        # Use the processed frame (with annotations)
+                        frame = processed_frame
+                        
+                        # Add valid detections to the queue
+                        if detections:
+                            for detection in detections:
+                                if detection.get("plate_text") and detection.get("confidence", 0) > 0:
+                                    # Add timestamp if not present
+                                    if "timestamp" not in detection:
+                                        detection["timestamp"] = time.time()
+                                    
+                                    # Add to queue
+                                    plate_tracker["detection_queue"].append(detection)
+                        
+                        # Process the detection queue in a separate task (non-blocking)
+                        asyncio.create_task(process_detection_queue())
+                        
+                    except asyncio.TimeoutError:
+                        logger.warning("Frame processing timed out - using raw frame")
+                        # Already using raw_frame as default
+                    
                     # Calculate processing time
                     frame_processor["processing_time_ms"] = (time.time() - start_time) * 1000
-
+                    
                 except Exception as e:
                     logger.error(f"Error in license plate detection: {e}")
                     # Fall back to the original frame if detection fails
-                    frame = raw_frame
+                    # Already using raw_frame as default
 
             # Add performance metrics to the frame
             if should_process:
@@ -212,4 +223,3 @@ async def video_feed(
         generate_frames(camera, detection_svc),
         media_type="multipart/x-mixed-replace; boundary=frame"
     )
-

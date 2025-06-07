@@ -28,3 +28,6 @@ tests/output
 venv
 train/videos/*
 train/dataset/images/*
+data/enhanced_plates/*
+data/license_plates/*
+logs/*

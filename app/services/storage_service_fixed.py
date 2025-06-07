@@ -7,6 +7,7 @@ import traceback
 import uuid
 from typing import List, Dict, Any, Optional
 from app.utils.plate_database import PlateDatabase
+from app.utils.file_helpers import ensure_directory_exists, is_directory_writable, save_json_file, load_json_file
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,10 +25,12 @@ class StorageService:
         self.enhanced_database = None
         self.storage_lock = asyncio.Lock()
         self.last_save_time = 0
-        self.save_interval = 10.0  # seconds
+        self.save_interval = 2.0  # seconds - reduced from 10.0 to save more frequently
         self.task = None
         self.initialization_complete = False
         self.save_count = 0
+        self.pending_save = False
+        self.save_queued = False
     
     async def initialize(self, license_plates_dir: str = "data/license_plates",
                          enhanced_plates_dir: str = "data/enhanced_plates") -> None:
@@ -125,7 +128,7 @@ class StorageService:
         # Save any pending data
         try:
             if self.initialization_complete:
-                await self._save_data()
+                await self._save_data(force=True)
                 logger.info("Final data save completed during shutdown")
         except Exception as e:
             logger.error(f"Error during final save: {e}")
@@ -150,94 +153,129 @@ class StorageService:
             try:
                 current_time = time.time()
 
-                if current_time - self.last_save_time >= self.save_interval:
+                # Save if enough time has passed or if a save was explicitly requested
+                if (current_time - self.last_save_time >= self.save_interval) or self.pending_save:
                     await self._save_data()
                     self.last_save_time = current_time
+                    self.pending_save = False
 
-                await asyncio.sleep(self.save_interval / 2)  # Check twice as often as save interval
+                await asyncio.sleep(0.5)  # Check more frequently
             except asyncio.CancelledError:
                 logger.info("Periodic save task cancelled")
                 break
             except Exception as e:
                 logger.error(f"Error in periodic save: {e}")
                 logger.error(traceback.format_exc())
-                await asyncio.sleep(self.save_interval)  # Wait before retrying
+                await asyncio.sleep(1.0)  # Wait before retrying
 
-    async def _save_data(self) -> None:
+    async def _save_data(self, force: bool = False) -> None:
         """Save data to files"""
         if not self.initialization_complete:
             logger.warning("Attempted to save data before initialization complete")
             return
+        
+        # If already saving, just mark as pending and return
+        if self.save_queued and not force:
+            self.pending_save = True
+            return
             
-        async with self.storage_lock:
-            # Save raw detections
-            detection_count = len(self.plate_database["detections"])
-            logger.debug(f"Attempting to save {detection_count} detections")
-            
-            if detection_count > 0:
-                try:
-                    # Ensure directory exists
-                    os.makedirs(os.path.dirname(self.session_file), exist_ok=True)
-                    
-                    # Create temp file for atomic write
-                    temp_file = f"{self.session_file}.tmp"
-                    with open(temp_file, 'w') as f:
-                        json.dump(self.plate_database, f, indent=2)
-                    
-                    # Rename temp file to final file (atomic operation)
-                    os.replace(temp_file, self.session_file)
-                    
-                    self.save_count += 1
-                    logger.info(f"Successfully saved {detection_count} detections to {self.session_file} (Save #{self.save_count})")
-                except Exception as e:
-                    logger.error(f"Error saving detections to file: {e}")
-                    logger.error(f"File path: {self.session_file}")
-                    logger.error(f"Directory exists: {os.path.exists(os.path.dirname(self.session_file))}")
-                    logger.error(f"Directory writable: {os.access(os.path.dirname(self.session_file), os.W_OK)}")
-                    logger.error(traceback.format_exc())
-                    
-                    # Try alternate location
+        self.save_queued = True
+        try:
+            async with self.storage_lock:
+                # Save raw detections
+                detection_count = len(self.plate_database["detections"])
+                logger.debug(f"Attempting to save {detection_count} detections")
+                
+                if detection_count > 0 or force:
                     try:
-                        recovery_file = f"recovery_lpr_session_{time.time()}.json"
-                        with open(recovery_file, 'w') as f:
-                            json.dump(self.plate_database, f, indent=2)
-                        logger.info(f"Saved recovery file to current directory: {recovery_file}")
-                    except Exception as recovery_error:
-                        logger.error(f"Failed to save recovery file: {recovery_error}")
+                        # Save in a separate task to avoid blocking
+                        loop = asyncio.get_running_loop()
+                        await loop.run_in_executor(
+                            None,
+                            self._sync_save_detections,
+                            self.plate_database,
+                            self.session_file
+                        )
+                        
+                        self.save_count += 1
+                        logger.info(f"Successfully saved {detection_count} detections to {self.session_file} (Save #{self.save_count})")
+                    except Exception as e:
+                        logger.error(f"Error saving detections to file: {e}")
+                        logger.error(traceback.format_exc())
 
-            # Save enhanced results
-            enhanced_count = len(self.enhanced_database["enhanced_results"])
-            logger.debug(f"Attempting to save {enhanced_count} enhanced results")
-            
-            if enhanced_count > 0:
-                try:
-                    # Ensure directory exists
-                    os.makedirs(os.path.dirname(self.enhanced_session_file), exist_ok=True)
-                    
-                    # Create temp file for atomic write
-                    temp_file = f"{self.enhanced_session_file}.tmp"
-                    with open(temp_file, 'w') as f:
-                        json.dump(self.enhanced_database, f, indent=2)
-                    
-                    # Rename temp file to final file (atomic operation)
-                    os.replace(temp_file, self.enhanced_session_file)
-                    
-                    logger.info(f"Successfully saved {enhanced_count} enhanced results to {self.enhanced_session_file} (Save #{self.save_count})")
-                except Exception as e:
-                    logger.error(f"Error saving enhanced results to file: {e}")
-                    logger.error(f"File path: {self.enhanced_session_file}")
-                    logger.error(f"Directory exists: {os.path.exists(os.path.dirname(self.enhanced_session_file))}")
-                    logger.error(f"Directory writable: {os.access(os.path.dirname(self.enhanced_session_file), os.W_OK)}")
-                    logger.error(traceback.format_exc())
-                    
-                    # Try alternate location
+                # Save enhanced results
+                enhanced_count = len(self.enhanced_database["enhanced_results"])
+                logger.debug(f"Attempting to save {enhanced_count} enhanced results")
+                
+                if enhanced_count > 0 or force:
                     try:
-                        recovery_file = f"recovery_enhanced_session_{time.time()}.json"
-                        with open(recovery_file, 'w') as f:
-                            json.dump(self.enhanced_database, f, indent=2)
-                        logger.info(f"Saved recovery file to current directory: {recovery_file}")
-                    except Exception as recovery_error:
-                        logger.error(f"Failed to save recovery file: {recovery_error}")
+                        # Save in a separate task to avoid blocking
+                        loop = asyncio.get_running_loop()
+                        await loop.run_in_executor(
+                            None,
+                            self._sync_save_enhanced,
+                            self.enhanced_database,
+                            self.enhanced_session_file
+                        )
+                        
+                        logger.info(f"Successfully saved {enhanced_count} enhanced results to {self.enhanced_session_file} (Save #{self.save_count})")
+                    except Exception as e:
+                        logger.error(f"Error saving enhanced results to file: {e}")
+                        logger.error(traceback.format_exc())
+        finally:
+            self.save_queued = False
+                
+    def _sync_save_detections(self, data, filepath):
+        """Synchronous method to save detections (used with run_in_executor)"""
+        try:
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            
+            # Create temp file for atomic write
+            temp_file = f"{filepath}.tmp"
+            with open(temp_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            # Rename temp file to final file (atomic operation)
+            os.replace(temp_file, filepath)
+            return True
+        except Exception as e:
+            logger.error(f"Error in sync save detections: {e}")
+            # Try alternate location
+            try:
+                recovery_file = f"recovery_lpr_session_{time.time()}.json"
+                with open(recovery_file, 'w') as f:
+                    json.dump(data, f, indent=2)
+                logger.info(f"Saved recovery file to current directory: {recovery_file}")
+            except:
+                pass
+            return False
+            
+    def _sync_save_enhanced(self, data, filepath):
+        """Synchronous method to save enhanced results (used with run_in_executor)"""
+        try:
+            # Ensure directory exists
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            
+            # Create temp file for atomic write
+            temp_file = f"{filepath}.tmp"
+            with open(temp_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            # Rename temp file to final file (atomic operation)
+            os.replace(temp_file, filepath)
+            return True
+        except Exception as e:
+            logger.error(f"Error in sync save enhanced: {e}")
+            # Try alternate location
+            try:
+                recovery_file = f"recovery_enhanced_session_{time.time()}.json"
+                with open(recovery_file, 'w') as f:
+                    json.dump(data, f, indent=2)
+                logger.info(f"Saved recovery file to current directory: {recovery_file}")
+            except:
+                pass
+            return False
     
     async def add_detections(self, detections: List[Dict[str, Any]]) -> None:
         """Add detections to the database"""
@@ -268,8 +306,8 @@ class StorageService:
             self.plate_database["detections"].extend(detections)
             logger.debug(f"Total detections in database: {len(self.plate_database['detections'])}")
 
-            # Force save immediately after adding
-            await self._save_data()
+            # Don't force immediate save - just mark as pending
+            self.pending_save = True
             
             # Log details of first detection for debugging
             if detections:
@@ -305,8 +343,8 @@ class StorageService:
             self.enhanced_database["enhanced_results"].extend(results)
             logger.debug(f"Total enhanced results in database: {len(self.enhanced_database['enhanced_results'])}")
             
-            # Force save immediately after adding enhanced results
-            await self._save_data()
+            # Don't force immediate save - just mark as pending
+            self.pending_save = True
             
             # Log details of first result for debugging
             if results:

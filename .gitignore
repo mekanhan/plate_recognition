@@ -24,3 +24,7 @@ app/dependencies/__pycache__
 config/__pycache__
 config/__init__.py
 .env
+tests/output
+venv
+train/videos/*
+train/dataset/images/*

@@ -1,0 +1,21 @@
+name: Reference Existing Documentation
+version: 0.0.1
+schema: v1
+rules:
+  - name: Reference Existing Documentation
+    rule: >-
+      Always reference the existing documentation files in the project:
+
+      1. docs/developer_resources.md - For specific tools, frameworks, and
+      resources with their URLs
+
+      2. docs/rules.md - For code quality standards, file handling procedures,
+      and interaction guidelines
+
+      3. docs/flowcharts/overview.md - For high-level architecture and
+      multi-project setup guidance
+
+
+      These are documentation files, not rules to be recreated. Consult these
+      documents directly when providing assistance and refer to them by name
+      when relevant.

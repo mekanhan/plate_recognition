@@ -88,42 +88,52 @@ class StorageService:
         """Save data to files"""
         async with self.storage_lock:
             # Save raw detections
-            print(f"Attempting to save {len(self.plate_database['detections'])} detections")
+            logger.debug(f"Attempting to save {len(self.plate_database['detections'])} detections")
             if self.plate_database["detections"]:
                 try:
                     with open(self.session_file, 'w') as f:
                         json.dump(self.plate_database, f, indent=2)
-                    print(f"Successfully saved detections to {self.session_file}")
+                    logger.info(f"Successfully saved {len(self.plate_database['detections'])} detections to {self.session_file}")
                 except Exception as e:
-                    print(f"Error saving detections to file: {e}")
+                    logger.error(f"Error saving detections to file: {e}")
 
             # Save enhanced results
-            print(f"Attempting to save {len(self.enhanced_database['enhanced_results'])} enhanced results")
+            logger.debug(f"Attempting to save {len(self.enhanced_database['enhanced_results'])} enhanced results")
             if self.enhanced_database["enhanced_results"]:
                 try:
                     with open(self.enhanced_session_file, 'w') as f:
                         json.dump(self.enhanced_database, f, indent=2)
-                    print(f"Successfully saved enhanced results to {self.enhanced_session_file}")
+                    logger.info(f"Successfully saved {len(self.enhanced_database['enhanced_results'])} enhanced results to {self.enhanced_session_file}")
                 except Exception as e:
-                    print(f"Error saving enhanced results to file: {e}")
+                    logger.error(f"Error saving enhanced results to file: {e}")
+    
     async def add_detections(self, detections: List[Dict[str, Any]]) -> None:
         """Add detections to the database"""
         if not detections:
-            print("No detections to add")
+            logger.debug("No detections to add")
             return
 
         async with self.storage_lock:
-            print(f"Adding {len(detections)} detections to database")
+            logger.debug(f"Adding {len(detections)} detections to database")
             self.plate_database["detections"].extend(detections)
-            print(f"Total detections in database: {len(self.plate_database['detections'])}")
+            logger.debug(f"Total detections in database: {len(self.plate_database['detections'])}")
 
             # Force save immediately after adding (optional, for debugging)
             await self._save_data()
 
     async def add_enhanced_results(self, results: List[Dict[str, Any]]) -> None:
         """Add enhanced results to the database"""
+        if not results:
+            logger.debug("No enhanced results to add")
+            return
+            
         async with self.storage_lock:
+            logger.debug(f"Adding {len(results)} enhanced results to database")
             self.enhanced_database["enhanced_results"].extend(results)
+            logger.debug(f"Total enhanced results in database: {len(self.enhanced_database['enhanced_results'])}")
+            
+            # Force save immediately after adding enhanced results
+            await self._save_data()
 
     async def get_detections(self) -> List[Dict[str, Any]]:
         """Get all detections"""

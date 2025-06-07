@@ -23,6 +23,7 @@ class LicensePlateRecognitionService:
         self.detector_model = None
         self.ocr_reader = None
         self.initialized = False
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         
         # Character confusion matrix for correction
         self.char_confusion = {
@@ -54,7 +55,7 @@ class LicensePlateRecognitionService:
         await self._initialize_ocr()
         
         self.initialized = True
-        print("License plate recognition service initialized")
+        print(f"License plate recognition service initialized (Device: {self.device})")
         
     async def _initialize_detector(self):
         """Initialize the license plate detector model."""
@@ -77,12 +78,18 @@ class LicensePlateRecognitionService:
             if not model_path:
                 raise FileNotFoundError("No YOLO model found in app/models directory")
 
-            # Select device (GPU if available)
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
-            print(f"Loading detector model on {device}: {model_path}")
+            print(f"Loading detector model on {self.device}: {model_path}")
 
-            # Load the model
-            return YOLO(model_path).to(device)
+            # Load the model with GPU acceleration
+            model = YOLO(model_path)
+            model.to(self.device)
+
+            # Set the model to half precision for faster inference if using GPU
+            if self.device == 'cuda':
+                model.model.half()  # Convert to FP16
+                print("Using half precision (FP16) for faster inference")
+
+            return model
 
         # Run model loading in a thread pool to avoid blocking
         loop = asyncio.get_event_loop()
@@ -91,8 +98,13 @@ class LicensePlateRecognitionService:
     async def _initialize_ocr(self):
         """Initialize the OCR reader for license plate text recognition."""
         def load_ocr():
-            print("Initializing EasyOCR reader for license plates")
-            return easyocr.Reader(['en'], gpu=torch.cuda.is_available())
+            gpu = self.device == 'cuda'
+            print(f"Initializing EasyOCR reader for license plates (GPU: {gpu})")
+
+            # Set CUDA device correctly for EasyOCR
+            if gpu:
+                os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # Use the first GPU
+            return easyocr.Reader(['en'], gpu=gpu, quantize=gpu)
 
         # Run OCR loading in a thread pool to avoid blocking
         loop = asyncio.get_event_loop()
@@ -119,13 +131,24 @@ class LicensePlateRecognitionService:
         
         # Run the detector
         try:
+            # Offload YOLO inference to a separate thread to avoid blocking
             loop = asyncio.get_event_loop()
-            detections = await loop.run_in_executor(None, lambda: self.detector_model(image)[0])
+
+            # Function to run YOLO detection
+            def run_detection(img):
+                # Move image tensor to correct device if needed
+                results = self.detector_model(img, verbose=False)
+                return results[0]
+
+            # Run detection in a thread pool
+            detections = await loop.run_in_executor(None, run_detection, image)
             
             results = []
             
             # Process each detection
-            for det in detections.boxes.data.cpu().numpy():
+            boxes_data = detections.boxes.data.cpu().numpy()
+
+            for det in boxes_data:
                 x1, y1, x2, y2, conf, cls = det
                 
                 # Skip low confidence detections
@@ -182,9 +205,13 @@ class LicensePlateRecognitionService:
         # Preprocess the image for better OCR
         preprocessed = self._preprocess_plate_image(plate_image)
 
-        # Run OCR on the preprocessed image
+        # Run OCR on the preprocessed image in a separate thread
         loop = asyncio.get_event_loop()
-        ocr_result = await loop.run_in_executor(None, lambda: self.ocr_reader.readtext(preprocessed))
+
+        # Wrap OCR call in a function to run in executor
+        def run_ocr(img):
+            return self.ocr_reader.readtext(img)
+        ocr_result = await loop.run_in_executor(None, run_ocr, preprocessed)
 
         # Extract and process OCR results
         extracted_text, confidence, state_code = self._process_ocr_results(ocr_result)
@@ -416,3 +443,4 @@ class LicensePlateRecognitionService:
             return True, min(confidence, 1.0)  # Cap at 1.0
             
         return False, 0.3  # Low confidence for non-matching patterns
+

@@ -1,0 +1,55 @@
+name: Developer Resources Reference
+version: 0.0.1
+schema: v1
+rules:
+  - name: Developer Resources Reference
+    rule: >-
+      Always refer to and prioritize these specific resources when providing
+      guidance:
+
+
+      1. ARCHITECTURE & MULTI-PROJECT SETUP:
+         - Pragmatic Programmer Notes for scaling, modularity, and architecture
+         - Real Python's guidance on structuring Python projects
+         - Turborepo for monorepo setups in TS/JS projects
+         - Microservices.io patterns and best practices
+
+      2. AI / MACHINE LEARNING:
+         - YOLOv8 documentation for object detection, segmentation, and training
+         - Deep SORT with YOLO for tracking vehicles across frames
+         - PaddleOCR for fast OCR capabilities
+         - MadeWithML for ML pipeline guidance
+         - CompCars Dataset for vehicle attribute classification
+
+      3. FRONTEND:
+         - React as the primary UI library
+         - Radix UI for accessible React components
+         - Tailwind CSS as the utility-first styling framework
+         - Vite for development server and bundling
+
+      4. BACKEND:
+         - FastAPI for Python microservices
+         - WebSockets in FastAPI for real-time support
+         - Express.js for Node.js web services
+         - TypeScript for type safety
+
+      5. MICROSERVICES:
+         - FastAPI Deployment Guide for Docker, HTTPS, and CORS setup
+         - Railway + FastAPI for serverless deployment with Neon DB
+         - NGINX for reverse proxy and API gateway setup
+
+      6. INFRASTRUCTURE / DEVOPS:
+         - Docker for containerizing backend/ML services
+         - Docker Compose for multi-container development environments
+         - Continue.dev for AI assistance and prompt engineering
+         - GitHub Actions for CI/CD automation
+
+      7. DATABASE (POSTGRESQL):
+         - PostgreSQL Docs for SQL reference and performance tips
+         - Drizzle ORM for TypeScript-based ORM with schema-first design
+         - Neon for serverless Postgres with branching capabilities
+         - pgAdmin for PostgreSQL GUI management
+
+      When recommending solutions or providing guidance, always prioritize these
+      specific tools, frameworks, and resources that are already part of the
+      established tech stack.

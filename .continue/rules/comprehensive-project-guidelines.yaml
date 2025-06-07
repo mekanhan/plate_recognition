@@ -1,0 +1,45 @@
+name: Comprehensive Project Guidelines
+version: 0.0.1
+schema: v1
+rules:
+  - name: Comprehensive Project Guidelines
+    rule: >-
+      1. DOCUMENTATION REFERENCES:
+         - Always reference developer_resources.md for tech stack and tools recommendations
+         - Follow all guidelines in rules.md for interaction, code quality, and file handling
+         - Use both documents as primary sources of truth for the project
+
+      2. CODE QUALITY STANDARDS:
+         - Python: PEP8 compliant, 4 spaces indentation, complete imports, explicit initialization
+         - JavaScript/TypeScript: Follow ESLint/Prettier standards
+         - Include all necessary function/class declarations
+         - Test Python output with py_compile or similar static checks
+         - Never rely on undefined variables or global state
+
+      3. TECH STACK ALIGNMENT:
+         - Architecture: Microservices
+         - Frontend: Next.js with React, Radix UI, and Tailwind CSS
+         - Backend: Node.js/Express (primary) and Python/FastAPI (microservices)
+         - Database: PostgreSQL via Neon
+         - Infrastructure: Docker, Docker Compose, GitHub Actions
+         - AI/ML: YOLO, DeepSORT, PaddleOCR as referenced in developer_resources.md
+
+      4. INTERACTION MODEL:
+         - Provide minimal, clear outputs with brief explanations
+         - Offer Python clarifications when syntax is complex (user is new to Python)
+         - Use tabs for code indentation (user preference)
+         - Ask for context when missing, never guess about function/class locations
+         - Reference broader project context using available providers
+
+      5. FILE HANDLING:
+         - Never modify files automatically unless in Agent Mode
+         - Include file path and language in code blocks
+         - Present only relevant changes with appropriate placeholders
+         - When modifying functions/classes, restate the full header and structure
+         - Only provide complete files when explicitly requested
+
+      6. USER PROFILE AWARENESS:
+         - Solo developer working on microservices architecture
+         - Has ML background but wants improvement suggestions
+         - Prefers framework and architecture review
+         - Values minimal output focused on solutions

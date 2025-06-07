@@ -80,3 +80,718 @@
 2025-06-03 23:51:08,393 - WARNING - Using CPU. Note: This module is much faster with a GPU.
 2025-06-03 23:52:35,682 - INFO - Camera service shutdown
 2025-06-03 23:52:35,682 - INFO - Storage service shutdown
+2025-06-04 14:07:55,594 - INFO - Storage service initialized
+2025-06-04 14:07:55,594 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_140755.json
+2025-06-04 14:07:55,594 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_140755.json
+2025-06-04 14:08:20,549 - INFO - Camera initialized: 1280x720
+2025-06-04 14:08:23,878 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:08:25,422 - INFO - Camera service shutdown
+2025-06-04 14:08:25,423 - INFO - Storage service shutdown
+2025-06-04 14:08:29,583 - INFO - Storage service initialized
+2025-06-04 14:08:29,583 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_140829.json
+2025-06-04 14:08:29,583 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_140829.json
+2025-06-04 14:08:55,144 - INFO - Camera initialized: 1280x720
+2025-06-04 14:08:57,891 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:11:23,224 - INFO - Camera service shutdown
+2025-06-04 14:11:23,224 - INFO - Storage service shutdown
+2025-06-04 14:11:27,425 - INFO - Storage service initialized
+2025-06-04 14:11:27,425 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_141127.json
+2025-06-04 14:11:27,425 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_141127.json
+2025-06-04 14:11:52,627 - INFO - Camera initialized: 1280x720
+2025-06-04 14:11:55,387 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:11:56,927 - INFO - Camera service shutdown
+2025-06-04 14:11:56,928 - INFO - Storage service shutdown
+2025-06-04 14:12:01,033 - INFO - Storage service initialized
+2025-06-04 14:12:01,033 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_141201.json
+2025-06-04 14:12:01,033 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_141201.json
+2025-06-04 14:12:26,006 - INFO - Camera initialized: 1280x720
+2025-06-04 14:12:28,747 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:12:30,272 - INFO - Camera service shutdown
+2025-06-04 14:12:30,272 - INFO - Storage service shutdown
+2025-06-04 14:12:34,379 - INFO - Storage service initialized
+2025-06-04 14:12:34,380 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_141234.json
+2025-06-04 14:12:34,380 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_141234.json
+2025-06-04 14:12:59,603 - INFO - Camera initialized: 1280x720
+2025-06-04 14:13:02,892 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:13:04,438 - INFO - Camera service shutdown
+2025-06-04 14:13:04,438 - INFO - Storage service shutdown
+2025-06-04 14:13:08,531 - INFO - Storage service initialized
+2025-06-04 14:13:08,531 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_141308.json
+2025-06-04 14:13:08,531 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_141308.json
+2025-06-04 14:13:33,746 - INFO - Camera initialized: 1280x720
+2025-06-04 14:13:37,016 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:13:38,684 - INFO - Camera service shutdown
+2025-06-04 14:13:38,684 - INFO - Storage service shutdown
+2025-06-04 14:13:42,778 - INFO - Storage service initialized
+2025-06-04 14:13:42,778 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_141342.json
+2025-06-04 14:13:42,778 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_141342.json
+2025-06-04 14:14:07,654 - INFO - Camera initialized: 1280x720
+2025-06-04 14:14:10,397 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:15:26,496 - INFO - Camera service shutdown
+2025-06-04 14:15:26,496 - INFO - Storage service shutdown
+2025-06-04 14:15:43,352 - INFO - Storage service initialized
+2025-06-04 14:15:43,352 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_141543.json
+2025-06-04 14:15:43,352 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_141543.json
+2025-06-04 14:16:07,668 - INFO - Camera initialized: 1280x720
+2025-06-04 14:16:10,635 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:29:57,745 - INFO - Camera service shutdown
+2025-06-04 14:29:57,745 - INFO - Storage service shutdown
+2025-06-04 14:30:02,174 - INFO - Storage service initialized
+2025-06-04 14:30:02,174 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_143002.json
+2025-06-04 14:30:02,174 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_143002.json
+2025-06-04 14:30:28,143 - INFO - Camera initialized: 1280x720
+2025-06-04 14:30:31,430 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 14:30:32,966 - INFO - Camera service shutdown
+2025-06-04 14:30:32,966 - INFO - Storage service shutdown
+2025-06-04 14:30:36,952 - INFO - Storage service initialized
+2025-06-04 14:30:36,953 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_143036.json
+2025-06-04 14:30:36,953 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_143036.json
+2025-06-04 14:31:01,015 - INFO - Camera initialized: 1280x720
+2025-06-04 14:31:03,780 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 16:34:05,325 - INFO - Camera service shutdown
+2025-06-04 16:34:05,325 - INFO - Storage service shutdown
+2025-06-04 16:34:12,267 - INFO - Storage service initialized
+2025-06-04 16:34:12,267 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_163412.json
+2025-06-04 16:34:12,267 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_163412.json
+2025-06-04 16:34:38,774 - INFO - Camera initialized: 1280x720
+2025-06-04 16:34:42,056 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 16:35:04,345 - INFO - Camera service shutdown
+2025-06-04 16:35:04,345 - INFO - Storage service shutdown
+2025-06-04 16:35:08,687 - INFO - Storage service initialized
+2025-06-04 16:35:08,687 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_163508.json
+2025-06-04 16:35:08,687 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_163508.json
+2025-06-04 16:35:33,343 - INFO - Camera initialized: 1280x720
+2025-06-04 16:35:36,619 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 16:35:38,133 - INFO - Camera service shutdown
+2025-06-04 16:35:38,133 - INFO - Storage service shutdown
+2025-06-04 16:35:42,199 - INFO - Storage service initialized
+2025-06-04 16:35:42,199 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_163542.json
+2025-06-04 16:35:42,199 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_163542.json
+2025-06-04 16:36:08,380 - INFO - Camera initialized: 1280x720
+2025-06-04 16:36:11,660 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 16:36:46,743 - INFO - Camera service shutdown
+2025-06-04 16:36:46,743 - INFO - Storage service shutdown
+2025-06-04 16:36:50,986 - INFO - Storage service initialized
+2025-06-04 16:36:50,986 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250604_163650.json
+2025-06-04 16:36:50,986 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250604_163650.json
+2025-06-04 16:37:16,683 - INFO - Camera initialized: 1280x720
+2025-06-04 16:37:19,966 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-04 16:37:36,921 - INFO - Camera service shutdown
+2025-06-04 16:37:36,921 - INFO - Storage service shutdown
+2025-06-06 14:23:09,356 - INFO - Storage service initialized
+2025-06-06 14:23:09,357 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_142309.json
+2025-06-06 14:23:09,357 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_142309.json
+2025-06-06 14:23:34,958 - INFO - Camera initialized: 1280x720
+2025-06-06 14:23:38,299 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:34:58,365 - INFO - Camera service shutdown
+2025-06-06 14:34:58,365 - INFO - Storage service shutdown
+2025-06-06 14:35:02,799 - INFO - Storage service initialized
+2025-06-06 14:35:02,799 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143502.json
+2025-06-06 14:35:02,799 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143502.json
+2025-06-06 14:35:29,559 - INFO - Camera initialized: 1280x720
+2025-06-06 14:35:32,956 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:35:34,626 - INFO - Camera service shutdown
+2025-06-06 14:35:34,626 - INFO - Storage service shutdown
+2025-06-06 14:35:41,123 - INFO - Storage service initialized
+2025-06-06 14:35:41,123 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143541.json
+2025-06-06 14:35:41,123 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143541.json
+2025-06-06 14:36:08,024 - INFO - Camera initialized: 1280x720
+2025-06-06 14:36:11,322 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:36:12,887 - INFO - Camera service shutdown
+2025-06-06 14:36:12,887 - INFO - Storage service shutdown
+2025-06-06 14:36:17,055 - INFO - Storage service initialized
+2025-06-06 14:36:17,055 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143617.json
+2025-06-06 14:36:17,055 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143617.json
+2025-06-06 14:36:44,266 - INFO - Camera initialized: 1280x720
+2025-06-06 14:36:47,548 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:36:49,100 - INFO - Camera service shutdown
+2025-06-06 14:36:49,100 - INFO - Storage service shutdown
+2025-06-06 14:36:53,308 - INFO - Storage service initialized
+2025-06-06 14:36:53,308 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143653.json
+2025-06-06 14:36:53,308 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143653.json
+2025-06-06 14:37:20,425 - INFO - Camera initialized: 1280x720
+2025-06-06 14:37:23,719 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:37:25,272 - INFO - Camera service shutdown
+2025-06-06 14:37:25,272 - INFO - Storage service shutdown
+2025-06-06 14:37:29,424 - INFO - Storage service initialized
+2025-06-06 14:37:29,424 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143729.json
+2025-06-06 14:37:29,424 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143729.json
+2025-06-06 14:37:57,356 - INFO - Camera initialized: 1280x720
+2025-06-06 14:38:00,638 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:38:02,272 - INFO - Camera service shutdown
+2025-06-06 14:38:02,272 - INFO - Storage service shutdown
+2025-06-06 14:38:06,631 - INFO - Storage service initialized
+2025-06-06 14:38:06,631 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143806.json
+2025-06-06 14:38:06,631 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143806.json
+2025-06-06 14:38:35,169 - INFO - Camera initialized: 1280x720
+2025-06-06 14:38:38,457 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:38:39,725 - INFO - EnhancerService connected to StorageService
+2025-06-06 14:38:40,007 - INFO - Camera service shutdown
+2025-06-06 14:38:40,007 - INFO - Storage service shutdown
+2025-06-06 14:38:44,244 - INFO - Storage service initialized
+2025-06-06 14:38:44,244 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143844.json
+2025-06-06 14:38:44,245 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143844.json
+2025-06-06 14:39:10,883 - INFO - Camera initialized: 1280x720
+2025-06-06 14:39:14,176 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:39:15,469 - INFO - EnhancerService connected to StorageService
+2025-06-06 14:39:15,755 - INFO - Camera service shutdown
+2025-06-06 14:39:15,755 - INFO - Storage service shutdown
+2025-06-06 14:39:19,925 - INFO - Storage service initialized
+2025-06-06 14:39:19,925 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_143919.json
+2025-06-06 14:39:19,925 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_143919.json
+2025-06-06 14:39:47,683 - INFO - Camera initialized: 1280x720
+2025-06-06 14:39:50,972 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:39:52,230 - INFO - EnhancerService connected to StorageService
+2025-06-06 14:39:52,495 - INFO - Camera service shutdown
+2025-06-06 14:39:52,495 - INFO - Storage service shutdown
+2025-06-06 14:40:59,984 - INFO - Storage service initialized
+2025-06-06 14:40:59,984 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_144059.json
+2025-06-06 14:40:59,984 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_144059.json
+2025-06-06 14:41:25,387 - INFO - Camera initialized: 1280x720
+2025-06-06 14:41:28,186 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 14:41:29,472 - INFO - EnhancerService connected to StorageService
+2025-06-06 14:42:22,272 - INFO - Camera service shutdown
+2025-06-06 14:42:22,272 - INFO - Storage service shutdown
+2025-06-06 15:58:10,244 - INFO - Storage service initialized
+2025-06-06 15:58:10,244 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_155810.json
+2025-06-06 15:58:10,251 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_155810.json
+2025-06-06 15:58:35,587 - INFO - Camera initialized: 1280x720
+2025-06-06 15:58:38,199 - WARNING - Using CPU. Note: This module is much faster with a GPU.
+2025-06-06 15:58:39,447 - INFO - EnhancerService connected to StorageService
+2025-06-06 16:05:23,419 - INFO - Camera service shutdown
+2025-06-06 16:05:23,419 - INFO - Storage service shutdown
+2025-06-06 19:48:07,049 - INFO - Storage service initialized
+2025-06-06 19:48:07,053 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_194807.json
+2025-06-06 19:48:07,053 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_194807.json
+2025-06-06 19:48:35,887 - INFO - Camera initialized: 1280x720
+2025-06-06 19:48:40,622 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 19:48:40,626 - INFO - EnhancerService connected to StorageService
+2025-06-06 19:48:40,918 - INFO - Camera service shutdown
+2025-06-06 19:48:40,918 - INFO - Detection service shutdown
+2025-06-06 19:48:40,918 - INFO - Storage service shutdown
+2025-06-06 19:48:45,233 - INFO - Storage service initialized
+2025-06-06 19:48:45,233 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_194845.json
+2025-06-06 19:48:45,233 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_194845.json
+2025-06-06 19:49:12,009 - INFO - Camera initialized: 1280x720
+2025-06-06 19:49:16,585 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 19:49:16,585 - INFO - EnhancerService connected to StorageService
+2025-06-06 19:49:16,865 - INFO - Camera service shutdown
+2025-06-06 19:49:16,865 - INFO - Detection service shutdown
+2025-06-06 19:49:16,865 - INFO - Storage service shutdown
+2025-06-06 20:01:01,435 - INFO - Storage service initialized
+2025-06-06 20:01:01,435 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_200101.json
+2025-06-06 20:01:01,435 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_200101.json
+2025-06-06 20:01:29,438 - INFO - Camera initialized: 1280x720
+2025-06-06 20:01:33,539 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:01:33,539 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:01:33,559 - INFO - Detection service shutdown
+2025-06-06 20:01:33,827 - INFO - Camera service shutdown
+2025-06-06 20:01:33,827 - INFO - Storage service shutdown
+2025-06-06 20:01:38,140 - INFO - Storage service initialized
+2025-06-06 20:01:38,141 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_200138.json
+2025-06-06 20:01:38,141 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_200138.json
+2025-06-06 20:02:06,877 - INFO - Camera initialized: 1280x720
+2025-06-06 20:02:11,505 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:02:11,505 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:02:19,956 - INFO - Processing 5 detections from queue
+2025-06-06 20:02:19,956 - INFO - Processing plate: SVBRZGG0 (Confidence: 0.52)
+2025-06-06 20:02:19,956 - INFO - Processed detection a515cdc9-e17c-4d3f-9f71-26407774e9c2: SVBRZGG0
+2025-06-06 20:02:19,956 - INFO - Sending detection a515cdc9-e17c-4d3f-9f71-26407774e9c2 to storage service
+2025-06-06 20:02:22,118 - INFO - Processing 10 detections from queue
+2025-06-06 20:02:22,118 - INFO - Processing plate: VBR7660I (Confidence: 0.66)
+2025-06-06 20:02:22,118 - INFO - Processed detection cc3e965b-0050-4692-a50a-01a273440fb2: VBR7660I
+2025-06-06 20:02:22,118 - INFO - Sending detection cc3e965b-0050-4692-a50a-01a273440fb2 to storage service
+2025-06-06 20:02:24,316 - INFO - Processing 11 detections from queue
+2025-06-06 20:02:24,316 - INFO - Processing plate: ONTO1OIA (Confidence: 0.54)
+2025-06-06 20:02:24,316 - INFO - Processed detection cc13d9cb-62fb-4401-82b5-1c35af9ba48f: ONTO1OIA
+2025-06-06 20:02:24,316 - INFO - Sending detection cc13d9cb-62fb-4401-82b5-1c35af9ba48f to storage service
+2025-06-06 20:02:26,391 - INFO - Processing 11 detections from queue
+2025-06-06 20:02:26,391 - INFO - Processing plate: ONTOYOIA (Confidence: 0.54)
+2025-06-06 20:02:26,391 - INFO - Processed detection 8a93e350-df77-4604-b6b2-7b6bbe472d84: ONTOYOIA
+2025-06-06 20:02:26,391 - INFO - Sending detection 8a93e350-df77-4604-b6b2-7b6bbe472d84 to storage service
+2025-06-06 20:02:28,414 - INFO - Processing 10 detections from queue
+2025-06-06 20:02:30,435 - INFO - Processing 4 detections from queue
+2025-06-06 20:02:32,491 - INFO - Processing 6 detections from queue
+2025-06-06 20:02:34,631 - INFO - Processing 11 detections from queue
+2025-06-06 20:02:36,675 - INFO - Processing 11 detections from queue
+2025-06-06 20:02:38,704 - INFO - Processing 12 detections from queue
+2025-06-06 20:02:38,704 - INFO - Processing plate: SVBR766O (Confidence: 0.52)
+2025-06-06 20:02:38,704 - INFO - Processed detection d0d379ae-f4f5-49c9-b890-d58c4689f9f7: SVBR766O
+2025-06-06 20:02:38,704 - INFO - Sending detection d0d379ae-f4f5-49c9-b890-d58c4689f9f7 to storage service
+2025-06-06 20:02:40,844 - INFO - Processing 13 detections from queue
+2025-06-06 20:02:40,844 - INFO - Processing plate: OHTOTOIA (Confidence: 0.52)
+2025-06-06 20:02:40,844 - INFO - Processed detection a7bc5ca0-7832-46fe-9c6b-be6888a56873: OHTOTOIA
+2025-06-06 20:02:40,844 - INFO - Sending detection a7bc5ca0-7832-46fe-9c6b-be6888a56873 to storage service
+2025-06-06 20:02:42,869 - INFO - Processing 12 detections from queue
+2025-06-06 20:02:42,869 - INFO - Processing plate: ONTOTOTA (Confidence: 0.51)
+2025-06-06 20:02:42,869 - INFO - Processed detection c8eb75f6-56c4-49a2-a8bf-4f302a99eccf: ONTOTOTA
+2025-06-06 20:02:42,869 - INFO - Sending detection c8eb75f6-56c4-49a2-a8bf-4f302a99eccf to storage service
+2025-06-06 20:02:45,006 - INFO - Processing 13 detections from queue
+2025-06-06 20:02:45,006 - INFO - Processing plate: ONTOYOIA (Confidence: 0.54)
+2025-06-06 20:02:45,006 - INFO - Processed detection 75f14f0b-ac2b-4313-bf89-9126d83fdc60: ONTOYOIA
+2025-06-06 20:02:45,006 - INFO - Sending detection 75f14f0b-ac2b-4313-bf89-9126d83fdc60 to storage service
+2025-06-06 20:02:47,079 - INFO - Processing 13 detections from queue
+2025-06-06 20:02:47,079 - INFO - Processing plate: ONIOTOIA (Confidence: 0.56)
+2025-06-06 20:02:47,079 - INFO - Processed detection 523201f0-94f1-43d0-b807-e68531100628: ONIOTOIA
+2025-06-06 20:02:47,079 - INFO - Sending detection 523201f0-94f1-43d0-b807-e68531100628 to storage service
+2025-06-06 20:02:49,096 - INFO - Processing 13 detections from queue
+2025-06-06 20:02:49,096 - INFO - Processing plate: OHTOVOIA (Confidence: 0.51)
+2025-06-06 20:02:49,100 - INFO - Processed detection 5662fd59-4f04-464c-ab32-1c54b7c91e4c: OHTOVOIA
+2025-06-06 20:02:49,100 - INFO - Sending detection 5662fd59-4f04-464c-ab32-1c54b7c91e4c to storage service
+2025-06-06 20:02:51,147 - INFO - Processing 12 detections from queue
+2025-06-06 20:02:51,147 - INFO - Processing plate: ONTOVOIA (Confidence: 0.56)
+2025-06-06 20:02:51,147 - INFO - Processed detection 47b01b8b-17be-43f2-aa49-f7b9413475dc: ONTOVOIA
+2025-06-06 20:02:51,147 - INFO - Sending detection 47b01b8b-17be-43f2-aa49-f7b9413475dc to storage service
+2025-06-06 20:02:53,254 - INFO - Processing 13 detections from queue
+2025-06-06 20:02:53,254 - INFO - Processing plate: OWTOYOIA (Confidence: 0.53)
+2025-06-06 20:02:53,254 - INFO - Processed detection 375b823a-3a74-4804-9ba1-c21c410f5c14: OWTOYOIA
+2025-06-06 20:02:53,254 - INFO - Sending detection 375b823a-3a74-4804-9ba1-c21c410f5c14 to storage service
+2025-06-06 20:02:55,268 - INFO - Processing 13 detections from queue
+2025-06-06 20:02:55,268 - INFO - Processing plate: MONTOOIA (Confidence: 0.59)
+2025-06-06 20:02:55,268 - INFO - Processed detection af1e4f49-db51-4e8e-a4e6-5a5dc82fd6f9: MONTOOIA
+2025-06-06 20:02:55,268 - INFO - Sending detection af1e4f49-db51-4e8e-a4e6-5a5dc82fd6f9 to storage service
+2025-06-06 20:02:57,354 - INFO - Processing 14 detections from queue
+2025-06-06 20:02:57,354 - INFO - Processing plate: ONTOYOIA (Confidence: 0.57)
+2025-06-06 20:02:57,354 - INFO - Processed detection 5359bdd0-3df3-485f-bcdf-2b2a22aa2ece: ONTOYOIA
+2025-06-06 20:02:57,354 - INFO - Sending detection 5359bdd0-3df3-485f-bcdf-2b2a22aa2ece to storage service
+2025-06-06 20:02:59,486 - INFO - Processing 13 detections from queue
+2025-06-06 20:02:59,486 - INFO - Processing plate: ONTOVOIA (Confidence: 0.58)
+2025-06-06 20:02:59,486 - INFO - Processed detection 80b4e467-96f5-496a-ad23-571333ac8247: ONTOVOIA
+2025-06-06 20:02:59,486 - INFO - Sending detection 80b4e467-96f5-496a-ad23-571333ac8247 to storage service
+2025-06-06 20:03:01,620 - INFO - Processing 12 detections from queue
+2025-06-06 20:03:01,620 - INFO - Processing plate: OMTOVOIA (Confidence: 0.56)
+2025-06-06 20:03:01,620 - INFO - Processed detection 25f613ac-0ee5-4f22-9ac5-6c8627706e85: OMTOVOIA
+2025-06-06 20:03:01,620 - INFO - Sending detection 25f613ac-0ee5-4f22-9ac5-6c8627706e85 to storage service
+2025-06-06 20:03:03,655 - INFO - Processing 13 detections from queue
+2025-06-06 20:03:03,655 - INFO - Processing plate: ONTOTOIA (Confidence: 0.56)
+2025-06-06 20:03:03,655 - INFO - Processed detection 9a9961c9-0fbe-41a2-9ce0-98bb2f774adf: ONTOTOIA
+2025-06-06 20:03:03,655 - INFO - Sending detection 9a9961c9-0fbe-41a2-9ce0-98bb2f774adf to storage service
+2025-06-06 20:03:05,693 - INFO - Processing 16 detections from queue
+2025-06-06 20:03:05,693 - INFO - Processing plate: 66OAYANE (Confidence: 0.55)
+2025-06-06 20:03:05,693 - INFO - Processed detection 9475a439-803a-4607-beca-44a458d53394: 66OAYANE
+2025-06-06 20:03:05,693 - INFO - Sending detection 9475a439-803a-4607-beca-44a458d53394 to storage service
+2025-06-06 20:03:07,726 - INFO - Processing 14 detections from queue
+2025-06-06 20:03:07,726 - INFO - Processing plate: SVBR766O (Confidence: 0.75)
+2025-06-06 20:03:07,726 - INFO - Processed detection d2cfe92c-b442-4ece-b9d9-7deb39505e71: SVBR766O
+2025-06-06 20:03:07,726 - INFO - Sending detection d2cfe92c-b442-4ece-b9d9-7deb39505e71 to storage service
+2025-06-06 20:03:09,747 - INFO - Processing 3 detections from queue
+2025-06-06 20:03:16,811 - INFO - Detection service shutdown
+2025-06-06 20:03:17,084 - INFO - Camera service shutdown
+2025-06-06 20:03:30,537 - INFO - Storage service initialized
+2025-06-06 20:03:30,537 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_200330.json
+2025-06-06 20:03:30,537 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_200330.json
+2025-06-06 20:03:58,068 - INFO - Camera initialized: 1280x720
+2025-06-06 20:04:02,665 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:04:02,665 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:04:24,028 - INFO - Processing 6 detections from queue
+2025-06-06 20:04:26,169 - INFO - Processing 11 detections from queue
+2025-06-06 20:04:26,169 - INFO - Processing plate: SV8R766U (Confidence: 0.61)
+2025-06-06 20:04:26,169 - INFO - Processed detection e7c37d45-de44-4780-b652-9cd7c5c7aa33: SV8R766U
+2025-06-06 20:04:26,169 - INFO - Sending detection e7c37d45-de44-4780-b652-9cd7c5c7aa33 to storage service
+2025-06-06 20:04:28,286 - INFO - Processing 12 detections from queue
+2025-06-06 20:04:28,299 - INFO - Processing plate: TEXASV8R (Confidence: 0.51)
+2025-06-06 20:04:28,299 - INFO - Processed detection 73d762cc-bb77-4e36-ae3e-67e58e136768: TEXASV8R
+2025-06-06 20:04:28,299 - INFO - Sending detection 73d762cc-bb77-4e36-ae3e-67e58e136768 to storage service
+2025-06-06 20:04:30,432 - INFO - Processing 13 detections from queue
+2025-06-06 20:04:30,432 - INFO - Processing plate: ONTOTDIA (Confidence: 0.52)
+2025-06-06 20:04:30,432 - INFO - Processed detection fdf051c9-4e01-4b7c-b5c2-f5958bd70dd9: ONTOTDIA
+2025-06-06 20:04:30,432 - INFO - Sending detection fdf051c9-4e01-4b7c-b5c2-f5958bd70dd9 to storage service
+2025-06-06 20:04:32,495 - INFO - Processing 12 detections from queue
+2025-06-06 20:04:32,495 - INFO - Processing plate: ONTOYOIA (Confidence: 0.54)
+2025-06-06 20:04:32,495 - INFO - Processed detection 0443d50e-0536-4cc2-acb1-60af44faaaf5: ONTOYOIA
+2025-06-06 20:04:32,495 - INFO - Sending detection 0443d50e-0536-4cc2-acb1-60af44faaaf5 to storage service
+2025-06-06 20:04:34,599 - INFO - Processing 13 detections from queue
+2025-06-06 20:04:34,599 - INFO - Processing plate: ONTOTOIA (Confidence: 0.54)
+2025-06-06 20:04:34,599 - INFO - Processed detection 93725711-70a3-4833-b856-48c9a8b844ab: ONTOTOIA
+2025-06-06 20:04:34,599 - INFO - Sending detection 93725711-70a3-4833-b856-48c9a8b844ab to storage service
+2025-06-06 20:04:36,607 - INFO - Processing 12 detections from queue
+2025-06-06 20:04:36,607 - INFO - Processing plate: ONTOVOIA (Confidence: 0.54)
+2025-06-06 20:04:36,607 - INFO - Processed detection 4cb79e94-00bc-4a0d-a4f5-05b385d5877c: ONTOVOIA
+2025-06-06 20:04:36,607 - INFO - Sending detection 4cb79e94-00bc-4a0d-a4f5-05b385d5877c to storage service
+2025-06-06 20:04:38,651 - INFO - Processing 13 detections from queue
+2025-06-06 20:04:38,651 - INFO - Processing plate: OHTOTOIA (Confidence: 0.54)
+2025-06-06 20:04:38,651 - INFO - Processed detection f16fca30-3bae-48b9-8503-380dd9136dc1: OHTOTOIA
+2025-06-06 20:04:38,651 - INFO - Sending detection f16fca30-3bae-48b9-8503-380dd9136dc1 to storage service
+2025-06-06 20:04:40,709 - INFO - Processing 13 detections from queue
+2025-06-06 20:04:40,709 - INFO - Processing plate: ONTOTOIA (Confidence: 0.54)
+2025-06-06 20:04:40,709 - INFO - Processed detection 5e197861-b3ac-43ee-b979-09e9357a176c: ONTOTOIA
+2025-06-06 20:04:40,709 - INFO - Sending detection 5e197861-b3ac-43ee-b979-09e9357a176c to storage service
+2025-06-06 20:04:42,800 - INFO - Processing 12 detections from queue
+2025-06-06 20:04:42,800 - INFO - Processing plate: OHTOYOIA (Confidence: 0.51)
+2025-06-06 20:04:42,800 - INFO - Processed detection 10d991eb-985b-4239-9c28-a913d0c34e96: OHTOYOIA
+2025-06-06 20:04:42,800 - INFO - Sending detection 10d991eb-985b-4239-9c28-a913d0c34e96 to storage service
+2025-06-06 20:04:44,960 - INFO - Processing 14 detections from queue
+2025-06-06 20:04:44,960 - INFO - Processing plate: NONTOTOI (Confidence: 0.54)
+2025-06-06 20:04:44,960 - INFO - Processed detection f17e9217-2886-47c0-bc42-3a1f83c4a076: NONTOTOI
+2025-06-06 20:04:44,960 - INFO - Sending detection f17e9217-2886-47c0-bc42-3a1f83c4a076 to storage service
+2025-06-06 20:04:47,016 - INFO - Processing 14 detections from queue
+2025-06-06 20:04:47,016 - INFO - Processing plate: ONTOTOIA (Confidence: 0.50)
+2025-06-06 20:04:47,016 - INFO - Processed detection bd611495-2bdf-4f03-8b40-7cf47fbd643e: ONTOTOIA
+2025-06-06 20:04:47,016 - INFO - Sending detection bd611495-2bdf-4f03-8b40-7cf47fbd643e to storage service
+2025-06-06 20:04:49,017 - INFO - Processing 10 detections from queue
+2025-06-06 20:04:51,029 - INFO - Processing 12 detections from queue
+2025-06-06 20:04:53,065 - INFO - Processing 6 detections from queue
+2025-06-06 20:04:53,065 - INFO - Processing plate: SVBR766O (Confidence: 0.68)
+2025-06-06 20:04:53,065 - INFO - Processed detection 847d27ea-5c56-49b6-97d1-0929b51949fd: SVBR766O
+2025-06-06 20:04:53,065 - INFO - Sending detection 847d27ea-5c56-49b6-97d1-0929b51949fd to storage service
+2025-06-06 20:04:55,129 - INFO - Processing 7 detections from queue
+2025-06-06 20:04:57,215 - INFO - Processing 11 detections from queue
+2025-06-06 20:04:59,228 - INFO - Processing 13 detections from queue
+2025-06-06 20:04:59,228 - INFO - Processing plate: 60TTEXA5 (Confidence: 0.54)
+2025-06-06 20:04:59,228 - INFO - Processed detection 1ff3001f-03f9-43f1-9002-a605a54ab1ca: 60TTEXA5
+2025-06-06 20:04:59,228 - INFO - Sending detection 1ff3001f-03f9-43f1-9002-a605a54ab1ca to storage service
+2025-06-06 20:05:01,272 - INFO - Processing 1 detections from queue
+2025-06-06 20:05:03,316 - INFO - Processing 10 detections from queue
+2025-06-06 20:05:03,316 - INFO - Processing plate: COUECN0H (Confidence: 0.51)
+2025-06-06 20:05:03,316 - INFO - Processed detection 8173fed8-6405-460f-b3f1-3c786726398b: COUECN0H
+2025-06-06 20:05:03,316 - INFO - Sending detection 8173fed8-6405-460f-b3f1-3c786726398b to storage service
+2025-06-06 20:05:05,416 - INFO - Processing 4 detections from queue
+2025-06-06 20:05:05,416 - INFO - Processing plate: OANCELAA (Confidence: 0.53)
+2025-06-06 20:05:05,416 - INFO - Processed detection ddbfbc65-658f-42c8-ac53-a82303392f1f: OANCELAA
+2025-06-06 20:05:05,416 - INFO - Sending detection ddbfbc65-658f-42c8-ac53-a82303392f1f to storage service
+2025-06-06 20:05:07,577 - INFO - Processing 15 detections from queue
+2025-06-06 20:05:07,577 - INFO - Processing plate: SVBR766O (Confidence: 0.78)
+2025-06-06 20:05:07,577 - INFO - Processed detection eabdc4c9-f3bb-40aa-9cd7-63efbdb35604: SVBR766O
+2025-06-06 20:05:07,577 - INFO - Sending detection eabdc4c9-f3bb-40aa-9cd7-63efbdb35604 to storage service
+2025-06-06 20:05:09,615 - INFO - Processing 11 detections from queue
+2025-06-06 20:05:09,615 - INFO - Processing plate: OHTOTOIA (Confidence: 0.51)
+2025-06-06 20:05:09,615 - INFO - Processed detection 7dd92d1a-6353-43f0-9ded-c5a536bdf982: OHTOTOIA
+2025-06-06 20:05:09,615 - INFO - Sending detection 7dd92d1a-6353-43f0-9ded-c5a536bdf982 to storage service
+2025-06-06 20:05:11,761 - INFO - Processing 15 detections from queue
+2025-06-06 20:05:11,761 - INFO - Processing plate: EXAS766O (Confidence: 0.71)
+2025-06-06 20:05:11,761 - INFO - Processed detection 3798b4c8-aec2-4c7d-8bac-c3154f24883e: EXAS766O
+2025-06-06 20:05:11,761 - INFO - Sending detection 3798b4c8-aec2-4c7d-8bac-c3154f24883e to storage service
+2025-06-06 20:05:13,866 - INFO - Processing 14 detections from queue
+2025-06-06 20:05:13,866 - INFO - Processing plate: R7660C0U (Confidence: 0.67)
+2025-06-06 20:05:13,866 - INFO - Processed detection 6dad2db4-e6f7-41ef-abb1-215a9ffde8d8: R7660C0U
+2025-06-06 20:05:13,866 - INFO - Sending detection 6dad2db4-e6f7-41ef-abb1-215a9ffde8d8 to storage service
+2025-06-06 20:05:15,912 - INFO - Processing 10 detections from queue
+2025-06-06 20:05:15,912 - INFO - Processing plate: SVBR766O (Confidence: 0.62)
+2025-06-06 20:05:15,912 - INFO - Processed detection 8941aa53-786a-43d0-b6b5-82ce5eda1366: SVBR766O
+2025-06-06 20:05:15,912 - INFO - Sending detection 8941aa53-786a-43d0-b6b5-82ce5eda1366 to storage service
+2025-06-06 20:05:18,035 - INFO - Processing 11 detections from queue
+2025-06-06 20:05:18,035 - INFO - Processing plate: ONTOTOIA (Confidence: 0.52)
+2025-06-06 20:05:18,035 - INFO - Processed detection 36d46637-d537-4034-8890-134e5558f6d6: ONTOTOIA
+2025-06-06 20:05:18,035 - INFO - Sending detection 36d46637-d537-4034-8890-134e5558f6d6 to storage service
+2025-06-06 20:05:20,117 - INFO - Processing 6 detections from queue
+2025-06-06 20:05:20,117 - INFO - Processing plate: NO7O7S7A (Confidence: 0.51)
+2025-06-06 20:05:20,117 - INFO - Processed detection bfa8e842-f66d-4d8f-8281-441faf54f41f: NO7O7S7A
+2025-06-06 20:05:20,117 - INFO - Sending detection bfa8e842-f66d-4d8f-8281-441faf54f41f to storage service
+2025-06-06 20:05:24,374 - INFO - Processing 5 detections from queue
+2025-06-06 20:05:24,374 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-06 20:05:24,374 - INFO - Processed detection 740660c2-fbfe-4eac-a67a-d079193b2ad6: SVBR766O
+2025-06-06 20:05:24,374 - INFO - Sending detection 740660c2-fbfe-4eac-a67a-d079193b2ad6 to storage service
+2025-06-06 20:05:26,375 - INFO - Processing 14 detections from queue
+2025-06-06 20:05:26,375 - INFO - Processing plate: ONTONOIA (Confidence: 0.51)
+2025-06-06 20:05:26,375 - INFO - Processed detection 44a799a8-2f21-4cb4-a3b9-a9abb39005b2: ONTONOIA
+2025-06-06 20:05:26,375 - INFO - Sending detection 44a799a8-2f21-4cb4-a3b9-a9abb39005b2 to storage service
+2025-06-06 20:05:38,699 - INFO - Processing 8 detections from queue
+2025-06-06 20:05:38,699 - INFO - Processing plate: SVBR766O (Confidence: 0.66)
+2025-06-06 20:05:38,699 - INFO - Processed detection 6ef62608-aa65-4724-b303-2121db0b55a1: SVBR766O
+2025-06-06 20:05:38,699 - INFO - Sending detection 6ef62608-aa65-4724-b303-2121db0b55a1 to storage service
+2025-06-06 20:05:40,766 - INFO - Processing 13 detections from queue
+2025-06-06 20:05:40,766 - INFO - Processing plate: TOMTOOIA (Confidence: 0.52)
+2025-06-06 20:05:40,766 - INFO - Processed detection f7cf562f-df46-4498-8050-1665800c2fb3: TOMTOOIA
+2025-06-06 20:05:40,766 - INFO - Sending detection f7cf562f-df46-4498-8050-1665800c2fb3 to storage service
+2025-06-06 20:05:42,823 - INFO - Processing 13 detections from queue
+2025-06-06 20:05:42,823 - INFO - Processing plate: ANORIIDI (Confidence: 0.51)
+2025-06-06 20:05:42,823 - INFO - Processed detection 24ddfc57-0976-4144-b373-0ce9156cff29: ANORIIDI
+2025-06-06 20:05:42,823 - INFO - Sending detection 24ddfc57-0976-4144-b373-0ce9156cff29 to storage service
+2025-06-06 20:05:44,882 - INFO - Processing 13 detections from queue
+2025-06-06 20:05:44,882 - INFO - Processing plate: ONTOTOIA (Confidence: 0.52)
+2025-06-06 20:05:44,882 - INFO - Processed detection 9a93f07b-d61d-46e0-b200-e1cd71dd0919: ONTOTOIA
+2025-06-06 20:05:44,882 - INFO - Sending detection 9a93f07b-d61d-46e0-b200-e1cd71dd0919 to storage service
+2025-06-06 20:05:47,022 - INFO - Processing 12 detections from queue
+2025-06-06 20:05:49,061 - INFO - Processing 4 detections from queue
+2025-06-06 20:05:51,138 - INFO - Processing 4 detections from queue
+2025-06-06 20:05:53,196 - INFO - Processing 1 detections from queue
+2025-06-06 20:05:55,343 - INFO - Processing 15 detections from queue
+2025-06-06 20:05:57,359 - INFO - Processing 14 detections from queue
+2025-06-06 20:05:59,503 - INFO - Processing 12 detections from queue
+2025-06-06 20:05:59,503 - INFO - Processing plate: ONTOTOIF (Confidence: 0.52)
+2025-06-06 20:05:59,503 - INFO - Processed detection 04981d9d-612e-49b6-85ce-3f0ca8a8d162: ONTOTOIF
+2025-06-06 20:05:59,503 - INFO - Sending detection 04981d9d-612e-49b6-85ce-3f0ca8a8d162 to storage service
+2025-06-06 20:06:01,532 - INFO - Processing 13 detections from queue
+2025-06-06 20:06:01,532 - INFO - Processing plate: ONTOTOIA (Confidence: 0.50)
+2025-06-06 20:06:01,532 - INFO - Processed detection f382b628-da0a-45bc-97e0-4dd8e4b5ee80: ONTOTOIA
+2025-06-06 20:06:01,532 - INFO - Sending detection f382b628-da0a-45bc-97e0-4dd8e4b5ee80 to storage service
+2025-06-06 20:06:03,570 - INFO - Processing 14 detections from queue
+2025-06-06 20:06:03,570 - INFO - Processing plate: CNNOROIA (Confidence: 0.51)
+2025-06-06 20:06:03,570 - INFO - Processed detection be41203a-32a9-40e9-bc48-dc1c9647acb7: CNNOROIA
+2025-06-06 20:06:03,570 - INFO - Sending detection be41203a-32a9-40e9-bc48-dc1c9647acb7 to storage service
+2025-06-06 20:06:05,675 - INFO - Processing 14 detections from queue
+2025-06-06 20:06:07,720 - INFO - Processing 14 detections from queue
+2025-06-06 20:06:07,720 - INFO - Processing plate: ONTOTOIA (Confidence: 0.50)
+2025-06-06 20:06:07,720 - INFO - Processed detection 9df7890b-8aa1-4b51-bdbf-d0261af69304: ONTOTOIA
+2025-06-06 20:06:07,720 - INFO - Sending detection 9df7890b-8aa1-4b51-bdbf-d0261af69304 to storage service
+2025-06-06 20:06:09,816 - INFO - Processing 2 detections from queue
+2025-06-06 20:07:02,876 - INFO - Processing 3 detections from queue
+2025-06-06 20:07:04,910 - INFO - Processing 5 detections from queue
+2025-06-06 20:07:07,013 - INFO - Processing 10 detections from queue
+2025-06-06 20:07:07,013 - INFO - Processing plate: SVBR766O (Confidence: 0.59)
+2025-06-06 20:07:07,013 - INFO - Processed detection 3d66f2b1-4611-4382-8002-77dd6d84c550: SVBR766O
+2025-06-06 20:07:07,013 - INFO - Sending detection 3d66f2b1-4611-4382-8002-77dd6d84c550 to storage service
+2025-06-06 20:07:09,098 - INFO - Processing 12 detections from queue
+2025-06-06 20:07:09,098 - INFO - Processing plate: SV8R766U (Confidence: 0.62)
+2025-06-06 20:07:09,098 - INFO - Processed detection d3b21fca-dcdc-4b1b-8ae8-dc9887a10a32: SV8R766U
+2025-06-06 20:07:09,098 - INFO - Sending detection d3b21fca-dcdc-4b1b-8ae8-dc9887a10a32 to storage service
+2025-06-06 20:07:11,134 - INFO - Processing 12 detections from queue
+2025-06-06 20:07:13,213 - INFO - Processing 11 detections from queue
+2025-06-06 20:07:15,367 - INFO - Processing 13 detections from queue
+2025-06-06 20:07:15,367 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-06 20:07:15,367 - INFO - Processed detection 58cb033e-eca6-43a9-b3e6-3609b54ccb0d: SVBR766O
+2025-06-06 20:07:15,367 - INFO - Sending detection 58cb033e-eca6-43a9-b3e6-3609b54ccb0d to storage service
+2025-06-06 20:07:17,481 - INFO - Processing 14 detections from queue
+2025-06-06 20:07:17,481 - INFO - Processing plate: ONTOTOIA (Confidence: 0.52)
+2025-06-06 20:07:17,481 - INFO - Processed detection 4776c047-c9aa-4543-b5d6-fc859f4458f9: ONTOTOIA
+2025-06-06 20:07:17,481 - INFO - Sending detection 4776c047-c9aa-4543-b5d6-fc859f4458f9 to storage service
+2025-06-06 20:07:19,579 - INFO - Processing 12 detections from queue
+2025-06-06 20:07:21,596 - INFO - Processing 13 detections from queue
+2025-06-06 20:07:23,798 - INFO - Processing 14 detections from queue
+2025-06-06 20:07:25,917 - INFO - Processing 13 detections from queue
+2025-06-06 20:07:27,961 - INFO - Processing 13 detections from queue
+2025-06-06 20:07:27,961 - INFO - Processing plate: SVBR766O (Confidence: 0.74)
+2025-06-06 20:07:27,961 - INFO - Processed detection fd32cb68-9c80-4226-8553-389c96801757: SVBR766O
+2025-06-06 20:07:27,961 - INFO - Sending detection fd32cb68-9c80-4226-8553-389c96801757 to storage service
+2025-06-06 20:07:29,997 - INFO - Processing 11 detections from queue
+2025-06-06 20:07:32,174 - INFO - Processing 9 detections from queue
+2025-06-06 20:07:32,174 - INFO - Processing plate: EXAS76EO (Confidence: 0.59)
+2025-06-06 20:07:32,174 - INFO - Processed detection 66cbf21e-f1f8-4739-b986-0577b4795324: EXAS76EO
+2025-06-06 20:07:32,174 - INFO - Sending detection 66cbf21e-f1f8-4739-b986-0577b4795324 to storage service
+2025-06-06 20:07:34,346 - INFO - Processing 13 detections from queue
+2025-06-06 20:07:36,422 - INFO - Processing 12 detections from queue
+2025-06-06 20:07:36,422 - INFO - Processing plate: SVBR766O (Confidence: 0.71)
+2025-06-06 20:07:36,422 - INFO - Processed detection fa9051da-5fa4-4b94-9de0-39ed81cecb55: SVBR766O
+2025-06-06 20:07:36,422 - INFO - Sending detection fa9051da-5fa4-4b94-9de0-39ed81cecb55 to storage service
+2025-06-06 20:07:38,451 - INFO - Processing 11 detections from queue
+2025-06-06 20:07:38,451 - INFO - Processing plate: TOMTOROI (Confidence: 0.51)
+2025-06-06 20:07:38,451 - INFO - Processed detection 6e73adde-d3d3-4d0e-a82d-9f66cc6f3b79: TOMTOROI
+2025-06-06 20:07:38,451 - INFO - Sending detection 6e73adde-d3d3-4d0e-a82d-9f66cc6f3b79 to storage service
+2025-06-06 20:07:40,544 - INFO - Processing 10 detections from queue
+2025-06-06 20:07:40,544 - INFO - Processing plate: NMTOROIA (Confidence: 0.53)
+2025-06-06 20:07:40,544 - INFO - Processed detection 0ba177e7-775a-417f-a64d-aaaaeac2aaf0: NMTOROIA
+2025-06-06 20:07:40,544 - INFO - Sending detection 0ba177e7-775a-417f-a64d-aaaaeac2aaf0 to storage service
+2025-06-06 20:07:42,641 - INFO - Processing 10 detections from queue
+2025-06-06 20:07:42,641 - INFO - Processing plate: SVBR766O (Confidence: 0.52)
+2025-06-06 20:07:42,641 - INFO - Processed detection af53547f-6949-436d-b2e6-b7d5e29b02ad: SVBR766O
+2025-06-06 20:07:42,641 - INFO - Sending detection af53547f-6949-436d-b2e6-b7d5e29b02ad to storage service
+2025-06-06 20:07:44,653 - INFO - Processing 10 detections from queue
+2025-06-06 20:07:44,653 - INFO - Processing plate: EXAS766O (Confidence: 0.62)
+2025-06-06 20:07:44,653 - INFO - Processed detection d29ca2a8-4da2-4706-af7e-ae66d81aa0ea: EXAS766O
+2025-06-06 20:07:44,653 - INFO - Sending detection d29ca2a8-4da2-4706-af7e-ae66d81aa0ea to storage service
+2025-06-06 20:07:46,762 - INFO - Processing 12 detections from queue
+2025-06-06 20:07:46,762 - INFO - Processing plate: M1I10RIA (Confidence: 0.54)
+2025-06-06 20:07:46,762 - INFO - Processed detection a36d2d96-2f8d-43fa-8ba7-5a39517857cd: M1I10RIA
+2025-06-06 20:07:46,762 - INFO - Sending detection a36d2d96-2f8d-43fa-8ba7-5a39517857cd to storage service
+2025-06-06 20:08:56,986 - INFO - Detection service shutdown
+2025-06-06 20:08:57,255 - INFO - Camera service shutdown
+2025-06-06 20:19:49,555 - INFO - Storage service initialized
+2025-06-06 20:19:49,555 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_201949.json
+2025-06-06 20:19:49,556 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_201949.json
+2025-06-06 20:20:17,379 - INFO - Camera initialized: 1280x720
+2025-06-06 20:20:17,379 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:20:21,527 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:20:23,033 - INFO - Detection service shutdown
+2025-06-06 20:20:23,305 - INFO - Camera service shutdown
+2025-06-06 20:20:23,305 - INFO - Storage service shutdown
+2025-06-06 20:20:28,024 - INFO - Storage service initialized
+2025-06-06 20:20:28,024 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_202028.json
+2025-06-06 20:20:28,024 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_202028.json
+2025-06-06 20:20:55,881 - INFO - Camera initialized: 1280x720
+2025-06-06 20:20:55,881 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:21:00,533 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:21:00,550 - INFO - Detection service shutdown
+2025-06-06 20:21:00,825 - INFO - Camera service shutdown
+2025-06-06 20:21:00,826 - INFO - Storage service shutdown
+2025-06-06 20:21:05,985 - INFO - Storage service initialized
+2025-06-06 20:21:05,985 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_202105.json
+2025-06-06 20:21:05,985 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_202105.json
+2025-06-06 20:21:36,842 - INFO - Camera initialized: 1280x720
+2025-06-06 20:21:36,842 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:21:40,984 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:21:40,993 - INFO - Detection service shutdown
+2025-06-06 20:21:41,262 - INFO - Camera service shutdown
+2025-06-06 20:21:41,262 - INFO - Storage service shutdown
+2025-06-06 20:21:45,889 - INFO - Storage service initialized
+2025-06-06 20:21:45,889 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_202145.json
+2025-06-06 20:21:45,889 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_202145.json
+2025-06-06 20:22:14,306 - INFO - Camera initialized: 1280x720
+2025-06-06 20:22:14,306 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:22:18,910 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:22:18,916 - INFO - Detection service shutdown
+2025-06-06 20:22:19,180 - INFO - Camera service shutdown
+2025-06-06 20:22:19,180 - INFO - Storage service shutdown
+2025-06-06 20:22:23,561 - INFO - Storage service initialized
+2025-06-06 20:22:23,561 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_202223.json
+2025-06-06 20:22:23,561 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_202223.json
+2025-06-06 20:22:50,597 - INFO - Camera initialized: 1280x720
+2025-06-06 20:22:50,597 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:22:54,698 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:23:07,071 - INFO - Processing 11 detections from queue
+2025-06-06 20:23:09,185 - INFO - Processing 12 detections from queue
+2025-06-06 20:23:11,270 - INFO - Processing 11 detections from queue
+2025-06-06 20:23:13,388 - INFO - Processing 12 detections from queue
+2025-06-06 20:23:13,388 - INFO - Processing plate: ONTOYOIA (Confidence: 0.50)
+2025-06-06 20:23:13,388 - INFO - Processed detection 5a14f4c6-5115-41aa-a7ca-731bf2a217ed: ONTOYOIA
+2025-06-06 20:23:13,388 - INFO - Sending detection 5a14f4c6-5115-41aa-a7ca-731bf2a217ed to storage service
+2025-06-06 20:23:15,424 - INFO - Processing 11 detections from queue
+2025-06-06 20:23:15,424 - INFO - Processing plate: OMTOYOIA (Confidence: 0.53)
+2025-06-06 20:23:15,424 - INFO - Processed detection 061e0430-b167-453a-bf3a-e5cf95521c23: OMTOYOIA
+2025-06-06 20:23:15,424 - INFO - Sending detection 061e0430-b167-453a-bf3a-e5cf95521c23 to storage service
+2025-06-06 20:23:17,479 - INFO - Processing 11 detections from queue
+2025-06-06 20:23:19,574 - INFO - Processing 11 detections from queue
+2025-06-06 20:23:21,643 - INFO - Processing 11 detections from queue
+2025-06-06 20:23:21,643 - INFO - Processing plate: RANDOEIA (Confidence: 0.53)
+2025-06-06 20:23:21,643 - INFO - Processed detection 646abf53-0c88-4691-aad8-22a384929816: RANDOEIA
+2025-06-06 20:23:21,643 - INFO - Sending detection 646abf53-0c88-4691-aad8-22a384929816 to storage service
+2025-06-06 20:23:23,764 - INFO - Processing 12 detections from queue
+2025-06-06 20:23:23,764 - INFO - Processing plate: SVBR766O (Confidence: 0.78)
+2025-06-06 20:23:23,764 - INFO - Processed detection a0aa091c-88e7-4bd9-8b33-554ebf158a17: SVBR766O
+2025-06-06 20:23:23,764 - INFO - Sending detection a0aa091c-88e7-4bd9-8b33-554ebf158a17 to storage service
+2025-06-06 20:23:25,869 - INFO - Processing 12 detections from queue
+2025-06-06 20:23:25,869 - INFO - Processing plate: 660EUREI (Confidence: 0.51)
+2025-06-06 20:23:25,869 - INFO - Processed detection 696471ea-97f5-4697-a8ff-17c9bb57c557: 660EUREI
+2025-06-06 20:23:25,869 - INFO - Sending detection 696471ea-97f5-4697-a8ff-17c9bb57c557 to storage service
+2025-06-06 20:23:27,872 - INFO - Processing 8 detections from queue
+2025-06-06 20:23:27,872 - INFO - Processing plate: 7660Z3RE (Confidence: 0.55)
+2025-06-06 20:23:27,872 - INFO - Processed detection 6e1d13da-ef4d-4055-aae6-3ed897e91232: 7660Z3RE
+2025-06-06 20:23:27,872 - INFO - Sending detection 6e1d13da-ef4d-4055-aae6-3ed897e91232 to storage service
+2025-06-06 20:23:29,997 - INFO - Processing 12 detections from queue
+2025-06-06 20:23:29,997 - INFO - Processing plate: ONTOTOIA (Confidence: 0.55)
+2025-06-06 20:23:29,997 - INFO - Processed detection c7e2b34d-98b4-46cf-91ce-71a752c62d3c: ONTOTOIA
+2025-06-06 20:23:29,997 - INFO - Sending detection c7e2b34d-98b4-46cf-91ce-71a752c62d3c to storage service
+2025-06-06 20:23:32,058 - INFO - Processing 10 detections from queue
+2025-06-06 20:23:32,058 - INFO - Processing plate: OUE0AD00 (Confidence: 0.52)
+2025-06-06 20:23:32,058 - INFO - Processed detection 230e86c8-866a-4438-adda-ce10cb488e10: OUE0AD00
+2025-06-06 20:23:32,058 - INFO - Sending detection 230e86c8-866a-4438-adda-ce10cb488e10 to storage service
+2025-06-06 20:23:46,363 - INFO - Processing 5 detections from queue
+2025-06-06 20:23:46,363 - INFO - Processing plate: SVBR766O (Confidence: 0.68)
+2025-06-06 20:23:46,363 - INFO - Processed detection c82e7571-ee01-446a-aaee-68c5b9077679: SVBR766O
+2025-06-06 20:23:46,363 - INFO - Sending detection c82e7571-ee01-446a-aaee-68c5b9077679 to storage service
+2025-06-06 20:23:48,446 - INFO - Processing 10 detections from queue
+2025-06-06 20:23:48,446 - INFO - Processing plate: 660TEXA5 (Confidence: 0.61)
+2025-06-06 20:23:48,446 - INFO - Processed detection 2f491c74-bb6d-421f-b48a-80fbefe2c073: 660TEXA5
+2025-06-06 20:23:48,446 - INFO - Sending detection 2f491c74-bb6d-421f-b48a-80fbefe2c073 to storage service
+2025-06-06 20:23:50,485 - INFO - Processing 6 detections from queue
+2025-06-06 20:23:52,581 - INFO - Processing 12 detections from queue
+2025-06-06 20:23:52,581 - INFO - Processing plate: SVBR766O (Confidence: 0.77)
+2025-06-06 20:23:52,581 - INFO - Processed detection 273bb569-4925-4939-bb94-813f510f911e: SVBR766O
+2025-06-06 20:23:52,581 - INFO - Sending detection 273bb569-4925-4939-bb94-813f510f911e to storage service
+2025-06-06 20:23:54,668 - INFO - Processing 8 detections from queue
+2025-06-06 20:23:56,715 - INFO - Processing 8 detections from queue
+2025-06-06 20:23:58,772 - INFO - Processing 13 detections from queue
+2025-06-06 20:23:58,772 - INFO - Processing plate: SVBR766O (Confidence: 0.77)
+2025-06-06 20:23:58,772 - INFO - Processed detection 993bb140-ab83-4f98-8475-ca186c6e0cfe: SVBR766O
+2025-06-06 20:23:58,772 - INFO - Sending detection 993bb140-ab83-4f98-8475-ca186c6e0cfe to storage service
+2025-06-06 20:24:00,801 - INFO - Processing 13 detections from queue
+2025-06-06 20:24:02,844 - INFO - Processing 1 detections from queue
+2025-06-06 20:24:04,888 - INFO - Processing 2 detections from queue
+2025-06-06 20:24:04,888 - INFO - Processing plate: VBR766O (Confidence: 0.55)
+2025-06-06 20:24:04,888 - INFO - Processed detection 96b33567-fcf7-40bc-ae6d-b21991fd55f3: VBR766
+2025-06-06 20:24:04,888 - INFO - Sending detection 96b33567-fcf7-40bc-ae6d-b21991fd55f3 to storage service
+2025-06-06 20:24:06,980 - INFO - Processing 7 detections from queue
+2025-06-06 20:24:06,980 - INFO - Processing plate: NBR766O (Confidence: 0.76)
+2025-06-06 20:24:06,980 - INFO - Processed detection a7c381ea-62e0-426b-839d-371c520aff3c: NBR766O
+2025-06-06 20:24:06,980 - INFO - Sending detection a7c381ea-62e0-426b-839d-371c520aff3c to storage service
+2025-06-06 20:24:09,005 - INFO - Processing 13 detections from queue
+2025-06-06 20:24:09,005 - INFO - Processing plate: 7660V8R (Confidence: 0.90)
+2025-06-06 20:24:09,005 - INFO - Processed detection 78c27c69-6713-4437-9daf-0633e3b71698: 7660V8R
+2025-06-06 20:24:09,005 - INFO - Sending detection 78c27c69-6713-4437-9daf-0633e3b71698 to storage service
+2025-06-06 20:24:11,007 - INFO - Processing 9 detections from queue
+2025-06-06 20:24:11,007 - INFO - Processing plate: VBR766O (Confidence: 0.88)
+2025-06-06 20:24:11,007 - INFO - Processed detection ddb602f8-47e0-4aaf-bacb-b98bb380047e: VBR766O
+2025-06-06 20:24:11,007 - INFO - Sending detection ddb602f8-47e0-4aaf-bacb-b98bb380047e to storage service
+2025-06-06 20:24:13,010 - INFO - Processing 13 detections from queue
+2025-06-06 20:24:15,018 - INFO - Processing 15 detections from queue
+2025-06-06 20:24:15,018 - INFO - Processing plate: NBR766O (Confidence: 0.65)
+2025-06-06 20:24:15,018 - INFO - Processed detection 81ad41eb-07d9-4ce5-bc45-fc1b4eb3f986: NBR766
+2025-06-06 20:24:15,018 - INFO - Sending detection 81ad41eb-07d9-4ce5-bc45-fc1b4eb3f986 to storage service
+2025-06-06 20:24:17,050 - INFO - Processing 8 detections from queue
+2025-06-06 20:24:17,050 - INFO - Processing plate: VBR766O (Confidence: 0.79)
+2025-06-06 20:24:17,050 - INFO - Processed detection 6d666dfd-1b9f-4e5b-a366-439ea395dbd8: VBR766O
+2025-06-06 20:24:17,050 - INFO - Sending detection 6d666dfd-1b9f-4e5b-a366-439ea395dbd8 to storage service
+2025-06-06 20:24:28,501 - INFO - Detection service shutdown
+2025-06-06 20:24:28,771 - INFO - Camera service shutdown
+2025-06-06 20:24:42,627 - INFO - Storage service initialized
+2025-06-06 20:24:42,627 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250606_202442.json
+2025-06-06 20:24:42,627 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250606_202442.json
+2025-06-06 20:25:09,575 - INFO - Camera initialized: 1280x720
+2025-06-06 20:25:09,575 - INFO - EnhancerService connected to StorageService
+2025-06-06 20:25:14,182 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-06 20:25:23,544 - INFO - Processing 1 detections from queue
+2025-06-06 20:25:25,646 - INFO - Processing 11 detections from queue
+2025-06-06 20:25:25,646 - INFO - Processing plate: SVBR766O (Confidence: 0.80)
+2025-06-06 20:25:25,646 - INFO - Processed detection fa7b1d6e-6d2e-4b6c-a6b7-a7ae21894626: SVBR766O
+2025-06-06 20:25:25,646 - INFO - Sending detection fa7b1d6e-6d2e-4b6c-a6b7-a7ae21894626 to storage service
+2025-06-06 20:25:27,763 - INFO - Processing 11 detections from queue
+2025-06-06 20:25:29,881 - INFO - Processing 16 detections from queue
+2025-06-06 20:25:31,908 - INFO - Processing 9 detections from queue
+2025-06-06 20:25:31,908 - INFO - Processing plate: SVBR766O (Confidence: 0.78)
+2025-06-06 20:25:31,908 - INFO - Processed detection 38771a70-582c-4c63-b1c4-d2f5f8f73408: SVBR766O
+2025-06-06 20:25:31,908 - INFO - Sending detection 38771a70-582c-4c63-b1c4-d2f5f8f73408 to storage service
+2025-06-06 20:25:33,935 - INFO - Processing 16 detections from queue
+2025-06-06 20:25:36,021 - INFO - Processing 4 detections from queue
+2025-06-06 20:26:22,001 - INFO - Processing 1 detections from queue
+2025-06-06 20:26:22,001 - INFO - Processing plate: SVBR766O (Confidence: 0.64)
+2025-06-06 20:26:22,001 - INFO - Processed detection a812b0f1-d36e-4cc6-aff6-2fd797168b51: SVBR766O
+2025-06-06 20:26:22,001 - INFO - Sending detection a812b0f1-d36e-4cc6-aff6-2fd797168b51 to storage service
+2025-06-06 20:26:24,052 - INFO - Processing 9 detections from queue
+2025-06-06 20:26:26,171 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:26,171 - INFO - Processing plate: SNBR766O (Confidence: 0.52)
+2025-06-06 20:26:26,171 - INFO - Processed detection 3cfc2472-ecf6-477d-b825-5dbcc9886bbe: SNBR766O
+2025-06-06 20:26:26,171 - INFO - Sending detection 3cfc2472-ecf6-477d-b825-5dbcc9886bbe to storage service
+2025-06-06 20:26:28,261 - INFO - Processing 13 detections from queue
+2025-06-06 20:26:28,261 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-06 20:26:28,261 - INFO - Processed detection 545fac8d-f2d4-4fa8-b5bd-d41a25b6958c: SVBR766O
+2025-06-06 20:26:28,261 - INFO - Sending detection 545fac8d-f2d4-4fa8-b5bd-d41a25b6958c to storage service
+2025-06-06 20:26:30,286 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:32,363 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:34,412 - INFO - Processing 14 detections from queue
+2025-06-06 20:26:34,412 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-06 20:26:34,412 - INFO - Processed detection 1533aece-3422-4e12-8ada-80f5de6abf2a: SVBR766O
+2025-06-06 20:26:34,412 - INFO - Sending detection 1533aece-3422-4e12-8ada-80f5de6abf2a to storage service
+2025-06-06 20:26:36,526 - INFO - Processing 14 detections from queue
+2025-06-06 20:26:38,627 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:40,735 - INFO - Processing 11 detections from queue
+2025-06-06 20:26:40,735 - INFO - Processing plate: SVBR766O (Confidence: 0.75)
+2025-06-06 20:26:40,735 - INFO - Processed detection 5ca7221d-2bbc-4702-ad3c-c78542b1a931: SVBR766O
+2025-06-06 20:26:40,735 - INFO - Sending detection 5ca7221d-2bbc-4702-ad3c-c78542b1a931 to storage service
+2025-06-06 20:26:42,762 - INFO - Processing 14 detections from queue
+2025-06-06 20:26:44,791 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:46,848 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:46,848 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-06 20:26:46,848 - INFO - Processed detection 18bf25eb-0325-43e3-990b-fb8566d53c77: SVBR766O
+2025-06-06 20:26:46,848 - INFO - Sending detection 18bf25eb-0325-43e3-990b-fb8566d53c77 to storage service
+2025-06-06 20:26:48,936 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:51,067 - INFO - Processing 15 detections from queue
+2025-06-06 20:26:53,181 - INFO - Processing 14 detections from queue
+2025-06-06 20:26:53,181 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-06 20:26:53,181 - INFO - Processed detection 6b5516e3-9076-47f4-b0b8-92a094be1f37: SVBR766O
+2025-06-06 20:26:53,181 - INFO - Sending detection 6b5516e3-9076-47f4-b0b8-92a094be1f37 to storage service
+2025-06-06 20:26:55,251 - INFO - Processing 10 detections from queue
+2025-06-06 20:26:57,262 - INFO - Processing 8 detections from queue
+2025-06-06 20:26:59,306 - INFO - Processing 9 detections from queue
+2025-06-06 20:26:59,306 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-06 20:26:59,306 - INFO - Processed detection 795ecf61-2c08-4bcc-8626-1b8585f4bd73: SVBR766O
+2025-06-06 20:26:59,306 - INFO - Sending detection 795ecf61-2c08-4bcc-8626-1b8585f4bd73 to storage service
+2025-06-06 20:27:01,359 - INFO - Processing 16 detections from queue
+2025-06-06 20:27:03,380 - INFO - Processing 14 detections from queue
+2025-06-06 20:27:05,497 - INFO - Processing 12 detections from queue
+2025-06-06 20:27:05,497 - INFO - Processing plate: SVBR766O (Confidence: 0.78)
+2025-06-06 20:27:05,497 - INFO - Processed detection 4e71164d-9551-4a22-bd9c-82402a845625: SVBR766O
+2025-06-06 20:27:05,497 - INFO - Sending detection 4e71164d-9551-4a22-bd9c-82402a845625 to storage service
+2025-06-06 20:27:07,547 - INFO - Processing 12 detections from queue
+2025-06-06 20:27:09,598 - INFO - Processing 13 detections from queue
+2025-06-06 20:27:11,641 - INFO - Processing 6 detections from queue
+2025-06-06 20:27:11,641 - INFO - Processing plate: SVBR766O (Confidence: 0.73)
+2025-06-06 20:27:11,641 - INFO - Processed detection 221e0b58-f13a-4d0c-a24f-d06898a7e038: SVBR766O
+2025-06-06 20:27:11,641 - INFO - Sending detection 221e0b58-f13a-4d0c-a24f-d06898a7e038 to storage service
+2025-06-06 20:27:13,653 - INFO - Processing 13 detections from queue
+2025-06-06 20:27:15,738 - INFO - Processing 16 detections from queue
+2025-06-06 20:27:17,751 - INFO - Processing 13 detections from queue
+2025-06-06 20:27:17,751 - INFO - Processing plate: SVBR766O (Confidence: 0.77)
+2025-06-06 20:27:17,751 - INFO - Processed detection 70a8daad-3b85-4d70-a2dc-d89c1992f7b9: SVBR766O
+2025-06-06 20:27:17,751 - INFO - Sending detection 70a8daad-3b85-4d70-a2dc-d89c1992f7b9 to storage service
+2025-06-06 20:27:19,773 - INFO - Processing 3 detections from queue
+2025-06-06 20:28:20,311 - INFO - Detection service shutdown
+2025-06-06 20:28:20,586 - INFO - Camera service shutdown

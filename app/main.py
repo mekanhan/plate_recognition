@@ -1,6 +1,7 @@
 import uvicorn
 import os
 import logging
+import asyncio
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -22,13 +23,24 @@ class Config(BaseSettings):
     license_plates_dir: str = "data/license_plates"
     enhanced_plates_dir: str = "data/enhanced_plates"
     known_plates_path: str = "data/known_plates.json"
+    github_token: str = None
 
-    # Your existing fields...
 
     class Config:
         env_file = ".env"
-        # If you want to allow arbitrary fields, you can add:
-        # extra = "allow"
+        extra = "ignore"  # Allow extra fields to be ignored
+
+# Set up proper exception handling for asyncio tasks
+def handle_task_exception(task):
+    """Handle exceptions in background tasks"""
+    try:
+        # This will re-raise the exception if one occurred
+        task.result()
+    except asyncio.CancelledError:
+        # This is normal during shutdown, ignore
+        pass
+    except Exception as e:
+        logging.error(f"Unhandled exception in background task: {e}")
 
 setup_logging()
 
@@ -58,9 +70,15 @@ app.state.detection_service = detection_service
 app.state.storage_service = storage_service
 app.state.enhancer_service = enhancer_service
 
-# Connect detection service to storage service
+# Connect storage service to both detection and enhancer services
 detection_service.storage_service = storage_service
+enhancer_service.storage_service = storage_service
+# Connect enhancer service to detection service
+detection_service.enhancer_service = enhancer_service
+
 print("Connected detection service to storage service")
+print("Connected enhancer service to storage service")
+print("Connected detection service to enhancer service")
 
 # Set the services in the routers
 stream.camera_service = camera_service
@@ -69,36 +87,87 @@ detection.detection_service = detection_service
 results.detection_service = detection_service
 results.storage_service = storage_service
 
+# Track background tasks for proper cleanup
+background_tasks = []
+
 @app.on_event("startup")
 async def startup_event():
-    # Initialize storage first
-    await storage_service.initialize()
-    print("Storage service initialized")
+    """Initialize all services on startup"""
+    global background_tasks
 
-    # Then camera
-    await camera_service.initialize()
-    print("Camera service initialized")
+    try:
+        # Initialize storage first
+        await storage_service.initialize()
+        print("Storage service initialized")
 
-    # Then detection (which depends on camera)
-    await detection_service.initialize(camera_service=camera_service)
-    print("Detection service initialized")
+        # Then camera
+        await camera_service.initialize()
+        print("Camera service initialized")
 
-    # Finally enhancer
-    await enhancer_service.initialize()
-    print("Enhancer service initialized")
+        # Then enhancer service
+        await enhancer_service.initialize(storage_service=storage_service)
+        print("Enhancer service initialized")
 
-    print("All services initialized successfully")
-async def startup_event():
-    await camera_service.initialize()
-    await detection_service.initialize(camera_service=camera_service)
-    await storage_service.initialize()
-    await enhancer_service.initialize()
+        # Finally detection (depends on camera and enhancer)
+        await detection_service.initialize(camera_service=camera_service, enhancer_service=enhancer_service)
+        print("Detection service initialized")
+
+        print("All services initialized successfully")
+
+        # Register exception handlers for background tasks
+        if hasattr(storage_service, 'task') and storage_service.task:
+            storage_service.task.add_done_callback(handle_task_exception)
+            background_tasks.append(storage_service.task)
+
+    except Exception as e:
+        print(f"Error during startup: {e}")
+        # Re-raise to prevent the app from starting with incomplete initialization
+        raise
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    await camera_service.shutdown()
-    await detection_service.shutdown()
-    await storage_service.shutdown()
+    """Properly shut down all services"""
+    print("Shutting down services...")
+
+    # Cancel all background tasks
+    for task in background_tasks:
+        if not task.done():
+            task.cancel()
+
+    # Wait for all tasks to complete (with a timeout)
+    if background_tasks:
+        await asyncio.wait(background_tasks, timeout=5.0)
+
+    # Shutdown services in reverse order of initialization
+    print("Shutting down detection service...")
+    if detection_service:
+        try:
+            await asyncio.wait_for(detection_service.shutdown(), timeout=5.0)
+        except:
+            pass
+
+    print("Shutting down enhancer service...")
+    if enhancer_service:
+        try:
+            await asyncio.wait_for(enhancer_service.shutdown(), timeout=5.0)
+        except:
+            pass
+
+    print("Shutting down camera service...")
+    if camera_service:
+        try:
+            await asyncio.wait_for(camera_service.shutdown(), timeout=5.0)
+        except:
+            pass
+
+    print("Shutting down storage service...")
+    if storage_service:
+        try:
+            await asyncio.wait_for(storage_service.shutdown(), timeout=5.0)
+        except:
+            pass
+
+    print("All services shut down")
 
 # Then include the routers
 app.include_router(stream.router, prefix="/stream", tags=["streaming"])

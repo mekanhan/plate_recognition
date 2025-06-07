@@ -1,0 +1,13 @@
+{
+  "session_start": "20250606_143956",
+  "enhanced_results": [
+    {
+      "plate_text": "VBR7660",
+      "confidence": 0.9,
+      "confidence_category": "HIGH",
+      "match_type": "known_plate",
+      "original_detection_id": "90d52883-dd37-4918-8aef-e6d316584687",
+      "timestamp": 1749238796.9838498
+    }
+  ]
+}

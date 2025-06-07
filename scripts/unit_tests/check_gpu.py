@@ -1,5 +1,6 @@
 import torch
 import sys
+import time
 
 print(f"PyTorch version: {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
@@ -26,7 +27,6 @@ if torch.cuda.is_available():
     y = torch.rand(1000, 1000).cuda()
     
     # Time a matrix multiplication
-    import time
     start = time.time()
     z = torch.matmul(x, y)
     torch.cuda.synchronize()  # Wait for GPU operation to complete
@@ -34,3 +34,7 @@ if torch.cuda.is_available():
     
     print(f"Matrix multiplication time: {(end - start) * 1000:.2f} ms")
     print("GPU test completed successfully!")
+
+if __name__ == "__main__":
+    # Script already runs in the global scope, so no additional code needed here
+    pass

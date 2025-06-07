@@ -795,3 +795,260 @@
 2025-06-06 20:27:19,773 - INFO - Processing 3 detections from queue
 2025-06-06 20:28:20,311 - INFO - Detection service shutdown
 2025-06-06 20:28:20,586 - INFO - Camera service shutdown
+2025-06-07 09:31:48,876 - INFO - Storage service initialized
+2025-06-07 09:31:48,876 - INFO - License plate data will be saved to: data/license_plates\lpr_session_20250607_093148.json
+2025-06-07 09:31:48,876 - INFO - Enhanced results will be saved to: data/enhanced_plates\enhanced_session_20250607_093148.json
+2025-06-07 09:32:15,852 - INFO - Camera initialized: 1280x720
+2025-06-07 09:32:15,852 - INFO - EnhancerService connected to StorageService
+2025-06-07 09:32:19,964 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-07 09:32:36,589 - INFO - Processing 1 detections from queue
+2025-06-07 09:32:36,589 - INFO - Processing plate: VM766O (Confidence: 0.53)
+2025-06-07 09:32:36,589 - INFO - Processed detection ab458d4c-e817-463b-9435-fb0aa1a3082d: VM766O
+2025-06-07 09:32:36,589 - INFO - Sending detection ab458d4c-e817-463b-9435-fb0aa1a3082d to storage service
+2025-06-07 09:32:38,671 - INFO - Processing 6 detections from queue
+2025-06-07 09:32:38,671 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-07 09:32:38,671 - INFO - Processed detection 4171f246-b2bf-45dd-9da3-972da80039c9: SVBR766O
+2025-06-07 09:32:38,671 - INFO - Sending detection 4171f246-b2bf-45dd-9da3-972da80039c9 to storage service
+2025-06-07 09:32:40,774 - INFO - Processing 8 detections from queue
+2025-06-07 09:32:42,903 - INFO - Processing 10 detections from queue
+2025-06-07 09:32:42,903 - INFO - Processing plate: 660TEXA5 (Confidence: 0.73)
+2025-06-07 09:32:42,903 - INFO - Processed detection 133ce9b7-d3ae-486c-a658-c2d702156e9a: 660TEXA5
+2025-06-07 09:32:42,903 - INFO - Sending detection 133ce9b7-d3ae-486c-a658-c2d702156e9a to storage service
+2025-06-07 09:32:44,981 - INFO - Processing 13 detections from queue
+2025-06-07 09:32:44,981 - INFO - Processing plate: SVBR766O (Confidence: 0.76)
+2025-06-07 09:32:44,981 - INFO - Processed detection cdbdaad3-ee9e-41cc-9f97-05d402c5d2df: SVBR766O
+2025-06-07 09:32:44,981 - INFO - Sending detection cdbdaad3-ee9e-41cc-9f97-05d402c5d2df to storage service
+2025-06-07 09:32:47,019 - INFO - Processing 11 detections from queue
+2025-06-07 09:32:49,136 - INFO - Processing 10 detections from queue
+2025-06-07 09:32:49,136 - INFO - Processing plate: VBR766O (Confidence: 0.84)
+2025-06-07 09:32:49,136 - INFO - Processed detection 90c5711d-2d56-4c4c-b90f-651f9c9a10a0: VBR766O
+2025-06-07 09:32:49,136 - INFO - Sending detection 90c5711d-2d56-4c4c-b90f-651f9c9a10a0 to storage service
+2025-06-07 09:32:51,150 - INFO - Processing 5 detections from queue
+2025-06-07 09:32:51,150 - INFO - Processing plate: 7660V8R (Confidence: 0.73)
+2025-06-07 09:32:51,150 - INFO - Processed detection 60451709-1cb4-4595-82ac-3e5f4ee9258d: 7660V8R
+2025-06-07 09:32:51,150 - INFO - Sending detection 60451709-1cb4-4595-82ac-3e5f4ee9258d to storage service
+2025-06-07 09:32:53,212 - INFO - Processing 16 detections from queue
+2025-06-07 09:32:53,212 - INFO - Processing plate: 76608R (Confidence: 0.75)
+2025-06-07 09:32:53,212 - INFO - Processed detection 4ac56dc8-cb80-4ec4-b4b1-61e3e22e4f2f: 76608R
+2025-06-07 09:32:53,212 - INFO - Sending detection 4ac56dc8-cb80-4ec4-b4b1-61e3e22e4f2f to storage service
+2025-06-07 09:32:55,237 - INFO - Processing 7 detections from queue
+2025-06-07 09:32:55,237 - INFO - Processing plate: VBR766O (Confidence: 0.85)
+2025-06-07 09:32:55,237 - INFO - Processed detection 6002b730-2d95-4bb4-a458-b0856912222d: VBR766O
+2025-06-07 09:32:55,237 - INFO - Sending detection 6002b730-2d95-4bb4-a458-b0856912222d to storage service
+2025-06-07 09:32:57,299 - INFO - Processing 4 detections from queue
+2025-06-07 09:32:59,350 - INFO - Processing 6 detections from queue
+2025-06-07 09:33:01,420 - INFO - Processing 13 detections from queue
+2025-06-07 09:33:01,425 - INFO - Processing plate: VBR766O (Confidence: 0.86)
+2025-06-07 09:33:01,425 - INFO - Processed detection 2232fed5-c6e4-4258-8e31-c41f448727f7: VBR766O
+2025-06-07 09:33:01,425 - INFO - Sending detection 2232fed5-c6e4-4258-8e31-c41f448727f7 to storage service
+2025-06-07 09:33:03,436 - INFO - Processing 6 detections from queue
+2025-06-07 09:33:05,532 - INFO - Processing 8 detections from queue
+2025-06-07 09:33:05,532 - INFO - Processing plate: V8R766U (Confidence: 0.60)
+2025-06-07 09:33:05,532 - INFO - Processed detection 5b4d7b30-68fe-4f6a-affc-37a43f95764a: V8R766U
+2025-06-07 09:33:05,532 - INFO - Sending detection 5b4d7b30-68fe-4f6a-affc-37a43f95764a to storage service
+2025-06-07 09:33:07,649 - INFO - Processing 7 detections from queue
+2025-06-07 09:33:07,649 - INFO - Processing plate: VBR766O (Confidence: 0.59)
+2025-06-07 09:33:07,649 - INFO - Processed detection 1d144b41-31ab-4052-b6eb-5d51c464e703: VBR766
+2025-06-07 09:33:07,649 - INFO - Sending detection 1d144b41-31ab-4052-b6eb-5d51c464e703 to storage service
+2025-06-07 09:33:09,716 - INFO - Processing 2 detections from queue
+2025-06-07 09:33:11,785 - INFO - Processing 15 detections from queue
+2025-06-07 09:33:11,785 - INFO - Processing plate: VBRS766O (Confidence: 0.67)
+2025-06-07 09:33:11,785 - INFO - Processed detection c941b132-4e02-461b-bc5c-2ad43f8c72d5: VBRS766O
+2025-06-07 09:33:11,785 - INFO - Sending detection c941b132-4e02-461b-bc5c-2ad43f8c72d5 to storage service
+2025-06-07 09:33:13,793 - INFO - Processing 15 detections from queue
+2025-06-07 09:33:13,793 - INFO - Processing plate: VBR766O (Confidence: 0.90)
+2025-06-07 09:33:13,793 - INFO - Processed detection 0c6b3b61-3a21-49d1-be93-f1390f88eb07: VBR766O
+2025-06-07 09:33:13,793 - INFO - Sending detection 0c6b3b61-3a21-49d1-be93-f1390f88eb07 to storage service
+2025-06-07 09:33:15,856 - INFO - Processing 7 detections from queue
+2025-06-07 09:33:15,856 - INFO - Processing plate: NBR766O (Confidence: 0.56)
+2025-06-07 09:33:15,856 - INFO - Processed detection 79fd3f33-0633-45a1-b647-c0d8c5f8f7a2: NBR766
+2025-06-07 09:33:15,856 - INFO - Sending detection 79fd3f33-0633-45a1-b647-c0d8c5f8f7a2 to storage service
+2025-06-07 09:33:17,925 - INFO - Processing 10 detections from queue
+2025-06-07 09:33:17,925 - INFO - Processing plate: 7660V8R (Confidence: 0.55)
+2025-06-07 09:33:17,925 - INFO - Processed detection 007c6aed-92c3-4fde-98ee-9d678ddcbb66: 7660V8R
+2025-06-07 09:33:17,925 - INFO - Sending detection 007c6aed-92c3-4fde-98ee-9d678ddcbb66 to storage service
+2025-06-07 09:33:20,013 - INFO - Processing 13 detections from queue
+2025-06-07 09:33:20,013 - INFO - Processing plate: VBR766O (Confidence: 0.90)
+2025-06-07 09:33:20,013 - INFO - Processed detection 806ff0a1-51e5-493f-aee6-953aa349c26a: VBR766O
+2025-06-07 09:33:20,013 - INFO - Sending detection 806ff0a1-51e5-493f-aee6-953aa349c26a to storage service
+2025-06-07 09:33:22,051 - INFO - Processing 5 detections from queue
+2025-06-07 09:55:19,405 - INFO - Using data directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data
+2025-06-07 09:55:19,405 - INFO - Using license plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates
+2025-06-07 09:55:19,406 - INFO - Using enhanced plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 09:55:19,407 - INFO - Data directories created and writable
+2025-06-07 09:55:19,433 - INFO - Connected detection service to storage service
+2025-06-07 09:55:19,433 - INFO - Connected enhancer service to storage service
+2025-06-07 09:55:19,433 - INFO - Connected detection service to enhancer service
+2025-06-07 09:55:19,436 - INFO - Storage directories: license_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates, enhanced_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 09:55:19,437 - INFO - Storage directories are writable
+2025-06-07 09:55:19,438 - INFO - Initial database files created successfully
+2025-06-07 09:55:19,438 - INFO - Storage service initialized
+2025-06-07 09:55:19,438 - INFO - License plate data will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates\lpr_session_20250607_095519.json
+2025-06-07 09:55:19,439 - INFO - Enhanced results will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates\enhanced_session_20250607_095519.json
+2025-06-07 09:55:19,439 - INFO - Storage service initialized
+2025-06-07 09:55:47,676 - INFO - Camera initialized: 1280x720
+2025-06-07 09:55:47,676 - INFO - Camera service initialized
+2025-06-07 09:55:47,676 - INFO - EnhancerService connected to StorageService
+2025-06-07 09:55:47,676 - INFO - Enhancer service initialized
+2025-06-07 09:55:51,672 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-07 09:55:51,672 - INFO - Detection service initialized
+2025-06-07 09:55:51,673 - INFO - All services initialized successfully
+2025-06-07 09:55:54,171 - INFO - Processing 3 detections from queue
+2025-06-07 09:55:56,269 - INFO - Processing 13 detections from queue
+2025-06-07 09:55:56,269 - INFO - Processing plate: SVBR766O (Confidence: 0.78)
+2025-06-07 09:55:56,269 - INFO - Processed detection 78b04f5e-3995-4caa-80ac-973a8e3160d7: SVBR766O
+2025-06-07 09:55:56,269 - INFO - Sending detection 78b04f5e-3995-4caa-80ac-973a8e3160d7 to storage service
+2025-06-07 09:55:58,291 - INFO - Processing 15 detections from queue
+2025-06-07 09:55:58,291 - INFO - Processing plate: VIBR766O (Confidence: 0.59)
+2025-06-07 09:55:58,291 - INFO - Processed detection f8fb1d0f-9b7f-48b4-b849-5da3c1f61222: VIBR766O
+2025-06-07 09:55:58,291 - INFO - Sending detection f8fb1d0f-9b7f-48b4-b849-5da3c1f61222 to storage service
+2025-06-07 09:56:00,369 - INFO - Processing 14 detections from queue
+2025-06-07 09:56:00,369 - INFO - Processing plate: SNBR766O (Confidence: 0.65)
+2025-06-07 09:56:00,369 - INFO - Processed detection 37a7f50b-43e3-499a-b267-8738dd4f15ca: SNBR766O
+2025-06-07 09:56:00,369 - INFO - Sending detection 37a7f50b-43e3-499a-b267-8738dd4f15ca to storage service
+2025-06-07 09:56:02,453 - INFO - Processing 14 detections from queue
+2025-06-07 09:56:02,453 - INFO - Processing plate: SVBR766O (Confidence: 0.79)
+2025-06-07 09:56:02,453 - INFO - Processed detection 61fd1a17-f38b-4443-8629-68c0fc80c041: SVBR766O
+2025-06-07 09:56:02,453 - INFO - Sending detection 61fd1a17-f38b-4443-8629-68c0fc80c041 to storage service
+2025-06-07 09:56:04,546 - INFO - Processing 11 detections from queue
+2025-06-07 09:56:06,558 - INFO - Processing 6 detections from queue
+2025-06-07 09:56:08,658 - INFO - Processing 12 detections from queue
+2025-06-07 09:56:08,658 - INFO - Processing plate: SVBR766O (Confidence: 0.78)
+2025-06-07 09:56:08,658 - INFO - Processed detection 74c2dc04-efad-45f8-91d9-d9ee59d4a97a: SVBR766O
+2025-06-07 09:56:08,658 - INFO - Sending detection 74c2dc04-efad-45f8-91d9-d9ee59d4a97a to storage service
+2025-06-07 09:56:10,670 - INFO - Processing 3 detections from queue
+2025-06-07 09:56:12,723 - INFO - Processing 9 detections from queue
+2025-06-07 09:56:14,781 - INFO - Processing 12 detections from queue
+2025-06-07 09:56:14,781 - INFO - Processing plate: SVBR766O (Confidence: 0.77)
+2025-06-07 09:56:14,781 - INFO - Processed detection 0f199432-bc87-4ccd-a87e-f0819bc0d9e3: SVBR766O
+2025-06-07 09:56:14,781 - INFO - Sending detection 0f199432-bc87-4ccd-a87e-f0819bc0d9e3 to storage service
+2025-06-07 09:56:16,817 - INFO - Processing 8 detections from queue
+2025-06-07 09:56:21,084 - INFO - Processing 3 detections from queue
+2025-06-07 09:56:21,084 - INFO - Processing plate: SVBR766O (Confidence: 0.65)
+2025-06-07 09:56:21,084 - INFO - Processed detection 7d042965-b5c1-421f-88d0-e3cd5b3b47ac: SVBR766O
+2025-06-07 09:56:21,084 - INFO - Sending detection 7d042965-b5c1-421f-88d0-e3cd5b3b47ac to storage service
+2025-06-07 09:56:23,104 - INFO - Processing 6 detections from queue
+2025-06-07 09:56:23,104 - INFO - Processing plate: S7660V8R (Confidence: 0.63)
+2025-06-07 09:56:23,104 - INFO - Processed detection 15cd5e26-1344-43ed-89ed-902577be7a59: S7660V8R
+2025-06-07 09:56:23,104 - INFO - Sending detection 15cd5e26-1344-43ed-89ed-902577be7a59 to storage service
+2025-06-07 09:56:25,214 - INFO - Processing 2 detections from queue
+2025-06-07 09:56:25,214 - INFO - Processing plate: SNBR766O (Confidence: 0.69)
+2025-06-07 09:56:25,214 - INFO - Processed detection 6a153928-9683-47d7-aef7-371a15d309d2: SNBR766O
+2025-06-07 09:56:25,214 - INFO - Sending detection 6a153928-9683-47d7-aef7-371a15d309d2 to storage service
+2025-06-07 09:56:27,272 - INFO - Processing 1 detections from queue
+2025-06-07 09:56:27,272 - INFO - Processing plate: SVBR766O (Confidence: 0.68)
+2025-06-07 09:56:27,272 - INFO - Processed detection 843314e3-c33d-4f91-82ee-a334552a1daf: SVBR766O
+2025-06-07 09:56:27,272 - INFO - Sending detection 843314e3-c33d-4f91-82ee-a334552a1daf to storage service
+2025-06-07 09:56:29,325 - INFO - Processing 15 detections from queue
+2025-06-07 09:56:31,349 - INFO - Processing 13 detections from queue
+2025-06-07 09:56:33,385 - INFO - Processing 8 detections from queue
+2025-06-07 09:56:33,385 - INFO - Processing plate: SVBR766O (Confidence: 0.74)
+2025-06-07 09:56:33,385 - INFO - Processed detection 82d6ea56-d907-42be-aed8-11b40c595b7f: SVBR766O
+2025-06-07 09:56:33,385 - INFO - Sending detection 82d6ea56-d907-42be-aed8-11b40c595b7f to storage service
+2025-06-07 09:56:35,403 - INFO - Processing 6 detections from queue
+2025-06-07 09:56:37,429 - INFO - Processing 11 detections from queue
+2025-06-07 09:56:39,447 - INFO - Processing 8 detections from queue
+2025-06-07 09:56:39,447 - INFO - Processing plate: S7660V8R (Confidence: 0.80)
+2025-06-07 09:56:39,447 - INFO - Processed detection 7e5d49a7-8ee1-4d99-bf4a-44b717109955: S7660V8R
+2025-06-07 09:56:39,447 - INFO - Sending detection 7e5d49a7-8ee1-4d99-bf4a-44b717109955 to storage service
+2025-06-07 09:56:41,483 - INFO - Processing 9 detections from queue
+2025-06-07 09:56:41,483 - INFO - Processing plate: SVBR766O (Confidence: 0.78)
+2025-06-07 09:56:41,483 - INFO - Processed detection 43010d8b-32da-4b62-a1f5-da9672ea80c1: SVBR766O
+2025-06-07 09:56:41,483 - INFO - Sending detection 43010d8b-32da-4b62-a1f5-da9672ea80c1 to storage service
+2025-06-07 09:56:43,654 - INFO - Processing 16 detections from queue
+2025-06-07 09:56:43,654 - INFO - Processing plate: 7660VBR5 (Confidence: 0.65)
+2025-06-07 09:56:43,654 - INFO - Processed detection a71a39a4-33f7-4097-97b0-4bd4b7e90c8e: 7660VBR5
+2025-06-07 09:56:43,654 - INFO - Sending detection a71a39a4-33f7-4097-97b0-4bd4b7e90c8e to storage service
+2025-06-07 09:56:45,695 - INFO - Processing 14 detections from queue
+2025-06-07 09:56:45,695 - INFO - Processing plate: EXAS766O (Confidence: 0.80)
+2025-06-07 09:56:45,695 - INFO - Processed detection 83409d06-ab5e-4957-a950-74eec406d179: EXAS766O
+2025-06-07 09:56:45,695 - INFO - Sending detection 83409d06-ab5e-4957-a950-74eec406d179 to storage service
+2025-06-07 09:56:47,747 - INFO - Processing 5 detections from queue
+2025-06-07 09:56:47,747 - INFO - Processing plate: SVBR766O (Confidence: 0.73)
+2025-06-07 09:56:47,747 - INFO - Processed detection f42e6501-ff89-4b37-b8a6-65d80c66a2e3: SVBR766O
+2025-06-07 09:56:47,747 - INFO - Sending detection f42e6501-ff89-4b37-b8a6-65d80c66a2e3 to storage service
+2025-06-07 09:56:51,883 - INFO - Processing 1 detections from queue
+2025-06-07 09:56:58,813 - INFO - Shutting down services...
+2025-06-07 09:56:58,813 - INFO - Shutting down detection service...
+2025-06-07 09:56:58,814 - INFO - Detection service shutdown
+2025-06-07 09:56:58,814 - INFO - Shutting down enhancer service...
+2025-06-07 09:56:58,814 - INFO - Shutting down camera service...
+2025-06-07 09:56:59,086 - INFO - Camera service shutdown
+2025-06-07 09:56:59,086 - INFO - Shutting down storage service...
+2025-06-07 09:57:04,098 - INFO - All services shut down
+2025-06-07 10:20:21,566 - INFO - Using data directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data
+2025-06-07 10:20:21,566 - INFO - Using license plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates
+2025-06-07 10:20:21,566 - INFO - Using enhanced plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 10:20:21,568 - INFO - Data directories created and writable
+2025-06-07 10:20:21,586 - INFO - Connected detection service to storage service
+2025-06-07 10:20:21,586 - INFO - Connected enhancer service to storage service
+2025-06-07 10:20:21,586 - INFO - Connected detection service to enhancer service
+2025-06-07 10:20:21,589 - INFO - Storage directories: license_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates, enhanced_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 10:20:21,590 - INFO - Storage directories are writable
+2025-06-07 10:20:21,591 - INFO - Initial database files created successfully
+2025-06-07 10:20:21,591 - INFO - Storage service initialized
+2025-06-07 10:20:21,591 - INFO - License plate data will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates\lpr_session_20250607_102021.json
+2025-06-07 10:20:21,591 - INFO - Enhanced results will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates\enhanced_session_20250607_102021.json
+2025-06-07 10:20:21,591 - INFO - Storage service initialized
+2025-06-07 10:20:51,291 - INFO - Camera initialized: 1280x720
+2025-06-07 10:20:51,291 - INFO - Camera service initialized
+2025-06-07 10:20:51,291 - INFO - EnhancerService connected to StorageService
+2025-06-07 10:20:51,291 - INFO - Enhancer service initialized
+2025-06-07 10:20:56,000 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-07 10:20:56,000 - INFO - Detection service initialized
+2025-06-07 10:20:56,000 - INFO - All services initialized successfully
+2025-06-07 10:20:56,001 - INFO - Shutting down services...
+2025-06-07 10:20:56,001 - INFO - Shutting down detection service...
+2025-06-07 10:20:56,001 - INFO - Detection service shutdown
+2025-06-07 10:20:56,002 - INFO - Shutting down enhancer service...
+2025-06-07 10:20:56,002 - INFO - Shutting down camera service...
+2025-06-07 10:20:56,279 - INFO - Camera service shutdown
+2025-06-07 10:20:56,279 - INFO - Shutting down storage service...
+2025-06-07 10:20:56,280 - INFO - Storage service shutdown
+2025-06-07 10:20:56,280 - INFO - All services shut down
+2025-06-07 10:21:00,871 - INFO - Using data directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data
+2025-06-07 10:21:00,871 - INFO - Using license plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates
+2025-06-07 10:21:00,871 - INFO - Using enhanced plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 10:21:00,873 - INFO - Data directories created and writable
+2025-06-07 10:21:00,892 - INFO - Connected detection service to storage service
+2025-06-07 10:21:00,893 - INFO - Connected enhancer service to storage service
+2025-06-07 10:21:00,893 - INFO - Connected detection service to enhancer service
+2025-06-07 10:21:00,895 - INFO - Storage directories: license_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates, enhanced_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 10:21:00,896 - INFO - Storage directories are writable
+2025-06-07 10:21:00,896 - INFO - Initial database files created successfully
+2025-06-07 10:21:00,897 - INFO - Storage service initialized
+2025-06-07 10:21:00,897 - INFO - License plate data will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates\lpr_session_20250607_102100.json
+2025-06-07 10:21:00,897 - INFO - Enhanced results will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates\enhanced_session_20250607_102100.json
+2025-06-07 10:21:00,897 - INFO - Storage service initialized
+2025-06-07 10:21:30,131 - INFO - Camera initialized: 1280x720
+2025-06-07 10:21:30,131 - INFO - Camera service initialized
+2025-06-07 10:21:30,131 - INFO - EnhancerService connected to StorageService
+2025-06-07 10:21:30,132 - INFO - Enhancer service initialized
+2025-06-07 10:21:34,211 - INFO - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-07 10:21:34,211 - INFO - Detection service initialized
+2025-06-07 10:21:34,212 - INFO - All services initialized successfully
+2025-06-07 10:21:34,220 - INFO - Shutting down services...
+2025-06-07 10:21:34,221 - INFO - Shutting down detection service...
+2025-06-07 10:21:34,221 - INFO - Detection service shutdown
+2025-06-07 10:21:34,221 - INFO - Shutting down enhancer service...
+2025-06-07 10:21:34,221 - INFO - Shutting down camera service...
+2025-06-07 10:21:34,491 - INFO - Camera service shutdown
+2025-06-07 10:21:34,491 - INFO - Shutting down storage service...
+2025-06-07 10:21:34,491 - INFO - Storage service shutdown
+2025-06-07 10:21:34,491 - INFO - All services shut down
+2025-06-07 10:28:51,068 - INFO - Using data directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data
+2025-06-07 10:28:51,068 - INFO - Using license plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates
+2025-06-07 10:28:51,068 - INFO - Using enhanced plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 10:28:51,070 - INFO - Data directories created and writable
+2025-06-07 10:28:51,086 - INFO - Connected detection service to storage service
+2025-06-07 10:28:51,086 - INFO - Connected enhancer service to storage service
+2025-06-07 10:28:51,086 - INFO - Connected detection service to enhancer service
+2025-06-07 10:28:51,093 - ERROR - Error during startup: 'StorageService' object has no attribute 'initialize'
+2025-06-07 10:29:02,652 - INFO - Using data directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data
+2025-06-07 10:29:02,652 - INFO - Using license plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates
+2025-06-07 10:29:02,652 - INFO - Using enhanced plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-07 10:29:02,653 - INFO - Data directories created and writable
+2025-06-07 10:29:02,672 - INFO - Connected detection service to storage service
+2025-06-07 10:29:02,672 - INFO - Connected enhancer service to storage service
+2025-06-07 10:29:02,672 - INFO - Connected detection service to enhancer service
+2025-06-07 10:29:02,675 - ERROR - Error during startup: 'StorageService' object has no attribute 'initialize'

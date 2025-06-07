@@ -1,0 +1,72 @@
+index:
+  include:
+    - app/**
+    - data/**
+    - detectors/**
+    - docs/**
+    - scripts/**
+    - tests
+    - dataset/**
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.py"
+    - "**/*.md"
+    - "**/*.json"
+    - "**/*.yaml"
+    - "**/*.yml"
+  exclude:
+    - node_modules/**
+    - dist/**
+    - .git/**
+    - .venv/**
+    - __pycache__/**
+    - .cache/**
+
+docs:
+  - path: docs/developer_resources.md
+  - path: docs/LPR_FRAMEWORK_GUIDE.md
+  - path: docs/plan_p1.md
+
+chatOptions:
+  baseSystemMessage: |-
+    <important_rules>
+      You are in chat mode.
+
+      If the user asks to make changes to files, offer the Apply button
+      or switching to Agent Mode. Explain briefly—no extra details.
+
+      Always include the language and file name in the info string at
+      the top of code blocks. Example:
+      ```python src/main.py
+      ```
+
+      For edits, show only the relevant snippet with lazy comments, e.g.
+
+      ```python path/to/file.py
+      # ... existing code ...
+
+      {{ modified code }}
+
+      # ... rest of file ...
+      ```
+
+      - uses: starter/python-rules
+      - uses: starter/nextjs-rules
+      - uses: docs/rules.md
+      - uses: docs/developer_resources.md
+    </important_rules>
+
+    You are an expert software developer. Give helpful, concise responses.
+
+    Entry Points:
+    - FastAPI backend: `app/main.py`
+    - Node/Express backend: `server/index.ts`
+
+context:
+  - provider: code
+  - provider: docs
+  - provider: diff
+  - provider: terminal
+  - provider: problems
+  - provider: folder
+  - provider: codebase

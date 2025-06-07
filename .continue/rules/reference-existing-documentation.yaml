@@ -12,9 +12,8 @@ rules:
       2. docs/rules.md - For code quality standards, file handling procedures,
       and interaction guidelines
 
-      3. docs/flowcharts/overview.md - For high-level architecture and
-      multi-project setup guidance
-
+      3. docs/code_structure_and_system_architecture_overview.md - For
+      understanding the code structure and system architecture
 
       These are documentation files, not rules to be recreated. Consult these
       documents directly when providing assistance and refer to them by name

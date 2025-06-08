@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.services.camera_service import CameraService
 from app.services.detection_service import DetectionService
-from app.services.storage_service_fixed import StorageService
+from app.services.storage_service import StorageService
 from app.services.enhancer_service import EnhancerService
 from app.routers import stream, detection, results
 from app.utils.logging_config import setup_logging

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Latest Detections - License Plate Recognition</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .menu a {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .menu a:hover {
+            background: #45a049;
+        }
+        .detections-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .detections-table th, .detections-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .detections-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .detections-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .detections-table tr:hover {
+            background-color: #f2f2f2;
+        }
+        .confidence-high {
+            color: green;
+            font-weight: bold;
+        }
+        .confidence-medium {
+            color: orange;
+        }
+        .confidence-low {
+            color: red;
+        }
+        .no-detections {
+            padding: 20px;
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .refresh-button {
+            background: #2196F3;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .refresh-button:hover {
+            background: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Latest License Plate Detections</h1>
+        
+        <div class="menu">
+            <a href="/">Home</a>
+            <a href="/stream">Live Stream</a>
+            <a href="/results/latest">Latest Results</a>
+            <a href="/results/all">All Detections</a>
+            <a href="/results/enhanced">Enhanced Results</a>
+        </div>
+        
+        {% if detections %}
+        <table class="detections-table">
+            <thead>
+                <tr>
+                    <th>Plate</th>
+                    <th>Confidence</th>
+                    <th>Time</th>
+                    <th>State</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detection in detections %}
+                <tr>
+                    <td>{{ detection.plate_text }}</td>
+                    <td class="
+                        {% if detection.confidence >= 0.7 %}confidence-high
+                        {% elif detection.confidence >= 0.4 %}confidence-medium
+                        {% else %}confidence-low{% endif %}
+                    ">
+                        {{ "%.2f"|format(detection.confidence) }}
+                    </td>
+                    <td>{{ detection.timestamp|fromtimestamp }}</td>
+                    <td>{{ detection.state or "Unknown" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-detections">
+            <h3>No license plate detections found</h3>
+            <p>Start the camera stream and wait for license plates to be detected</p>
+        </div>
+        {% endif %}
+        
+        <a href="/results/latest" class="refresh-button">Refresh Results</a>
+    </div>
+    
+    <script>
+        // Auto refresh every 5 seconds
+        setTimeout(function() {
+            window.location.reload();
+        }, 5000);
+    </script>
+</body>
+</html>

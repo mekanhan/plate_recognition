@@ -102,6 +102,15 @@ class DetectionService:
                 # Add frame ID
                 detection["frame_id"] = self.frame_count
                     
+            # Update latest detections for UI display if we have valid plate texts
+            valid_detections = [d for d in detections if d.get("plate_text") and d.get("confidence", 0) > 0.4]
+            if valid_detections:
+                async with self.detection_lock:
+                    # Add to latest detections (keep most recent 10)
+                    self.last_detections.extend(valid_detections)
+            # Keep only the 10 most recent detections
+            self.last_detections = self.last_detections[-10:]
+
             # Process each detection for storage
             for detection in detections:
                 # Only save to storage if we have a plate text
@@ -114,7 +123,6 @@ class DetectionService:
                         logger.error(traceback.format_exc())
 
             return display_frame, detections
-
         except Exception as e:
             logger.error(f"Error in license plate detection: {e}")
             logger.error(traceback.format_exc())
@@ -236,6 +244,13 @@ class DetectionService:
             "status": "completed"
         }
 
+        # Update latest detections for the UI
+        async with self.detection_lock:
+            # Add to latest detections (limit to 10 most recent)
+            self.last_detections.append(detection_result)
+            # Keep only the 10 most recent detections
+            self.last_detections = self.last_detections[-10:]
+
         # Update stats
         self.detections_processed += 1
         self.last_detection_time = time.time()
@@ -261,7 +276,7 @@ class DetectionService:
                     "processed_at": time.time(),
                     "processed_by": detection_result.get('processed_by', 'detection_service')
                 }
-                
+
                 # Add to storage
                 await self.storage_service.add_detections([detection_record])
                 logger.info(f"Detection {detection_id} sent to storage: {detection_record['plate_text']}")

@@ -205,15 +205,49 @@ class LicensePlateRecognitionService:
                 plate_result["detection_confidence"] = float(conf)
                 plate_result["timestamp"] = time.time()
                 
-                # Draw on the display image
-                cv2.rectangle(display_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+                # Get confidence values for display
+                ocr_confidence = plate_result.get('confidence', 0) * 100
+                detection_confidence = plate_result.get('detection_confidence', 0) * 100
                 
-                text_to_show = f"{plate_result['plate_text']}"
-                if 'state' in plate_result and plate_result['state']:
-                    text_to_show = f"{plate_result['state']}: {text_to_show}"
-                    
-                cv2.putText(display_image, text_to_show, (int(x1), int(y1)-10),
-                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                # Determine color based on confidence levels
+                avg_confidence = (ocr_confidence + detection_confidence) / 2
+                if avg_confidence >= 80:
+                    color = (0, 255, 0)  # Green for high confidence
+                elif avg_confidence >= 60:
+                    color = (0, 255, 255)  # Yellow for medium confidence
+                else:
+                    color = (0, 0, 255)  # Red for low confidence
+                
+                # Draw bounding box with confidence-based color
+                cv2.rectangle(display_image, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
+                
+                # Create enhanced text with confidence
+                plate_text = plate_result['plate_text']
+                state_prefix = f"{plate_result['state']}: " if plate_result.get('state') else ""
+                confidence_text = f"({ocr_confidence:.0f}%/{detection_confidence:.0f}%)"
+                
+                # Main text: State + Plate + Confidence
+                main_text = f"{state_prefix}{plate_text} {confidence_text}"
+                
+                # Calculate text positioning
+                text_y = int(y1) - 15
+                if text_y < 25:  # If too close to top, move below the box
+                    text_y = int(y2) + 25
+                
+                # Draw main text with background for better visibility
+                text_size = cv2.getTextSize(main_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
+                cv2.rectangle(display_image, 
+                             (int(x1), text_y - text_size[1] - 5), 
+                             (int(x1) + text_size[0] + 10, text_y + 5), 
+                             (0, 0, 0), -1)  # Black background
+                cv2.putText(display_image, main_text, (int(x1) + 2, text_y),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                
+                # Add additional metadata if space allows (smaller text)
+                if plate_result.get('frame_id'):
+                    meta_text = f"Frame: {plate_result['frame_id']}"
+                    cv2.putText(display_image, meta_text, (int(x1) + 2, text_y + 20),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 255, 255), 1)
                 
                 results.append(plate_result)
             
@@ -226,7 +260,7 @@ class LicensePlateRecognitionService:
 
     async def _recognize_plate_text(self, plate_image: np.ndarray) -> Dict[str, Any]:
         """
-        Recognize text on a license plate image using OCR and apply corrections.
+        Recognize text on a license plate image using OCR with enhanced text filtering.
 
         Args:
             plate_image: Cropped license plate image
@@ -237,19 +271,19 @@ class LicensePlateRecognitionService:
         # Preprocess the image for better OCR
         preprocessed = self._preprocess_plate_image(plate_image)
 
-        # Run OCR on the preprocessed image in a separate thread
+        # Run OCR on the preprocessed image in a separate thread with bounding boxes
         loop = asyncio.get_event_loop()
 
         # Wrap OCR call in a function to run in executor
         def run_ocr(img):
-            return self.ocr_reader.readtext(img)
+            return self.ocr_reader.readtext(img, detail=1)  # detail=1 gives us bounding boxes
         ocr_result = await loop.run_in_executor(None, run_ocr, preprocessed)
 
-        # Extract and process OCR results
-        extracted_text, confidence, state_code = self._process_ocr_results(ocr_result)
+        # Process OCR results with enhanced text filtering
+        best_plate_text, confidence, state_code, raw_text = self._process_ocr_results_enhanced(ocr_result, plate_image.shape)
 
         # Clean and validate the plate text
-        cleaned_text = self._clean_plate_text(extracted_text)
+        cleaned_text = self._clean_plate_text(best_plate_text)
 
         # Apply character corrections based on confusion matrix
         corrected_text = self._apply_character_corrections(cleaned_text, state_code)
@@ -265,7 +299,7 @@ class LicensePlateRecognitionService:
             "confidence": float(final_confidence),
             "ocr_confidence": float(confidence),
             "state": state_code,
-            "raw_text": extracted_text
+            "raw_text": raw_text
         }
 
     def _preprocess_plate_image(self, plate_image: np.ndarray) -> np.ndarray:
@@ -332,6 +366,201 @@ class LicensePlateRecognitionService:
         avg_confidence = sum(all_confs) / len(all_confs) if all_confs else 0.0
 
         return combined_text, avg_confidence, state_code
+
+    def _process_ocr_results_enhanced(self, ocr_result, image_shape) -> Tuple[str, float, Optional[str], str]:
+        """
+        Enhanced OCR processing with size-based text filtering and state name removal.
+
+        Args:
+            ocr_result: Results from OCR with bounding boxes
+            image_shape: Shape of the license plate image (height, width, channels)
+
+        Returns:
+            Tuple of (best_plate_text, confidence, state_code, raw_text)
+        """
+        if not ocr_result:
+            return "", 0.0, None, ""
+
+        height, width = image_shape[:2]
+        text_elements = []
+        all_raw_texts = []
+
+        # Process each OCR result with bounding box analysis
+        for bbox, text, confidence in ocr_result:
+            # Extract bounding box coordinates
+            x_coords = [point[0] for point in bbox]
+            y_coords = [point[1] for point in bbox]
+            
+            # Calculate text element properties
+            text_width = max(x_coords) - min(x_coords)
+            text_height = max(y_coords) - min(y_coords)
+            text_area = text_width * text_height
+            
+            # Calculate center position (normalized to 0-1)
+            center_x = (min(x_coords) + max(x_coords)) / (2 * width)
+            center_y = (min(y_coords) + max(y_coords)) / (2 * height)
+            
+            # Calculate relative size (normalized to image size)
+            relative_area = text_area / (width * height)
+            
+            text_elements.append({
+                "text": text.strip(),
+                "confidence": confidence,
+                "area": text_area,
+                "relative_area": relative_area,
+                "width": text_width,
+                "height": text_height,
+                "center_x": center_x,
+                "center_y": center_y,
+                "bbox": bbox
+            })
+            all_raw_texts.append(text.strip())
+
+        # Try to identify state from all text elements
+        state_code = None
+        for element in text_elements:
+            potential_state = get_state_from_text(element["text"])
+            if potential_state:
+                state_code = potential_state
+                break
+
+        # Filter and select the best plate text
+        best_plate_text, best_confidence = self._select_best_plate_text_enhanced(text_elements, state_code)
+        
+        # Combine all raw text for debugging
+        raw_text = " ".join(all_raw_texts)
+        
+        return best_plate_text, best_confidence, state_code, raw_text
+
+    def _select_best_plate_text_enhanced(self, text_elements: List[Dict], state_code: Optional[str]) -> Tuple[str, float]:
+        """
+        Select the best license plate text from multiple text elements using size and position analysis.
+        
+        Args:
+            text_elements: List of text elements with bounding box info
+            state_code: Detected state code for pattern validation
+            
+        Returns:
+            Tuple of (best_text, confidence)
+        """
+        if not text_elements:
+            return "", 0.0
+        
+        # Import filtering lists
+        from app.utils.us_states import STATE_NAMES, COMMON_WORDS, DEALER_FRAME_WORDS, STATE_SLOGANS
+        
+        # Filter out state names, common words, dealer text, and slogans
+        filtered_elements = []
+        for element in text_elements:
+            text = element["text"].upper()
+            
+            # Skip if it's a state name
+            if text in STATE_NAMES or text in STATE_NAMES.values():
+                continue
+                
+            # Skip if it's a common word
+            if any(word in text for word in COMMON_WORDS):
+                continue
+                
+            # Skip if it contains dealer/frame text
+            if any(word in text for word in DEALER_FRAME_WORDS):
+                continue
+                
+            # Skip if it's a state slogan
+            if any(slogan in text for slogan in STATE_SLOGANS):
+                continue
+                
+            # Skip if it's likely a partial dealer name (contains "GROUP", "PURDY", etc.)
+            dealer_keywords = ["GROUP", "PURDY", "STATION", "BAYAN", "COLLECE", "COLLEGE"]
+            if any(keyword in text for keyword in dealer_keywords):
+                continue
+                
+            # Skip very small text (likely decorative)
+            if element["relative_area"] < 0.05:  # Less than 5% of image area
+                continue
+                
+            # Skip very low confidence
+            if element["confidence"] < 0.3:
+                continue
+                
+            filtered_elements.append(element)
+        
+        if not filtered_elements:
+            # Fallback to largest text element if filtering removes everything
+            largest_element = max(text_elements, key=lambda x: x["area"])
+            return largest_element["text"], largest_element["confidence"]
+        
+        # Score each remaining text element
+        scored_elements = []
+        for element in filtered_elements:
+            score = self._calculate_text_element_score(element, state_code)
+            scored_elements.append((element, score))
+        
+        # Sort by score (highest first)
+        scored_elements.sort(key=lambda x: x[1], reverse=True)
+        
+        # Return the best scoring element
+        best_element, best_score = scored_elements[0]
+        return best_element["text"], best_element["confidence"]
+
+    def _calculate_text_element_score(self, element: Dict, state_code: Optional[str]) -> float:
+        """
+        Calculate a score for a text element to determine if it's likely the license plate number.
+        
+        Args:
+            element: Text element with properties
+            state_code: Detected state code
+            
+        Returns:
+            Score (higher is better)
+        """
+        text = element["text"].upper()
+        score = 0.0
+        
+        # Base score from OCR confidence
+        score += element["confidence"] * 40
+        
+        # Size bonus - larger text is more likely to be the plate number
+        size_bonus = min(element["relative_area"] * 100, 30)  # Cap at 30 points
+        score += size_bonus
+        
+        # Center position bonus - plates are usually centered
+        center_x_bonus = 10 * (1 - abs(element["center_x"] - 0.5) * 2)  # Max 10 points for center
+        center_y_bonus = 5 * (1 - abs(element["center_y"] - 0.5) * 2)   # Max 5 points for center
+        score += center_x_bonus + center_y_bonus
+        
+        # Length bonus - typical plate lengths
+        text_length = len(re.sub(r'[^A-Z0-9]', '', text))  # Count only alphanumeric
+        if 5 <= text_length <= 8:
+            score += 15
+        elif 4 <= text_length <= 9:
+            score += 10
+        else:
+            score -= 5
+        
+        # Pattern matching bonus
+        if state_code:
+            from app.utils.us_states import get_state_pattern
+            pattern = get_state_pattern(state_code)
+            if pattern and re.match(pattern, text):
+                score += 20
+        
+        # Character composition bonus
+        letter_count = sum(1 for c in text if c.isalpha())
+        digit_count = sum(1 for c in text if c.isdigit())
+        
+        # Most plates have both letters and numbers
+        if letter_count > 0 and digit_count > 0:
+            score += 10
+        elif letter_count > 0 or digit_count > 0:
+            score += 5
+        
+        # Penalty for too many special characters
+        special_count = len(text) - letter_count - digit_count
+        if special_count > 2:
+            score -= special_count * 3
+        
+        return score
 
     def _clean_plate_text(self, text: str) -> str:
         """

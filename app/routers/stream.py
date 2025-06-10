@@ -19,6 +19,7 @@ templates = Jinja2Templates(directory="templates")
 # This will be initialized in the main app
 camera_service = None
 detection_service = None
+video_recording_service = None
 
 # License plate tracking for deduplication
 plate_tracker = {
@@ -36,7 +37,9 @@ frame_processor = {
     "frame_count": 0,
     "process_every_n_frames": 5,  # Only process every Nth frame - increased from 3 to 5
     "last_frame_time": 0,
-    "processing_time_ms": 0
+    "processing_time_ms": 0,
+    "total_detections": 0,  # Track total detections in session
+    "session_start_time": time.time()
 }
 
 async def get_camera_service():
@@ -128,6 +131,7 @@ async def generate_frames(camera: CameraService, detection_svc=None):
 
             # Default to raw frame
             frame = raw_frame
+            annotated_frame = None
 
             # Increment frame counter
             frame_processor["frame_count"] += 1
@@ -146,6 +150,7 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                         
                         # Use the processed frame (with annotations)
                         frame = processed_frame
+                        annotated_frame = processed_frame  # Save annotated frame for video recording
                         
                         # Add valid detections to the queue
                         if detections:
@@ -157,6 +162,9 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                                     
                                     # Add to queue
                                     plate_tracker["detection_queue"].append(detection)
+                                    
+                                    # Increment detection counter
+                                    frame_processor["total_detections"] += 1
                         
                         # Process the detection queue in a separate task (non-blocking)
                         asyncio.create_task(process_detection_queue())
@@ -173,16 +181,49 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                     # Fall back to the original frame if detection fails
                     # Already using raw_frame as default
 
+            # Send frame to video recording service
+            # Use annotated frame if available, otherwise use raw frame
+            frame_for_video = annotated_frame if annotated_frame is not None else raw_frame
+            
+            if video_recording_service:
+                try:
+                    await video_recording_service.add_frame(frame_for_video, timestamp)
+                except Exception as e:
+                    logger.error(f"Error adding frame to video recording: {e}")
+
+            # Add timestamp overlay (always visible)
+            import datetime
+            current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Include milliseconds
+            cv2.putText(frame, current_time, (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            
+            # Add system info overlay
+            session_duration = time.time() - frame_processor["session_start_time"]
+            hours = int(session_duration // 3600)
+            minutes = int((session_duration % 3600) // 60)
+            seconds = int(session_duration % 60)
+            
+            system_info = f"LPR System | Frame: {frame_processor['frame_count']} | Detections: {frame_processor['total_detections']}"
+            cv2.putText(frame, system_info, (10, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+            
+            # Add session uptime
+            uptime_info = f"Session: {hours:02d}:{minutes:02d}:{seconds:02d}"
+            cv2.putText(frame, uptime_info, (10, 85),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+
             # Add performance metrics to the frame
             if should_process:
                 # Add processing time
                 processing_time = frame_processor["processing_time_ms"]
-                cv2.putText(frame, f"Process: {processing_time:.1f}ms", (10, frame.shape[0] - 10),
+                perf_text = f"Processing: {processing_time:.1f}ms"
+                cv2.putText(frame, perf_text, (10, frame.shape[0] - 40),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
-                # Add frame counter
-                cv2.putText(frame, f"Frame: {frame_processor['frame_count']}", (10, frame.shape[0] - 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                # Add frame processing info
+                fps_info = f"Process Rate: Every {frame_processor['process_every_n_frames']} frames"
+                cv2.putText(frame, fps_info, (10, frame.shape[0] - 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
 
             # Convert the frame to JPEG
             success, jpeg_buffer = cv2.imencode('.jpg', frame)

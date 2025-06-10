@@ -25,6 +25,36 @@ async_session = sessionmaker(
     expire_on_commit=False
 )
 
+async def init_database():
+    """Initialize database and create all tables"""
+    try:
+        # Import models to ensure they're registered
+        from app.models import Base, Detection, EnhancedResult, KnownPlate, VideoSegment, SystemEvent
+        
+        logger.info("Creating database tables...")
+        
+        # Create all tables
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        
+        logger.info("Database tables created successfully")
+        
+        # Test database connection
+        async with async_session() as session:
+            # Try a simple query to verify the database works
+            from sqlalchemy import text
+            result = await session.execute(text("SELECT 1"))
+            test_value = result.scalar()
+            
+            if test_value == 1:
+                logger.info("Database connection test successful")
+            else:
+                raise RuntimeError("Database connection test failed")
+                
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+        raise
+
 async def get_db_session():
     """Get a database session"""
     async with async_session() as session:

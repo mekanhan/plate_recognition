@@ -1,9 +1,12 @@
 """
 Improved results routes using the new service architecture.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from typing import Dict, Any, List, Optional
 import logging
+import datetime
 
 from app.interfaces.storage import DetectionRepository, EnhancementRepository
 from app.dependencies.services import get_detection_repository, get_enhancement_repository
@@ -13,6 +16,50 @@ logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter()
+
+# Templates for HTML responses
+templates = Jinja2Templates(directory="templates")
+
+# Add custom filter to convert timestamp to readable format
+def fromtimestamp(value):
+    try:
+        return datetime.datetime.fromtimestamp(value).strftime('%Y-%m-%d %H:%M:%S')
+    except:
+        return "Unknown"
+
+templates.env.filters["fromtimestamp"] = fromtimestamp
+
+@router.get("/latest", response_class=HTMLResponse)
+async def get_latest_detections(
+    request: Request,
+    detection_repository: DetectionRepository = Depends(get_detection_repository)
+):
+    """Get the latest detections for display in the web UI (backward compatibility with V1)."""
+    try:
+        # Get all detections from repository
+        all_detections = await detection_repository.get_detections()
+        
+        # Sort by timestamp (newest first) and take the last 20
+        latest_detections = sorted(
+            all_detections,
+            key=lambda d: d.get("timestamp", 0),
+            reverse=True
+        )[:20]
+        
+        return templates.TemplateResponse("results.html", {
+            "request": request,
+            "detections": latest_detections,
+            "total_detections": len(all_detections)
+        })
+    except Exception as e:
+        logger.error(f"Error getting latest detections: {e}")
+        # Return empty results on error to prevent page crash
+        return templates.TemplateResponse("results.html", {
+            "request": request,
+            "detections": [],
+            "total_detections": 0,
+            "error": str(e)
+        })
 
 @router.get("/detections")
 async def get_detections(

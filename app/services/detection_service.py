@@ -27,6 +27,7 @@ class DetectionService:
         self.license_plate_service = None
         self.storage_service = None
         self.enhancer_service = None  # Add reference to enhancer service
+        self.video_recording_service = None  # Add reference to video recording service
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.frame_count = 0
         self.performance_metrics = {
@@ -111,13 +112,23 @@ class DetectionService:
             # Keep only the 10 most recent detections
             self.last_detections = self.last_detections[-10:]
 
-            # Process each detection for storage
+            # Process each detection for storage and video recording
             for detection in detections:
                 # Only save to storage if we have a plate text
                 if detection.get("plate_text") and hasattr(self, 'storage_service') and self.storage_service:
                     try:
                         logger.info(f"Sending detection {detection['detection_id']} to storage service")
                         await self.storage_service.add_detections([detection])
+                        
+                        # Trigger video recording if video service is available
+                        if hasattr(self, 'video_recording_service') and self.video_recording_service:
+                            try:
+                                logger.info(f"Triggering video recording for detection {detection['detection_id']}")
+                                await self.video_recording_service.trigger_recording(detection['detection_id'])
+                            except Exception as e:
+                                logger.error(f"Error triggering video recording: {e}")
+                                logger.error(traceback.format_exc())
+                                
                     except Exception as e:
                         logger.error(f"Error saving detection to storage: {e}")
                         logger.error(traceback.format_exc())

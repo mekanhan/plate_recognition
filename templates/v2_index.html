@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Plate Recognition V2</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
+        }
+        .video-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        .video-feed {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .button-secondary {
+            background-color: #2196F3;
+        }
+        .button-secondary:hover {
+            background-color: #0b7dda;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .detection-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+        .version-badge {
+            display: inline-block;
+            background-color: #ff9800;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .api-info {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            border: 1px solid #c8e6c9;
+        }
+        .api-endpoint {
+            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 2px 5px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>License Plate Recognition <span class="version-badge">V2</span></h1>
+        
+        <div class="video-container">
+            <h2>Live Video Feed</h2>
+            <img src="/v2/stream/video-feed" alt="Video Feed" class="video-feed">
+        </div>
+        
+        <div class="controls">
+            <h2>Controls</h2>
+            <button id="detectButton" class="button">Detect License Plate</button>
+            <button id="snapshotButton" class="button button-secondary">Take Snapshot</button>
+        </div>
+        
+        <div class="results">
+            <h2>Latest Detections</h2>
+            <div id="detectionResults">
+                <p>No detections yet. Click "Detect License Plate" to start.</p>
+            </div>
+        </div>
+        
+        <div class="api-info">
+            <h2>V2 API Information</h2>
+            <p>The V2 API uses a new architecture with improved interfaces and dependency injection.</p>
+            <h3>Available Endpoints:</h3>
+            <ul>
+                <li><span class="api-endpoint">/v2/stream/video-feed</span> - Stream video with license plate detection</li>
+                <li><span class="api-endpoint">/v2/stream/snapshot</span> - Get a single frame from the camera</li>
+                <li><span class="api-endpoint">/v2/detection/detect-from-camera</span> - Detect license plate from camera</li>
+                <li><span class="api-endpoint">/v2/results/detections</span> - Get all license plate detections</li>
+                <li><span class="api-endpoint">/v2/results/enhanced-results</span> - Get all enhanced results</li>
+                <li><span class="api-endpoint">/v2/results/statistics</span> - Get detection statistics</li>
+            </ul>
+            <p><a href="/">Switch to V1 Interface</a></p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('detectButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/v2/detection/detect-from-camera', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateDetectionResults(data);
+                } else {
+                    showError(data.detail || 'Error detecting license plate');
+                }
+            } catch (error) {
+                showError('Error connecting to server');
+                console.error(error);
+            }
+        });
+        
+        document.getElementById('snapshotButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/v2/stream/snapshot');
+                
+                if (response.ok) {
+                    // Create a temporary link to download the image
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = `snapshot-${new Date().toISOString()}.jpg`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                } else {
+                    showError('Error taking snapshot');
+                }
+            } catch (error) {
+                showError('Error connecting to server');
+                console.error(error);
+            }
+        });
+        
+        async function loadLatestDetections() {
+            try {
+                const response = await fetch('/v2/detection/latest');
+                const data = await response.json();
+                
+                if (response.ok && data.detections && data.detections.length > 0) {
+                    const resultsDiv = document.getElementById('detectionResults');
+                    resultsDiv.innerHTML = '';
+                    
+                    data.detections.forEach(detection => {
+                        const detectionElement = createDetectionElement(detection);
+                        resultsDiv.appendChild(detectionElement);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading latest detections:', error);
+            }
+        }
+        
+        function updateDetectionResults(detection) {
+            const resultsDiv = document.getElementById('detectionResults');
+            
+            if (resultsDiv.querySelector('p')) {
+                resultsDiv.innerHTML = '';
+            }
+            
+            const detectionElement = document.createElement('div');
+            detectionElement.className = 'detection-item';
+            
+            const plateText = detection.plate_text || 'Unknown';
+            const confidence = detection.confidence ? (detection.confidence * 100).toFixed(1) : 'N/A';
+            const timestamp = new Date().toLocaleTimeString();
+            
+            detectionElement.innerHTML = `
+                <strong>Plate:</strong> ${plateText}<br>
+                <strong>Confidence:</strong> ${confidence}%<br>
+                <strong>Time:</strong> ${timestamp}<br>
+                <strong>ID:</strong> ${detection.detection_id || 'N/A'}
+            `;
+            
+            resultsDiv.insertBefore(detectionElement, resultsDiv.firstChild);
+        }
+        
+        function createDetectionElement(detection) {
+            const detectionElement = document.createElement('div');
+            detectionElement.className = 'detection-item';
+            
+            const plateText = detection.plate_text || 'Unknown';
+            const confidence = detection.confidence ? (detection.confidence * 100).toFixed(1) : 'N/A';
+            const timestamp = detection.timestamp ? new Date(detection.timestamp * 1000).toLocaleTimeString() : 'N/A';
+            
+            detectionElement.innerHTML = `
+                <strong>Plate:</strong> ${plateText}<br>
+                <strong>Confidence:</strong> ${confidence}%<br>
+                <strong>Time:</strong> ${timestamp}<br>
+                <strong>ID:</strong> ${detection.detection_id || 'N/A'}
+            `;
+            
+            return detectionElement;
+        }
+        
+        function showError(message) {
+            const resultsDiv = document.getElementById('detectionResults');
+            const errorElement = document.createElement('div');
+            errorElement.className = 'detection-item';
+            errorElement.style.backgroundColor = '#ffebee';
+            errorElement.style.borderColor = '#ffcdd2';
+            errorElement.innerHTML = `<strong>Error:</strong> ${message}`;
+            
+            resultsDiv.insertBefore(errorElement, resultsDiv.firstChild);
+            
+            // Remove error after 5 seconds
+            setTimeout(() => {
+                if (errorElement.parentNode === resultsDiv) {
+                    resultsDiv.removeChild(errorElement);
+                }
+            }, 5000);
+        }
+        
+        // Load latest detections on page load
+        window.addEventListener('load', loadLatestDetections);
+        
+        // Refresh latest detections every 10 seconds
+        setInterval(loadLatestDetections, 10000);
+    </script>
+</body>
+</html>

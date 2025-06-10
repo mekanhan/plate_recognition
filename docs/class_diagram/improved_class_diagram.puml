@@ -1,0 +1,71 @@
+@startuml
+
+' Base interfaces
+interface IDetector {
+  + detect_objects(frame: np.ndarray): List[Dict]
+}
+
+interface ITextRecognizer {
+  + recognize_text(image: np.ndarray): Tuple[str, float]
+}
+
+interface IRepository {
+  + save(entity: Dict): str
+  + get_by_id(id: str): Dict
+  + query(filter: Dict): List[Dict]
+}
+
+' Main services
+class CameraService {
+  + get_frame(): Tuple[np.ndarray, float]
+}
+
+class DetectionService {
+  - detector: IDetector
+  - storage_repo: IRepository
+  - enhancer: IEnhancer
+  + process_frame(frame: np.ndarray): List[Dict]
+}
+
+class StorageService {
+  - detection_repo: IRepository
+  - enhanced_repo: IRepository
+  + add_detection(detection: Dict): str
+  + add_enhanced_result(result: Dict): str
+}
+
+class EnhancerService {
+  - validator: IValidator
+  - correction_engine: ICorrectionEngine
+  + enhance_detection(detection: Dict): Dict
+}
+
+' Implementations
+class YOLODetector implements IDetector {
+  - model: YOLO
+  + detect_objects(frame: np.ndarray): List[Dict]
+}
+
+class EasyOCRRecognizer implements ITextRecognizer {
+  - reader: easyocr.Reader
+  + recognize_text(image: np.ndarray): Tuple[str, float]
+}
+
+class JSONRepository implements IRepository {
+  - file_path: str
+  - data: Dict
+  + save(entity: Dict): str
+  + get_by_id(id: str): Dict
+  + query(filter: Dict): List[Dict]
+}
+
+' Relationships
+DetectionService --> IDetector
+DetectionService --> IRepository
+DetectionService --> EnhancerService
+
+EnhancerService --> IRepository
+
+YOLODetector --> ITextRecognizer
+
+@enduml

@@ -4,10 +4,11 @@ import time
 import numpy as np
 from typing import Optional, Dict, Any, Tuple
 import logging
+from app.interfaces.camera import Camera  # Import the Camera interface
 
 logger = logging.getLogger(__name__)
 
-class CameraService:
+class CameraService(Camera):  # Implement the Camera interface
     """
     Service for managing camera operations.
     """

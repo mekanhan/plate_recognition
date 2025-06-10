@@ -4,10 +4,11 @@ from collections import Counter
 from typing import Dict, List, Any, Optional, Tuple
 import time
 import logging
+from app.interfaces.enhancer import LicensePlateEnhancer  # Import the enhancer interface
 
 logger = logging.getLogger(__name__)
 
-class EnhancerService:
+class EnhancerService(LicensePlateEnhancer):  # Implement the enhancer interface
     """Simplified enhancer service for initial setup"""
     def __init__(self):
         self.known_plates = ["VBR7660"]  # Start with a default known plate
@@ -79,6 +80,16 @@ class EnhancerService:
 
         return enhanced_result
 
+    # Add the required enhance_detections method from the interface
+    async def enhance_detections(self, detections: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Enhance multiple license plate detections"""
+        enhanced_results = []
+        for detection in detections:
+            enhanced = await self.enhance_detection(detection)
+            if enhanced:
+                enhanced_results.append(enhanced)
+        return enhanced_results
+
     def _get_confidence_category(self, confidence: float) -> str:
         """Categorize confidence scores"""
         if confidence >= 0.7:
@@ -87,6 +98,11 @@ class EnhancerService:
             return "MEDIUM"
         else:
             return "LOW"
+
+    async def shutdown(self) -> None:
+        """Shutdown the enhancer service"""
+        # Nothing to clean up in this simple implementation
+        logger.info("Enhancer service shutdown")
 
 class LicensePlateValidator:
     """
@@ -256,3 +272,4 @@ class LicensePlateValidator:
             return "MEDIUM"
         else:
             return "LOW"
+

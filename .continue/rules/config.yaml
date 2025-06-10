@@ -6,7 +6,6 @@ index:
     - docs/**
     - scripts/**
     - tests
-    - dataset/**
     - "**/*.ts"
     - "**/*.tsx"
     - "**/*.py"
@@ -23,9 +22,10 @@ index:
     - .cache/**
 
 docs:
-  - path: docs/developer_resources.md
-  - path: docs/LPR_FRAMEWORK_GUIDE.md
-  - path: docs/plan_p1.md
+  - path: docs/guides/**
+  - path: docs/rules.md
+  - path: docs/class_diagram.md
+  - path: docs/technicals.md
 
 chatOptions:
   baseSystemMessage: |-
@@ -53,7 +53,6 @@ chatOptions:
       - uses: starter/python-rules
       - uses: starter/nextjs-rules
       - uses: docs/rules.md
-      - uses: docs/developer_resources.md
     </important_rules>
 
     You are an expert software developer. Give helpful, concise responses.

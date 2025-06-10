@@ -1,0 +1,40 @@
+# Web Framework
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+python-multipart>=0.0.6
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+Jinja2>=3.1.2
+python-dotenv>=1.0.0
+
+# Computer Vision & LPR
+opencv-python>=4.8.0.74
+easyocr>=1.7.0
+torch>=2.0.1,<2.6.0
+torchvision>=0.15.2,<0.21.0
+ultralytics>=8.0.0,<8.4.0
+numpy>=1.25.2,<2.0.0
+
+# Image Processing & Data Analysis
+scikit-image>=0.21.0
+matplotlib>=3.7.2
+pandas>=2.0.3,<2.2.0
+pillow>=10.0.0,<11.0.0
+scipy>=1.11.1
+
+# Machine Learning Support
+scikit-learn>=1.3.0
+onnx>=1.14.0
+onnxruntime>=1.15.1
+
+# Utilities
+tqdm>=4.65.0
+requests>=2.31.0
+PyYAML>=6.0.1
+coloredlogs>=15.0.1
+psutil>=5.9.5
+
+# Testing
+pytest>=7.4.0
+pytest-mock>=3.11.1
+

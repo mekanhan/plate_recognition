@@ -31,3 +31,6 @@ train/dataset/images/*
 data/enhanced_plates/*
 data/license_plates/*
 logs/*
+app/factories/__pycache__/*
+app/repositories/__pycache__/*
+data/videos/*

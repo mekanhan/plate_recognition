@@ -63,39 +63,33 @@ async def generate_frames(
                 try:
                     # Process the frame with a timeout to avoid blocking too long
                     process_task = asyncio.create_task(detection_svc.process_frame(frame))
-                    processed_frame, _ = await asyncio.wait_for(process_task, timeout=0.5)
+                    processed_frame, detections = await asyncio.wait_for(process_task, timeout=0.5)
                     
-                    # Update the frame with the processed version
+                    # Update the frame with the processed version (annotated frame)
                     frame = processed_frame
+                    
+                    # Send annotated frame to video recording service if available
+                    if detection_svc.video_recording_service:
+                        try:
+                            await detection_svc.video_recording_service.add_frame(processed_frame, timestamp)
+                        except Exception as e:
+                            logger.error(f"Error adding frame to video recording: {e}")
                     
                     # Calculate processing time
                     frame_processor["processing_time_ms"] = (time.time() - start_time) * 1000
-                    
                 except asyncio.TimeoutError:
-                    logger.warning("Frame processing timed out - using raw frame")
-                    # Just add timestamp to the frame without detection
-                    cv2.putText(
-                        frame,
-                        f"Time: {time.strftime('%Y-%m-%d %H:%M:%S')}",
-                        (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7,
-                        (0, 0, 255),
-                        2
-                    )
+                    logger.warning("Frame processing timed out")
                 except Exception as e:
                     logger.error(f"Error processing frame: {e}")
-                    # Just add timestamp to the frame without detection
-                    cv2.putText(
-                        frame,
-                        f"Error: {str(e)[:20]}",
-                        (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.7,
-                        (0, 0, 255),
-                        2
-                    )
+
             else:
+                # Send raw frame to video recording service if available and no detection processing
+                if detection_svc and detection_svc.video_recording_service:
+                    try:
+                        await detection_svc.video_recording_service.add_frame(frame, timestamp)
+                    except Exception as e:
+                        logger.error(f"Error adding raw frame to video recording: {e}")
+                
                 # Just add timestamp to the frame without detection
                 cv2.putText(
                     frame,

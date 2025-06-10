@@ -64,24 +64,7 @@ class VideoRecorder:
         
         return False
     
-# In video_service.py, add more logging
-
-async def start_recording(self, trigger_detection_id: str) -> str:
-    """Start recording a video segment"""
-    try:
-        logger.info(f"Starting video recording for detection {trigger_detection_id}")
-
-        # Rest of your code...
-
-        # After initializing the writer
-        logger.info(f"Video writer initialized: {self.writer is not None}")
-        logger.info(f"Output file: {output_file}")
-
-        return segment_id
-    except Exception as e:
-        logger.error(f"Error starting video recording: {e}")
-        logger.error(traceback.format_exc())
-        return None
+    def start_recording(self, video_path: str) -> Tuple[float, List]:
         """
         Start recording to the specified path
         
@@ -145,6 +128,13 @@ async def start_recording(self, trigger_detection_id: str) -> str:
         if self.current_output:
             self.current_output.release()
             self.current_output = None
+            
+            # Force filesystem sync for WSL compatibility
+            import subprocess
+            try:
+                subprocess.run(['sync'], check=False)
+            except:
+                pass
         
         # Reset recording state
         self.current_video_path = None
@@ -170,7 +160,7 @@ class VideoRecordingService:
         self.current_detection_ids = []
         self.last_frame_time = None
         
-        # Ensure video directory exists
+        # Ensure video directory exists (use relative path for WSL compatibility)
         self.base_video_dir = "data/videos"
         os.makedirs(self.base_video_dir, exist_ok=True)
     

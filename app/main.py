@@ -11,6 +11,9 @@ from app.services.camera_service import CameraService
 from app.services.detection_service import DetectionService
 from app.services.storage_service import StorageService
 from app.services.enhancer_service import EnhancerService
+from app.services.video_service import VideoRecordingService
+from app.repositories.sql_repository import SQLiteDetectionRepository, SQLiteVideoRepository
+from app.database import async_session
 from app.routers import stream, detection, results
 from app.utils.logging_config import setup_logging
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable
@@ -93,24 +96,30 @@ detection_service = DetectionService()
 storage_service = StorageService()
 enhancer_service = EnhancerService()
 
-app.state.camera_service = camera_service
-app.state.detection_service = detection_service
-app.state.storage_service = storage_service
-app.state.enhancer_service = enhancer_service
+# Initialize video recording service with repositories
+detection_repository = SQLiteDetectionRepository(async_session)
+video_repository = SQLiteVideoRepository(async_session)
+video_recording_service = VideoRecordingService(detection_repository, video_repository)
+
+# Don't set app.state here - wait until after initialization in startup event
 
 # Connect storage service to both detection and enhancer services
 detection_service.storage_service = storage_service
 enhancer_service.storage_service = storage_service
 # Connect enhancer service to detection service
 detection_service.enhancer_service = enhancer_service
+# Connect video recording service to detection service
+detection_service.video_recording_service = video_recording_service
 
 logger.info("Connected detection service to storage service")
 logger.info("Connected enhancer service to storage service")
 logger.info("Connected detection service to enhancer service")
+logger.info("Connected video recording service to detection service")
 
 # Set the services in the routers
 stream.camera_service = camera_service
 stream.detection_service = detection_service
+stream.video_recording_service = video_recording_service
 detection.detection_service = detection_service
 results.detection_service = detection_service
 results.storage_service = storage_service
@@ -123,6 +132,12 @@ async def startup_event():
     global background_tasks
 
     try:
+        # Initialize database first
+        logger.info("Initializing database...")
+        from app.database import init_database
+        await init_database()
+        logger.info("Database initialized successfully")
+
         # Initialize storage first with explicit absolute paths
         logger.info(f"Initializing storage service with dirs: {license_plates_dir}, {enhanced_plates_dir}")
         await storage_service.initialize(
@@ -139,11 +154,23 @@ async def startup_event():
         await enhancer_service.initialize(storage_service=storage_service)
         logger.info("Enhancer service initialized")
 
+        # Initialize video recording service
+        await video_recording_service.initialize()
+        logger.info("Video recording service initialized")
+
         # Finally detection (depends on camera and enhancer)
         await detection_service.initialize(camera_service=camera_service, enhancer_service=enhancer_service)
         logger.info("Detection service initialized")
 
         logger.info("All services initialized successfully")
+
+        # Set the services in app.state after successful initialization
+        app.state.camera_service = camera_service
+        app.state.detection_service = detection_service
+        app.state.storage_service = storage_service
+        app.state.enhancer_service = enhancer_service
+        app.state.video_recording_service = video_recording_service
+        logger.info("Services assigned to app.state")
 
         # Register exception handlers for background tasks
         if hasattr(storage_service, 'task') and storage_service.task:

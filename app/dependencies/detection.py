@@ -4,4 +4,12 @@ from fastapi import Request
 
 async def get_detection_service(request: Request):
     """Return the detection service instance from application state."""
-    return request.app.state.detection_service
+    # Try V2 service first (for main_v2.py), then fall back to V1 (for main.py)
+    if hasattr(request.app.state, 'detection_service_v2'):
+        return request.app.state.detection_service_v2
+    elif hasattr(request.app.state, 'detection_service'):
+        return request.app.state.detection_service
+    else:
+        # Fallback to global variable if app.state is not available
+        from app.routers import results
+        return results.detection_service

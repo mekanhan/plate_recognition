@@ -115,20 +115,19 @@ class LicensePlateProcessor:
             ]
         }
         
-        # Common dealership/frame text to filter out
-        self.common_frame_text = [
-            "dealer", "dealership", "auto", "group", "motors", "toyota", 
-            "honda", "ford", "chevrolet", "chevy", "nissan", "hyundai", 
-            "kia", "subaru", "dodge", "jeep", "lexus", "audi", "bmw", 
-            "mercedes", "volkswagen", "volvo", "mazda", "acura", "infiniti",
-            "cadillac", "lincoln", "buick", "gmc", "chrysler", "fiat",
-            "service", "sales", "parts", "collision", "center", "financing",
-            "lease", "leasing", "rental", "used", "new", "certified",
-            "university", "college", "alumni", "proud", "support", "owner",
-            "visit", "call", "www", "http", ".com", ".net", ".org",
-            "phone", "drive", "driving", "road", "street", "ave", "hwy",
-            "tag", "frame", "holder", "license", "plate"
-        ]
+        # Import comprehensive filtering lists
+        from app.utils.us_states import DEALER_FRAME_WORDS, STATE_SLOGANS
+        
+        # Use the comprehensive dealer/frame text filter
+        self.common_frame_text = [word.lower() for word in DEALER_FRAME_WORDS]
+        
+        # Add state slogans to filter
+        self.state_slogans = [slogan.lower() for slogan in STATE_SLOGANS]
+        
+        # Add specific words from your Texas example
+        self.common_frame_text.extend([
+            "purdy", "group", "station", "bayan", "collece", "college", "toyota"
+        ])
     
     def extract_plate_from_raw_text(self, raw_text: str, detected_state: Optional[str] = None) -> Tuple[str, float]:
         """
@@ -196,11 +195,22 @@ class LicensePlateProcessor:
     def _is_common_frame_text(self, word: str) -> bool:
         """Check if word is likely to be common dealership or frame text."""
         word_lower = word.lower()
+        word_upper = word.upper()
         
         # Check against our list of common frame text
         for frame_text in self.common_frame_text:
             if frame_text in word_lower:
                 return True
+                
+        # Check against state slogans
+        for slogan in self.state_slogans:
+            if slogan in word_lower:
+                return True
+                
+        # Check if it's a state name
+        from app.utils.us_states import STATE_NAMES
+        if word_upper in STATE_NAMES or word_upper in STATE_NAMES.values():
+            return True
                 
         # Very short words are unlikely to be plates
         if len(word) < 4:

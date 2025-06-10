@@ -8,12 +8,14 @@ import uuid
 from typing import List, Dict, Any, Optional
 from app.utils.plate_database import PlateDatabase
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable, save_json_file, load_json_file
+from app.repositories.sql_repository import SQLiteDetectionRepository
+from app.database import async_session
 import logging
 
 logger = logging.getLogger(__name__)
 
 class StorageService:
-    """Service for storing detection data"""
+    """Service for storing detection data with dual JSON and SQL storage"""
     
     def __init__(self):
         self.license_plates_dir = None
@@ -31,6 +33,11 @@ class StorageService:
         self.save_count = 0
         self.pending_save = False
         self.save_queued = False
+        
+        # Add SQL repository for database storage
+        self.sql_repository = SQLiteDetectionRepository(async_session)
+        self.detections_saved_to_db = 0
+        self.detections_saved_to_json = 0
     
     async def initialize(self, license_plates_dir: str = "data/license_plates",
                          enhanced_plates_dir: str = "data/enhanced_plates") -> None:
@@ -109,14 +116,19 @@ class StorageService:
                 
             logger.info("Initial database files created successfully")
             
+            # Initialize SQL repository
+            await self.sql_repository.initialize()
+            logger.info("SQL repository initialized")
+            
             # Start background save task
             self.task = asyncio.create_task(self._periodic_save())
             
             self.initialization_complete = True
             
-            logger.info("Storage service initialized")
+            logger.info("Storage service initialized with dual JSON/SQL storage")
             logger.info("License plate data will be saved to: %s", self.session_file)
             logger.info("Enhanced results will be saved to: %s", self.enhanced_session_file)
+            logger.info("Database storage enabled for persistent data")
             
         except Exception as e:
             logger.error(f"Error initializing storage service: {e}")
@@ -278,7 +290,7 @@ class StorageService:
             return False
     
     async def add_detections(self, detections: List[Dict[str, Any]]) -> None:
-        """Add detections to the database"""
+        """Add detections to both JSON and SQL storage"""
         if not detections:
             logger.debug("No detections to add")
             return
@@ -288,7 +300,7 @@ class StorageService:
             return
 
         async with self.storage_lock:
-            logger.debug(f"Adding {len(detections)} detections to database")
+            logger.info(f"Adding {len(detections)} detections to storage (JSON + SQL)")
             
             # Add timestamp and ID if missing
             for detection in detections:
@@ -303,10 +315,21 @@ class StorageService:
                 if "detection_id" not in detection:
                     detection["detection_id"] = str(uuid.uuid4())
             
+            # Save to JSON storage (existing logic)
             self.plate_database["detections"].extend(detections)
-            logger.debug(f"Total detections in database: {len(self.plate_database['detections'])}")
+            logger.debug(f"Total detections in JSON database: {len(self.plate_database['detections'])}")
+            self.detections_saved_to_json += len(detections)
 
-            # Don't force immediate save - just mark as pending
+            # Save to SQL database
+            try:
+                await self.sql_repository.add_detections(detections)
+                self.detections_saved_to_db += len(detections)
+                logger.info(f"Successfully saved {len(detections)} detections to SQL database")
+            except Exception as e:
+                logger.error(f"Error saving detections to SQL database: {e}")
+                logger.error(traceback.format_exc())
+
+            # Don't force immediate save - just mark as pending for JSON
             self.pending_save = True
             
             # Log details of first detection for debugging
@@ -315,6 +338,7 @@ class StorageService:
                 logger.info(f"Added detection: ID={first_detection.get('detection_id', 'unknown')}, "
                            f"Plate={first_detection.get('plate_text', 'unknown')}, "
                            f"Confidence={first_detection.get('confidence', 0)}")
+                logger.info(f"Storage stats: JSON={self.detections_saved_to_json}, SQL={self.detections_saved_to_db}")
 
     async def add_enhanced_results(self, results: List[Dict[str, Any]]) -> None:
         """Add enhanced results to the database"""

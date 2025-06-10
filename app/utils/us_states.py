@@ -65,6 +65,55 @@ COMMON_WORDS = [
     "GRAND", "CANYON", "TREASURE", "ALOHA", "GREAT", "LAKES"
 ]
 
+# Dealership and frame text to filter out
+DEALER_FRAME_WORDS = [
+    # Dealership names and types
+    "DEALER", "DEALERSHIP", "AUTO", "GROUP", "MOTORS", "AUTOMOTIVE", "SALES", "SERVICE",
+    "TOYOTA", "HONDA", "FORD", "CHEVROLET", "CHEVY", "NISSAN", "HYUNDAI", "KIA", 
+    "SUBARU", "DODGE", "JEEP", "LEXUS", "AUDI", "BMW", "MERCEDES", "VOLKSWAGEN",
+    "VOLVO", "MAZDA", "ACURA", "INFINITI", "CADILLAC", "LINCOLN", "BUICK", "GMC",
+    "CHRYSLER", "FIAT", "TESLA", "PORSCHE", "FERRARI", "LAMBORGHINI", "MASERATI",
+    
+    # Services and departments
+    "PARTS", "COLLISION", "REPAIR", "CENTER", "FINANCING", "LEASE", "LEASING",
+    "RENTAL", "USED", "NEW", "CERTIFIED", "PRE-OWNED", "WARRANTY", "MAINTENANCE",
+    
+    # Educational institutions
+    "UNIVERSITY", "COLLEGE", "SCHOOL", "ALUMNI", "PROUD", "SUPPORT", "OWNER",
+    "GRADUATE", "STUDENT", "EDUCATION", "ACADEMY", "INSTITUTE",
+    
+    # Contact and web information
+    "VISIT", "CALL", "WWW", "HTTP", "HTTPS", ".COM", ".NET", ".ORG", ".EDU",
+    "PHONE", "EMAIL", "CONTACT", "INFO", "WEBSITE", "ONLINE",
+    
+    # Location and directions
+    "DRIVE", "DRIVING", "ROAD", "STREET", "AVE", "AVENUE", "BLVD", "BOULEVARD",
+    "HWY", "HIGHWAY", "ROUTE", "EXIT", "NORTH", "SOUTH", "EAST", "WEST",
+    
+    # Frame and plate related
+    "TAG", "FRAME", "HOLDER", "LICENSE", "PLATE", "REGISTRATION", "TAGS",
+    "BRACKET", "MOUNT", "COVER", "PROTECTOR",
+    
+    # Generic promotional text
+    "PROUD", "OWNER", "MEMBER", "CUSTOMER", "SATISFACTION", "QUALITY", "BEST",
+    "AWARD", "WINNING", "FAMILY", "FRIENDLY", "COMMUNITY", "LOCAL", "HOMETOWN"
+]
+
+# State slogans and mottos to filter out
+STATE_SLOGANS = [
+    # Common state slogans that appear on plates
+    "LONE STAR STATE", "GOLDEN STATE", "SUNSHINE STATE", "EMPIRE STATE",
+    "GARDEN STATE", "KEYSTONE STATE", "VOLUNTEER STATE", "PEACH STATE",
+    "FIRST STATE", "LAST FRONTIER", "GRAND CANYON STATE", "TREASURE STATE",
+    "ALOHA STATE", "GREAT LAKES STATE", "LAND OF LINCOLN", "SHOW ME STATE",
+    "BLUEGRASS STATE", "PELICAN STATE", "PINE TREE STATE", "OLD LINE STATE",
+    "BAY STATE", "WOLVERINE STATE", "NORTH STAR STATE", "MAGNOLIA STATE",
+    "BIG SKY COUNTRY", "CORNHUSKER STATE", "SILVER STATE", "LIVE FREE OR DIE",
+    "OCEAN STATE", "PALMETTO STATE", "MOUNT RUSHMORE STATE", "VOLUNTEER STATE",
+    "BEEHIVE STATE", "GREEN MOUNTAIN STATE", "OLD DOMINION", "EVERGREEN STATE",
+    "MOUNTAIN STATE", "BADGER STATE", "EQUALITY STATE"
+]
+
 # State-specific regex patterns for validation
 # Format: [regex pattern, description]
 STATE_PATTERNS = {

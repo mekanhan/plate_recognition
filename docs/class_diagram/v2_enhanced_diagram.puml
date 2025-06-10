@@ -1,0 +1,303 @@
+@startuml V2 Enhanced License Plate Recognition Architecture
+
+!define INTERFACE_COLOR #E1F5FE
+!define SERVICE_COLOR #E8F5E8
+!define REPOSITORY_COLOR #FFF3E0
+!define FACTORY_COLOR #F3E5F5
+!define MODEL_COLOR #FCE4EC
+
+title License Plate Recognition System - V2 Enhanced Architecture
+
+package "Core Interfaces" INTERFACE_COLOR {
+    interface Camera {
+        +get_frame(): Tuple[np.ndarray, float]
+        +initialize(camera_id: int, width: int, height: int): void
+        +shutdown(): void
+    }
+    
+    interface LicensePlateDetector {
+        +detect_and_recognize(image: np.ndarray): Tuple[List[Dict], np.ndarray]
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    interface LicensePlateEnhancer {
+        +enhance_detection(detection: Dict): Dict
+        +initialize(known_plates_path: str, storage_service): void
+        +shutdown(): void
+    }
+    
+    interface DetectionRepository {
+        +add_detections(detections: List[Dict]): void
+        +get_detections(): List[Dict]
+        +get_detection_by_id(detection_id: str): Optional[Dict]
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    interface EnhancementRepository {
+        +add_enhanced_results(results: List[Dict]): void
+        +get_enhanced_results(): List[Dict]
+        +get_enhanced_result_by_id(enhanced_id: str): Optional[Dict]
+        +initialize(): void
+        +shutdown(): void
+    }
+}
+
+package "Service Layer" SERVICE_COLOR {
+    class CameraService {
+        -camera_id: int
+        -width: int
+        -height: int
+        -cap: cv2.VideoCapture
+        +get_frame(): Tuple[np.ndarray, float]
+        +initialize(camera_id: int, width: int, height: int): void
+        +shutdown(): void
+    }
+    
+    class DetectionServiceV2 {
+        -camera: Camera
+        -detector: LicensePlateDetector
+        -detection_repository: DetectionRepository
+        -enhancer: LicensePlateEnhancer
+        -enhancement_repository: EnhancementRepository
+        -video_recording_service: VideoRecordingService
+        -last_detections: List[Dict]
+        -frame_count: int
+        +process_frame(frame: np.ndarray): Tuple[np.ndarray, List[Dict]]
+        +get_latest_detections(): List[Dict]
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    class LicensePlateRecognitionService {
+        -detector_model: YOLO
+        -ocr_reader: easyocr.Reader
+        -device: str
+        -char_confusion: Dict
+        +detect_and_recognize(image: np.ndarray): Tuple[List[Dict], np.ndarray]
+        +_recognize_plate_text(plate_image: np.ndarray): Dict
+        +_process_ocr_results_enhanced(ocr_result, image_shape): Tuple
+        +_apply_character_corrections(text: str, state_code: str): str
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    class EnhancerService {
+        -known_plates: Dict
+        -storage_service: EnhancementRepository
+        -confidence_thresholds: Dict
+        +enhance_detection(detection: Dict): Dict
+        +_match_known_plates(plate_text: str): Optional[Dict]
+        +_calculate_enhanced_confidence(detection: Dict, match: Dict): float
+        +initialize(known_plates_path: str, storage_service): void
+        +shutdown(): void
+    }
+    
+    class VideoRecordingService {
+        -detection_repository: DetectionRepository
+        -video_repository: VideoRepository
+        -recorder: VideoRecorder
+        -current_segment_id: str
+        -base_video_dir: str
+        +add_frame(frame: np.ndarray, timestamp: float): void
+        +trigger_recording(detection_id: str): void
+        +stop_recording(): void
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    class VideoRecorder {
+        -frame_buffer: List[Tuple]
+        -buffer_seconds: int
+        -post_event_seconds: int
+        -fps: int
+        -recording: bool
+        -current_output: cv2.VideoWriter
+        +add_frame(frame: np.ndarray, timestamp: float): bool
+        +start_recording(video_path: str): Tuple
+        +stop_recording(): Tuple
+    }
+}
+
+package "Repository Layer" REPOSITORY_COLOR {
+    class SQLiteDetectionRepository {
+        -session_factory: AsyncSessionFactory
+        -initialization_complete: bool
+        +add_detections(detections: List[Dict]): void
+        +get_detections(): List[Dict]
+        +get_detection_by_id(detection_id: str): Optional[Dict]
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    class JSONDetectionRepository {
+        -license_plates_dir: str
+        -session_file: str
+        -plate_database: Dict
+        -storage_lock: asyncio.Lock
+        +add_detections(detections: List[Dict]): void
+        +get_detections(): List[Dict]
+        +get_detection_by_id(detection_id: str): Optional[Dict]
+        +initialize(license_plates_dir: str): void
+        +shutdown(): void
+    }
+    
+    class CompositeDetectionRepository {
+        -sql_repository: DetectionRepository
+        -json_repository: DetectionRepository
+        +add_detections(detections: List[Dict]): void
+        +get_detections(): List[Dict]
+        +get_detection_by_id(detection_id: str): Optional[Dict]
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    class SQLiteEnhancementRepository {
+        -session_factory: AsyncSessionFactory
+        -initialization_complete: bool
+        +add_enhanced_results(results: List[Dict]): void
+        +get_enhanced_results(): List[Dict]
+        +get_enhanced_result_by_id(enhanced_id: str): Optional[Dict]
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    class JSONEnhancementRepository {
+        -enhanced_plates_dir: str
+        -session_file: str
+        -enhanced_database: Dict
+        -storage_lock: asyncio.Lock
+        +add_enhanced_results(results: List[Dict]): void
+        +get_enhanced_results(): List[Dict]
+        +get_enhanced_result_by_id(enhanced_id: str): Optional[Dict]
+        +initialize(enhanced_plates_dir: str): void
+        +shutdown(): void
+    }
+    
+    class CompositeEnhancementRepository {
+        -sql_repository: EnhancementRepository
+        -json_repository: EnhancementRepository
+        +add_enhanced_results(results: List[Dict]): void
+        +get_enhanced_results(): List[Dict]
+        +get_enhanced_result_by_id(enhanced_id: str): Optional[Dict]
+        +initialize(): void
+        +shutdown(): void
+    }
+    
+    class SQLiteVideoRepository {
+        -session_factory: AsyncSessionFactory
+        +add_video_segment(): str
+        +update_video_segment(): void
+        +get_video_segment_by_id(video_id: str): Optional[Dict]
+        +get_video_segment_by_detection_id(detection_id: str): Optional[Dict]
+        +cleanup_old_videos(days: int): int
+    }
+}
+
+package "Factory & Management" FACTORY_COLOR {
+    class ServiceFactory {
+        -_services: Dict
+        -_repositories: Dict
+        -_config: Dict
+        +set_config(config: Dict): void
+        +create_camera(): Camera
+        +create_detector(): LicensePlateDetector
+        +create_enhancer(): LicensePlateEnhancer
+        +create_detection_repository(): DetectionRepository
+        +create_enhancement_repository(): EnhancementRepository
+        +create_video_repository(): SQLiteVideoRepository
+        +create_video_recording_service(): VideoRecordingService
+        +shutdown_all(): void
+    }
+}
+
+package "Data Models" MODEL_COLOR {
+    class Detection {
+        +id: str
+        +timestamp: datetime
+        +plate_text: str
+        +confidence: float
+        +box: List[int]
+        +state: str
+        +frame_id: int
+        +video_path: str
+    }
+    
+    class EnhancedResult {
+        +id: str
+        +original_detection_id: str
+        +plate_text: str
+        +confidence: float
+        +match_type: str
+        +confidence_category: str
+        +enhanced_image_path: str
+        +timestamp: datetime
+    }
+    
+    class VideoSegment {
+        +id: str
+        +file_path: str
+        +start_time: datetime
+        +end_time: datetime
+        +duration_seconds: float
+        +file_size_bytes: int
+        +resolution: str
+        +detection_ids: str
+        +archived: bool
+    }
+}
+
+' Interface Implementations
+Camera <|-- CameraService
+LicensePlateDetector <|-- LicensePlateRecognitionService
+LicensePlateEnhancer <|-- EnhancerService
+DetectionRepository <|-- SQLiteDetectionRepository
+DetectionRepository <|-- JSONDetectionRepository
+DetectionRepository <|-- CompositeDetectionRepository
+EnhancementRepository <|-- SQLiteEnhancementRepository
+EnhancementRepository <|-- JSONEnhancementRepository
+EnhancementRepository <|-- CompositeEnhancementRepository
+
+' Service Dependencies
+DetectionServiceV2 --> Camera
+DetectionServiceV2 --> LicensePlateDetector
+DetectionServiceV2 --> DetectionRepository
+DetectionServiceV2 --> LicensePlateEnhancer
+DetectionServiceV2 --> EnhancementRepository
+DetectionServiceV2 --> VideoRecordingService
+
+VideoRecordingService --> DetectionRepository
+VideoRecordingService --> SQLiteVideoRepository
+VideoRecordingService --> VideoRecorder
+
+EnhancerService --> EnhancementRepository
+
+' Composite Pattern
+CompositeDetectionRepository --> SQLiteDetectionRepository
+CompositeDetectionRepository --> JSONDetectionRepository
+CompositeEnhancementRepository --> SQLiteEnhancementRepository
+CompositeEnhancementRepository --> JSONEnhancementRepository
+
+' Factory Dependencies
+ServiceFactory --> Camera
+ServiceFactory --> LicensePlateDetector
+ServiceFactory --> LicensePlateEnhancer
+ServiceFactory --> DetectionRepository
+ServiceFactory --> EnhancementRepository
+ServiceFactory --> VideoRecordingService
+
+' Data Model Relationships
+SQLiteDetectionRepository --> Detection
+SQLiteEnhancementRepository --> EnhancedResult
+SQLiteVideoRepository --> VideoSegment
+
+note right of CompositeDetectionRepository : Dual storage pattern:\n- Writes to both SQL and JSON\n- SQL for queries, JSON for debugging\n- Automatic failover support
+
+note right of DetectionServiceV2 : Main orchestrator:\n- Processes every 5th frame\n- Triggers video recording\n- Manages dual storage\n- Coordinates enhancement
+
+note right of LicensePlateRecognitionService : Enhanced recognition:\n- YOLO + EasyOCR integration\n- Texas plate improvements\n- Character confusion correction\n- Confidence-based color coding
+
+note right of VideoRecordingService : Enhanced video recording:\n- Pre/post event capture\n- Confidence overlays\n- System metrics display\n- MP4V codec with 15 FPS
+
+@enduml

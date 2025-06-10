@@ -144,11 +144,39 @@ class DetectionServiceV2:
                     # Keep only the 10 most recent detections
                     self.last_detections = self.last_detections[-10:]
             
-            # Process each detection for storage
+            # Process each detection for storage and video recording
             if valid_detections and self.detection_repository:
                 try:
                     logger.info(f"Sending {len(valid_detections)} detections to storage repository")
                     await self.detection_repository.add_detections(valid_detections)
+                    
+                    # Trigger video recording for each detection if video service is available
+                    if self.video_recording_service:
+                        for detection in valid_detections:
+                            try:
+                                detection_id = detection.get("detection_id")
+                                if detection_id:
+                                    logger.info(f"Triggering video recording for detection {detection_id}")
+                                    await self.video_recording_service.trigger_recording(detection_id)
+                            except Exception as e:
+                                logger.error(f"Error triggering video recording: {e}")
+                    
+                    # Process with enhancer if available
+                    if self.enhancer and self.enhancement_repository:
+                        for detection in valid_detections:
+                            try:
+                                enhanced_result = await self.enhancer.enhance_detection(detection)
+                                if enhanced_result:
+                                    enhanced_result["detection_id"] = detection.get("detection_id")
+                                    enhanced_result["original_detection_id"] = detection.get("detection_id")
+                                    enhanced_result["timestamp"] = time.time()
+                                    enhanced_result["enhanced_at"] = time.time()
+                                    
+                                    await self.enhancement_repository.add_enhanced_results([enhanced_result])
+                                    logger.info(f"Enhanced detection {detection.get('detection_id')}: {enhanced_result.get('plate_text', '')}")
+                            except Exception as e:
+                                logger.error(f"Error enhancing detection: {e}")
+                                
                 except Exception as e:
                     logger.error(f"Error saving detections to repository: {e}")
                     logger.error(traceback.format_exc())

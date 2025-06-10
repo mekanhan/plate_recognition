@@ -1,9 +1,27 @@
-version: "3.9"
+# docker-compose.yml example
+version: '3'
+
 services:
-  app:
+  lpr-app:
     build: .
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
     volumes:
-      - .:/app
+      - ./data:/app/data
+      - ./logs:/app/logs
     ports:
-      - "8000:8000"
+      - "8001:8001"
+    restart: unless-stopped
+    depends_on:
+      - lpr-backup
+
+  lpr-backup:
+    image: alpine
+    volumes:
+      - ./data:/data
+    command: |
+      sh -c 'while true; do
+        timestamp=$$(date +%Y%m%d_%H%M%S)
+        cp /data/license_plates.db /data/backups/license_plates_$$timestamp.db
+        find /data/backups -name "license_plates_*.db" -mtime +7 -delete
+        sleep 86400
+      done'
+    restart: unless-stopped

@@ -4,17 +4,11 @@ schema: v1
 rules:
   - name: Reference Existing Documentation
     rule: >-
-      Always reference the existing documentation files in the project:
+      Always reference existing documentation in the `docs/` folder instead of recreating its content.
 
-      1. docs/developer_resources.md - For specific tools, frameworks, and
-      resources with their URLs
+      Use the file names when relevant, and consult the appropriate document based on the topic (e.g., architecture, coding standards, implementation plans).
 
-      2. docs/rules.md - For code quality standards, file handling procedures,
-      and interaction guidelines
-
-      3. docs/code_structure_and_system_architecture_overview.md - For
-      understanding the code structure and system architecture
-
-      These are documentation files, not rules to be recreated. Consult these
-      documents directly when providing assistance and refer to them by name
-      when relevant.
+      The `docs/` folder is the source of truth. Cite documents by name when providing assistance.
+      If the user asks for information that is already documented, point them to the relevant document instead of repeating the content.
+      This ensures consistency and avoids duplication of information.
+      For example, if the user asks about the architecture of the system, refer them to `docs/developer_resources.md` or `docs/technicals/architecture.md` as appropriate.

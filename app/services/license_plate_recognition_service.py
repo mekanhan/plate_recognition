@@ -1,6 +1,8 @@
 """
 License plate recognition service that uses specialized models for US license plates.
 """
+# might need to remove this file.
+
 import cv2
 import numpy as np
 import torch
@@ -40,7 +42,37 @@ class LicensePlateRecognitionService:
             '2': ['Z']        # 2 is often confused with Z
         }
         
+    """
+    Service for detecting and recognizing license plates using specialized models.
+    """
+
+    def __init__(self):
+        """Initialize the license plate recognition service."""
+        self.detector_model = None
+        self.ocr_reader = None
+        self.initialized = False
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+        # Character confusion matrix for correction
+        self.char_confusion = {
+            'I': ['T', '1'],  # I is often confused with T or 1
+            'T': ['I'],       # T is often confused with I
+            '0': ['O', 'D'],  # 0 is often confused with O or D
+            'O': ['0', 'D'],  # O is often confused with 0 or D
+            '8': ['B'],       # 8 is often confused with B
+            'B': ['8'],       # B is often confused with 8
+            '5': ['S'],       # 5 is often confused with S
+            'S': ['5'],       # S is often confused with 5
+            '1': ['I', 'L'],  # 1 is often confused with I or L
+            'Z': ['2'],       # Z is often confused with 2
+            '2': ['Z']        # 2 is often confused with Z
+        }
+
         # Invalid words that shouldn't appear in license plates
+        self.invalid_words = ["ZANE", "FAKE", "SAMPLE", "TEST", "DEMO"]
+
+    async def initialize(self):
+        """Initialize models and resources."""
         self.invalid_words = ["ZANE", "FAKE", "SAMPLE", "TEST", "DEMO"]
         
     async def initialize(self):
@@ -444,3 +476,33 @@ class LicensePlateRecognitionService:
             
         return False, 0.3  # Low confidence for non-matching patterns
 
+
+
+
+    async def shutdown(self):
+        """
+        Shutdown the license plate recognition service and release resources.
+        """
+        if not self.initialized:
+            return
+            
+        # Release YOLO model resources
+        if self.detector_model is not None:
+            # Clear CUDA memory if using GPU
+            if self.device == 'cuda':
+                try:
+                    import torch
+                    torch.cuda.empty_cache()
+                except Exception as e:
+                    print(f"Error clearing CUDA cache: {e}")
+            
+            # Set model to None to help garbage collection
+            self.detector_model = None
+        
+        # Clear OCR reader
+        self.ocr_reader = None
+        
+        # Mark as uninitialized
+        self.initialized = False
+        
+        print("License plate recognition service shutdown")

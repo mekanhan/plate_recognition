@@ -1,141 +1,1379 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Latest Detections - License Plate Recognition</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .menu {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .menu a {
-            background: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-        .menu a:hover {
-            background: #45a049;
-        }
-        .detections-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        .detections-table th, .detections-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .detections-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        .detections-table tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        .detections-table tr:hover {
-            background-color: #f2f2f2;
-        }
-        .confidence-high {
-            color: green;
-            font-weight: bold;
-        }
-        .confidence-medium {
-            color: orange;
-        }
-        .confidence-low {
-            color: red;
-        }
-        .no-detections {
-            padding: 20px;
-            background-color: #f8f8f8;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        .refresh-button {
-            background: #2196F3;
-            color: white;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 20px;
-        }
-        .refresh-button:hover {
-            background: #0b7dda;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Latest License Plate Detections</h1>
-        
-        <div class="menu">
-            <a href="/">Home</a>
-            <a href="/stream">Live Stream</a>
-            <a href="/results/latest">Latest Results</a>
-            <a href="/results/all">All Detections</a>
-            <a href="/results/enhanced">Enhanced Results</a>
-        </div>
-        
-        {% if detections %}
-        <table class="detections-table">
-            <thead>
-                <tr>
-                    <th>Plate</th>
-                    <th>Confidence</th>
-                    <th>Time</th>
-                    <th>State</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for detection in detections %}
-                <tr>
-                    <td>{{ detection.plate_text }}</td>
-                    <td class="
-                        {% if detection.confidence >= 0.7 %}confidence-high
-                        {% elif detection.confidence >= 0.4 %}confidence-medium
-                        {% else %}confidence-low{% endif %}
-                    ">
-                        {{ "%.2f"|format(detection.confidence) }}
-                    </td>
-                    <td>{{ detection.timestamp|fromtimestamp }}</td>
-                    <td>{{ detection.state or "Unknown" }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="no-detections">
-            <h3>No license plate detections found</h3>
-            <p>Start the camera stream and wait for license plates to be detected</p>
-        </div>
-        {% endif %}
-        
-        <a href="/results/latest" class="refresh-button">Refresh Results</a>
-    </div>
-    
-    <script>
-        // Auto refresh every 5 seconds
-        setTimeout(function() {
-            window.location.reload();
-        }, 5000);
-    </script>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Detection Results{% endblock %}
+{% block breadcrumb_current %}Detection Results{% endblock %}
+{% block page_title %}License Plate Detection Results{% endblock %}
+{% block page_subtitle %}Browse and analyze detected license plates{% endblock %}
+
+{% block page_actions %}
+<div class="flex items-center gap-3">
+	<button id="export-results" class="btn btn-outline">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+			<polyline points="7,10 12,15 17,10"></polyline>
+			<line x1="12" y1="15" x2="12" y2="3"></line>
+		</svg>
+		Export CSV
+	</button>
+	<button id="refresh-results" class="btn btn-primary">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<polyline points="23,4 23,10 17,10"></polyline>
+			<polyline points="1,20 1,14 7,14"></polyline>
+			<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+		</svg>
+		Refresh
+	</button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.search-filters {
+	background: var(--surface-light);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius-lg);
+	padding: var(--space-6);
+	margin-bottom: var(--space-6);
+}
+
+.filter-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: var(--space-4);
+	align-items: end;
+}
+
+.filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.filter-label {
+	font-weight: 500;
+	color: var(--gray-700);
+	font-size: 0.875rem;
+}
+
+.filter-input {
+	padding: var(--space-2) var(--space-3);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius);
+	background: var(--surface-light);
+}
+
+.filter-input:focus {
+	outline: none;
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.results-summary {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: var(--space-4);
+	padding: var(--space-4);
+	background: var(--gray-50);
+	border-radius: var(--radius-lg);
+}
+
+.results-count {
+	font-weight: 600;
+	color: var(--gray-900);
+}
+
+.results-actions {
+	display: flex;
+	gap: var(--space-2);
+}
+
+.detection-card {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: var(--space-4);
+	align-items: center;
+	padding: var(--space-4);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius-lg);
+	background: var(--surface-light);
+	margin-bottom: var(--space-3);
+	transition: all var(--transition-fast);
+}
+
+.detection-card:hover {
+	box-shadow: var(--shadow-md);
+	border-color: var(--primary);
+	transform: translateY(-1px);
+}
+
+.detection-thumbnail {
+	width: 80px;
+	height: 60px;
+	border-radius: var(--radius);
+	background: var(--gray-200);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	color: var(--gray-600);
+	border: 2px solid var(--border-light);
+}
+
+.detection-info {
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.detection-plate {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--gray-900);
+	font-family: var(--font-mono);
+	letter-spacing: 0.05em;
+}
+
+.detection-meta {
+	display: flex;
+	gap: var(--space-4);
+	font-size: 0.875rem;
+	color: var(--gray-600);
+}
+
+.detection-time {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.detection-location {
+	display: flex;
+	align-items: center;
+	gap: var(--space-1);
+}
+
+.detection-stats {
+	display: flex;
+	flex-direction: column;
+	align-items: end;
+	gap: var(--space-2);
+}
+
+.confidence-badge {
+	padding: var(--space-1) var(--space-3);
+	border-radius: var(--radius-full);
+	font-size: 0.875rem;
+	font-weight: 600;
+	text-align: center;
+	min-width: 60px;
+}
+
+.confidence-high {
+	background: var(--success);
+	color: white;
+}
+
+.confidence-medium {
+	background: var(--warning);
+	color: white;
+}
+
+.confidence-low {
+	background: var(--danger);
+	color: white;
+}
+
+.state-badge {
+	padding: var(--space-1) var(--space-2);
+	border-radius: var(--radius);
+	font-size: 0.75rem;
+	font-weight: 500;
+	background: var(--gray-100);
+	color: var(--gray-700);
+}
+
+.pagination {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--space-2);
+	margin-top: var(--space-8);
+}
+
+.pagination-btn {
+	padding: var(--space-2) var(--space-3);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius);
+	background: var(--surface-light);
+	color: var(--gray-700);
+	text-decoration: none;
+	transition: all var(--transition-fast);
+}
+
+.pagination-btn:hover {
+	background: var(--primary);
+	color: white;
+	border-color: var(--primary);
+	text-decoration: none;
+}
+
+.pagination-btn.active {
+	background: var(--primary);
+	color: white;
+	border-color: var(--primary);
+}
+
+.pagination-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.no-results {
+	text-align: center;
+	padding: var(--space-8);
+	color: var(--gray-600);
+}
+
+.no-results-icon {
+	width: 64px;
+	height: 64px;
+	margin: 0 auto var(--space-4);
+	color: var(--gray-400);
+}
+
+.empty-state {
+	text-align: center;
+	padding: var(--space-12);
+	background: var(--gray-50);
+	border-radius: var(--radius-lg);
+	border: 2px dashed var(--border-light);
+}
+
+[data-theme="dark"] .search-filters {
+	background: var(--surface-dark);
+	border-color: var(--border-dark);
+}
+
+[data-theme="dark"] .filter-label {
+	color: var(--gray-300);
+}
+
+[data-theme="dark"] .filter-input {
+	background: var(--surface-darker);
+	border-color: var(--border-dark);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .detection-card {
+	background: var(--surface-dark);
+	border-color: var(--border-dark);
+}
+
+[data-theme="dark"] .detection-plate {
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .detection-meta {
+	color: var(--gray-400);
+}
+
+[data-theme="dark"] .results-summary {
+	background: var(--gray-800);
+}
+
+[data-theme="dark"] .results-count {
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .empty-state {
+	background: var(--gray-800);
+	border-color: var(--border-dark);
+}
+
+/* Enhanced Search Styles */
+.search-input-container {
+	margin-bottom: var(--space-6);
+}
+
+.search-input-wrapper {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--space-2);
+}
+
+.search-input {
+	padding: var(--space-3) var(--space-4);
+	border: 2px solid var(--border-light);
+	border-radius: var(--radius-lg);
+	background: var(--surface-light);
+	font-size: 1rem;
+	transition: all var(--transition-fast);
+	padding-right: 80px; /* Space for loading/clear buttons */
+}
+
+.search-input:focus {
+	outline: none;
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+	background: white;
+}
+
+.search-input.has-content {
+	border-color: var(--primary);
+}
+
+.search-options {
+	display: flex;
+	gap: var(--space-4);
+	margin-top: var(--space-2);
+}
+
+.search-option {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	font-size: 0.875rem;
+	color: var(--gray-600);
+	cursor: pointer;
+	user-select: none;
+}
+
+.search-option input[type="checkbox"] {
+	accent-color: var(--primary);
+}
+
+.search-loading, .search-clear {
+	position: absolute;
+	right: var(--space-3);
+	top: 50%;
+	transform: translateY(-50%);
+	background: none;
+	border: none;
+	color: var(--gray-500);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+}
+
+.search-clear:hover {
+	color: var(--danger);
+}
+
+/* Time Range Buttons */
+.time-range-section {
+	margin-bottom: var(--space-6);
+}
+
+.time-range-buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--space-2);
+	margin-top: var(--space-2);
+}
+
+.time-btn {
+	padding: var(--space-2) var(--space-3);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius);
+	background: var(--surface-light);
+	color: var(--gray-700);
+	font-size: 0.875rem;
+	cursor: pointer;
+	transition: all var(--transition-fast);
+	white-space: nowrap;
+}
+
+.time-btn:hover {
+	background: var(--primary);
+	color: white;
+	border-color: var(--primary);
+}
+
+.time-btn.active {
+	background: var(--primary);
+	color: white;
+	border-color: var(--primary);
+	box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+/* Advanced Filters */
+.advanced-filters {
+	background: var(--gray-50);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius-lg);
+	padding: var(--space-4);
+}
+
+.date-range-inputs, .time-inputs {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.date-separator, .time-separator {
+	color: var(--gray-500);
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+
+.filter-actions {
+	display: flex;
+	gap: var(--space-2);
+}
+
+/* Search Result Highlighting */
+.search-highlight {
+	background: rgba(255, 235, 59, 0.4);
+	padding: 1px 2px;
+	border-radius: 2px;
+	font-weight: 600;
+}
+
+.match-type-indicator {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	font-size: 0.75rem;
+	padding: 2px 6px;
+	border-radius: var(--radius);
+	margin-left: var(--space-2);
+}
+
+.match-type-exact {
+	background: var(--success);
+	color: white;
+}
+
+.match-type-contains {
+	background: var(--warning);
+	color: white;
+}
+
+.match-type-fuzzy {
+	background: var(--info);
+	color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.filter-grid {
+		grid-template-columns: 1fr;
+	}
+	
+	.time-range-buttons {
+		justify-content: center;
+	}
+	
+	.time-btn {
+		flex: 1;
+		min-width: 80px;
+	}
+	
+	.date-range-inputs, .time-inputs {
+		flex-direction: column;
+		align-items: stretch;
+	}
+	
+	.date-separator, .time-separator {
+		text-align: center;
+		margin: var(--space-1) 0;
+	}
+	
+	.filter-actions {
+		flex-direction: column;
+	}
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .search-input {
+	background: var(--surface-darker);
+	border-color: var(--border-dark);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .search-input:focus {
+	background: var(--surface-dark);
+}
+
+[data-theme="dark"] .search-option {
+	color: var(--gray-400);
+}
+
+[data-theme="dark"] .time-btn {
+	background: var(--surface-dark);
+	border-color: var(--border-dark);
+	color: var(--gray-300);
+}
+
+[data-theme="dark"] .time-btn:hover {
+	background: var(--primary);
+	color: white;
+	border-color: var(--primary);
+}
+
+[data-theme="dark"] .time-btn.active {
+	background: var(--primary);
+	color: white;
+	border-color: var(--primary);
+	box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+	transform: none;
+}
+
+[data-theme="dark"] .advanced-filters {
+	background: var(--surface-darker);
+	border-color: var(--border-dark);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Enhanced Search and Filters -->
+<div class="search-filters">
+	<!-- Search Input with Real-time Search -->
+	<div class="search-input-container">
+		<label class="filter-label">Search License Plate</label>
+		<div class="search-input-wrapper">
+			<input type="text" id="search-plate" class="search-input" placeholder="Enter plate number... (e.g., ABC123, ABC1*3)" autocomplete="off">
+			<div class="search-options">
+				<label class="search-option">
+					<input type="checkbox" id="fuzzy-search">
+					<span>Smart Search (OCR errors)</span>
+				</label>
+				<label class="search-option">
+					<input type="checkbox" id="exact-search">
+					<span>Exact Match</span>
+				</label>
+			</div>
+			<div class="search-loading" id="search-loading" style="display: none;">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+					<path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round">
+						<animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" values="0 12 12;360 12 12"/>
+					</path>
+				</svg>
+			</div>
+			<button class="search-clear" id="search-clear" style="display: none;">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			</button>
+		</div>
+	</div>
+
+	<!-- Quick Time Range Filters -->
+	<div class="time-range-section">
+		<label class="filter-label">Quick Time Filters</label>
+		<div class="time-range-buttons">
+			<button class="time-btn" data-range="last_hour">Last Hour</button>
+			<button class="time-btn" data-range="today">Today</button>
+			<button class="time-btn" data-range="yesterday">Yesterday</button>
+			<button class="time-btn" data-range="last_24h">Last 24h</button>
+			<button class="time-btn" data-range="this_week">This Week</button>
+			<button class="time-btn" data-range="last_week">Last Week</button>
+			<button class="time-btn" data-range="this_month">This Month</button>
+			<button class="time-btn" data-range="last_7d">Last 7 Days</button>
+		</div>
+	</div>
+
+	<!-- Advanced Filters -->
+	<div class="advanced-filters">
+		<div class="filter-grid">
+			<div class="filter-group">
+				<label class="filter-label">Custom Date Range</label>
+				<div class="date-range-inputs">
+					<input type="date" id="date-from" class="filter-input" placeholder="From date">
+					<span class="date-separator">to</span>
+					<input type="date" id="date-to" class="filter-input" placeholder="To date">
+				</div>
+			</div>
+			<div class="filter-group">
+				<label class="filter-label">Time of Day</label>
+				<div class="time-inputs">
+					<input type="time" id="start-time" class="filter-input" placeholder="Start time">
+					<span class="time-separator">to</span>
+					<input type="time" id="end-time" class="filter-input" placeholder="End time">
+				</div>
+			</div>
+			<div class="filter-group">
+				<label class="filter-label">Min Confidence</label>
+				<select id="confidence-filter" class="filter-input">
+					<option value="">All Confidence Levels</option>
+					<option value="0.9">Very High (90%+)</option>
+					<option value="0.7">High (70%+)</option>
+					<option value="0.5">Medium (50%+)</option>
+					<option value="0.3">Low (30%+)</option>
+				</select>
+			</div>
+			<div class="filter-group">
+				<label class="filter-label">Actions</label>
+				<div class="filter-actions">
+					<button id="apply-filters" class="btn btn-primary">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polygon points="22,3 2,3 10,12.46 10,19 14,21 14,12.46 22,3"></polygon>
+						</svg>
+						Apply Filters
+					</button>
+					<button id="clear-filters" class="btn btn-outline">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+						Clear All
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Results Summary -->
+<div class="results-summary">
+	<div class="results-count" id="results-count">
+		{% if detections %}
+			Showing {{ detections|length }} detection{{ detections|length|pluralize }}
+		{% else %}
+			No detections found
+		{% endif %}
+	</div>
+	<div class="results-actions">
+		<select id="sort-by" class="filter-input">
+			<option value="timestamp">Sort by Time</option>
+			<option value="confidence">Sort by Confidence</option>
+			<option value="plate_text">Sort by Plate</option>
+		</select>
+		<select id="per-page" class="filter-input">
+			<option value="10">10 per page</option>
+			<option value="25" selected>25 per page</option>
+			<option value="50">50 per page</option>
+			<option value="100">100 per page</option>
+		</select>
+	</div>
+</div>
+
+<!-- Detection Results -->
+<div id="detection-results">
+	{% if detections %}
+		{% for detection in detections %}
+		<div class="detection-card">
+			<div class="detection-thumbnail">
+				{{ detection.plate_text[:3] if detection.plate_text else 'IMG' }}
+			</div>
+			
+			<div class="detection-info">
+				<div class="detection-plate">{{ detection.plate_text or 'Unknown' }}</div>
+				<div class="detection-meta">
+					<div class="detection-time">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10"></circle>
+							<polyline points="12,6 12,12 16,14"></polyline>
+						</svg>
+						{{ detection.timestamp.strftime('%Y-%m-%d %H:%M:%S') if detection.timestamp else 'Unknown time' }}
+					</div>
+					<div class="detection-location">
+						<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+							<circle cx="12" cy="10" r="3"></circle>
+						</svg>
+						{{ detection.state or 'Unknown State' }}
+					</div>
+				</div>
+			</div>
+			
+			<div class="detection-stats">
+				<div class="confidence-badge 
+					{% if detection.confidence >= 0.7 %}confidence-high
+					{% elif detection.confidence >= 0.4 %}confidence-medium
+					{% else %}confidence-low{% endif %}
+				">
+					{{ "%.1f"|format(detection.confidence * 100) }}%
+				</div>
+				<div class="state-badge">{{ detection.state or 'N/A' }}</div>
+			</div>
+		</div>
+		{% endfor %}
+	{% else %}
+		<div class="empty-state">
+			<svg class="no-results-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+				<polyline points="14,2 14,8 20,8"></polyline>
+				<line x1="16" y1="13" x2="8" y2="13"></line>
+				<line x1="16" y1="17" x2="8" y2="17"></line>
+				<polyline points="10,9 9,9 8,9"></polyline>
+			</svg>
+			<h3>No License Plate Detections Found</h3>
+			<p class="text-gray-600">Start the camera stream to begin detecting license plates, or adjust your search filters.</p>
+			<div class="flex gap-3 justify-center mt-6">
+				<a href="/stream" class="btn btn-primary">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="m22 8-6 4 6 4V8Z"></path>
+						<rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>
+					</svg>
+					Start Live Stream
+				</a>
+				<button id="clear-filters" class="btn btn-outline">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<line x1="18" y1="6" x2="6" y2="18"></line>
+						<line x1="6" y1="6" x2="18" y2="18"></line>
+					</svg>
+					Clear Filters
+				</button>
+			</div>
+		</div>
+	{% endif %}
+</div>
+
+<!-- Pagination -->
+{% if detections %}
+<div class="pagination">
+	<button class="pagination-btn" id="prev-page" disabled>
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<polyline points="15,18 9,12 15,6"></polyline>
+		</svg>
+		Previous
+	</button>
+	<span class="pagination-btn active">1</span>
+	<button class="pagination-btn" id="next-page">
+		Next
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<polyline points="9,18 15,12 9,6"></polyline>
+		</svg>
+	</button>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block page_js %}
+// Enhanced Results Page JavaScript with Real-time Search
+class ResultsPage {
+	constructor() {
+		this.currentPage = 1;
+		this.perPage = 25;
+		this.currentFilters = {};
+		this.autoRefresh = true;
+		this.refreshInterval = 30000; // 30 seconds
+		this.searchTimeout = null;
+		this.searchDebounceMs = 300;
+		this.currentSearchQuery = '';
+		this.activeTimeRange = null;
+		
+		this.init();
+	}
+
+	init() {
+		this.setupEventListeners();
+		this.loadFiltersFromURL();
+		this.startAutoRefresh();
+		
+		// Always load initial detections if no filters were loaded from URL
+		if (!this.currentFilters || Object.keys(this.currentFilters).length === 0) {
+			this.loadDetections({});
+		}
+	}
+
+	setupEventListeners() {
+		// Enhanced search input with real-time search
+		const searchInput = document.getElementById('search-plate');
+		if (searchInput) {
+			// Real-time search with debouncing
+			searchInput.addEventListener('input', (e) => this.handleSearchInput(e));
+			searchInput.addEventListener('keypress', (e) => {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					this.performSearch(true); // Immediate search on Enter
+				}
+			});
+			
+			// Search options
+			document.getElementById('fuzzy-search')?.addEventListener('change', () => {
+				document.getElementById('exact-search').checked = false;
+				this.performSearch();
+			});
+			
+			document.getElementById('exact-search')?.addEventListener('change', () => {
+				document.getElementById('fuzzy-search').checked = false;
+				this.performSearch();
+			});
+		}
+		
+		// Search clear button
+		document.getElementById('search-clear')?.addEventListener('click', () => this.clearSearch());
+		
+		// Time range quick filters
+		document.querySelectorAll('.time-btn').forEach(btn => {
+			btn.addEventListener('click', (e) => this.selectTimeRange(e.target.dataset.range));
+		});
+		
+		// Traditional filter controls
+		document.getElementById('apply-filters')?.addEventListener('click', () => this.applyFilters());
+		document.getElementById('clear-filters')?.addEventListener('click', () => this.clearAllFilters());
+		document.getElementById('refresh-results')?.addEventListener('click', () => this.refreshResults());
+		document.getElementById('export-results')?.addEventListener('click', () => this.exportResults());
+		
+		document.getElementById('sort-by')?.addEventListener('change', () => this.applyFilters());
+		document.getElementById('per-page')?.addEventListener('change', (e) => {
+			this.perPage = parseInt(e.target.value);
+			this.currentPage = 1;
+			this.applyFilters();
+		});
+		
+		// Custom date/time input listeners - clear time range buttons when custom dates are used
+		document.getElementById('date-from')?.addEventListener('change', () => this.clearTimeRangeSelection());
+		document.getElementById('date-to')?.addEventListener('change', () => this.clearTimeRangeSelection());
+		document.getElementById('start-time')?.addEventListener('change', () => this.clearTimeRangeSelection());
+		document.getElementById('end-time')?.addEventListener('change', () => this.clearTimeRangeSelection());
+		
+		// Auto-refresh toggle
+		document.addEventListener('visibilitychange', () => {
+			if (document.hidden) {
+				this.stopAutoRefresh();
+			} else {
+				this.startAutoRefresh();
+			}
+		});
+	}
+
+	loadFiltersFromURL() {
+		const params = new URLSearchParams(window.location.search);
+		
+		if (params.get('plate')) {
+			document.getElementById('search-plate').value = params.get('plate');
+			this.currentSearchQuery = params.get('plate');
+		}
+		if (params.get('from')) {
+			document.getElementById('date-from').value = params.get('from');
+		}
+		if (params.get('to')) {
+			document.getElementById('date-to').value = params.get('to');
+		}
+		if (params.get('start_time')) {
+			document.getElementById('start-time').value = params.get('start_time');
+		}
+		if (params.get('end_time')) {
+			document.getElementById('end-time').value = params.get('end_time');
+		}
+		if (params.get('confidence')) {
+			document.getElementById('confidence-filter').value = params.get('confidence');
+		}
+		if (params.get('sort')) {
+			document.getElementById('sort-by').value = params.get('sort');
+		}
+		if (params.get('limit')) {
+			this.perPage = parseInt(params.get('limit'));
+			document.getElementById('per-page').value = this.perPage;
+		}
+		if (params.get('page')) {
+			this.currentPage = parseInt(params.get('page'));
+		}
+		
+		// Handle search options
+		if (params.get('fuzzy') === 'true') {
+			document.getElementById('fuzzy-search').checked = true;
+			document.getElementById('exact-search').checked = false;
+		} else if (params.get('exact') === 'true') {
+			document.getElementById('exact-search').checked = true;
+			document.getElementById('fuzzy-search').checked = false;
+		}
+		
+		// Handle time range buttons
+		if (params.get('time_range')) {
+			this.activeTimeRange = params.get('time_range');
+			const timeBtn = document.querySelector(`[data-range="${this.activeTimeRange}"]`);
+			if (timeBtn) {
+				timeBtn.classList.add('active');
+			}
+		}
+		
+		// Update search input UI state if there's a plate value
+		if (params.get('plate')) {
+			const searchInput = document.getElementById('search-plate');
+			const clearBtn = document.getElementById('search-clear');
+			searchInput.classList.add('has-content');
+			clearBtn.style.display = 'flex';
+		}
+		
+		// Load detections with initial filters if any are present
+		if (params.toString()) {
+			const filters = {
+				plate: params.get('plate') || '',
+				from_date: params.get('from') || '',  // Map URL 'from' to API 'from_date'
+				to: params.get('to') || '',
+				start_time: params.get('start_time') || '',
+				end_time: params.get('end_time') || '',
+				confidence: params.get('confidence') || '',
+				sort: params.get('sort') || 'timestamp',
+				limit: this.perPage,
+				page: this.currentPage,
+				time_range: params.get('time_range') || ''
+			};
+			
+			// Add search mode flags if plate search is present
+			if (filters.plate) {
+				filters.fuzzy = params.get('fuzzy') === 'true';
+				filters.exact = params.get('exact') === 'true';
+			}
+			
+			// Remove empty filters
+			Object.keys(filters).forEach(key => {
+				if (!filters[key] && filters[key] !== false) delete filters[key];
+			});
+			
+			this.currentFilters = filters;
+			this.loadDetections(filters);
+		} else {
+			// Initialize empty filters if no URL params
+			this.currentFilters = {};
+		}
+	}
+
+	async applyFilters() {
+		const searchValue = document.getElementById('search-plate')?.value?.trim() || '';
+		const fuzzySearch = document.getElementById('fuzzy-search')?.checked || false;
+		const exactSearch = document.getElementById('exact-search')?.checked || false;
+		
+		const filters = {
+			plate: searchValue,
+			from_date: document.getElementById('date-from')?.value || '',
+			to: document.getElementById('date-to')?.value || '',
+			start_time: document.getElementById('start-time')?.value || '',
+			end_time: document.getElementById('end-time')?.value || '',
+			confidence: document.getElementById('confidence-filter')?.value || '',
+			sort: document.getElementById('sort-by')?.value || 'timestamp',
+			limit: this.perPage,
+			page: this.currentPage
+		};
+		
+		// Add search mode flags
+		if (searchValue) {
+			filters.fuzzy = fuzzySearch && !exactSearch;
+			filters.exact = exactSearch;
+		}
+		
+		// Add active time range if any (time range buttons take precedence over custom dates)
+		if (this.activeTimeRange) {
+			filters.time_range = this.activeTimeRange;
+			// Clear custom date fields when using time range buttons
+			delete filters.from_date;
+			delete filters.to;
+		}
+		
+		// Remove empty filters
+		Object.keys(filters).forEach(key => {
+			if (!filters[key] && filters[key] !== false) delete filters[key];
+		});
+		
+		this.currentFilters = filters;
+		this.currentSearchQuery = searchValue;
+		
+		// Update URL without reload (use original names for URL)
+		const urlParams = {
+			plate: filters.plate,
+			from: filters.from_date,  // Map back to 'from' for URL
+			to: filters.to,
+			start_time: filters.start_time,
+			end_time: filters.end_time,
+			confidence: filters.confidence,
+			sort: filters.sort,
+			limit: filters.limit,
+			page: filters.page,
+			fuzzy: filters.fuzzy,
+			exact: filters.exact,
+			time_range: filters.time_range
+		};
+		// Remove empty URL params
+		Object.keys(urlParams).forEach(key => {
+			if (!urlParams[key] && urlParams[key] !== false) delete urlParams[key];
+		});
+		
+		const params = new URLSearchParams(urlParams);
+		window.history.pushState({}, '', `${window.location.pathname}?${params.toString()}`);
+		
+		// Load filtered results via API
+		await this.loadDetections(filters);
+	}
+
+	async clearFilters() {
+		// Delegate to clearAllFilters for consistency
+		this.clearAllFilters();
+	}
+
+	async refreshResults() {
+		await this.loadDetections(this.currentFilters);
+	}
+
+	async loadDetections(filters = {}) {
+		try {
+			// Show loading state
+			this.showLoadingState();
+			
+			// Make API request
+			const params = new URLSearchParams(filters);
+			const response = await fetch(`/results/detections?${params.toString()}`);
+			
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			}
+			
+			const data = await response.json();
+			
+			// Update the results display
+			this.renderResults(data.detections || []);
+			this.updateResultsCount(data.total || 0);
+			this.renderPagination(data.total || 0, data.page || 1, data.limit || this.perPage);
+			
+		} catch (error) {
+			console.error('Error loading detections:', error);
+			this.showErrorState(error.message);
+		}
+	}
+
+	showLoadingState() {
+		const container = document.getElementById('detection-results');
+		if (container) {
+			container.innerHTML = `
+				<div class="empty-state">
+					<div class="loading-spinner" style="margin: 0 auto 1rem; width: 32px; height: 32px;">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+							<path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round">
+								<animateTransform attributeName="transform" type="rotate" dur="1s" repeatCount="indefinite" values="0 12 12;360 12 12"/>
+							</path>
+						</svg>
+					</div>
+					<h3>Loading detections...</h3>
+					<p>Please wait while we fetch your results.</p>
+				</div>
+			`;
+		}
+	}
+
+	showErrorState(message) {
+		const container = document.getElementById('detection-results');
+		if (container) {
+			container.innerHTML = `
+				<div class="empty-state">
+					<div class="no-results-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10"/>
+							<line x1="12" y1="8" x2="12" y2="12"/>
+							<line x1="12" y1="16" x2="12.01" y2="16"/>
+						</svg>
+					</div>
+					<h3>Error Loading Results</h3>
+					<p>${message}</p>
+					<button class="btn btn-primary" onclick="resultsPage.refreshResults()">Try Again</button>
+				</div>
+			`;
+		}
+	}
+
+	renderResults(detections) {
+		const container = document.getElementById('detection-results');
+		if (!container) return;
+		
+		if (!detections || detections.length === 0) {
+			container.innerHTML = `
+				<div class="empty-state">
+					<div class="no-results-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+						</svg>
+					</div>
+					<h3>No Results Found</h3>
+					<p>Try adjusting your search filters or date range.</p>
+				</div>
+			`;
+			return;
+		}
+		
+		container.innerHTML = detections.map(detection => `
+			<div class="detection-card">
+				<div class="detection-thumbnail">
+					${detection.plate_text ? detection.plate_text.substring(0, 3) : 'IMG'}
+				</div>
+				
+				<div class="detection-info">
+					<div class="detection-plate">${detection.plate_text || 'Unknown'}</div>
+					<div class="detection-meta">
+						<div class="detection-time">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<circle cx="12" cy="12" r="10"></circle>
+								<polyline points="12,6 12,12 16,14"></polyline>
+							</svg>
+							${this.formatTimestamp(detection.timestamp)}
+						</div>
+						<div class="detection-location">
+							<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+								<circle cx="12" cy="10" r="3"></circle>
+							</svg>
+							${detection.state || 'Unknown State'}
+						</div>
+					</div>
+				</div>
+				
+				<div class="detection-stats">
+					<div class="confidence-badge ${this.getConfidenceClass(detection.confidence)}">
+						${((detection.confidence || 0) * 100).toFixed(1)}%
+					</div>
+					<div class="detection-actions">
+						<button class="btn btn-sm btn-outline" onclick="resultsPage.viewDetection('${detection.id}')">View</button>
+					</div>
+				</div>
+			</div>
+		`).join('');
+	}
+
+	updateResultsCount(total) {
+		const countEl = document.getElementById('results-count');
+		if (countEl) {
+			countEl.textContent = total === 0 ? 'No detections found' : 
+				`Showing ${total} detection${total !== 1 ? 's' : ''}`;
+		}
+	}
+
+	renderPagination(total, currentPage, limit) {
+		// Implementation for pagination if needed
+		// For now, keeping it simple
+	}
+
+	formatTimestamp(timestamp) {
+		if (!timestamp) return 'Unknown time';
+		try {
+			const date = new Date(timestamp);
+			return date.toLocaleString();
+		} catch {
+			return 'Invalid date';
+		}
+	}
+
+	getConfidenceClass(confidence) {
+		if (confidence >= 0.7) return 'confidence-high';
+		if (confidence >= 0.4) return 'confidence-medium';
+		return 'confidence-low';
+	}
+
+	viewDetection(id) {
+		// Navigate to detection detail view
+		window.location.href = `/results/detection/${id}`;
+	}
+
+	exportResults() {
+		// Create CSV export using the correct endpoint
+		const params = new URLSearchParams(this.currentFilters);
+		params.set('format', 'csv');
+		
+		const exportUrl = `/results/detections/export?${params.toString()}`;
+		
+		// Create download link
+		const link = document.createElement('a');
+		link.href = exportUrl;
+		link.download = `license_plate_detections_${new Date().toISOString().slice(0, 10)}.csv`;
+		link.click();
+		
+		if (window.lprApp) {
+			window.lprApp.showNotification('Export started', 'success');
+		}
+	}
+
+	// Real-time search methods
+	handleSearchInput(event) {
+		const value = event.target.value.trim();
+		this.currentSearchQuery = value;
+		
+		// Update UI state
+		const searchInput = document.getElementById('search-plate');
+		const clearBtn = document.getElementById('search-clear');
+		const loadingIcon = document.getElementById('search-loading');
+		
+		if (value.length > 0) {
+			searchInput.classList.add('has-content');
+			clearBtn.style.display = 'flex';
+		} else {
+			searchInput.classList.remove('has-content');
+			clearBtn.style.display = 'none';
+		}
+		
+		// Clear existing timeout
+		if (this.searchTimeout) {
+			clearTimeout(this.searchTimeout);
+		}
+		
+		// Set new timeout for debounced search
+		if (value.length >= 2 || value.length === 0) {
+			loadingIcon.style.display = 'flex';
+			this.searchTimeout = setTimeout(() => {
+				this.performSearch();
+				loadingIcon.style.display = 'none';
+			}, this.searchDebounceMs);
+		}
+	}
+	
+	performSearch(immediate = false) {
+		if (this.searchTimeout && !immediate) {
+			clearTimeout(this.searchTimeout);
+		}
+		
+		const searchValue = this.currentSearchQuery;
+		const fuzzySearch = document.getElementById('fuzzy-search')?.checked || false;
+		const exactSearch = document.getElementById('exact-search')?.checked || false;
+		
+		// Build search filters
+		const filters = {
+			plate: searchValue,
+			fuzzy: fuzzySearch && !exactSearch,
+			exact: exactSearch,
+			sort: document.getElementById('sort-by')?.value || 'timestamp',
+			limit: this.perPage,
+			page: 1  // Reset to first page on new search
+		};
+		
+		// Add active time range if any
+		if (this.activeTimeRange) {
+			filters.time_range = this.activeTimeRange;
+		}
+		
+		// Add custom date/time filters
+		const dateFrom = document.getElementById('date-from')?.value;
+		const dateTo = document.getElementById('date-to')?.value;
+		const startTime = document.getElementById('start-time')?.value;
+		const endTime = document.getElementById('end-time')?.value;
+		const confidence = document.getElementById('confidence-filter')?.value;
+		
+		if (dateFrom) filters.from_date = dateFrom;
+		if (dateTo) filters.to = dateTo;
+		if (startTime) filters.start_time = startTime;
+		if (endTime) filters.end_time = endTime;
+		if (confidence) filters.confidence = parseFloat(confidence);
+		
+		// Remove empty filters
+		Object.keys(filters).forEach(key => {
+			if (!filters[key] && filters[key] !== false) delete filters[key];
+		});
+		
+		this.currentPage = 1;
+		this.currentFilters = filters;
+		
+		// Debug logging for troubleshooting
+		console.log('performSearch filters:', filters);
+		
+		this.loadDetections(filters);
+	}
+	
+	selectTimeRange(range) {
+		// Update active time range
+		this.activeTimeRange = range;
+		
+		// Update UI - remove active class from all buttons
+		document.querySelectorAll('.time-btn').forEach(btn => {
+			btn.classList.remove('active');
+		});
+		
+		// Add active class to selected button
+		const selectedBtn = document.querySelector(`[data-range="${range}"]`);
+		if (selectedBtn) {
+			selectedBtn.classList.add('active');
+		}
+		
+		// Clear custom date/time inputs when using quick filters
+		document.getElementById('date-from').value = '';
+		document.getElementById('date-to').value = '';
+		document.getElementById('start-time').value = '';
+		document.getElementById('end-time').value = '';
+		
+		// Trigger search with new time range
+		this.performSearch(true);
+	}
+	
+	clearTimeRangeSelection() {
+		// Clear active time range when custom dates are used
+		this.activeTimeRange = null;
+		
+		// Remove active class from all time range buttons
+		document.querySelectorAll('.time-btn').forEach(btn => {
+			btn.classList.remove('active');
+		});
+	}
+	
+	clearSearch() {
+		const searchInput = document.getElementById('search-plate');
+		const clearBtn = document.getElementById('search-clear');
+		
+		searchInput.value = '';
+		searchInput.classList.remove('has-content');
+		clearBtn.style.display = 'none';
+		
+		this.currentSearchQuery = '';
+		
+		// Clear search timeout
+		if (this.searchTimeout) {
+			clearTimeout(this.searchTimeout);
+		}
+		
+		// Perform search with empty query
+		this.performSearch(true);
+	}
+	
+	clearAllFilters() {
+		// Clear all search inputs
+		document.getElementById('search-plate').value = '';
+		document.getElementById('date-from').value = '';
+		document.getElementById('date-to').value = '';
+		document.getElementById('start-time').value = '';
+		document.getElementById('end-time').value = '';
+		document.getElementById('confidence-filter').value = '';
+		document.getElementById('sort-by').value = 'timestamp';
+		
+		// Reset search options to defaults
+		document.getElementById('fuzzy-search').checked = false;
+		document.getElementById('exact-search').checked = false;
+		
+		// Clear time range selection
+		document.querySelectorAll('.time-btn').forEach(btn => {
+			btn.classList.remove('active');
+		});
+		
+		// Clear search input UI state
+		const searchInput = document.getElementById('search-plate');
+		const clearBtn = document.getElementById('search-clear');
+		searchInput.classList.remove('has-content');
+		clearBtn.style.display = 'none';
+		
+		// Reset state
+		this.currentSearchQuery = '';
+		this.activeTimeRange = null;
+		this.currentPage = 1;
+		this.currentFilters = {};
+		
+		// Clear URL params
+		window.history.pushState({}, '', window.location.pathname);
+		
+		// Load all detections
+		this.loadDetections({});
+	}
+
+	startAutoRefresh() {
+		if (this.autoRefresh) {
+			this.refreshTimer = setTimeout(() => {
+				this.refreshResults();
+				this.startAutoRefresh(); // Continue the cycle
+			}, this.refreshInterval);
+		}
+	}
+
+	stopAutoRefresh() {
+		if (this.refreshTimer) {
+			clearTimeout(this.refreshTimer);
+			this.refreshTimer = null;
+		}
+	}
+}
+
+// Initialize results page
+const resultsPage = new ResultsPage();
+{% endblock %}

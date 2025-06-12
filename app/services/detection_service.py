@@ -47,6 +47,16 @@ class DetectionService:
         
         logger.info(f"Detection service initialized with license plate recognition (Device: {self.device})")
         return self
+    
+    def _is_headless_mode(self) -> bool:
+        """Check if running in headless mode (pure headless, not hybrid)"""
+        try:
+            from config.settings import Config
+            config = Config()
+            # Only disable immediate storage in pure headless mode, not hybrid
+            return config.deployment_mode == "headless"
+        except Exception:
+            return False
 
     async def shutdown(self):
         """Shutdown the detection service"""
@@ -113,9 +123,13 @@ class DetectionService:
             self.last_detections = self.last_detections[-10:]
 
             # Process each detection for storage and video recording
+            # NOTE: In headless mode, storage is handled by BackgroundStreamManager
+            # to avoid duplicate storage attempts and implement proper cooldown/deduplication
             for detection in detections:
-                # Only save to storage if we have a plate text
-                if detection.get("plate_text") and hasattr(self, 'storage_service') and self.storage_service:
+                # Only save to storage if we have a plate text AND we're not in headless mode
+                if (detection.get("plate_text") and 
+                    hasattr(self, 'storage_service') and self.storage_service and
+                    not self._is_headless_mode()):
                     try:
                         logger.info(f"Sending detection {detection['detection_id']} to storage service")
                         await self.storage_service.add_detections([detection])
@@ -132,6 +146,8 @@ class DetectionService:
                     except Exception as e:
                         logger.error(f"Error saving detection to storage: {e}")
                         logger.error(traceback.format_exc())
+                elif detection.get("plate_text") and self._is_headless_mode():
+                    logger.debug(f"Headless mode: storage handled by BackgroundStreamManager for {detection['detection_id']}")
 
             return display_frame, detections
         except Exception as e:

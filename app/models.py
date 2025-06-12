@@ -13,7 +13,7 @@ class Detection(Base):
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     plate_text = Column(String, nullable=False, index=True)
-    confidence = Column(Float, nullable=False)
+    confidence = Column(Float, nullable=False, index=True)  # Added index for confidence filtering
     timestamp = Column(DateTime, nullable=False, default=datetime.datetime.utcnow, index=True)
     
     # Bounding box

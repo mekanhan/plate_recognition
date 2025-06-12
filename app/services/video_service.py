@@ -16,12 +16,13 @@ logger = logging.getLogger(__name__)
 class VideoRecorder:
     """Low-level class for recording video frames"""
     
-    def __init__(self, buffer_seconds: int = 5, post_event_seconds: int = 15, fps: int = 15):
+    def __init__(self, buffer_seconds: int = 5, post_event_seconds: int = 15, fps: int = 15, max_segment_minutes: int = 5):
         self.frame_buffer = []
         self.buffer_seconds = buffer_seconds
         self.post_event_seconds = post_event_seconds
         self.fps = fps
         self.buffer_frames = self.buffer_seconds * self.fps
+        self.max_segment_seconds = max_segment_minutes * 60  # Convert to seconds
         
         # Recording state
         self.recording = False
@@ -59,8 +60,15 @@ class VideoRecorder:
             # Increment post-event counter
             self.post_event_frames += 1
             
+            # Check if segment should be closed due to time limit
+            recording_duration = time.time() - self.recording_start_time if self.recording_start_time else 0
+            segment_time_exceeded = recording_duration >= self.max_segment_seconds
+            
             # Check if we've recorded enough frames after the event
-            return self.post_event_frames >= self.post_event_seconds * self.fps
+            post_event_complete = self.post_event_frames >= self.post_event_seconds * self.fps
+            
+            # Return True if either condition is met (time limit or post-event complete)
+            return segment_time_exceeded or post_event_complete
         
         return False
     

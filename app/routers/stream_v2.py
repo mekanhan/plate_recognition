@@ -3,7 +3,8 @@ Improved stream routes using the new service architecture.
 """
 import asyncio
 import time
-from fastapi import APIRouter, Depends, HTTPException, Request
+import json
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 from starlette.responses import Response
 import logging
@@ -34,6 +35,45 @@ frame_processor = {
 plate_tracker = {
     "process_interval": 1.0  # Process queue every 1 second
 }
+
+# Store WebSocket connections for real-time detection updates
+stream_connections: list[WebSocket] = []
+
+# Store detection callback function for dashboard integration
+dashboard_broadcast_callback = None
+
+async def broadcast_detection_to_stream(detection_data):
+    """Broadcast detection data to all connected stream clients"""
+    if not stream_connections:
+        return
+    
+    message = {
+        "type": "detection",
+        "detection": detection_data,
+        "timestamp": time.time()
+    }
+    
+    message_str = json.dumps(message)
+    
+    # Send to all connected stream clients
+    disconnected = []
+    for websocket in stream_connections:
+        try:
+            await websocket.send_text(message_str)
+        except Exception:
+            disconnected.append(websocket)
+    
+    # Remove disconnected clients
+    for ws in disconnected:
+        if ws in stream_connections:
+            stream_connections.remove(ws)
+    
+    # Also broadcast to dashboard if callback is available
+    if dashboard_broadcast_callback:
+        try:
+            await dashboard_broadcast_callback(detection_data)
+        except Exception as e:
+            logger.debug(f"Failed to broadcast to dashboard: {e}")
 
 async def generate_frames(
     camera: Camera,
@@ -74,6 +114,11 @@ async def generate_frames(
                             await detection_svc.video_recording_service.add_frame(processed_frame, timestamp)
                         except Exception as e:
                             logger.error(f"Error adding frame to video recording: {e}")
+                    
+                    # Broadcast detections to connected clients
+                    if detections:
+                        for detection in detections:
+                            await broadcast_detection_to_stream(detection)
                     
                     # Calculate processing time
                     frame_processor["processing_time_ms"] = (time.time() - start_time) * 1000
@@ -236,3 +281,45 @@ async def annotated_snapshot(
     except Exception as e:
         logger.error(f"Error getting annotated snapshot: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.websocket("/ws")
+async def stream_websocket(websocket: WebSocket):
+    """WebSocket endpoint for real-time stream updates"""
+    await websocket.accept()
+    stream_connections.append(websocket)
+    
+    try:
+        while True:
+            # Keep connection alive and handle incoming messages
+            data = await websocket.receive_text()
+            
+            # Handle client commands
+            try:
+                message = json.loads(data)
+                if message.get("type") == "ping":
+                    await websocket.send_text(json.dumps({"type": "pong"}))
+                elif message.get("type") == "get_stats":
+                    # Send current stats
+                    stats = {
+                        "type": "stats",
+                        "frame_count": frame_processor["frame_count"],
+                        "processing_time": frame_processor["processing_time_ms"]
+                    }
+                    await websocket.send_text(json.dumps(stats))
+            except json.JSONDecodeError:
+                # Just echo back if not valid JSON
+                await websocket.send_text(f"Echo: {data}")
+                
+    except WebSocketDisconnect:
+        if websocket in stream_connections:
+            stream_connections.remove(websocket)
+    except Exception as e:
+        logger.error(f"Stream WebSocket error: {e}")
+        if websocket in stream_connections:
+            stream_connections.remove(websocket)
+
+# Initialize dashboard broadcast callback from main app if available
+def set_dashboard_callback(callback):
+    """Set the dashboard broadcast callback"""
+    global dashboard_broadcast_callback
+    dashboard_broadcast_callback = callback

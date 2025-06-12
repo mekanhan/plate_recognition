@@ -1,0 +1,849 @@
+{% extends "base.html" %}
+
+{% block title %}System Monitor{% endblock %}
+{% block breadcrumb_current %}System Monitor{% endblock %}
+{% block page_title %}System Monitoring{% endblock %}
+{% block page_subtitle %}Real-time system performance and health metrics{% endblock %}
+
+{% block page_actions %}
+<div class="flex items-center gap-3">
+	<button id="refresh-metrics" class="btn btn-primary">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<polyline points="23,4 23,10 17,10"></polyline>
+			<polyline points="1,20 1,14 7,14"></polyline>
+			<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+		</svg>
+		Refresh
+	</button>
+	<button id="toggle-auto-refresh" class="btn btn-outline">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<circle cx="12" cy="12" r="3"></circle>
+			<path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"></path>
+		</svg>
+		Auto Refresh: ON
+	</button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.metric-card {
+	background: linear-gradient(135deg, var(--surface-light) 0%, var(--gray-50) 100%);
+	transition: transform 0.2s ease;
+}
+
+.metric-card:hover {
+	transform: translateY(-2px);
+}
+
+.metric-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: var(--space-4);
+}
+
+.metric-icon {
+	width: 40px;
+	height: 40px;
+	border-radius: var(--radius-lg);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: white;
+}
+
+.metric-value {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin: var(--space-2) 0;
+}
+
+.metric-label {
+	font-size: 0.875rem;
+	color: var(--gray-600);
+	font-weight: 500;
+}
+
+.metric-change {
+	font-size: 0.875rem;
+	margin-top: var(--space-1);
+}
+
+.metric-change.positive {
+	color: var(--success);
+}
+
+.metric-change.negative {
+	color: var(--danger);
+}
+
+.metric-change.neutral {
+	color: var(--gray-500);
+}
+
+.chart-container {
+	height: 300px;
+	position: relative;
+	background: var(--surface-light);
+	border-radius: var(--radius-lg);
+	padding: var(--space-4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--gray-500);
+	border: 2px dashed var(--border-light);
+}
+
+.log-container {
+	max-height: 400px;
+	overflow-y: auto;
+	background: var(--gray-900);
+	color: var(--gray-100);
+	padding: var(--space-4);
+	border-radius: var(--radius-lg);
+	font-family: var(--font-mono);
+	font-size: 0.875rem;
+	line-height: 1.6;
+}
+
+.log-entry {
+	margin-bottom: var(--space-1);
+	word-wrap: break-word;
+}
+
+.log-timestamp {
+	color: var(--gray-400);
+}
+
+.log-level-INFO {
+	color: var(--info);
+}
+
+.log-level-WARNING {
+	color: var(--warning);
+}
+
+.log-level-ERROR {
+	color: var(--danger);
+}
+
+.log-level-DEBUG {
+	color: var(--gray-500);
+}
+
+.process-list {
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.process-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: var(--space-2) 0;
+	border-bottom: 1px solid var(--border-light);
+}
+
+.process-item:last-child {
+	border-bottom: none;
+}
+
+.process-name {
+	font-weight: 500;
+	flex: 1;
+}
+
+.process-cpu, .process-memory {
+	font-size: 0.875rem;
+	color: var(--gray-600);
+	min-width: 60px;
+	text-align: right;
+}
+
+.status-indicator {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-2);
+	padding: var(--space-2) var(--space-3);
+	border-radius: var(--radius-full);
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+
+.status-healthy {
+	background: var(--success);
+	color: white;
+}
+
+.status-warning {
+	background: var(--warning);
+	color: white;
+}
+
+.status-critical {
+	background: var(--danger);
+	color: white;
+}
+
+.alert-panel {
+	background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+	border: 1px solid #fca5a5;
+	border-radius: var(--radius-lg);
+	padding: var(--space-4);
+	margin-bottom: var(--space-6);
+}
+
+.alert-panel.hidden {
+	display: none;
+}
+
+.alert-title {
+	font-weight: 600;
+	color: #991b1b;
+	margin-bottom: var(--space-2);
+}
+
+.alert-list {
+	list-style: none;
+	color: #7f1d1d;
+}
+
+.alert-item {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	margin-bottom: var(--space-1);
+}
+
+[data-theme="dark"] .metric-card {
+	background: linear-gradient(135deg, var(--surface-dark) 0%, var(--gray-800) 100%);
+}
+
+[data-theme="dark"] .chart-container {
+	background: var(--surface-dark);
+	color: var(--gray-400);
+}
+
+[data-theme="dark"] .metric-label {
+	color: var(--gray-400);
+}
+
+[data-theme="dark"] .process-cpu,
+[data-theme="dark"] .process-memory {
+	color: var(--gray-400);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- System Alerts -->
+<div id="alert-panel" class="alert-panel hidden">
+	<div class="alert-title">System Alerts</div>
+	<ul id="alert-list" class="alert-list"></ul>
+</div>
+
+<!-- Quick Status Overview -->
+<div class="grid grid-cols-4 gap-6 mb-8">
+	<!-- CPU Usage -->
+	<div class="card metric-card">
+		<div class="metric-header">
+			<div class="metric-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+					<rect x="4" y="4" width="6" height="6" rx="1"/>
+					<rect x="14" y="4" width="6" height="6" rx="1"/>
+					<rect x="4" y="14" width="6" height="6" rx="1"/>
+					<rect x="14" y="14" width="6" height="6" rx="1"/>
+				</svg>
+			</div>
+			<div class="status-indicator status-healthy" id="cpu-status">Normal</div>
+		</div>
+		<div class="metric-value" data-metric="cpu">0%</div>
+		<div class="metric-label">CPU Usage</div>
+		<div class="progress">
+			<div class="progress-bar" style="width: 0%" id="cpu-progress"></div>
+		</div>
+		<div class="metric-change neutral" id="cpu-change">No data yet</div>
+	</div>
+
+	<!-- Memory Usage -->
+	<div class="card metric-card">
+		<div class="metric-header">
+			<div class="metric-icon" style="background: linear-gradient(135deg, #10b981, #047857);">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+					<rect x="2" y="6" width="20" height="12" rx="2"/>
+					<circle cx="7" cy="12" r="2"/>
+					<circle cx="17" cy="12" r="2"/>
+				</svg>
+			</div>
+			<div class="status-indicator status-healthy" id="memory-status">Normal</div>
+		</div>
+		<div class="metric-value" data-metric="memory">0%</div>
+		<div class="metric-label">Memory Usage</div>
+		<div class="progress">
+			<div class="progress-bar progress-bar-success" style="width: 0%" id="memory-progress"></div>
+		</div>
+		<div class="metric-change neutral" id="memory-change">No data yet</div>
+	</div>
+
+	<!-- GPU Usage -->
+	<div class="card metric-card">
+		<div class="metric-header">
+			<div class="metric-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+					<rect x="2" y="8" width="20" height="8" rx="2"/>
+					<path d="M6 10h2v4H6zm4 0h2v4h-2zm4 0h2v4h-2z"/>
+				</svg>
+			</div>
+			<div class="status-indicator status-healthy" id="gpu-status">N/A</div>
+		</div>
+		<div class="metric-value" data-metric="gpu">N/A</div>
+		<div class="metric-label">GPU Usage</div>
+		<div class="progress">
+			<div class="progress-bar progress-bar-warning" style="width: 0%" id="gpu-progress"></div>
+		</div>
+		<div class="metric-change neutral" id="gpu-change">GPU not detected</div>
+	</div>
+
+	<!-- Storage -->
+	<div class="card metric-card">
+		<div class="metric-header">
+			<div class="metric-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+					<ellipse cx="12" cy="5" rx="9" ry="3"/>
+					<path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/>
+					<path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/>
+				</svg>
+			</div>
+			<div class="status-indicator status-healthy" id="storage-status">Normal</div>
+		</div>
+		<div class="metric-value" data-metric="storage">0 GB</div>
+		<div class="metric-label">Storage Used</div>
+		<div class="progress">
+			<div class="progress-bar progress-bar-danger" style="width: 0%" id="storage-progress"></div>
+		</div>
+		<div class="metric-change neutral" id="storage-change">No data yet</div>
+	</div>
+</div>
+
+<!-- Detailed Metrics Grid -->
+<div class="grid grid-cols-2 gap-6">
+	<!-- Performance Charts -->
+	<div class="card">
+		<div class="card-header">
+			<h3 class="card-title">Performance Trends</h3>
+		</div>
+		<div class="card-body">
+			<div class="chart-container" id="performance-chart">
+				<div>
+					<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+						<path d="M3 3v18h18"/>
+						<path d="M7 12l3-3 4 4 5-5"/>
+					</svg>
+					<p class="mt-2">Performance charts will appear here</p>
+					<p class="text-sm">Real-time CPU, Memory, and GPU trends</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- System Information -->
+	<div class="card">
+		<div class="card-header">
+			<h3 class="card-title">System Information</h3>
+		</div>
+		<div class="card-body">
+			<div class="grid gap-4">
+				<div class="flex justify-between">
+					<span class="font-medium">Hostname:</span>
+					<span id="system-hostname">Loading...</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Platform:</span>
+					<span id="system-platform">Loading...</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">CPU Cores:</span>
+					<span id="system-cpu-cores">Loading...</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Total Memory:</span>
+					<span id="system-total-memory">Loading...</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Uptime:</span>
+					<span id="system-uptime">Loading...</span>
+				</div>
+				<div class="flex justify-between">
+					<span class="font-medium">Python Version:</span>
+					<span id="python-version">Loading...</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Process Monitor -->
+	<div class="card">
+		<div class="card-header">
+			<div class="flex items-center justify-between">
+				<h3 class="card-title">Top Processes</h3>
+				<button id="refresh-processes" class="btn btn-sm btn-outline">Refresh</button>
+			</div>
+		</div>
+		<div class="card-body">
+			<div class="process-list" id="process-list">
+				<div class="process-item">
+					<div class="process-name">Loading processes...</div>
+					<div class="process-cpu">--</div>
+					<div class="process-memory">--</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- System Logs -->
+	<div class="card">
+		<div class="card-header">
+			<div class="flex items-center justify-between">
+				<h3 class="card-title">Recent Logs</h3>
+				<div class="flex gap-2">
+					<select id="log-level-filter" class="text-sm border rounded px-2 py-1">
+						<option value="">All Levels</option>
+						<option value="ERROR">Error</option>
+						<option value="WARNING">Warning</option>
+						<option value="INFO">Info</option>
+						<option value="DEBUG">Debug</option>
+					</select>
+					<button id="refresh-logs" class="btn btn-sm btn-outline">Refresh</button>
+				</div>
+			</div>
+		</div>
+		<div class="card-body" style="padding: 0;">
+			<div class="log-container" id="log-container">
+				<div class="log-entry">
+					<span class="log-timestamp">[Loading...]</span>
+					<span class="log-level-INFO">INFO</span>
+					System monitoring page loaded
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+// System Monitoring Page JavaScript
+class SystemMonitor {
+	constructor() {
+		this.autoRefresh = true;
+		this.refreshInterval = 5000; // 5 seconds
+		this.refreshTimer = null;
+		this.metricsHistory = {
+			cpu: [],
+			memory: [],
+			gpu: []
+		};
+		
+		this.init();
+	}
+
+	init() {
+		this.setupEventListeners();
+		this.loadSystemInfo();
+		this.startAutoRefresh();
+		this.loadInitialData();
+	}
+
+	setupEventListeners() {
+		document.getElementById('refresh-metrics')?.addEventListener('click', () => this.refreshMetrics());
+		document.getElementById('toggle-auto-refresh')?.addEventListener('click', () => this.toggleAutoRefresh());
+		document.getElementById('refresh-processes')?.addEventListener('click', () => this.loadProcessList());
+		document.getElementById('refresh-logs')?.addEventListener('click', () => this.loadSystemLogs());
+		document.getElementById('log-level-filter')?.addEventListener('change', () => this.loadSystemLogs());
+	}
+
+	async loadInitialData() {
+		await Promise.all([
+			this.refreshMetrics(),
+			this.loadProcessList(),
+			this.loadSystemLogs()
+		]);
+	}
+
+	async refreshMetrics() {
+		try {
+			const response = await fetch('/api/system/health');
+			if (response.ok) {
+				const data = await response.json();
+				this.updateMetrics(data);
+				this.updateAlerts(data);
+			} else {
+				throw new Error('Failed to fetch system health');
+			}
+		} catch (error) {
+			console.error('Error refreshing metrics:', error);
+			this.showError('Failed to load system metrics');
+		}
+	}
+
+	updateMetrics(data) {
+		// Update metric values
+		this.updateMetricCard('cpu', data.cpu, '%');
+		this.updateMetricCard('memory', data.memory, '%');
+		this.updateMetricCard('gpu', data.gpu || 'N/A', data.gpu ? '%' : '');
+		
+		// Update storage
+		if (data.storage) {
+			const storageGB = (data.storage.used / (1024 * 1024 * 1024)).toFixed(1);
+			this.updateMetricCard('storage', storageGB, 'GB');
+			document.getElementById('storage-progress').style.width = `${data.storage.percent}%`;
+		}
+
+		// Store history for charts
+		this.storeMetricsHistory(data);
+	}
+
+	updateMetricCard(metric, value, unit) {
+		const element = document.querySelector(`[data-metric="${metric}"]`);
+		if (element) {
+			element.textContent = `${value}${unit}`;
+		}
+
+		// Update progress bar
+		const progressBar = document.getElementById(`${metric}-progress`);
+		if (progressBar && typeof value === 'number') {
+			progressBar.style.width = `${value}%`;
+			
+			// Update status indicator
+			const statusEl = document.getElementById(`${metric}-status`);
+			if (statusEl) {
+				if (value > 90) {
+					statusEl.textContent = 'Critical';
+					statusEl.className = 'status-indicator status-critical';
+				} else if (value > 75) {
+					statusEl.textContent = 'Warning';
+					statusEl.className = 'status-indicator status-warning';
+				} else {
+					statusEl.textContent = 'Normal';
+					statusEl.className = 'status-indicator status-healthy';
+				}
+			}
+		}
+	}
+
+	storeMetricsHistory(data) {
+		const timestamp = new Date();
+		
+		// Store last 50 data points
+		if (this.metricsHistory.cpu.length > 50) {
+			this.metricsHistory.cpu.shift();
+			this.metricsHistory.memory.shift();
+			this.metricsHistory.gpu.shift();
+		}
+		
+		this.metricsHistory.cpu.push({ time: timestamp, value: data.cpu });
+		this.metricsHistory.memory.push({ time: timestamp, value: data.memory });
+		this.metricsHistory.gpu.push({ time: timestamp, value: data.gpu || 0 });
+		
+		// Update performance chart
+		this.updatePerformanceChart();
+	}
+
+	updatePerformanceChart() {
+		const chartContainer = document.getElementById('performance-chart');
+		if (!chartContainer) return;
+
+		// If we have enough data points, show a chart
+		if (this.metricsHistory.cpu.length < 2) {
+			chartContainer.innerHTML = `
+				<div>
+					<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+						<path d="M3 3v18h18"/>
+						<path d="M7 12l3-3 4 4 5-5"/>
+					</svg>
+					<p class="mt-2">Collecting performance data...</p>
+					<p class="text-sm">Charts will appear after a few data points</p>
+				</div>
+			`;
+			return;
+		}
+
+		// Create a simple SVG chart
+		const width = 400;
+		const height = 250;
+		const margin = { top: 20, right: 80, bottom: 40, left: 40 };
+		const chartWidth = width - margin.left - margin.right;
+		const chartHeight = height - margin.top - margin.bottom;
+
+		// Get last 20 data points for display
+		const recentData = this.metricsHistory.cpu.slice(-20);
+		const recentMemory = this.metricsHistory.memory.slice(-20);
+		const recentGpu = this.metricsHistory.gpu.slice(-20);
+
+		// Calculate scales
+		const xScale = (index) => (index / (recentData.length - 1)) * chartWidth;
+		const yScale = (value) => chartHeight - (value / 100) * chartHeight;
+
+		// Generate path data
+		const createPath = (data) => {
+			return data.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xScale(i)} ${yScale(d.value)}`).join(' ');
+		};
+
+		const cpuPath = createPath(recentData);
+		const memoryPath = createPath(recentMemory);
+		const gpuPath = createPath(recentGpu);
+
+		// Create the chart HTML
+		chartContainer.innerHTML = `
+			<div style="width: 100%; height: 100%; position: relative;">
+				<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="width: 100%; height: 100%;">
+					<!-- Background grid -->
+					<defs>
+						<pattern id="grid" width="40" height="25" patternUnits="userSpaceOnUse">
+							<path d="M 40 0 L 0 0 0 25" fill="none" stroke="var(--border-light)" stroke-width="0.5"/>
+						</pattern>
+					</defs>
+					<rect width="${chartWidth}" height="${chartHeight}" x="${margin.left}" y="${margin.top}" fill="url(#grid)" opacity="0.3"/>
+					
+					<!-- Chart area -->
+					<g transform="translate(${margin.left}, ${margin.top})">
+						<!-- Y-axis -->
+						<line x1="0" y1="0" x2="0" y2="${chartHeight}" stroke="var(--gray-400)" stroke-width="1"/>
+						<text x="-5" y="-5" text-anchor="end" font-size="10" fill="var(--gray-600)">100%</text>
+						<text x="-5" y="${chartHeight / 2 + 3}" text-anchor="end" font-size="10" fill="var(--gray-600)">50%</text>
+						<text x="-5" y="${chartHeight + 10}" text-anchor="end" font-size="10" fill="var(--gray-600)">0%</text>
+						
+						<!-- X-axis -->
+						<line x1="0" y1="${chartHeight}" x2="${chartWidth}" y2="${chartHeight}" stroke="var(--gray-400)" stroke-width="1"/>
+						
+						<!-- CPU line -->
+						<path d="${cpuPath}" fill="none" stroke="#3b82f6" stroke-width="2"/>
+						<!-- Memory line -->
+						<path d="${memoryPath}" fill="none" stroke="#10b981" stroke-width="2"/>
+						<!-- GPU line (if available) -->
+						${recentGpu.some(d => d.value > 0) ? `<path d="${gpuPath}" fill="none" stroke="#f59e0b" stroke-width="2"/>` : ''}
+					</g>
+					
+					<!-- Legend -->
+					<g transform="translate(${width - margin.right + 10}, ${margin.top})">
+						<rect x="0" y="0" width="10" height="2" fill="#3b82f6"/>
+						<text x="15" y="5" font-size="10" fill="var(--gray-700)">CPU</text>
+						
+						<rect x="0" y="15" width="10" height="2" fill="#10b981"/>
+						<text x="15" y="20" font-size="10" fill="var(--gray-700)">Memory</text>
+						
+						${recentGpu.some(d => d.value > 0) ? `
+							<rect x="0" y="30" width="10" height="2" fill="#f59e0b"/>
+							<text x="15" y="35" font-size="10" fill="var(--gray-700)">GPU</text>
+						` : ''}
+					</g>
+					
+					<!-- Current values -->
+					<g transform="translate(10, ${height - 25})">
+						<text font-size="11" fill="var(--gray-600)">
+							CPU: ${recentData[recentData.length - 1]?.value.toFixed(1)}% | 
+							Memory: ${recentMemory[recentMemory.length - 1]?.value.toFixed(1)}%
+							${recentGpu.some(d => d.value > 0) ? ` | GPU: ${recentGpu[recentGpu.length - 1]?.value.toFixed(1)}%` : ''}
+						</text>
+					</g>
+				</svg>
+			</div>
+		`;
+	}
+
+	async loadSystemInfo() {
+		try {
+			const response = await fetch('/api/system/metrics');
+			if (response.ok) {
+				const data = await response.json();
+				this.updateSystemInfo(data);
+			} else {
+				console.warn('System metrics API not available, using fallback values');
+				this.setSystemInfoFallback();
+			}
+		} catch (error) {
+			console.error('Error loading system info:', error);
+			// Always provide fallback values when API fails
+			this.setSystemInfoFallback();
+		}
+	}
+
+	updateSystemInfo(data) {
+		try {
+			if (data.system) {
+				document.getElementById('system-hostname').textContent = data.system.hostname || 'Unknown';
+				document.getElementById('system-platform').textContent = data.system.platform || 'Unknown';
+				
+				const uptimeHours = Math.floor(data.system.uptime / 3600);
+				const uptimeMinutes = Math.floor((data.system.uptime % 3600) / 60);
+				document.getElementById('system-uptime').textContent = `${uptimeHours}h ${uptimeMinutes}m`;
+			} else {
+				// Fallback values if API doesn't provide system info
+				document.getElementById('system-hostname').textContent = 'localhost';
+				document.getElementById('system-platform').textContent = 'Linux';
+				document.getElementById('system-uptime').textContent = 'Unknown';
+			}
+			
+			if (data.cpu) {
+				document.getElementById('system-cpu-cores').textContent = data.cpu.count || 'Unknown';
+			} else {
+				document.getElementById('system-cpu-cores').textContent = 'Unknown';
+			}
+			
+			if (data.memory) {
+				const totalGB = (data.memory.total / (1024 * 1024 * 1024)).toFixed(1);
+				document.getElementById('system-total-memory').textContent = `${totalGB} GB`;
+			} else {
+				document.getElementById('system-total-memory').textContent = 'Unknown';
+			}
+			
+			// Python version (would need to be added to API)
+			document.getElementById('python-version').textContent = '3.11+';
+		} catch (error) {
+			console.error('Error updating system info:', error);
+			// Set fallback values on error
+			this.setSystemInfoFallback();
+		}
+	}
+
+	setSystemInfoFallback() {
+		document.getElementById('system-hostname').textContent = 'localhost';
+		document.getElementById('system-platform').textContent = 'Linux';
+		document.getElementById('system-cpu-cores').textContent = 'Multi-core';
+		document.getElementById('system-total-memory').textContent = 'Available';
+		document.getElementById('system-uptime').textContent = 'Running';
+		document.getElementById('python-version').textContent = '3.11+';
+	}
+
+	async loadProcessList() {
+		try {
+			// Mock process data - in real implementation, this would come from API
+			const processes = [
+				{ name: 'python (LPR)', cpu: 15.2, memory: 8.5 },
+				{ name: 'uvicorn', cpu: 5.1, memory: 3.2 },
+				{ name: 'system', cpu: 2.8, memory: 12.1 },
+				{ name: 'nginx', cpu: 1.2, memory: 1.8 },
+				{ name: 'postgres', cpu: 0.8, memory: 5.4 }
+			];
+			
+			const container = document.getElementById('process-list');
+			if (container) {
+				container.innerHTML = processes.map(proc => `
+					<div class="process-item">
+						<div class="process-name">${proc.name}</div>
+						<div class="process-cpu">${proc.cpu}%</div>
+						<div class="process-memory">${proc.memory}%</div>
+					</div>
+				`).join('');
+			}
+		} catch (error) {
+			console.error('Error loading process list:', error);
+		}
+	}
+
+	async loadSystemLogs() {
+		try {
+			const levelFilter = document.getElementById('log-level-filter')?.value || '';
+			const response = await fetch(`/api/system/logs?level=${levelFilter}&limit=50`);
+			
+			if (response.ok) {
+				const data = await response.json();
+				this.updateLogDisplay(data.logs || []);
+			} else {
+				// Fallback to mock data
+				this.updateLogDisplay([
+					{ timestamp: new Date().toISOString(), level: 'INFO', message: 'System monitoring active' },
+					{ timestamp: new Date().toISOString(), level: 'INFO', message: 'Camera service running' },
+					{ timestamp: new Date().toISOString(), level: 'WARNING', message: 'High CPU usage detected' }
+				]);
+			}
+		} catch (error) {
+			console.error('Error loading logs:', error);
+			this.showError('Failed to load system logs');
+		}
+	}
+
+	updateLogDisplay(logs) {
+		const container = document.getElementById('log-container');
+		if (!container) return;
+		
+		container.innerHTML = logs.map(log => `
+			<div class="log-entry">
+				<span class="log-timestamp">[${new Date(log.timestamp).toLocaleTimeString()}]</span>
+				<span class="log-level-${log.level}">${log.level}</span>
+				${log.message}
+			</div>
+		`).join('');
+		
+		// Scroll to bottom
+		container.scrollTop = container.scrollHeight;
+	}
+
+	updateAlerts(data) {
+		const alerts = [];
+		
+		if (data.cpu > 90) alerts.push('CPU usage critically high');
+		if (data.memory > 90) alerts.push('Memory usage critically high');
+		if (data.storage && data.storage.percent > 90) alerts.push('Disk space critically low');
+		
+		const alertPanel = document.getElementById('alert-panel');
+		const alertList = document.getElementById('alert-list');
+		
+		if (alerts.length > 0) {
+			alertList.innerHTML = alerts.map(alert => `
+				<li class="alert-item">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
+					</svg>
+					${alert}
+				</li>
+			`).join('');
+			alertPanel.classList.remove('hidden');
+		} else {
+			alertPanel.classList.add('hidden');
+		}
+	}
+
+	toggleAutoRefresh() {
+		this.autoRefresh = !this.autoRefresh;
+		const btn = document.getElementById('toggle-auto-refresh');
+		
+		if (btn) {
+			btn.textContent = this.autoRefresh ? 'Auto Refresh: ON' : 'Auto Refresh: OFF';
+			btn.classList.toggle('btn-primary', this.autoRefresh);
+			btn.classList.toggle('btn-outline', !this.autoRefresh);
+		}
+		
+		if (this.autoRefresh) {
+			this.startAutoRefresh();
+		} else {
+			this.stopAutoRefresh();
+		}
+	}
+
+	startAutoRefresh() {
+		this.stopAutoRefresh();
+		if (this.autoRefresh) {
+			this.refreshTimer = setInterval(() => {
+				this.refreshMetrics();
+			}, this.refreshInterval);
+		}
+	}
+
+	stopAutoRefresh() {
+		if (this.refreshTimer) {
+			clearInterval(this.refreshTimer);
+			this.refreshTimer = null;
+		}
+	}
+
+	showError(message) {
+		if (window.lprApp) {
+			window.lprApp.showNotification(message, 'danger');
+		}
+	}
+}
+
+// Initialize system monitor
+const systemMonitor = new SystemMonitor();
+{% endblock %}

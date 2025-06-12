@@ -34,3 +34,4 @@ logs/*
 app/factories/__pycache__/*
 app/repositories/__pycache__/*
 data/videos/*
+app/repositories/__pycache__/sql_repository.cpython-312.pyc

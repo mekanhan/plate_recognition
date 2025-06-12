@@ -1,59 +1,424 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>License Plate Recognition</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .card {
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .menu {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .menu a {
-            background: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            text-decoration: none;
-            border-radius: 4px;
-        }
-        .menu a:hover {
-            background: #45a049;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>License Plate Recognition System</h1>
-        
-        <div class="menu">
-            <a href="/stream">Live Stream</a>
-            <a href="/results/latest">Latest Results</a>
-            <a href="/docs">API Documentation</a>
-        </div>
-        
-        <div class="card">
-            <h2>System Status</h2>
-            <p>LPR Microservice is running!</p>
-            <p>Use the menu above to access different features.</p>
-        </div>
-    </div>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.metric-card {
+	background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+	color: white;
+	border: none;
+}
+
+.metric-card .card-title {
+	color: white;
+	opacity: 0.9;
+}
+
+.metric-value {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin: var(--space-2) 0;
+}
+
+.metric-change {
+	font-size: 0.875rem;
+	opacity: 0.8;
+}
+
+.chart-container {
+	height: 300px;
+	position: relative;
+}
+
+.activity-item {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-3);
+	border-bottom: 1px solid var(--border-light);
+	transition: background-color var(--transition-fast);
+}
+
+.activity-item:hover {
+	background-color: var(--gray-50);
+}
+
+.activity-item:last-child {
+	border-bottom: none;
+}
+
+.activity-avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: var(--radius);
+	background-color: var(--gray-200);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+}
+
+.activity-content {
+	flex: 1;
+}
+
+.activity-title {
+	font-weight: 500;
+	margin-bottom: var(--space-1);
+}
+
+.activity-time {
+	font-size: 0.875rem;
+	color: var(--gray-600);
+}
+
+.quick-action-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: var(--space-4);
+	margin-top: var(--space-6);
+}
+
+.quick-action {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-4);
+	border: 2px dashed var(--border-light);
+	border-radius: var(--radius-lg);
+	text-decoration: none;
+	color: var(--gray-700);
+	transition: all var(--transition-fast);
+}
+
+.quick-action:hover {
+	border-color: var(--primary);
+	background-color: var(--primary);
+	color: white;
+	transform: translateY(-2px);
+	text-decoration: none;
+}
+
+.quick-action-icon {
+	width: 24px;
+	height: 24px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- System Overview Cards -->
+<div class="grid grid-cols-4 gap-6 mb-8">
+	<!-- Total Detections -->
+	<div class="card metric-card">
+		<div class="card-header">
+			<h3 class="card-title">Total Detections</h3>
+		</div>
+		<div class="card-body">
+			<div class="metric-value" data-metric="total-detections">0</div>
+			<div class="metric-change">+12% from last week</div>
+		</div>
+	</div>
+
+	<!-- Today's Detections -->
+	<div class="card metric-card" style="background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);">
+		<div class="card-header">
+			<h3 class="card-title">Today's Detections</h3>
+		</div>
+		<div class="card-body">
+			<div class="metric-value" data-metric="today-detections">0</div>
+			<div class="metric-change">Active since startup</div>
+		</div>
+	</div>
+
+	<!-- Accuracy Rate -->
+	<div class="card metric-card" style="background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);">
+		<div class="card-header">
+			<h3 class="card-title">Accuracy Rate</h3>
+		</div>
+		<div class="card-body">
+			<div class="metric-value" data-metric="accuracy">0%</div>
+			<div class="metric-change">Based on confidence scores</div>
+		</div>
+	</div>
+
+	<!-- System Status -->
+	<div class="card metric-card" style="background: linear-gradient(135deg, var(--success) 0%, var(--secondary-dark) 100%);">
+		<div class="card-header">
+			<h3 class="card-title">System Status</h3>
+		</div>
+		<div class="card-body">
+			<div class="metric-value">Online</div>
+			<div class="metric-change" id="system-uptime-display">Just started</div>
+		</div>
+	</div>
+</div>
+
+<!-- Main Content Grid -->
+<div class="grid grid-cols-3 gap-6">
+	<!-- Live Activity Feed -->
+	<div class="col-span-2">
+		<div class="card">
+			<div class="card-header">
+				<div class="flex items-center justify-between">
+					<h3 class="card-title">Recent Activity</h3>
+					<div class="flex items-center gap-2">
+						<span class="status status-online" data-connection-status="activity">
+							<span class="status-dot"></span>
+							<span class="status-text">Live</span>
+						</span>
+					</div>
+				</div>
+			</div>
+			<div class="card-body">
+				<div id="activity-feed">
+					<div class="activity-item">
+						<div class="activity-avatar" style="background-color: var(--primary);">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+							</svg>
+						</div>
+						<div class="activity-content">
+							<div class="activity-title">System started successfully</div>
+							<div class="activity-time">Just now</div>
+						</div>
+					</div>
+					<div class="activity-item">
+						<div class="activity-avatar" style="background-color: var(--secondary);">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+								<path d="m22 8-6 4 6 4V8Z"/>
+								<rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>
+							</svg>
+						</div>
+						<div class="activity-content">
+							<div class="activity-title">Camera service initialized</div>
+							<div class="activity-time">30 seconds ago</div>
+						</div>
+					</div>
+					<div class="activity-item">
+						<div class="activity-avatar" style="background-color: var(--warning);">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+								<circle cx="12" cy="12" r="10"/>
+								<path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+								<line x1="12" y1="17" x2="12.01" y2="17"/>
+							</svg>
+						</div>
+						<div class="activity-content">
+							<div class="activity-title">YOLO model loaded</div>
+							<div class="activity-time">1 minute ago</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- System Health -->
+	<div class="card">
+		<div class="card-header">
+			<h3 class="card-title">System Health</h3>
+		</div>
+		<div class="card-body">
+			<!-- CPU Usage -->
+			<div class="mb-4">
+				<div class="flex items-center justify-between mb-2">
+					<span class="text-sm font-medium">CPU Usage</span>
+					<span class="text-sm" data-metric="cpu">0%</span>
+				</div>
+				<div class="progress">
+					<div class="progress-bar progress-bar-success" style="width: 0%"></div>
+				</div>
+			</div>
+
+			<!-- Memory Usage -->
+			<div class="mb-4">
+				<div class="flex items-center justify-between mb-2">
+					<span class="text-sm font-medium">Memory Usage</span>
+					<span class="text-sm" data-metric="memory">0%</span>
+				</div>
+				<div class="progress">
+					<div class="progress-bar progress-bar-warning" style="width: 0%"></div>
+				</div>
+			</div>
+
+			<!-- GPU Usage -->
+			<div class="mb-4">
+				<div class="flex items-center justify-between mb-2">
+					<span class="text-sm font-medium">GPU Usage</span>
+					<span class="text-sm" data-metric="gpu">N/A</span>
+				</div>
+				<div class="progress">
+					<div class="progress-bar" style="width: 0%"></div>
+				</div>
+			</div>
+
+			<!-- Storage -->
+			<div>
+				<div class="flex items-center justify-between mb-2">
+					<span class="text-sm font-medium">Storage</span>
+					<span class="text-sm" data-metric="storage">0 GB</span>
+				</div>
+				<div class="progress">
+					<div class="progress-bar progress-bar-danger" style="width: 0%"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Quick Actions -->
+<div class="content-section">
+	<div class="section-header">
+		<h2 class="section-title">Quick Actions</h2>
+	</div>
+	<div class="quick-action-grid">
+		<a href="/stream" class="quick-action">
+			<svg class="quick-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="m22 8-6 4 6 4V8Z"></path>
+				<rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>
+			</svg>
+			<div>
+				<div class="font-medium">Start Live Stream</div>
+				<div class="text-sm opacity-75">View real-time detection</div>
+			</div>
+		</a>
+		
+		<a href="/results/latest" class="quick-action">
+			<svg class="quick-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+				<polyline points="14,2 14,8 20,8"></polyline>
+			</svg>
+			<div>
+				<div class="font-medium">View Results</div>
+				<div class="text-sm opacity-75">Browse detection history</div>
+			</div>
+		</a>
+		
+		<a href="/system/config" class="quick-action">
+			<svg class="quick-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<circle cx="12" cy="12" r="3"></circle>
+				<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+			</svg>
+			<div>
+				<div class="font-medium">System Config</div>
+				<div class="text-sm opacity-75">Adjust settings</div>
+			</div>
+		</a>
+		
+		<a href="/docs" class="quick-action">
+			<svg class="quick-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+				<polyline points="14,2 14,8 20,8"></polyline>
+			</svg>
+			<div>
+				<div class="font-medium">API Documentation</div>
+				<div class="text-sm opacity-75">View API reference</div>
+			</div>
+		</a>
+	</div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+// Dashboard-specific JavaScript
+class Dashboard {
+	constructor() {
+		this.setupDashboardWebSocket();
+		this.updateActivityFeed();
+	}
+
+	setupDashboardWebSocket() {
+		// Setup WebSocket for real-time updates
+		if (window.lprApp && window.location.protocol === 'http:') {
+			const wsUrl = `ws://${window.location.host}/ws/dashboard`;
+			window.lprApp.createWebSocket(wsUrl, {
+				id: 'dashboard',
+				onMessage: (data) => this.handleDashboardUpdate(data),
+				onOpen: () => console.log('Dashboard WebSocket connected'),
+				onClose: () => console.log('Dashboard WebSocket disconnected')
+			});
+		}
+	}
+
+	handleDashboardUpdate(data) {
+		if (data.type === 'detection') {
+			this.addActivityItem(data);
+			this.updateDetectionCount();
+		} else if (data.type === 'system') {
+			this.updateSystemHealth(data);
+		}
+	}
+
+	addActivityItem(detection) {
+		const feed = document.getElementById('activity-feed');
+		if (!feed) return;
+
+		const item = document.createElement('div');
+		item.className = 'activity-item';
+		item.innerHTML = `
+			<div class="activity-avatar" style="background-color: var(--primary);">
+				${detection.plate_text ? detection.plate_text.substring(0, 2) : 'LP'}
+			</div>
+			<div class="activity-content">
+				<div class="activity-title">License plate detected: ${detection.plate_text || 'Unknown'}</div>
+				<div class="activity-time">Just now</div>
+			</div>
+		`;
+
+		feed.insertBefore(item, feed.firstChild);
+
+		// Remove old items (keep only 10)
+		while (feed.children.length > 10) {
+			feed.removeChild(feed.lastChild);
+		}
+	}
+
+	updateDetectionCount() {
+		const todayElement = document.querySelector('[data-metric="today-detections"]');
+		if (todayElement) {
+			const current = parseInt(todayElement.textContent) || 0;
+			todayElement.textContent = current + 1;
+		}
+	}
+
+	updateSystemHealth(data) {
+		// Update system health metrics
+		if (window.lprApp) {
+			window.lprApp.updateSystemMetrics(data);
+		}
+	}
+
+	updateActivityFeed() {
+		// Fetch recent activity from API
+		fetch('/api/activity/recent')
+			.then(response => response.json())
+			.then(data => {
+				if (data.activities) {
+					this.renderActivityFeed(data.activities);
+				}
+			})
+			.catch(error => console.log('Activity feed not available yet'));
+	}
+
+	renderActivityFeed(activities) {
+		const feed = document.getElementById('activity-feed');
+		if (!feed || !activities.length) return;
+
+		feed.innerHTML = activities.map(activity => `
+			<div class="activity-item">
+				<div class="activity-avatar" style="background-color: ${activity.color || 'var(--primary)'};">
+					${activity.icon || activity.title.substring(0, 2)}
+				</div>
+				<div class="activity-content">
+					<div class="activity-title">${activity.title}</div>
+					<div class="activity-time">${activity.time}</div>
+				</div>
+			</div>
+		`).join('');
+	}
+}
+
+// Initialize dashboard
+const dashboard = new Dashboard();
+{% endblock %}

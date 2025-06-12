@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 import cv2
@@ -8,18 +8,30 @@ import uuid
 from typing import Dict, List, Any
 from app.services.camera_service import CameraService
 from app.services.detection_service import DetectionService
+from config.settings import Config
 import logging
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+
+# Load configuration
+config = Config()
+
+# Initialize templates only if web UI is enabled
+if config.is_web_ui_enabled:
+    templates = Jinja2Templates(directory="templates")
+else:
+    templates = None
 
 # This will be initialized in the main app
 camera_service = None
 detection_service = None
 video_recording_service = None
+
+# Dashboard broadcast callback (set by main app)
+dashboard_broadcast_callback = None
 
 # License plate tracking for deduplication
 plate_tracker = {
@@ -165,6 +177,13 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                                     
                                     # Increment detection counter
                                     frame_processor["total_detections"] += 1
+                                    
+                                    # Broadcast to dashboard if callback is available
+                                    if dashboard_broadcast_callback:
+                                        try:
+                                            asyncio.create_task(dashboard_broadcast_callback(detection))
+                                        except Exception as e:
+                                            logger.debug(f"Dashboard broadcast failed: {e}")
                         
                         # Process the detection queue in a separate task (non-blocking)
                         asyncio.create_task(process_detection_queue())
@@ -251,7 +270,9 @@ async def generate_frames(camera: CameraService, detection_svc=None):
 
 @router.get("/", response_class=HTMLResponse)
 async def stream_page(request: Request):
-    """Stream page"""
+    """Stream page - only available in web UI mode"""
+    if not config.is_web_ui_enabled or not templates:
+        raise HTTPException(status_code=503, detail="Web UI not available in headless mode")
     return templates.TemplateResponse("stream.html", {"request": request})
 
 @router.get("/video")
@@ -260,6 +281,9 @@ async def video_feed(
     detection_svc = Depends(get_detection_service)
 ):
     """Video streaming endpoint with license plate detection"""
+    if not config.is_web_ui_enabled:
+        raise HTTPException(status_code=503, detail="Video streaming not available in headless mode")
+    
     return StreamingResponse(
         generate_frames(camera, detection_svc),
         media_type="multipart/x-mixed-replace; boundary=frame"

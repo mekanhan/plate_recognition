@@ -1,271 +1,674 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>License Plate Recognition V2</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        h1 {
-            color: #333;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 10px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            border-radius: 5px;
-        }
-        .video-container {
-            margin: 20px 0;
-            text-align: center;
-        }
-        .video-feed {
-            max-width: 100%;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .controls {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .button {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        .button:hover {
-            background-color: #45a049;
-        }
-        .button-secondary {
-            background-color: #2196F3;
-        }
-        .button-secondary:hover {
-            background-color: #0b7dda;
-        }
-        .results {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f9f9f9;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .detection-item {
-            margin-bottom: 10px;
-            padding: 10px;
-            background-color: white;
-            border-radius: 4px;
-            border: 1px solid #eee;
-        }
-        .version-badge {
-            display: inline-block;
-            background-color: #ff9800;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-        .api-info {
-            margin-top: 30px;
-            padding: 15px;
-            background-color: #e8f5e9;
-            border-radius: 4px;
-            border: 1px solid #c8e6c9;
-        }
-        .api-endpoint {
-            font-family: monospace;
-            background-color: #f5f5f5;
-            padding: 2px 5px;
-            border-radius: 3px;
-            border: 1px solid #ddd;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>License Plate Recognition <span class="version-badge">V2</span></h1>
-        
-        <div class="video-container">
-            <h2>Live Video Feed</h2>
-            <img src="/v2/stream/video-feed" alt="Video Feed" class="video-feed">
-        </div>
-        
-        <div class="controls">
-            <h2>Controls</h2>
-            <button id="detectButton" class="button">Detect License Plate</button>
-            <button id="snapshotButton" class="button button-secondary">Take Snapshot</button>
-        </div>
-        
-        <div class="results">
-            <h2>Latest Detections</h2>
-            <div id="detectionResults">
-                <p>No detections yet. Click "Detect License Plate" to start.</p>
-            </div>
-        </div>
-        
-        <div class="api-info">
-            <h2>V2 API Information</h2>
-            <p>The V2 API uses a new architecture with improved interfaces and dependency injection.</p>
-            <h3>Available Endpoints:</h3>
-            <ul>
-                <li><span class="api-endpoint">/v2/stream/video-feed</span> - Stream video with license plate detection</li>
-                <li><span class="api-endpoint">/v2/stream/snapshot</span> - Get a single frame from the camera</li>
-                <li><span class="api-endpoint">/v2/detection/detect-from-camera</span> - Detect license plate from camera</li>
-                <li><span class="api-endpoint">/v2/results/detections</span> - Get all license plate detections</li>
-                <li><span class="api-endpoint">/v2/results/enhanced-results</span> - Get all enhanced results</li>
-                <li><span class="api-endpoint">/v2/results/statistics</span> - Get detection statistics</li>
-            </ul>
-            <p><a href="/">Switch to V1 Interface</a></p>
-        </div>
-    </div>
-    
-    <script>
-        document.getElementById('detectButton').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/v2/detection/detect-from-camera', {
-                    method: 'POST'
-                });
-                const data = await response.json();
-                
-                if (response.ok) {
-                    updateDetectionResults(data);
-                } else {
-                    showError(data.detail || 'Error detecting license plate');
-                }
-            } catch (error) {
-                showError('Error connecting to server');
-                console.error(error);
-            }
-        });
-        
-        document.getElementById('snapshotButton').addEventListener('click', async () => {
-            try {
-                const response = await fetch('/v2/stream/snapshot');
-                
-                if (response.ok) {
-                    // Create a temporary link to download the image
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = `snapshot-${new Date().toISOString()}.jpg`;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                } else {
-                    showError('Error taking snapshot');
-                }
-            } catch (error) {
-                showError('Error connecting to server');
-                console.error(error);
-            }
-        });
-        
-        async function loadLatestDetections() {
-            try {
-                const response = await fetch('/v2/detection/latest');
-                const data = await response.json();
-                
-                if (response.ok && data.detections && data.detections.length > 0) {
-                    const resultsDiv = document.getElementById('detectionResults');
-                    resultsDiv.innerHTML = '';
-                    
-                    data.detections.forEach(detection => {
-                        const detectionElement = createDetectionElement(detection);
-                        resultsDiv.appendChild(detectionElement);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading latest detections:', error);
-            }
-        }
-        
-        function updateDetectionResults(detection) {
-            const resultsDiv = document.getElementById('detectionResults');
-            
-            if (resultsDiv.querySelector('p')) {
-                resultsDiv.innerHTML = '';
-            }
-            
-            const detectionElement = document.createElement('div');
-            detectionElement.className = 'detection-item';
-            
-            const plateText = detection.plate_text || 'Unknown';
-            const confidence = detection.confidence ? (detection.confidence * 100).toFixed(1) : 'N/A';
-            const timestamp = new Date().toLocaleTimeString();
-            
-            detectionElement.innerHTML = `
-                <strong>Plate:</strong> ${plateText}<br>
-                <strong>Confidence:</strong> ${confidence}%<br>
-                <strong>Time:</strong> ${timestamp}<br>
-                <strong>ID:</strong> ${detection.detection_id || 'N/A'}
-            `;
-            
-            resultsDiv.insertBefore(detectionElement, resultsDiv.firstChild);
-        }
-        
-        function createDetectionElement(detection) {
-            const detectionElement = document.createElement('div');
-            detectionElement.className = 'detection-item';
-            
-            const plateText = detection.plate_text || 'Unknown';
-            const confidence = detection.confidence ? (detection.confidence * 100).toFixed(1) : 'N/A';
-            const timestamp = detection.timestamp ? new Date(detection.timestamp * 1000).toLocaleTimeString() : 'N/A';
-            
-            detectionElement.innerHTML = `
-                <strong>Plate:</strong> ${plateText}<br>
-                <strong>Confidence:</strong> ${confidence}%<br>
-                <strong>Time:</strong> ${timestamp}<br>
-                <strong>ID:</strong> ${detection.detection_id || 'N/A'}
-            `;
-            
-            return detectionElement;
-        }
-        
-        function showError(message) {
-            const resultsDiv = document.getElementById('detectionResults');
-            const errorElement = document.createElement('div');
-            errorElement.className = 'detection-item';
-            errorElement.style.backgroundColor = '#ffebee';
-            errorElement.style.borderColor = '#ffcdd2';
-            errorElement.innerHTML = `<strong>Error:</strong> ${message}`;
-            
-            resultsDiv.insertBefore(errorElement, resultsDiv.firstChild);
-            
-            // Remove error after 5 seconds
-            setTimeout(() => {
-                if (errorElement.parentNode === resultsDiv) {
-                    resultsDiv.removeChild(errorElement);
-                }
-            }, 5000);
-        }
-        
-        // Load latest detections on page load
-        window.addEventListener('load', loadLatestDetections);
-        
-        // Refresh latest detections every 10 seconds
-        setInterval(loadLatestDetections, 10000);
-    </script>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Dashboard V2{% endblock %}
+{% block breadcrumb_current %}Dashboard{% endblock %}
+{% block page_title %}LPR Dashboard V2{% endblock %}
+{% block page_subtitle %}Advanced License Plate Recognition System - Enhanced Architecture{% endblock %}
+
+{% block page_actions %}
+<div class="flex items-center gap-3">
+	<button id="refresh-stats" class="btn btn-primary">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<polyline points="23,4 23,10 17,10"></polyline>
+			<polyline points="1,20 1,14 7,14"></polyline>
+			<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+		</svg>
+		Refresh Stats
+	</button>
+	<a href="/v2/stream" class="btn btn-secondary">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="m22 8-6 4 6 4V8Z"></path>
+			<rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>
+		</svg>
+		Live Stream
+	</a>
+	<a href="/v2/system/monitoring" class="btn btn-outline">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+		</svg>
+		System Monitor
+	</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.version-banner {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	text-align: center;
+	padding: var(--space-4);
+	border-radius: var(--radius-lg);
+	margin-bottom: var(--space-6);
+}
+
+.version-badge {
+	display: inline-block;
+	background: rgba(255, 255, 255, 0.2);
+	padding: var(--space-1) var(--space-3);
+	border-radius: var(--radius-full);
+	font-weight: 600;
+	margin-left: var(--space-2);
+}
+
+.feature-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: var(--space-6);
+	margin: var(--space-8) 0;
+}
+
+.feature-card {
+	padding: var(--space-6);
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border-light);
+	transition: all 0.3s ease;
+	background: linear-gradient(135deg, var(--surface-light) 0%, var(--gray-50) 100%);
+}
+
+.feature-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+	width: 48px;
+	height: 48px;
+	border-radius: var(--radius-lg);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: var(--space-4);
+	color: white;
+}
+
+.feature-title {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin-bottom: var(--space-2);
+}
+
+.feature-description {
+	color: var(--gray-600);
+	line-height: 1.6;
+	margin-bottom: var(--space-4);
+}
+
+.feature-button {
+	width: 100%;
+	justify-content: center;
+}
+
+.stats-overview {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: var(--space-4);
+	margin-bottom: var(--space-8);
+}
+
+.stat-card {
+	text-align: center;
+	padding: var(--space-4);
+}
+
+.stat-value {
+	font-size: 2.5rem;
+	font-weight: 700;
+	color: var(--primary);
+	margin-bottom: var(--space-2);
+}
+
+.stat-label {
+	font-size: 0.875rem;
+	color: var(--gray-600);
+	font-weight: 500;
+}
+
+.api-showcase {
+	background: var(--gray-50);
+	padding: var(--space-6);
+	border-radius: var(--radius-lg);
+	margin-top: var(--space-8);
+}
+
+.api-endpoint {
+	background: var(--gray-800);
+	color: var(--green-400);
+	padding: var(--space-2) var(--space-3);
+	border-radius: var(--radius);
+	font-family: var(--font-mono);
+	font-size: 0.875rem;
+	margin: var(--space-2) 0;
+	display: block;
+	border-left: 4px solid var(--primary);
+}
+
+.recent-activity {
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.activity-item {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	padding: var(--space-3);
+	border-bottom: 1px solid var(--border-light);
+}
+
+.activity-icon {
+	width: 32px;
+	height: 32px;
+	border-radius: var(--radius-full);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1rem;
+}
+
+.activity-content {
+	flex: 1;
+}
+
+.activity-title {
+	font-weight: 500;
+	margin-bottom: var(--space-1);
+}
+
+.activity-time {
+	font-size: 0.875rem;
+	color: var(--gray-500);
+}
+
+[data-theme="dark"] .feature-card {
+	background: linear-gradient(135deg, var(--surface-dark) 0%, var(--gray-800) 100%);
+}
+
+[data-theme="dark"] .api-showcase {
+	background: var(--gray-800);
+}
+
+[data-theme="dark"] .feature-description {
+	color: var(--gray-400);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Version Banner -->
+<div class="version-banner">
+	<h2>Welcome to LPR System V2 <span class="version-badge">Enhanced</span></h2>
+	<p>Advanced architecture with improved interfaces, dependency injection, and real-time capabilities</p>
+</div>
+
+<!-- Quick Stats Overview -->
+<div class="stats-overview">
+	<div class="card stat-card">
+		<div class="stat-value" id="total-detections">0</div>
+		<div class="stat-label">Total Detections</div>
+	</div>
+	<div class="card stat-card">
+		<div class="stat-value" id="today-detections">0</div>
+		<div class="stat-label">Today's Detections</div>
+	</div>
+	<div class="card stat-card">
+		<div class="stat-value" id="accuracy-rate">95.2%</div>
+		<div class="stat-label">Accuracy Rate</div>
+	</div>
+	<div class="card stat-card">
+		<div class="stat-value" id="system-uptime">0:00:00</div>
+		<div class="stat-label">System Uptime</div>
+	</div>
+</div>
+
+<!-- Main Features -->
+<div class="feature-grid">
+	<!-- Live Stream Feature -->
+	<div class="feature-card">
+		<div class="feature-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+				<path d="m22 8-6 4 6 4V8Z"/>
+				<rect width="14" height="12" x="2" y="6" rx="2" ry="2"/>
+			</svg>
+		</div>
+		<h3 class="feature-title">Live Video Stream</h3>
+		<p class="feature-description">
+			Real-time license plate detection with annotated video feed, instant detection overlays, and live statistics tracking.
+		</p>
+		<a href="/v2/stream" class="btn btn-primary feature-button">
+			Start Live Stream
+		</a>
+	</div>
+
+	<!-- Detection Results -->
+	<div class="feature-card">
+		<div class="feature-icon" style="background: linear-gradient(135deg, #10b981, #047857);">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+				<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+				<polyline points="14,2 14,8 20,8"/>
+				<line x1="16" y1="13" x2="8" y2="13"/>
+				<line x1="16" y1="17" x2="8" y2="17"/>
+				<polyline points="10,9 9,9 8,9"/>
+			</svg>
+		</div>
+		<h3 class="feature-title">Detection Results</h3>
+		<p class="feature-description">
+			Browse and analyze all license plate detections with enhanced search, filtering, and detailed analytics.
+		</p>
+		<a href="/v2/results/latest" class="btn btn-secondary feature-button">
+			View Results
+		</a>
+	</div>
+
+	<!-- System Monitoring -->
+	<div class="feature-card">
+		<div class="feature-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+				<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+			</svg>
+		</div>
+		<h3 class="feature-title">System Monitor</h3>
+		<p class="feature-description">
+			Real-time system health monitoring with CPU, memory, GPU metrics, and performance analytics.
+		</p>
+		<a href="/v2/system/monitoring" class="btn btn-warning feature-button">
+			Monitor System
+		</a>
+	</div>
+
+	<!-- Configuration -->
+	<div class="feature-card">
+		<div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+				<circle cx="12" cy="12" r="3"/>
+				<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+			</svg>
+		</div>
+		<h3 class="feature-title">Configuration</h3>
+		<p class="feature-description">
+			Advanced system configuration with model settings, camera parameters, and detection thresholds.
+		</p>
+		<a href="/v2/system/config" class="btn btn-purple feature-button">
+			Configure System
+		</a>
+	</div>
+</div>
+
+<!-- Recent Activity & API Information -->
+<div class="grid grid-cols-2 gap-6">
+	<!-- Recent Activity -->
+	<div class="card">
+		<div class="card-header">
+			<h3 class="card-title">Recent Activity</h3>
+		</div>
+		<div class="card-body" style="padding: 0;">
+			<div class="recent-activity" id="recent-activity">
+				<div class="activity-item">
+					<div class="activity-icon" style="background: var(--success);">⚡</div>
+					<div class="activity-content">
+						<div class="activity-title">V2 System initialized</div>
+						<div class="activity-time">Just now</div>
+					</div>
+				</div>
+				<div class="activity-item">
+					<div class="activity-icon" style="background: var(--primary);">📹</div>
+					<div class="activity-content">
+						<div class="activity-title">Camera service connected</div>
+						<div class="activity-time">30 seconds ago</div>
+					</div>
+				</div>
+				<div class="activity-item">
+					<div class="activity-icon" style="background: var(--warning);">🧠</div>
+					<div class="activity-content">
+						<div class="activity-title">YOLO model loaded</div>
+						<div class="activity-time">1 minute ago</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- API Information -->
+	<div class="card">
+		<div class="card-header">
+			<h3 class="card-title">V2 API Overview</h3>
+		</div>
+		<div class="card-body">
+			<p class="mb-4">Enhanced API with improved architecture and real-time capabilities:</p>
+			
+			<h4 class="font-semibold mb-2">Core Endpoints:</h4>
+			<code class="api-endpoint">GET /v2/stream/video-feed</code>
+			<code class="api-endpoint">POST /v2/detection/detect-from-camera</code>
+			<code class="api-endpoint">GET /v2/results/detections</code>
+			<code class="api-endpoint">GET /v2/results/statistics</code>
+			
+			<h4 class="font-semibold mb-2 mt-4">WebSocket Endpoints:</h4>
+			<code class="api-endpoint">WS /ws/dashboard</code>
+			<code class="api-endpoint">WS /v2/stream/ws</code>
+			
+			<div class="mt-4">
+				<a href="/docs" class="btn btn-outline btn-sm">View Full API Docs</a>
+				<a href="/" class="btn btn-ghost btn-sm">Switch to V1</a>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Quick Actions -->
+<div class="api-showcase">
+	<h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+	<div class="grid grid-cols-3 gap-4">
+		<button id="test-detection" class="btn btn-primary">
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+				<circle cx="12" cy="12" r="3"/>
+			</svg>
+			Test Detection
+		</button>
+		<button id="take-snapshot" class="btn btn-secondary">
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+				<circle cx="12" cy="13" r="4"/>
+			</svg>
+			Take Snapshot
+		</button>
+		<button id="refresh-all" class="btn btn-outline">
+			<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<polyline points="23,4 23,10 17,10"/>
+				<polyline points="1,20 1,14 7,14"/>
+				<path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+			</svg>
+			Refresh All
+		</button>
+	</div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+// V2 Dashboard JavaScript
+class V2Dashboard {
+	constructor() {
+		this.stats = {
+			totalDetections: 0,
+			todayDetections: 0,
+			accuracyRate: 95.2,
+			systemUptime: 0
+		};
+		
+		this.init();
+	}
+
+	init() {
+		this.setupEventListeners();
+		this.loadInitialData();
+		this.startStatsUpdater();
+		this.setupWebSocket();
+	}
+
+	setupEventListeners() {
+		document.getElementById('refresh-stats')?.addEventListener('click', () => this.refreshStats());
+		document.getElementById('test-detection')?.addEventListener('click', () => this.testDetection());
+		document.getElementById('take-snapshot')?.addEventListener('click', () => this.takeSnapshot());
+		document.getElementById('refresh-all')?.addEventListener('click', () => this.refreshAll());
+	}
+
+	async loadInitialData() {
+		await Promise.all([
+			this.loadDetectionStats(),
+			this.loadSystemHealth(),
+			this.loadRecentActivity()
+		]);
+	}
+
+	async loadDetectionStats() {
+		try {
+			const response = await fetch('/v2/results/statistics');
+			if (response.ok) {
+				const data = await response.json();
+				this.updateStatsDisplay(data);
+			}
+		} catch (error) {
+			console.debug('Could not load detection stats:', error);
+		}
+	}
+
+	async loadSystemHealth() {
+		try {
+			const response = await fetch('/api/system/health');
+			if (response.ok) {
+				const data = await response.json();
+				this.updateSystemStats(data);
+			}
+		} catch (error) {
+			console.debug('Could not load system health:', error);
+		}
+	}
+
+	async loadRecentActivity() {
+		try {
+			const response = await fetch('/api/system/activity/recent');
+			if (response.ok) {
+				const data = await response.json();
+				this.updateRecentActivity(data.activities || []);
+			}
+		} catch (error) {
+			console.debug('Could not load recent activity:', error);
+		}
+	}
+
+	updateStatsDisplay(data) {
+		if (data.total_detections !== undefined) {
+			document.getElementById('total-detections').textContent = data.total_detections;
+		}
+		if (data.today_detections !== undefined) {
+			document.getElementById('today-detections').textContent = data.today_detections;
+		}
+		if (data.accuracy_rate !== undefined) {
+			document.getElementById('accuracy-rate').textContent = `${(data.accuracy_rate * 100).toFixed(1)}%`;
+		}
+	}
+
+	updateSystemStats(data) {
+		if (data.detections) {
+			if (data.detections.total !== undefined) {
+				document.getElementById('total-detections').textContent = data.detections.total;
+			}
+			if (data.detections.today !== undefined) {
+				document.getElementById('today-detections').textContent = data.detections.today;
+			}
+		}
+		
+		if (data.uptime !== undefined) {
+			const hours = Math.floor(data.uptime / 3600);
+			const minutes = Math.floor((data.uptime % 3600) / 60);
+			const seconds = Math.floor(data.uptime % 60);
+			document.getElementById('system-uptime').textContent = 
+				`${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+		}
+	}
+
+	updateRecentActivity(activities) {
+		const container = document.getElementById('recent-activity');
+		if (!container || !activities.length) return;
+
+		container.innerHTML = activities.map(activity => `
+			<div class="activity-item">
+				<div class="activity-icon" style="background: ${activity.color || 'var(--primary)'};">
+					${activity.icon || '🔵'}
+				</div>
+				<div class="activity-content">
+					<div class="activity-title">${activity.title}</div>
+					<div class="activity-time">${activity.time}</div>
+				</div>
+			</div>
+		`).join('');
+	}
+
+	setupWebSocket() {
+		if (window.lprApp && window.location.protocol === 'http:') {
+			const wsUrl = `ws://${window.location.host}/ws/dashboard`;
+			this.websocket = window.lprApp.createWebSocket(wsUrl, {
+				id: 'v2-dashboard',
+				onMessage: (data) => this.handleWebSocketMessage(data),
+				onOpen: () => console.log('V2 Dashboard WebSocket connected'),
+				onClose: () => console.log('V2 Dashboard WebSocket disconnected')
+			});
+		}
+	}
+
+	handleWebSocketMessage(data) {
+		try {
+			const message = typeof data === 'string' ? JSON.parse(data) : data;
+			
+			if (message.type === 'detection') {
+				this.handleNewDetection(message.detection);
+			} else if (message.type === 'system') {
+				this.updateSystemStats(message);
+			}
+		} catch (error) {
+			console.debug('Error parsing WebSocket message:', error);
+		}
+	}
+
+	handleNewDetection(detection) {
+		// Update detection count
+		const todayEl = document.getElementById('today-detections');
+		if (todayEl) {
+			const current = parseInt(todayEl.textContent) || 0;
+			todayEl.textContent = current + 1;
+		}
+
+		// Add to recent activity
+		this.addActivityItem({
+			icon: '🔍',
+			color: 'var(--success)',
+			title: `License plate detected: ${detection.plate_text || 'Unknown'}`,
+			time: 'Just now'
+		});
+	}
+
+	addActivityItem(activity) {
+		const container = document.getElementById('recent-activity');
+		if (!container) return;
+
+		const item = document.createElement('div');
+		item.className = 'activity-item';
+		item.innerHTML = `
+			<div class="activity-icon" style="background: ${activity.color};">
+				${activity.icon}
+			</div>
+			<div class="activity-content">
+				<div class="activity-title">${activity.title}</div>
+				<div class="activity-time">${activity.time}</div>
+			</div>
+		`;
+
+		container.insertBefore(item, container.firstChild);
+
+		// Remove old items
+		while (container.children.length > 10) {
+			container.removeChild(container.lastChild);
+		}
+	}
+
+	startStatsUpdater() {
+		// Update stats every 30 seconds
+		setInterval(() => {
+			this.loadDetectionStats();
+			this.loadSystemHealth();
+		}, 30000);
+	}
+
+	async refreshStats() {
+		if (window.lprApp) {
+			window.lprApp.showNotification('Refreshing statistics...', 'info');
+		}
+		
+		await this.loadInitialData();
+		
+		if (window.lprApp) {
+			window.lprApp.showNotification('Statistics refreshed successfully', 'success');
+		}
+	}
+
+	async testDetection() {
+		try {
+			if (window.lprApp) {
+				window.lprApp.showNotification('Running detection test...', 'info');
+			}
+			
+			const response = await fetch('/v2/detection/detect-from-camera', {
+				method: 'POST'
+			});
+			
+			if (response.ok) {
+				const data = await response.json();
+				if (window.lprApp) {
+					window.lprApp.showNotification('Detection test completed successfully', 'success');
+				}
+				console.log('Detection result:', data);
+			} else {
+				throw new Error('Detection test failed');
+			}
+		} catch (error) {
+			console.error('Detection test error:', error);
+			if (window.lprApp) {
+				window.lprApp.showNotification('Detection test failed', 'danger');
+			}
+		}
+	}
+
+	async takeSnapshot() {
+		try {
+			if (window.lprApp) {
+				window.lprApp.showNotification('Taking snapshot...', 'info');
+			}
+			
+			const response = await fetch('/v2/stream/snapshot');
+			
+			if (response.ok) {
+				const blob = await response.blob();
+				const url = window.URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.style.display = 'none';
+				a.href = url;
+				a.download = `v2_snapshot_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.jpg`;
+				document.body.appendChild(a);
+				a.click();
+				window.URL.revokeObjectURL(url);
+				
+				if (window.lprApp) {
+					window.lprApp.showNotification('Snapshot saved successfully', 'success');
+				}
+			} else {
+				throw new Error('Snapshot failed');
+			}
+		} catch (error) {
+			console.error('Snapshot error:', error);
+			if (window.lprApp) {
+				window.lprApp.showNotification('Snapshot failed', 'danger');
+			}
+		}
+	}
+
+	async refreshAll() {
+		if (window.lprApp) {
+			window.lprApp.showNotification('Refreshing all data...', 'info');
+		}
+		
+		await this.loadInitialData();
+		
+		// Refresh page metrics in sidebar
+		if (window.lprApp && window.lprApp.updateMetrics) {
+			window.lprApp.updateMetrics();
+		}
+		
+		if (window.lprApp) {
+			window.lprApp.showNotification('All data refreshed successfully', 'success');
+		}
+	}
+}
+
+// Initialize V2 dashboard
+const v2Dashboard = new V2Dashboard();
+{% endblock %}

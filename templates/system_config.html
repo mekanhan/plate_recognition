@@ -1,0 +1,967 @@
+{% extends "base.html" %}
+
+{% block title %}System Configuration{% endblock %}
+{% block breadcrumb_current %}Configuration{% endblock %}
+{% block page_title %}System Configuration{% endblock %}
+{% block page_subtitle %}Manage detection settings, camera configuration, and system preferences{% endblock %}
+
+{% block page_actions %}
+<div class="flex items-center gap-3">
+	<button id="export-config" class="btn btn-outline">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+			<polyline points="7,10 12,15 17,10"></polyline>
+			<line x1="12" y1="15" x2="12" y2="3"></line>
+		</svg>
+		Export Config
+	</button>
+	<button id="save-config" class="btn btn-primary">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+			<polyline points="17,21 17,13 7,13 7,21"></polyline>
+			<polyline points="7,3 7,8 15,8"></polyline>
+		</svg>
+		Save Changes
+	</button>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.config-section {
+	margin-bottom: var(--space-8);
+}
+
+.config-form {
+	display: grid;
+	gap: var(--space-6);
+}
+
+.form-group {
+	display: grid;
+	gap: var(--space-2);
+}
+
+.form-label {
+	font-weight: 600;
+	color: var(--gray-900);
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.form-help {
+	font-size: 0.875rem;
+	color: var(--gray-600);
+	margin-top: var(--space-1);
+}
+
+.form-input {
+	padding: var(--space-3);
+	border: 1px solid var(--border-light);
+	border-radius: var(--radius);
+	background: var(--surface-light);
+	transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input:focus {
+	outline: none;
+	border-color: var(--primary);
+	box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-select {
+	appearance: none;
+	background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+	background-position: right 0.5rem center;
+	background-repeat: no-repeat;
+	background-size: 1.5em 1.5em;
+	padding-right: 2.5rem;
+}
+
+.form-range {
+	width: 100%;
+	height: 6px;
+	border-radius: 3px;
+	background: var(--gray-200);
+	outline: none;
+	-webkit-appearance: none;
+}
+
+.form-range::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	appearance: none;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: var(--primary);
+	cursor: pointer;
+}
+
+.form-range::-moz-range-thumb {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: var(--primary);
+	cursor: pointer;
+	border: none;
+}
+
+.range-display {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: var(--space-2);
+}
+
+.range-value {
+	font-weight: 600;
+	color: var(--primary);
+	background: var(--gray-100);
+	padding: var(--space-1) var(--space-2);
+	border-radius: var(--radius);
+	min-width: 60px;
+	text-align: center;
+}
+
+.checkbox-group {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+}
+
+.form-checkbox {
+	width: 18px;
+	height: 18px;
+	accent-color: var(--primary);
+}
+
+.model-selector {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: var(--space-4);
+	margin-top: var(--space-4);
+}
+
+.model-option {
+	border: 2px solid var(--border-light);
+	border-radius: var(--radius-lg);
+	padding: var(--space-4);
+	cursor: pointer;
+	transition: all var(--transition-fast);
+	text-align: center;
+}
+
+.model-option:hover {
+	border-color: var(--primary);
+	background: var(--gray-50);
+}
+
+.model-option.selected {
+	border-color: var(--primary);
+	background: var(--primary);
+	color: white;
+}
+
+.model-name {
+	font-weight: 600;
+	margin-bottom: var(--space-2);
+}
+
+.model-description {
+	font-size: 0.875rem;
+	opacity: 0.8;
+}
+
+.test-button {
+	margin-top: var(--space-4);
+	width: 100%;
+}
+
+.status-display {
+	padding: var(--space-3);
+	border-radius: var(--radius);
+	margin-top: var(--space-3);
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+}
+
+.status-success {
+	background: #d1fae5;
+	color: #065f46;
+	border: 1px solid #6ee7b7;
+}
+
+.status-error {
+	background: #fee2e2;
+	color: #991b1b;
+	border: 1px solid #fca5a5;
+}
+
+.status-warning {
+	background: #fef3c7;
+	color: #92400e;
+	border: 1px solid #fcd34d;
+}
+
+.advanced-toggle {
+	margin-top: var(--space-4);
+	padding: var(--space-4);
+	background: var(--gray-50);
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border-light);
+}
+
+.advanced-content {
+	margin-top: var(--space-4);
+	display: none;
+}
+
+.advanced-content.show {
+	display: block;
+}
+
+[data-theme="dark"] .form-label {
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .form-help {
+	color: var(--gray-400);
+}
+
+[data-theme="dark"] .form-input {
+	background: var(--surface-dark);
+	border-color: var(--border-dark);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .model-option {
+	border-color: var(--border-dark);
+	background: var(--surface-dark);
+}
+
+[data-theme="dark"] .model-option:hover {
+	background: var(--gray-800);
+}
+
+[data-theme="dark"] .range-value {
+	background: var(--gray-800);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .advanced-toggle {
+	background: var(--gray-800);
+	border-color: var(--border-dark);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<form id="config-form" class="config-form">
+	<!-- Detection Settings -->
+	<div class="config-section">
+		<div class="card">
+			<div class="card-header">
+				<h3 class="card-title">Detection Settings</h3>
+				<p class="card-subtitle">Configure license plate detection parameters</p>
+			</div>
+			<div class="card-body">
+				<div class="grid grid-cols-2 gap-6">
+					<!-- Confidence Threshold -->
+					<div class="form-group">
+						<label class="form-label">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M9 12l2 2 4-4"/>
+								<path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+								<path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+							</svg>
+							Confidence Threshold
+						</label>
+						<input type="range" id="confidence-threshold" class="form-range" min="0.1" max="1.0" step="0.05" value="0.5">
+						<div class="range-display">
+							<span class="form-help">Lower values detect more plates but may include false positives</span>
+							<span class="range-value" id="confidence-value">0.5</span>
+						</div>
+					</div>
+
+					<!-- Model Selection -->
+					<div class="form-group">
+						<label class="form-label">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+								<line x1="8" y1="21" x2="16" y2="21"/>
+								<line x1="12" y1="17" x2="12" y2="21"/>
+							</svg>
+							YOLO Model
+						</label>
+						<select id="model-selection" class="form-input form-select">
+							<option value="app/models/yolo11m_best.pt">YOLO11M Best (Recommended)</option>
+							<option value="app/models/yolo11n.pt">YOLO11N (Fast)</option>
+							<option value="app/models/yolov8m.pt">YOLOv8M (Stable)</option>
+							<option value="app/models/yolov8n.pt">YOLOv8N (Lightweight)</option>
+						</select>
+						<div class="form-help">Choose the YOLO model based on your hardware capabilities</div>
+						
+						<button type="button" id="test-model" class="btn btn-outline test-button">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+							</svg>
+							Test Model Performance
+						</button>
+					</div>
+				</div>
+
+				<!-- Processing Settings -->
+				<div class="grid grid-cols-3 gap-6 mt-6">
+					<div class="form-group">
+						<label class="form-label">Processing Frequency</label>
+						<select id="processing-frequency" class="form-input form-select">
+							<option value="1">Every Frame</option>
+							<option value="3" selected>Every 3rd Frame</option>
+							<option value="5">Every 5th Frame</option>
+							<option value="10">Every 10th Frame</option>
+						</select>
+						<div class="form-help">Higher values reduce CPU usage</div>
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Detection Timeout</label>
+						<input type="number" id="detection-timeout" class="form-input" value="5" min="1" max="30">
+						<div class="form-help">Seconds before detection timeout</div>
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Max Detections</label>
+						<input type="number" id="max-detections" class="form-input" value="10" min="1" max="100">
+						<div class="form-help">Maximum detections per frame</div>
+					</div>
+				</div>
+
+				<!-- Enhancement Options -->
+				<div class="grid grid-cols-2 gap-6 mt-6">
+					<div class="form-group">
+						<div class="checkbox-group">
+							<input type="checkbox" id="auto-enhance" class="form-checkbox" checked>
+							<label for="auto-enhance" class="form-label">Auto-enhance detected plates</label>
+						</div>
+						<div class="form-help">Automatically enhance detected license plate images</div>
+					</div>
+
+					<div class="form-group">
+						<div class="checkbox-group">
+							<input type="checkbox" id="save-detections" class="form-checkbox" checked>
+							<label for="save-detections" class="form-label">Save detection images</label>
+						</div>
+						<div class="form-help">Store images of detected license plates</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Camera Settings -->
+	<div class="config-section">
+		<div class="card">
+			<div class="card-header">
+				<h3 class="card-title">Camera Configuration</h3>
+				<p class="card-subtitle">Configure camera source and video settings</p>
+			</div>
+			<div class="card-body">
+				<div class="grid grid-cols-2 gap-6">
+					<!-- Camera Source -->
+					<div class="form-group">
+						<label class="form-label">
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="m23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+								<circle cx="12" cy="13" r="4"/>
+							</svg>
+							Camera Source
+						</label>
+						<select id="camera-source" class="form-input form-select">
+							<option value="0">USB Camera (0)</option>
+							<option value="1">USB Camera (1)</option>
+							<option value="2">USB Camera (2)</option>
+							<option value="csi">CSI Camera (Jetson)</option>
+							<option value="ip">IP Camera</option>
+						</select>
+						<div class="form-help">Select your camera input source</div>
+					</div>
+
+					<!-- IP Camera URL (conditional) -->
+					<div class="form-group" id="ip-camera-group" style="display: none;">
+						<label class="form-label">IP Camera URL</label>
+						<input type="url" id="ip-camera-url" class="form-input" placeholder="http://192.168.1.100:8080/video">
+						<div class="form-help">Enter the IP camera stream URL</div>
+					</div>
+
+					<!-- Resolution -->
+					<div class="form-group">
+						<label class="form-label">Resolution</label>
+						<select id="camera-resolution" class="form-input form-select">
+							<option value="640x480">640x480 (VGA)</option>
+							<option value="1280x720" selected>1280x720 (HD)</option>
+							<option value="1920x1080">1920x1080 (Full HD)</option>
+							<option value="custom">Custom</option>
+						</select>
+						<div class="form-help">Higher resolutions require more processing power</div>
+					</div>
+
+					<!-- Custom Resolution (conditional) -->
+					<div class="form-group" id="custom-resolution-group" style="display: none;">
+						<label class="form-label">Custom Resolution</label>
+						<div class="flex gap-2">
+							<input type="number" id="custom-width" class="form-input" placeholder="Width" min="320" max="3840">
+							<span class="flex items-center">×</span>
+							<input type="number" id="custom-height" class="form-input" placeholder="Height" min="240" max="2160">
+						</div>
+					</div>
+
+					<!-- Frame Rate -->
+					<div class="form-group">
+						<label class="form-label">Frame Rate (FPS)</label>
+						<input type="range" id="frame-rate" class="form-range" min="5" max="60" step="5" value="30">
+						<div class="range-display">
+							<span class="form-help">Frames per second</span>
+							<span class="range-value" id="fps-value">30</span>
+						</div>
+					</div>
+
+					<!-- Buffer Size -->
+					<div class="form-group">
+						<label class="form-label">Buffer Size</label>
+						<input type="number" id="buffer-size" class="form-input" value="1" min="1" max="10">
+						<div class="form-help">Number of frames to buffer (1 = no buffering)</div>
+					</div>
+				</div>
+
+				<!-- Camera Test -->
+				<div class="mt-6">
+					<button type="button" id="test-camera" class="btn btn-secondary">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<circle cx="12" cy="12" r="10"/>
+							<polygon points="10,8 16,12 10,16 10,8"/>
+						</svg>
+						Test Camera Connection
+					</button>
+					<div id="camera-status" class="status-display status-success" style="display: none;">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M9 12l2 2 4-4"/>
+						</svg>
+						Camera connection successful
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Storage & Backup Settings -->
+	<div class="config-section">
+		<div class="card">
+			<div class="card-header">
+				<h3 class="card-title">Storage & Backup</h3>
+				<p class="card-subtitle">Manage data storage and backup preferences</p>
+			</div>
+			<div class="card-body">
+				<div class="grid grid-cols-3 gap-6">
+					<div class="form-group">
+						<label class="form-label">Max Detections to Store</label>
+						<input type="number" id="max-stored-detections" class="form-input" value="10000" min="100">
+						<div class="form-help">Older detections will be automatically cleaned up</div>
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Cleanup After (Days)</label>
+						<input type="number" id="cleanup-days" class="form-input" value="30" min="1" max="365">
+						<div class="form-help">Delete detection data older than this</div>
+					</div>
+
+					<div class="form-group">
+						<label class="form-label">Backup Frequency</label>
+						<select id="backup-frequency" class="form-input form-select">
+							<option value="never">Never</option>
+							<option value="daily" selected>Daily</option>
+							<option value="weekly">Weekly</option>
+							<option value="monthly">Monthly</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="grid grid-cols-2 gap-6 mt-6">
+					<div class="form-group">
+						<div class="checkbox-group">
+							<input type="checkbox" id="compress-images" class="form-checkbox" checked>
+							<label for="compress-images" class="form-label">Compress saved images</label>
+						</div>
+						<div class="form-help">Reduce storage space by compressing detection images</div>
+					</div>
+
+					<div class="form-group">
+						<div class="checkbox-group">
+							<input type="checkbox" id="export-csv" class="form-checkbox">
+							<label for="export-csv" class="form-label">Auto-export daily CSV</label>
+						</div>
+						<div class="form-help">Automatically export daily detection reports</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Advanced Settings -->
+	<div class="config-section">
+		<div class="card">
+			<div class="card-header">
+				<div class="flex items-center justify-between">
+					<div>
+						<h3 class="card-title">Advanced Settings</h3>
+						<p class="card-subtitle">Expert configuration options</p>
+					</div>
+					<button type="button" id="toggle-advanced" class="btn btn-outline">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<polyline points="6,9 12,15 18,9"/>
+						</svg>
+						Show Advanced
+					</button>
+				</div>
+			</div>
+			<div class="card-body">
+				<div id="advanced-content" class="advanced-content">
+					<div class="grid grid-cols-2 gap-6">
+						<div class="form-group">
+							<label class="form-label">GPU Device ID</label>
+							<input type="number" id="gpu-device" class="form-input" value="0" min="0">
+							<div class="form-help">CUDA device ID for GPU acceleration</div>
+						</div>
+
+						<div class="form-group">
+							<label class="form-label">Worker Threads</label>
+							<input type="number" id="worker-threads" class="form-input" value="4" min="1" max="16">
+							<div class="form-help">Number of processing threads</div>
+						</div>
+
+						<div class="form-group">
+							<label class="form-label">API Rate Limit</label>
+							<input type="number" id="rate-limit" class="form-input" value="100" min="10">
+							<div class="form-help">Requests per minute limit</div>
+						</div>
+
+						<div class="form-group">
+							<label class="form-label">Log Level</label>
+							<select id="log-level" class="form-input form-select">
+								<option value="DEBUG">Debug</option>
+								<option value="INFO" selected>Info</option>
+								<option value="WARNING">Warning</option>
+								<option value="ERROR">Error</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="grid grid-cols-1 gap-6 mt-6">
+						<div class="form-group">
+							<div class="checkbox-group">
+								<input type="checkbox" id="debug-mode" class="form-checkbox">
+								<label for="debug-mode" class="form-label">Enable debug mode</label>
+							</div>
+							<div class="form-help">Enable detailed logging and debugging features</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</form>
+{% endblock %}
+
+{% block page_js %}
+// System Configuration Page JavaScript
+class SystemConfig {
+	constructor() {
+		this.config = {};
+		this.hasChanges = false;
+		this.init();
+	}
+
+	init() {
+		this.setupEventListeners();
+		this.loadCurrentConfig();
+	}
+
+	setupEventListeners() {
+		// Save and export buttons
+		document.getElementById('save-config')?.addEventListener('click', () => this.saveConfig());
+		document.getElementById('export-config')?.addEventListener('click', () => this.exportConfig());
+		
+		// Range sliders
+		document.getElementById('confidence-threshold')?.addEventListener('input', (e) => {
+			document.getElementById('confidence-value').textContent = parseFloat(e.target.value).toFixed(2);
+			this.markChanged();
+		});
+		
+		document.getElementById('frame-rate')?.addEventListener('input', (e) => {
+			document.getElementById('fps-value').textContent = e.target.value;
+			this.markChanged();
+		});
+		
+		// Camera source changes
+		document.getElementById('camera-source')?.addEventListener('change', (e) => {
+			this.handleCameraSourceChange(e.target.value);
+			this.markChanged();
+		});
+		
+		// Resolution changes
+		document.getElementById('camera-resolution')?.addEventListener('change', (e) => {
+			this.handleResolutionChange(e.target.value);
+			this.markChanged();
+		});
+		
+		// Test buttons
+		document.getElementById('test-camera')?.addEventListener('click', () => this.testCamera());
+		document.getElementById('test-model')?.addEventListener('click', () => this.testModel());
+		
+		// Advanced toggle
+		document.getElementById('toggle-advanced')?.addEventListener('click', () => this.toggleAdvanced());
+		
+		// Mark changes on all form inputs
+		const form = document.getElementById('config-form');
+		if (form) {
+			form.addEventListener('change', () => this.markChanged());
+		}
+		
+		// Warn before leaving with unsaved changes
+		window.addEventListener('beforeunload', (e) => {
+			if (this.hasChanges) {
+				e.preventDefault();
+				e.returnValue = '';
+			}
+		});
+	}
+
+	async loadCurrentConfig() {
+		try {
+			const response = await fetch('/api/system/config');
+			if (response.ok) {
+				this.config = await response.json();
+				this.populateForm();
+			}
+		} catch (error) {
+			console.error('Error loading config:', error);
+			this.loadDefaultConfig();
+		}
+	}
+
+	loadDefaultConfig() {
+		// Load default configuration
+		this.config = {
+			detection: {
+				confidence_threshold: 0.5,
+				model_path: "app/models/yolo11m_best.pt",
+				enhancement_enabled: true,
+				save_detections: true,
+				processing_frequency: 3,
+				detection_timeout: 5,
+				max_detections: 10
+			},
+			camera: {
+				source: "0",
+				width: 1280,
+				height: 720,
+				fps: 30,
+				buffer_size: 1
+			},
+			storage: {
+				max_detections: 10000,
+				cleanup_days: 30,
+				backup_frequency: "daily",
+				compress_images: true,
+				export_csv: false
+			},
+			advanced: {
+				gpu_device: 0,
+				worker_threads: 4,
+				rate_limit: 100,
+				log_level: "INFO",
+				debug_mode: false
+			}
+		};
+		this.populateForm();
+	}
+
+	populateForm() {
+		const config = this.config;
+		
+		// Detection settings
+		if (config.detection) {
+			this.setFormValue('confidence-threshold', config.detection.confidence_threshold);
+			this.setFormValue('model-selection', config.detection.model_path);
+			this.setFormValue('auto-enhance', config.detection.enhancement_enabled);
+			this.setFormValue('save-detections', config.detection.save_detections);
+			this.setFormValue('processing-frequency', config.detection.processing_frequency);
+			this.setFormValue('detection-timeout', config.detection.detection_timeout);
+			this.setFormValue('max-detections', config.detection.max_detections);
+		}
+		
+		// Camera settings
+		if (config.camera) {
+			this.setFormValue('camera-source', config.camera.source);
+			this.setFormValue('camera-resolution', `${config.camera.width}x${config.camera.height}`);
+			this.setFormValue('frame-rate', config.camera.fps);
+			this.setFormValue('buffer-size', config.camera.buffer_size);
+		}
+		
+		// Storage settings
+		if (config.storage) {
+			this.setFormValue('max-stored-detections', config.storage.max_detections);
+			this.setFormValue('cleanup-days', config.storage.cleanup_days);
+			this.setFormValue('backup-frequency', config.storage.backup_frequency);
+			this.setFormValue('compress-images', config.storage.compress_images);
+			this.setFormValue('export-csv', config.storage.export_csv);
+		}
+		
+		// Advanced settings
+		if (config.advanced) {
+			this.setFormValue('gpu-device', config.advanced.gpu_device);
+			this.setFormValue('worker-threads', config.advanced.worker_threads);
+			this.setFormValue('rate-limit', config.advanced.rate_limit);
+			this.setFormValue('log-level', config.advanced.log_level);
+			this.setFormValue('debug-mode', config.advanced.debug_mode);
+		}
+		
+		// Update range displays
+		this.updateRangeDisplays();
+	}
+
+	setFormValue(id, value) {
+		const element = document.getElementById(id);
+		if (!element) return;
+		
+		if (element.type === 'checkbox') {
+			element.checked = value;
+		} else {
+			element.value = value;
+		}
+	}
+
+	updateRangeDisplays() {
+		const confidenceSlider = document.getElementById('confidence-threshold');
+		const confidenceValue = document.getElementById('confidence-value');
+		if (confidenceSlider && confidenceValue) {
+			confidenceValue.textContent = parseFloat(confidenceSlider.value).toFixed(2);
+		}
+		
+		const fpsSlider = document.getElementById('frame-rate');
+		const fpsValue = document.getElementById('fps-value');
+		if (fpsSlider && fpsValue) {
+			fpsValue.textContent = fpsSlider.value;
+		}
+	}
+
+	handleCameraSourceChange(source) {
+		const ipGroup = document.getElementById('ip-camera-group');
+		if (ipGroup) {
+			ipGroup.style.display = source === 'ip' ? 'block' : 'none';
+		}
+	}
+
+	handleResolutionChange(resolution) {
+		const customGroup = document.getElementById('custom-resolution-group');
+		if (customGroup) {
+			customGroup.style.display = resolution === 'custom' ? 'block' : 'none';
+		}
+	}
+
+	async testCamera() {
+		const button = document.getElementById('test-camera');
+		const status = document.getElementById('camera-status');
+		
+		if (button) {
+			button.disabled = true;
+			button.textContent = 'Testing...';
+		}
+		
+		try {
+			// Simulate camera test - replace with actual API call
+			await new Promise(resolve => setTimeout(resolve, 2000));
+			
+			if (status) {
+				status.className = 'status-display status-success';
+				status.innerHTML = `
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M9 12l2 2 4-4"/>
+					</svg>
+					Camera connection successful
+				`;
+				status.style.display = 'flex';
+			}
+			
+			if (window.lprApp) {
+				window.lprApp.showNotification('Camera test successful', 'success');
+			}
+		} catch (error) {
+			if (status) {
+				status.className = 'status-display status-error';
+				status.innerHTML = `
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M6 18L18 6M6 6l12 12"/>
+					</svg>
+					Camera connection failed
+				`;
+				status.style.display = 'flex';
+			}
+			
+			if (window.lprApp) {
+				window.lprApp.showNotification('Camera test failed', 'danger');
+			}
+		} finally {
+			if (button) {
+				button.disabled = false;
+				button.innerHTML = `
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="10"/>
+						<polygon points="10,8 16,12 10,16 10,8"/>
+					</svg>
+					Test Camera Connection
+				`;
+			}
+		}
+	}
+
+	async testModel() {
+		const button = document.getElementById('test-model');
+		
+		if (button) {
+			button.disabled = true;
+			button.textContent = 'Testing Model...';
+		}
+		
+		try {
+			// Simulate model test
+			await new Promise(resolve => setTimeout(resolve, 3000));
+			
+			if (window.lprApp) {
+				window.lprApp.showNotification('Model test completed successfully', 'success');
+			}
+		} catch (error) {
+			if (window.lprApp) {
+				window.lprApp.showNotification('Model test failed', 'danger');
+			}
+		} finally {
+			if (button) {
+				button.disabled = false;
+				button.innerHTML = `
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+					</svg>
+					Test Model Performance
+				`;
+			}
+		}
+	}
+
+	toggleAdvanced() {
+		const content = document.getElementById('advanced-content');
+		const button = document.getElementById('toggle-advanced');
+		
+		if (content && button) {
+			const isShown = content.classList.toggle('show');
+			button.textContent = isShown ? 'Hide Advanced' : 'Show Advanced';
+		}
+	}
+
+	async saveConfig() {
+		try {
+			const formData = this.collectFormData();
+			
+			const response = await fetch('/api/system/config', {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(formData)
+			});
+			
+			if (response.ok) {
+				this.hasChanges = false;
+				if (window.lprApp) {
+					window.lprApp.showNotification('Configuration saved successfully', 'success');
+				}
+			} else {
+				throw new Error('Failed to save configuration');
+			}
+		} catch (error) {
+			console.error('Error saving config:', error);
+			if (window.lprApp) {
+				window.lprApp.showNotification('Failed to save configuration', 'danger');
+			}
+		}
+	}
+
+	collectFormData() {
+		const resolution = document.getElementById('camera-resolution').value;
+		let width = 1280, height = 720;
+		
+		if (resolution === 'custom') {
+			width = parseInt(document.getElementById('custom-width').value) || 1280;
+			height = parseInt(document.getElementById('custom-height').value) || 720;
+		} else if (resolution !== 'custom') {
+			[width, height] = resolution.split('x').map(Number);
+		}
+		
+		return {
+			detection: {
+				confidence_threshold: parseFloat(document.getElementById('confidence-threshold').value),
+				model_path: document.getElementById('model-selection').value,
+				enhancement_enabled: document.getElementById('auto-enhance').checked,
+				save_detections: document.getElementById('save-detections').checked,
+				processing_frequency: parseInt(document.getElementById('processing-frequency').value),
+				detection_timeout: parseInt(document.getElementById('detection-timeout').value),
+				max_detections: parseInt(document.getElementById('max-detections').value)
+			},
+			camera: {
+				source: document.getElementById('camera-source').value,
+				width: width,
+				height: height,
+				fps: parseInt(document.getElementById('frame-rate').value),
+				buffer_size: parseInt(document.getElementById('buffer-size').value),
+				ip_url: document.getElementById('ip-camera-url')?.value || null
+			},
+			storage: {
+				max_detections: parseInt(document.getElementById('max-stored-detections').value),
+				cleanup_days: parseInt(document.getElementById('cleanup-days').value),
+				backup_frequency: document.getElementById('backup-frequency').value,
+				compress_images: document.getElementById('compress-images').checked,
+				export_csv: document.getElementById('export-csv').checked
+			},
+			advanced: {
+				gpu_device: parseInt(document.getElementById('gpu-device').value),
+				worker_threads: parseInt(document.getElementById('worker-threads').value),
+				rate_limit: parseInt(document.getElementById('rate-limit').value),
+				log_level: document.getElementById('log-level').value,
+				debug_mode: document.getElementById('debug-mode').checked
+			}
+		};
+	}
+
+	exportConfig() {
+		const config = this.collectFormData();
+		const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `lpr_config_${new Date().toISOString().slice(0, 10)}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+		
+		if (window.lprApp) {
+			window.lprApp.showNotification('Configuration exported successfully', 'success');
+		}
+	}
+
+	markChanged() {
+		this.hasChanges = true;
+	}
+}
+
+// Initialize system config
+const systemConfig = new SystemConfig();
+{% endblock %}

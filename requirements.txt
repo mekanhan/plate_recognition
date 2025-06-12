@@ -33,6 +33,8 @@ requests>=2.31.0
 PyYAML>=6.0.1
 coloredlogs>=15.0.1
 psutil>=5.9.5
+GPUtil>=1.4.0
+aiohttp>=3.8.0
 
 # Testing
 pytest>=7.4.0

@@ -54,10 +54,21 @@ class SQLiteDetectionRepository(DetectionRepository):
             return
             
         async with self.session_factory() as session:
+            added_count = 0
             for detection_data in detections:
                 # Generate ID if not present
                 if "detection_id" not in detection_data:
                     detection_data["detection_id"] = str(uuid.uuid4())
+                
+                detection_id = detection_data.get("detection_id")
+                
+                # Check if detection already exists
+                existing = await session.execute(
+                    select(Detection).where(Detection.id == detection_id)
+                )
+                if existing.scalar_one_or_none() is not None:
+                    logger.debug(f"Detection {detection_id} already exists, skipping")
+                    continue
                 
                 # Convert timestamp to datetime if it's a float
                 timestamp = detection_data.get("timestamp", time.time())
@@ -71,7 +82,7 @@ class SQLiteDetectionRepository(DetectionRepository):
                 
                 # Create Detection object
                 detection = Detection(
-                    id=detection_data.get("detection_id"),
+                    id=detection_id,
                     plate_text=detection_data.get("plate_text", ""),
                     confidence=detection_data.get("confidence", 0.0),
                     timestamp=timestamp,
@@ -86,9 +97,13 @@ class SQLiteDetectionRepository(DetectionRepository):
                     image_path=detection_data.get("image_path")
                 )
                 session.add(detection)
+                added_count += 1
             
-            await session.commit()
-            logger.info(f"Stored {len(detections)} detections in the database")
+            if added_count > 0:
+                await session.commit()
+                logger.info(f"Stored {added_count} new detections in the database")
+            else:
+                logger.debug("No new detections to store")
 
     async def get_detections(self) -> List[Dict[str, Any]]:
         """Get all detections"""

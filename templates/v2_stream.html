@@ -269,7 +269,7 @@
 	<div class="col-span-2">
 		<div class="card" style="padding: 0; overflow: hidden;">
 			<div class="stream-container" id="stream-container">
-				<img id="video-feed" src="/stream/video" alt="Video Stream" class="video-feed">
+				<img id="video-feed" src="/v2/stream/video-feed" alt="Video Stream" class="video-feed">
 				<canvas id="detection-canvas" class="stream-overlay"></canvas>
 				
 				<!-- Detection Overlay -->
@@ -311,7 +311,7 @@
 					<button class="control-btn" id="settings" data-tooltip="Settings">
 						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 							<circle cx="12" cy="12" r="3"></circle>
-							<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+							<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
 						</svg>
 					</button>
 				</div>
@@ -414,10 +414,10 @@
 {% endblock %}
 
 {% block page_js %}
-// Enhanced Stream Page JavaScript
-class StreamPage {
+// Enhanced Stream Page JavaScript for V2
+class StreamPageV2 {
 	constructor() {
-		this.isStreaming = false;  // Start as stopped
+		this.isStreaming = true;
 		this.isDetectionEnabled = true;
 		this.showLabels = true;
 		this.streamWebSocket = null;
@@ -474,9 +474,9 @@ class StreamPage {
 
 	setupWebSocket() {
 		if (window.lprApp && window.location.protocol === 'http:') {
-			const wsUrl = `ws://${window.location.host}/ws/stream`;
+			const wsUrl = `ws://${window.location.host}/ws/dashboard`;
 			this.streamWebSocket = window.lprApp.createWebSocket(wsUrl, {
-				id: 'stream',
+				id: 'stream-v2',
 				onMessage: (data) => this.handleStreamData(data),
 				onOpen: () => this.onStreamConnected(),
 				onClose: () => this.onStreamDisconnected()
@@ -501,14 +501,8 @@ class StreamPage {
 	}
 
 	async loadInitialStats() {
-		// Check initial stream status
-		await this.checkStreamStatus();
-		
 		// Load today's detection count
 		await this.fetchTodayDetectionCount();
-		
-		// Load recent detections for display
-		await this.loadRecentDetections();
 		
 		// Update stream quality
 		this.updateSystemStats();
@@ -517,49 +511,7 @@ class StreamPage {
 		setInterval(() => {
 			this.fetchTodayDetectionCount();
 			this.updateProcessingSpeed();
-			this.checkStreamStatus();
-			this.loadRecentDetections(); // Refresh detections periodically
 		}, 10000); // Update every 10 seconds
-	}
-
-	async checkStreamStatus() {
-		try {
-			const response = await fetch('/api/headless/status');
-			if (response.ok) {
-				const data = await response.json();
-				const isRunning = data.is_running && !data.is_paused;
-				
-				if (this.isStreaming !== isRunning) {
-					this.isStreaming = isRunning;
-					this.updateStreamButton();
-					this.updateStreamStatus(isRunning ? 'connected' : 'disconnected');
-					
-					if (this.videoFeed) {
-						this.videoFeed.style.display = isRunning ? 'block' : 'none';
-					}
-				}
-			}
-		} catch (error) {
-			console.debug('Could not check stream status:', error);
-		}
-	}
-
-	updateStreamButton() {
-		const btn = document.getElementById('toggle-stream');
-		if (btn) {
-			btn.innerHTML = this.isStreaming ? `
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-					<rect x="6" y="4" width="4" height="16"></rect>
-					<rect x="14" y="4" width="4" height="16"></rect>
-				</svg>
-				Stop Stream
-			` : `
-				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-					<polygon points="5,3 19,12 5,21 5,3"></polygon>
-				</svg>
-				Start Stream
-			`;
-		}
 	}
 
 	setupCanvas() {
@@ -609,12 +561,12 @@ class StreamPage {
 
 	onVideoLoad() {
 		this.updateStreamStatus('connected');
-		console.log('Video stream loaded successfully');
+		console.log('V2 Video stream loaded successfully');
 	}
 
 	onVideoError() {
 		this.updateStreamStatus('error');
-		console.error('Video stream failed to load');
+		console.error('V2 Video stream failed to load');
 	}
 
 	updateStreamStats() {
@@ -671,13 +623,19 @@ class StreamPage {
 	}
 
 	handleStreamData(data) {
-		if (data.type === 'detection') {
-			this.addDetection(data.detection || data);
-			this.updateStats(data.detection || data);
-		} else if (data.type === 'frame') {
-			// Handle frame data if needed
-		} else if (data.type === 'system') {
-			this.updateSystemStats(data);
+		try {
+			const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+			
+			if (parsedData.type === 'detection') {
+				this.addDetection(parsedData.detection || parsedData);
+				this.updateStats(parsedData.detection || parsedData);
+			} else if (parsedData.type === 'frame') {
+				// Handle frame data if needed
+			} else if (parsedData.type === 'system') {
+				this.updateSystemStats(parsedData);
+			}
+		} catch (error) {
+			console.debug('Error parsing websocket data:', error);
 		}
 	}
 
@@ -821,61 +779,32 @@ class StreamPage {
 		}
 	}
 
-	async toggleStream() {
-		try {
-			const btn = document.getElementById('toggle-stream');
-			if (btn) {
-				btn.disabled = true;
-				btn.innerHTML = `
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<circle cx="12" cy="12" r="10"></circle>
-						<path d="M8 12l2 2 4-4"></path>
-					</svg>
-					Processing...
-				`;
-			}
-
-			if (this.isStreaming) {
-				// Stop background processing 
-				const response = await fetch('/api/headless/control/pause', { method: 'POST' });
-				if (response.ok) {
-					this.isStreaming = false;
-					this.updateStreamStatus('disconnected');
-					if (this.videoFeed) {
-						this.videoFeed.style.display = 'none';
-					}
-				}
-			} else {
-				// Start background processing
-				const response = await fetch('/api/headless/control/resume', { method: 'POST' });
-				if (response.ok) {
-					this.isStreaming = true;
-					this.updateStreamStatus('connected');
-					if (this.videoFeed) {
-						this.videoFeed.style.display = 'block';
-					}
-				}
-			}
-		} catch (error) {
-			console.error('Error toggling stream:', error);
-		} finally {
-			// Update button
-			const btn = document.getElementById('toggle-stream');
-			if (btn) {
-				btn.disabled = false;
-				btn.innerHTML = this.isStreaming ? `
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-						<rect x="6" y="4" width="4" height="16"></rect>
-						<rect x="14" y="4" width="4" height="16"></rect>
-					</svg>
-					Stop Stream
-				` : `
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<polygon points="5,3 19,12 5,21 5,3"></polygon>
-					</svg>
-					Start Stream
-				`;
-			}
+	toggleStream() {
+		this.isStreaming = !this.isStreaming;
+		const btn = document.getElementById('toggle-stream');
+		if (btn) {
+			btn.innerHTML = this.isStreaming ? `
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+					<rect x="6" y="4" width="4" height="16"></rect>
+					<rect x="14" y="4" width="4" height="16"></rect>
+				</svg>
+				Stop Stream
+			` : `
+				<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+					<polygon points="5,3 19,12 5,21 5,3"></polygon>
+				</svg>
+				Start Stream
+			`;
+		}
+		
+		if (this.videoFeed) {
+			this.videoFeed.style.display = this.isStreaming ? 'block' : 'none';
+		}
+		
+		if (this.isStreaming) {
+			this.updateStreamStatus('connected');
+		} else {
+			this.updateStreamStatus('disconnected');
 		}
 	}
 
@@ -946,12 +875,12 @@ class StreamPage {
 		
 		// Create download link
 		const link = document.createElement('a');
-		link.download = `capture_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
+		link.download = `v2_capture_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.png`;
 		link.href = tempCanvas.toDataURL();
 		link.click();
 		
 		if (window.lprApp) {
-			window.lprApp.showNotification('Frame captured successfully', 'success');
+			window.lprApp.showNotification('V2 Frame captured successfully', 'success');
 		}
 	}
 
@@ -1029,8 +958,8 @@ class StreamPage {
 	}
 
 	openSettings() {
-		if (window.LPRUtils) {
-			window.LPRUtils.openModal('settings-modal');
+		if (window.lprApp) {
+			window.lprApp.openModal('settings-modal');
 		}
 	}
 
@@ -1042,11 +971,11 @@ class StreamPage {
 		const saveDetections = document.getElementById('save-detections')?.checked;
 		
 		// Save settings (implement API call)
-		console.log('Saving settings:', { confidence, frequency, autoEnhance, saveDetections });
+		console.log('Saving V2 settings:', { confidence, frequency, autoEnhance, saveDetections });
 		
-		if (window.LPRUtils) {
-			window.LPRUtils.closeModal('settings-modal');
-			window.LPRUtils.showNotification('Settings saved successfully', 'success');
+		if (window.lprApp) {
+			window.lprApp.closeModal('settings-modal');
+			window.lprApp.showNotification('V2 Settings saved successfully', 'success');
 		}
 	}
 
@@ -1082,100 +1011,17 @@ class StreamPage {
 
 	onStreamConnected() {
 		this.updateStreamStatus('connected');
-		console.log('Stream WebSocket connected');
+		console.log('V2 Stream WebSocket connected');
 	}
 
 	onStreamDisconnected() {
 		this.updateStreamStatus('disconnected');
-		console.log('Stream WebSocket disconnected');
-	}
-
-	handleStreamData(data) {
-		// Handle WebSocket detection data
-		if (data && data.type === 'detection') {
-			this.addLiveDetection(data.data);
-			this.detections = [data.data]; // Update for canvas overlay
-			this.updateAccuracyRate(data.data.confidence || 0);
-			this.fetchTodayDetectionCount();
-		}
-	}
-
-	addLiveDetection(detection) {
-		const container = document.getElementById('recent-detections');
-		if (!container) return;
-
-		// Remove placeholder if it exists
-		const placeholder = container.querySelector('.detection-item');
-		if (placeholder && placeholder.textContent.includes('Waiting for detections')) {
-			placeholder.remove();
-		}
-
-		// Create detection item
-		const detectionEl = document.createElement('div');
-		detectionEl.className = 'detection-item';
-		detectionEl.innerHTML = `
-			<div class="detection-thumbnail">
-				${detection.image_path ? 
-					`<img src="${detection.image_path}" alt="Detection" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius);">` : 
-					'IMG'
-				}
-			</div>
-			<div class="detection-info">
-				<div class="detection-plate">${detection.plate_text || 'Unknown'}</div>
-				<div class="detection-meta">
-					<span class="confidence-badge ${this.getConfidenceClass(detection.confidence)}">
-						${((detection.confidence || 0) * 100).toFixed(1)}%
-					</span>
-					<span style="margin-left: 8px; font-size: 0.75rem; color: var(--gray-500);">
-						${new Date().toLocaleTimeString()}
-					</span>
-				</div>
-			</div>
-		`;
-
-		// Add to container (newest first)
-		container.insertBefore(detectionEl, container.firstChild);
-
-		// Keep only last 10 detections
-		while (container.children.length > 10) {
-			container.removeChild(container.lastChild);
-		}
-
-		// Auto-scroll to show new detection
-		detectionEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-	}
-
-	getConfidenceClass(confidence) {
-		if (confidence >= 0.7) return 'confidence-high';
-		if (confidence >= 0.4) return 'confidence-medium';
-		return 'confidence-low';
-	}
-
-	// Load recent detections from API for initial display
-	async loadRecentDetections() {
-		try {
-			const response = await fetch('/api/headless/detections/recent?limit=10');
-			if (response.ok) {
-				const data = await response.json();
-				const container = document.getElementById('recent-detections');
-				if (container && data.detections && data.detections.length > 0) {
-					// Clear placeholder
-					container.innerHTML = '';
-					
-					// Add each detection (reverse to show newest first)
-					data.detections.reverse().forEach(detection => {
-						this.addLiveDetection(detection);
-					});
-				}
-			}
-		} catch (error) {
-			console.debug('Could not load recent detections:', error);
-		}
+		console.log('V2 Stream WebSocket disconnected');
 	}
 }
 
-// Initialize stream page
-const streamPage = new StreamPage();
+// Initialize V2 stream page
+const streamPageV2 = new StreamPageV2();
 
 // Update confidence slider display
 document.getElementById('confidence-slider')?.addEventListener('input', function() {

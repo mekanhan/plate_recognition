@@ -6,7 +6,9 @@ import os
 import logging
 import asyncio
 import uuid
-from fastapi import FastAPI, Request, Depends
+import time
+import json
+from fastapi import FastAPI, Request, Depends, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -176,6 +178,9 @@ async def startup_event():
         detection_v2.detection_service = detection_service_v2
         stream_v2.detection_service = detection_service_v2
         
+        # Setup stream integration with dashboard
+        setup_stream_integration()
+        
         logger.info("All services initialized successfully")
         
     except Exception as e:
@@ -208,6 +213,10 @@ app.include_router(stream.router, prefix="/stream", tags=["streaming"])
 app.include_router(detection.router, prefix="/detection", tags=["detection"])
 app.include_router(results.router, prefix="/results", tags=["results"])
 
+# Add system monitoring router
+from app.routers import system
+app.include_router(system.router, prefix="/api/system", tags=["system"])
+
 # Direct video feed adapter for backward compatibility
 @app.get("/stream")
 async def stream_adapter(
@@ -223,7 +232,9 @@ async def stream_adapter(
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    """Redirect root to V2 dashboard"""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/v2", status_code=302)
 
 @app.get("/detection-test", response_class=HTMLResponse)
 async def detection_test_page(request: Request):
@@ -233,6 +244,19 @@ async def detection_test_page(request: Request):
 async def v2_root(request: Request):
     """Root page for v2 API with updated information"""
     return templates.TemplateResponse("v2_index.html", {"request": request})
+
+@app.get("/v2/system/monitoring", response_class=HTMLResponse)
+async def v2_system_monitoring_page(request: Request):
+    return templates.TemplateResponse("system_monitoring.html", {"request": request})
+
+@app.get("/v2/system/config", response_class=HTMLResponse)
+async def v2_system_config_page(request: Request):
+    return templates.TemplateResponse("system_config.html", {"request": request})
+
+@app.get("/v2/stream", response_class=HTMLResponse)
+async def v2_stream_page(request: Request):
+    """V2 Stream page with professional UI"""
+    return templates.TemplateResponse("v2_stream.html", {"request": request})
 
 # Simple endpoint to test the improved detection service
 @app.get("/api/v2/test-detection")
@@ -254,6 +278,73 @@ async def test_detection(
 async def video_browser_page(request: Request):
     """Video browser page"""
     return templates.TemplateResponse("video_browser.html", {"request": request})
+
+# WebSocket Connection Manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        try:
+            await websocket.send_text(message)
+        except Exception:
+            self.disconnect(websocket)
+
+    async def broadcast(self, message: str):
+        for connection in self.active_connections[:]:
+            try:
+                await connection.send_text(message)
+            except Exception:
+                self.disconnect(connection)
+
+dashboard_manager = ConnectionManager()
+
+@app.websocket("/ws/dashboard")
+async def dashboard_websocket(websocket: WebSocket):
+    await dashboard_manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive and handle incoming messages
+            data = await websocket.receive_text()
+            # Echo back or handle commands
+            await dashboard_manager.send_personal_message(f"Echo: {data}", websocket)
+    except WebSocketDisconnect:
+        dashboard_manager.disconnect(websocket)
+
+# Helper function to broadcast system updates
+async def broadcast_system_update(data):
+    """Broadcast system updates to all connected dashboard clients"""
+    message = json.dumps(data)
+    await dashboard_manager.broadcast(message)
+
+# Helper function to broadcast detection updates
+async def broadcast_detection_update(detection_data):
+    """Broadcast detection updates to dashboard clients"""
+    data = {
+        "type": "detection",
+        "detection": detection_data,
+        "timestamp": detection_data.get("timestamp", time.time())
+    }
+    await broadcast_system_update(data)
+
+# Setup integration between stream router and dashboard
+def setup_stream_integration():
+    """Setup integration between stream router and dashboard"""
+    # Add a callback to stream router for broadcasting detections
+    # This will be connected in the stream_v2 router
+    app.state.dashboard_broadcast_callback = broadcast_detection_update
+    
+    # Set up the callback in stream_v2 router
+    from app.routers import stream_v2
+    stream_v2.set_dashboard_callback(broadcast_detection_update)
 
 if __name__ == "__main__":
     uvicorn.run("app.main_v2:app", host="0.0.0.0", port=8001, reload=True)

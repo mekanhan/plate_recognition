@@ -1,7 +1,8 @@
 # app/models.py
-from sqlalchemy import Column, String, Float, DateTime, Integer, ForeignKey, Boolean, Text
+from sqlalchemy import Column, String, Float, DateTime, Integer, ForeignKey, Boolean, Text, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 import datetime
 import uuid
 
@@ -21,6 +22,10 @@ class Detection(Base):
     box_y1 = Column(Integer)
     box_x2 = Column(Integer)
     box_y2 = Column(Integer)
+    
+    # Camera information
+    camera_id = Column(String, ForeignKey("cameras.id"), index=True)
+    camera_name = Column(String)  # Cached camera name for performance
     
     # Additional metadata
     frame_id = Column(Integer)
@@ -91,3 +96,43 @@ class SystemEvent(Base):
     event_type = Column(String, nullable=False, index=True)
     details = Column(Text)  # JSON formatted
     level = Column(String, nullable=False, index=True)
+
+class Camera(Base):
+    """Camera registry database model"""
+    __tablename__ = "cameras"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    name = Column(String(100), nullable=False, index=True)
+    type = Column(String(20), nullable=False, index=True)
+    status = Column(String(20), nullable=False, default="offline", index=True)
+    location = Column(String(200))
+    
+    # JSON columns for complex data
+    source_config = Column(JSON, nullable=False)
+    capabilities = Column(JSON)
+    
+    # Metadata
+    auto_discovered = Column(Boolean, default=False, index=True)
+    created_at = Column(DateTime, nullable=False, default=func.now(), index=True)
+    last_seen = Column(DateTime, index=True)
+    
+    # Performance tracking
+    frames_processed = Column(Integer, default=0)
+    detections_count = Column(Integer, default=0)
+    error_count = Column(Integer, default=0)
+    uptime_seconds = Column(Integer, default=0)
+    
+    # Relationships
+    detections = relationship("Detection", backref="camera")
+
+class CameraSession(Base):
+    """Camera session tracking"""
+    __tablename__ = "camera_sessions"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    camera_id = Column(String, ForeignKey("cameras.id"), nullable=False, index=True)
+    session_start = Column(DateTime, nullable=False, default=func.now())
+    session_end = Column(DateTime)
+    frames_processed = Column(Integer, default=0)
+    detections_made = Column(Integer, default=0)
+    disconnection_reason = Column(String(100))

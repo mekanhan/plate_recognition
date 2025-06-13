@@ -18,7 +18,7 @@ from app.services.output_channel_manager import OutputChannelManager
 from config.settings import Config
 from app.repositories.sql_repository import SQLiteDetectionRepository, SQLiteVideoRepository
 from app.database import async_session
-from app.routers import stream, detection, results, headless
+from app.routers import stream, detection, results, headless, cameras
 from app.utils.logging_config import setup_logging
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable
 
@@ -61,6 +61,17 @@ else:
         version="1.0.0"
     )
     app.state.config = config
+
+# Include routers for both modes
+app.include_router(cameras.router)
+app.include_router(stream.router, prefix="/api")
+app.include_router(detection.router, prefix="/api")
+app.include_router(results.router, prefix="/api")
+app.include_router(headless.router, prefix="/api")
+logger.info("API routers included: cameras, stream, detection, results, headless")
+
+# Set templates for headless mode
+if not config.is_web_ui_enabled:
     templates = None
     logger.info("Headless mode - minimal FastAPI app initialized")
 
@@ -508,6 +519,13 @@ if config.is_web_ui_enabled:
         if not templates:
             return HTMLResponse("Web UI not available in headless mode", status_code=503)
         return templates.TemplateResponse("system_config.html", {"request": request})
+
+    @app.get("/camera", response_class=HTMLResponse)
+    async def camera_client_page(request: Request):
+        """PWA camera client for mobile devices"""
+        if not templates:
+            return HTMLResponse("Web UI not available in headless mode", status_code=503)
+        return templates.TemplateResponse("camera_client.html", {"request": request})
 else:
     # Minimal root endpoint for headless mode
     @app.get("/")

@@ -141,7 +141,8 @@ class QRCodeRequest(BaseModel):
     computer_ip: str
     setup_token: Optional[str] = None
     camera_name: Optional[str] = None
-    expires_in_minutes: int = Field(default=30)
+    expires_in_minutes: int = Field(default=3
+    0)
 
 class CameraHealthCheck(BaseModel):
     """Camera health check response"""

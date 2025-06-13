@@ -59,6 +59,17 @@ class Config(BaseSettings):
     camera_height: int = 720
     camera_fps: int = 30
     
+    # Multi-Camera Network Configuration
+    camera_discovery_enabled: bool = True
+    camera_network_range: str = "192.168.1.0/24"
+    max_concurrent_cameras: int = 10
+    camera_frame_buffer_size: int = 30
+    
+    # PWA Camera Settings
+    enable_pwa_cameras: bool = True
+    pwa_camera_quality: str = "720p"  # 480p, 720p, 1080p
+    camera_timeout_seconds: int = 30
+    
     # Model Configuration
     model_path: str = "app/models/yolo11m_best.pt"
     model_confidence: float = 0.5

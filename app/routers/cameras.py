@@ -2,15 +2,22 @@
 import asyncio
 import base64
 import io
-import qrcode
 from datetime import datetime
 from typing import List, Optional
+
+# Optional import for QR code generation
+try:
+    import qrcode
+    QRCODE_AVAILABLE = True
+except ImportError:
+    qrcode = None
+    QRCODE_AVAILABLE = False
 from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Request, Response
 from fastapi.responses import StreamingResponse, JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db_session
-from app.models.camera_models import (
+from app.schemas import (
     CameraRegistration, CameraInfo, CameraUpdate, CameraType, CameraStatus,
     NetworkScanResult, CameraHealthCheck, QRCodeRequest, CameraFrame
 )
@@ -252,6 +259,12 @@ async def generate_camera_qr(
     camera_name: Optional[str] = None
 ):
     """Generate QR code for mobile camera setup"""
+    if not QRCODE_AVAILABLE:
+        raise HTTPException(
+            status_code=501, 
+            detail="QR code generation not available. Install qrcode package."
+        )
+    
     try:
         # Create setup URL
         setup_url = f"http://{computer_ip}:8001/camera?auto_setup=true"
@@ -390,7 +403,7 @@ async def test_camera_connection(
 ):
     """Test camera connection without registering"""
     try:
-        from app.models.camera_models import CameraConfig
+        from app.schemas import CameraConfig
         config = CameraConfig(**config_data)
         
         # Perform basic connection test

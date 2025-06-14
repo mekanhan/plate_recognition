@@ -11,7 +11,7 @@ from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 
 from app.models import Camera, CameraSession
-from app.models.camera_models import (
+from app.schemas import (
     CameraType, CameraStatus, 
     CameraRegistration, CameraInfo, CameraUpdate, 
     CameraDiscovery, NetworkScanResult, CameraConfig,

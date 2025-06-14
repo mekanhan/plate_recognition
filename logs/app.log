@@ -29117,3 +29117,650 @@
 2025-06-12 12:05:14,050 - DEBUG - app.services.storage_service - Attempting to save 5 detections
 2025-06-12 12:05:14,052 - INFO - app.services.storage_service - Successfully saved 5 detections to C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates\lpr_session_20250612_114909.json (Save #357)
 2025-06-12 12:05:14,052 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:32:36,794 - INFO - root - Logging configured
+2025-06-14 12:32:36,794 - INFO - root - Log level: INFO
+2025-06-14 12:32:36,794 - INFO - root - Log files: logs/app.log, logs/storage.log
+2025-06-14 12:32:36,797 - INFO - app.main - Web UI enabled - FastAPI app initialized on port 8001
+2025-06-14 12:32:36,809 - INFO - app.main - API routers included: cameras, stream, detection, results, headless
+2025-06-14 12:32:36,809 - INFO - app.main - Using data directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data
+2025-06-14 12:32:36,809 - INFO - app.main - Using license plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates
+2025-06-14 12:32:36,810 - INFO - app.main - Using enhanced plates directory: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-14 12:32:36,810 - INFO - app.main - Deployment mode: DeploymentMode.HYBRID
+2025-06-14 12:32:36,810 - INFO - app.main - Headless mode: False
+2025-06-14 12:32:36,810 - INFO - app.main - Background processing enabled: True
+2025-06-14 12:32:36,811 - INFO - app.main - Data directories created and writable
+2025-06-14 12:32:36,901 - INFO - app.services.output_channel_manager - OutputChannelManager initialized
+2025-06-14 12:32:36,901 - INFO - app.services.background_stream_manager - BackgroundStreamManager initialized
+2025-06-14 12:32:36,901 - INFO - app.main - Connected detection service to storage service
+2025-06-14 12:32:36,901 - INFO - app.main - Connected enhancer service to storage service
+2025-06-14 12:32:36,901 - INFO - app.main - Connected detection service to enhancer service
+2025-06-14 12:32:36,902 - INFO - app.main - Connected video recording service to detection service
+2025-06-14 12:32:36,907 - INFO - app.main - Web UI routers included
+2025-06-14 12:32:36,955 - INFO - app.main - Headless API endpoints added
+2025-06-14 12:32:36,957 - INFO - app.main - Initializing database...
+2025-06-14 12:32:36,957 - INFO - app.database - Creating database tables...
+2025-06-14 12:32:36,998 - INFO - app.database - Database tables created successfully
+2025-06-14 12:32:36,999 - INFO - app.database - Database connection test successful
+2025-06-14 12:32:36,999 - INFO - app.main - Database initialized successfully
+2025-06-14 12:32:36,999 - INFO - app.main - Initializing storage service with dirs: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates, C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-14 12:32:37,000 - INFO - app.services.storage_service - Storage directories: license_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates, enhanced_plates=C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates
+2025-06-14 12:32:37,001 - INFO - app.services.storage_service - Storage directories are writable
+2025-06-14 12:32:37,003 - INFO - app.services.storage_service - Initial database files created successfully
+2025-06-14 12:32:37,003 - INFO - app.repositories.sql_repository - SQLite detection repository initialized
+2025-06-14 12:32:37,003 - INFO - app.services.storage_service - SQL repository initialized
+2025-06-14 12:32:37,003 - INFO - app.services.storage_service - Storage service initialized with dual JSON/SQL storage
+2025-06-14 12:32:37,003 - INFO - app.services.storage_service - License plate data will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\license_plates\lpr_session_20250614_123237.json
+2025-06-14 12:32:37,003 - INFO - app.services.storage_service - Enhanced results will be saved to: C:\Users\mekja\Documents\GitHub\plate_recognition\data\enhanced_plates\enhanced_session_20250614_123237.json
+2025-06-14 12:32:37,003 - INFO - app.services.storage_service - Database storage enabled for persistent data
+2025-06-14 12:32:37,003 - INFO - app.main - Storage service initialized
+2025-06-14 12:32:37,004 - INFO - app.services.camera_service - Initializing camera: 0 (1280x720)
+2025-06-14 12:33:07,989 - INFO - app.services.camera_service - Camera opened successfully: 1280x720 @ 30fps
+2025-06-14 12:33:07,989 - INFO - app.services.camera_service - Camera service started
+2025-06-14 12:33:07,989 - INFO - app.main - Camera service initialized: 0 (1280x720)
+2025-06-14 12:33:07,989 - INFO - app.services.enhancer_service - EnhancerService connected to StorageService
+2025-06-14 12:33:07,989 - INFO - app.main - Enhancer service initialized
+2025-06-14 12:33:07,989 - INFO - app.services.video_service - Initializing video recording service
+2025-06-14 12:33:07,989 - INFO - app.main - Video recording service initialized
+2025-06-14 12:33:07,989 - INFO - app.services.storage_service - Starting periodic save task
+2025-06-14 12:33:07,989 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:07,989 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:11,309 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:11,309 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:12,683 - INFO - app.services.detection_service - Detection service initialized with license plate recognition (Device: cuda)
+2025-06-14 12:33:12,683 - INFO - app.main - Detection service initialized
+2025-06-14 12:33:12,683 - INFO - app.main - All core services initialized successfully
+2025-06-14 12:33:12,683 - INFO - app.main - Initializing background processing...
+2025-06-14 12:33:12,683 - INFO - app.services.output_channel_manager - Added output channel: storage (storage)
+2025-06-14 12:33:12,683 - INFO - app.main - Storage output channel added
+2025-06-14 12:33:12,683 - INFO - app.services.output_channel_manager - Added output channel: api (api)
+2025-06-14 12:33:12,683 - INFO - app.main - API output channel added
+2025-06-14 12:33:12,683 - INFO - app.services.background_stream_manager - Updated config: frame_skip = 5
+2025-06-14 12:33:12,683 - INFO - app.services.background_stream_manager - Updated config: processing_interval = 0.5
+2025-06-14 12:33:12,683 - INFO - app.services.background_stream_manager - Updated config: max_queue_size = 100
+2025-06-14 12:33:12,683 - INFO - app.services.background_stream_manager - Updated config: health_check_interval = 30.0
+2025-06-14 12:33:12,683 - INFO - app.services.output_channel_manager - OutputChannelManager started
+2025-06-14 12:33:12,683 - INFO - app.main - Output channel manager started
+2025-06-14 12:33:12,683 - INFO - app.services.background_stream_manager - Background stream processing started
+2025-06-14 12:33:12,683 - INFO - app.main - Background stream manager started
+2025-06-14 12:33:12,683 - INFO - app.main - All services assigned to app.state
+2025-06-14 12:33:12,683 - INFO - app.main - Set frame processing interval to every 5 frames
+2025-06-14 12:33:12,683 - INFO - app.main - Set detection queue processing interval to 1.0s
+2025-06-14 12:33:12,692 - INFO - app.services.background_stream_manager - Starting main processing loop
+2025-06-14 12:33:12,693 - INFO - app.services.background_stream_manager - Health check - Uptime: 0.0s, Frames: 1, Detections: 0, Errors: 0
+2025-06-14 12:33:13,858 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:13,858 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:15,937 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:15,937 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:17,988 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:17,988 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:20,014 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:20,014 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:22,501 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:22,501 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:24,620 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:24,620 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:26,637 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:26,639 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:29,119 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:29,119 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:31,156 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:31,156 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:34,124 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:34,124 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:36,346 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:36,346 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:38,390 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:38,390 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:39,924 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:33:39,957 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:33:41,021 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:41,021 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:42,150 - ERROR - app.routers.system - Error getting system metrics: module 'os' has no attribute 'uname'
+2025-06-14 12:33:43,261 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:43,261 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:43,261 - INFO - app.services.background_stream_manager - Health check - Uptime: 30.6s, Frames: 48, Detections: 0, Errors: 0
+2025-06-14 12:33:46,154 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:46,154 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:48,226 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:48,226 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:50,405 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:50,405 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:52,422 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:52,422 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:55,127 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:55,127 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:57,276 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:57,276 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:33:58,781 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:33:58,807 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:33:59,312 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:33:59,312 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:01,372 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:01,372 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:03,868 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:03,868 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:05,894 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:05,894 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:08,833 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:08,833 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:10,855 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:10,855 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:12,871 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:12,872 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:13,262 - INFO - app.services.background_stream_manager - Health check - Uptime: 60.6s, Frames: 93, Detections: 0, Errors: 0
+2025-06-14 12:34:14,872 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:14,872 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:16,923 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:16,923 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:19,357 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:19,357 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:21,379 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:21,379 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:23,479 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:23,479 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:25,496 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:25,496 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:27,539 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:27,539 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:27,753 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:34:27,753 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:34:29,841 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:29,841 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:32,333 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:32,333 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:34,382 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:34,382 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:36,867 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:36,867 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:39,381 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:39,381 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:41,410 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:41,410 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:43,265 - INFO - app.services.background_stream_manager - Health check - Uptime: 90.6s, Frames: 147, Detections: 0, Errors: 0
+2025-06-14 12:34:43,461 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:43,461 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:45,465 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:45,465 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:47,499 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:47,499 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:49,863 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:49,864 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:51,878 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:51,878 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:53,910 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:53,910 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:55,959 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:55,959 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:34:57,759 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:34:57,761 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:34:58,841 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:34:58,841 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:00,881 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:00,881 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:02,892 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:02,892 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:04,927 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:04,927 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:06,953 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:06,953 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:09,370 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:09,372 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:11,415 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:11,415 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:13,272 - INFO - app.services.background_stream_manager - Health check - Uptime: 120.6s, Frames: 201, Detections: 0, Errors: 0
+2025-06-14 12:35:13,452 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:13,452 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:15,471 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:15,471 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:17,528 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:17,528 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:19,918 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:19,918 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:21,950 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:21,950 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:23,981 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:23,981 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:25,998 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:25,999 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:27,760 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:35:27,760 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:35:28,888 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:28,889 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:30,921 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:30,921 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:32,967 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:32,968 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:34,988 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:34,989 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:37,011 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:37,011 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:39,368 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:39,368 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:41,371 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:41,371 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:43,281 - INFO - app.services.background_stream_manager - Health check - Uptime: 150.6s, Frames: 255, Detections: 0, Errors: 0
+2025-06-14 12:35:43,408 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:43,408 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:45,445 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:45,445 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:47,490 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:47,490 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:49,895 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:49,896 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:51,929 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:51,929 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:53,946 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:53,946 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:55,966 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:55,966 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:35:57,760 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:35:57,760 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:35:58,891 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:35:58,891 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:00,939 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:00,939 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:03,003 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:03,003 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:05,032 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:05,033 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:07,090 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:07,090 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:09,432 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:09,432 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:11,445 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:11,445 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:13,297 - INFO - app.services.background_stream_manager - Health check - Uptime: 180.6s, Frames: 309, Detections: 0, Errors: 0
+2025-06-14 12:36:13,482 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:13,482 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:15,519 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:15,519 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:17,548 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:17,548 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:19,938 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:19,938 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:21,985 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:21,987 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:24,005 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:24,005 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:26,056 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:26,056 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:27,815 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:36:27,818 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:36:28,932 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:28,932 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:31,447 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:31,447 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:33,499 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:33,499 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:35,529 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:35,529 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:37,540 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:37,540 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:39,933 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:39,933 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:41,966 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:41,966 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:43,291 - INFO - app.services.background_stream_manager - Health check - Uptime: 210.6s, Frames: 363, Detections: 0, Errors: 0
+2025-06-14 12:36:43,978 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:43,978 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:46,000 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:46,000 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:48,929 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:48,929 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:50,942 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:50,942 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:52,946 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:52,946 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:54,969 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:54,971 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:57,014 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:57,014 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:36:57,801 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:36:57,801 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:36:59,423 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:36:59,423 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:01,454 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:01,454 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:03,463 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:03,464 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:05,480 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:05,480 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:08,945 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:08,945 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:10,962 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:10,962 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:13,304 - INFO - app.services.background_stream_manager - Health check - Uptime: 240.6s, Frames: 417, Detections: 0, Errors: 0
+2025-06-14 12:37:13,479 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:13,479 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:15,532 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:15,532 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:17,586 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:17,586 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:19,960 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:19,960 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:22,003 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:22,003 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:24,032 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:24,032 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:26,531 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:26,531 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:27,789 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:37:27,789 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:37:28,949 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:28,951 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:30,976 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:30,976 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:33,011 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:33,011 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:35,057 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:35,057 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:37,099 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:37,099 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:39,477 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:39,477 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:41,518 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:41,518 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:43,304 - INFO - app.services.background_stream_manager - Health check - Uptime: 270.6s, Frames: 471, Detections: 0, Errors: 0
+2025-06-14 12:37:43,561 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:43,561 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:45,625 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:45,625 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:47,661 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:47,661 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:49,994 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:49,994 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:52,020 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:52,020 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:54,112 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:54,112 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:56,146 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:56,146 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:37:57,792 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:37:57,792 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:37:58,970 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:37:58,970 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:01,002 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:01,002 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:03,036 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:03,036 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:05,064 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:05,064 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:07,081 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:07,081 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:09,493 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:09,493 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:11,496 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:11,496 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:13,298 - INFO - app.services.background_stream_manager - Health check - Uptime: 300.6s, Frames: 525, Detections: 0, Errors: 0
+2025-06-14 12:38:13,509 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:13,509 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:15,546 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:15,548 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:17,547 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:17,547 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:20,008 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:20,009 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:22,033 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:22,033 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:24,056 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:24,056 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:26,083 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:26,084 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:27,806 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:38:27,806 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:38:28,995 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:28,995 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:31,023 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:31,023 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:33,078 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:33,078 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:35,129 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:35,129 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:37,614 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:37,614 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:40,027 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:40,027 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:42,040 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:42,040 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:43,320 - INFO - app.services.background_stream_manager - Health check - Uptime: 330.6s, Frames: 579, Detections: 0, Errors: 0
+2025-06-14 12:38:44,104 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:44,104 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:46,132 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:46,132 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:49,029 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:49,029 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:51,041 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:51,041 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:53,062 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:53,062 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:55,076 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:55,076 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:57,112 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:57,112 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:38:57,809 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:38:57,811 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:38:59,550 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:38:59,550 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:01,609 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:01,609 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:03,654 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:03,654 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:05,679 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:05,679 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:09,066 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:09,066 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:11,091 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:11,091 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:13,135 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:13,135 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:13,318 - INFO - app.services.background_stream_manager - Health check - Uptime: 360.6s, Frames: 633, Detections: 0, Errors: 0
+2025-06-14 12:39:15,170 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:15,171 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:17,684 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:17,684 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:20,082 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:20,084 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:22,092 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:22,092 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:24,102 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:24,103 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:26,119 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:26,119 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:27,830 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:39:27,832 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:39:29,062 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:29,062 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:31,067 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:31,067 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:33,089 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:33,089 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:35,138 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:35,138 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:37,157 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:37,157 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:39,638 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:39,638 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:41,640 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:41,642 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:43,330 - INFO - app.services.background_stream_manager - Health check - Uptime: 390.6s, Frames: 687, Detections: 0, Errors: 0
+2025-06-14 12:39:43,693 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:43,694 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:45,735 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:45,735 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:47,752 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:47,752 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:50,089 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:50,089 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:52,133 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:52,133 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:54,620 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:54,620 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:56,662 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:56,662 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:39:57,835 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:39:57,835 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:39:59,087 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:39:59,087 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:01,096 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:01,096 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:03,591 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:03,591 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:05,611 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:05,611 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:07,663 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:07,663 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:10,127 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:10,127 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:12,634 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:12,634 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:13,360 - INFO - app.services.background_stream_manager - Health check - Uptime: 420.7s, Frames: 741, Detections: 0, Errors: 0
+2025-06-14 12:40:15,117 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:15,117 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:17,160 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:17,160 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:19,628 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:19,628 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:22,133 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:22,133 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:24,176 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:24,177 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:26,678 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:26,678 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:27,842 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:40:27,842 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:40:29,112 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:29,114 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:31,121 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:31,121 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:33,139 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:33,139 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:35,181 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:35,181 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:37,678 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:37,679 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:40,204 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:40,204 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:42,247 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:42,247 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:43,359 - INFO - app.services.background_stream_manager - Health check - Uptime: 450.7s, Frames: 794, Detections: 0, Errors: 0
+2025-06-14 12:40:44,315 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:44,315 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:46,352 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:46,352 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:49,147 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:49,147 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:51,165 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:51,165 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:53,174 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:53,176 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:55,224 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:55,224 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:57,259 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:57,259 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:40:57,850 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:40:57,852 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:40:59,646 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:40:59,646 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:02,168 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:02,168 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:04,225 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:04,225 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:06,727 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:06,728 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:09,160 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:09,160 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:11,190 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:11,192 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:13,216 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:13,216 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:13,358 - INFO - app.services.background_stream_manager - Health check - Uptime: 480.7s, Frames: 849, Detections: 0, Errors: 0
+2025-06-14 12:41:15,240 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:15,240 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:17,252 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:17,252 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:19,669 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:19,669 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:21,689 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:21,689 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:23,716 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:23,716 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:25,749 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:25,749 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:27,848 - INFO - app.routers.results - Search parameters: plate='None', time_range='None', from_date='None', to='None', fuzzy=False, exact=False
+2025-06-14 12:41:27,850 - ERROR - app.routers.results - Error getting filtered detections: (sqlite3.OperationalError) no such column: detections.camera_id
+[SQL: SELECT count(*) AS count_1 
+FROM (SELECT detections.id AS id, detections.plate_text AS plate_text, detections.confidence AS confidence, detections.timestamp AS timestamp, detections.box_x1 AS box_x1, detections.box_y1 AS box_y1, detections.box_x2 AS box_x2, detections.box_y2 AS box_y2, detections.camera_id AS camera_id, detections.camera_name AS camera_name, detections.frame_id AS frame_id, detections.raw_text AS raw_text, detections.state AS state, detections.status AS status, detections.vehicle_type AS vehicle_type, detections.direction AS direction, detections.location AS location, detections.image_path AS image_path, detections.video_path AS video_path, detections.video_start_time AS video_start_time, detections.video_end_time AS video_end_time 
+FROM detections) AS anon_1]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-06-14 12:41:29,155 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:29,155 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:31,192 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:31,192 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:33,228 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:33,228 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results
+2025-06-14 12:41:35,711 - DEBUG - app.services.storage_service - Attempting to save 0 detections
+2025-06-14 12:41:35,711 - DEBUG - app.services.storage_service - Attempting to save 0 enhanced results

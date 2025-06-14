@@ -1,4 +1,7 @@
-# app/models/camera_models.py
+# app/schemas.py
+"""
+Pydantic schemas for API request/response models
+"""
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, Any
 from enum import Enum
@@ -141,8 +144,7 @@ class QRCodeRequest(BaseModel):
     computer_ip: str
     setup_token: Optional[str] = None
     camera_name: Optional[str] = None
-    expires_in_minutes: int = Field(default=3
-    0)
+    expires_in_minutes: int = Field(default=30)
 
 class CameraHealthCheck(BaseModel):
     """Camera health check response"""
@@ -153,7 +155,3 @@ class CameraHealthCheck(BaseModel):
     connection_time_ms: float
     error_message: Optional[str] = None
     suggested_action: Optional[str] = None
-
-# Database models are now defined in app.models
-# Import them here for convenience
-from app.models import Camera, CameraSession

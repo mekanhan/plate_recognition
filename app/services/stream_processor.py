@@ -6,7 +6,7 @@ import threading
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable, Union
 import numpy as np
-from app.models.camera_models import CameraType, CameraConfig, CameraFrame
+from app.schemas import CameraType, CameraConfig, CameraFrame
 
 logger = logging.getLogger(__name__)
 

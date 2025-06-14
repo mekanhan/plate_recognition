@@ -1,0 +1,483 @@
+{
+  "session_id": "67e2d2ca-8ab4-4413-82c4-7ee68cce3011",
+  "session_start": "20250614_151320",
+  "session_metadata": {
+    "source": "camera_service",
+    "configuration": {
+      "model": "yolov11",
+      "storage_version": "1.0"
+    }
+  },
+  "detections": [
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.5718834401355256,
+      "ocr_confidence": 0.6354260445950284,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        336,
+        175,
+        895,
+        449
+      ],
+      "detection_confidence": 0.8360399007797241,
+      "timestamp": 1749932083.3630078,
+      "detection_id": "5aae9448-414f-4dfc-a692-a4d72ca18a0c",
+      "frame_id": 90,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.5718834401355256,
+      "ocr_confidence": 0.6354260445950284,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        336,
+        175,
+        895,
+        449
+      ],
+      "detection_confidence": 0.8360399007797241,
+      "timestamp": 1749932083.3630078,
+      "detection_id": "5aae9448-414f-4dfc-a692-a4d72ca18a0c",
+      "frame_id": 90,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.5618395237940277,
+      "ocr_confidence": 0.6242661375489197,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        390,
+        118,
+        975,
+        383
+      ],
+      "detection_confidence": 0.8273733854293823,
+      "timestamp": 1749932085.763283,
+      "detection_id": "a655c084-214e-4b02-a73c-59965f4c4786",
+      "frame_id": 95,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.7574133238343416,
+      "ocr_confidence": 0.8415703598159351,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        387,
+        202,
+        913,
+        442
+      ],
+      "detection_confidence": 0.8215656280517578,
+      "timestamp": 1749932299.6568835,
+      "detection_id": "e08fd4cb-d097-47ee-94d8-1681c5572ed2",
+      "frame_id": 135,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.7888774193997272,
+      "ocr_confidence": 0.8765304659996969,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        424,
+        189,
+        948,
+        423
+      ],
+      "detection_confidence": 0.844478189945221,
+      "timestamp": 1749932300.1080842,
+      "detection_id": "556753f7-5044-4b9f-bd23-574a75667de0",
+      "frame_id": 136,
+      "status": "active",
+      "processed_by": "enhanced_processor"
+    },
+    {
+      "detection_id": "18d40743-3758-4357-855b-8e634105a85c",
+      "timestamp": 1749932300.1363578,
+      "plate_text": "VBR766O",
+      "raw_text": "TEXAS VBR+7660",
+      "confidence": 0.7888774193997272,
+      "state": "TX",
+      "box": [
+        424,
+        189,
+        948,
+        423
+      ],
+      "frame_id": 136,
+      "tracking_id": "trk-18d40743-3758-4357-855b-8e634105a85c",
+      "status": "active",
+      "processed_at": 1749932300.1363578,
+      "processed_by": "enhanced_processor"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.8766384579624867,
+      "ocr_confidence": 0.9740427310694297,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        423,
+        189,
+        958,
+        430
+      ],
+      "detection_confidence": 0.824908971786499,
+      "timestamp": 1749932300.304305,
+      "detection_id": "c16c262d-0b8a-405f-9ee4-0f33744c57b6",
+      "frame_id": 137,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.7912807642943431,
+      "ocr_confidence": 0.8792008492159368,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        424,
+        194,
+        960,
+        425
+      ],
+      "detection_confidence": 0.8248642683029175,
+      "timestamp": 1749932300.536549,
+      "detection_id": "8fdc0695-e003-4d05-8832-35f18403df8d",
+      "frame_id": 138,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.8422239582594708,
+      "ocr_confidence": 0.9358043980660787,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        419,
+        205,
+        952,
+        448
+      ],
+      "detection_confidence": 0.8228049278259277,
+      "timestamp": 1749932300.7384684,
+      "detection_id": "2de71023-fddd-46a0-8aa1-79f70a3c628d",
+      "frame_id": 435,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.8422239582594708,
+      "ocr_confidence": 0.9358043980660787,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        419,
+        205,
+        952,
+        448
+      ],
+      "detection_confidence": 0.8228049278259277,
+      "timestamp": 1749932300.7384684,
+      "detection_id": "2de71023-fddd-46a0-8aa1-79f70a3c628d",
+      "frame_id": 435,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.8422239582594708,
+      "ocr_confidence": 0.9358043980660787,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        419,
+        205,
+        952,
+        448
+      ],
+      "detection_confidence": 0.8228049278259277,
+      "timestamp": 1749932300.786831,
+      "detection_id": "9f21e335-6d90-4ec5-ac7f-b9ca2f9e55e8",
+      "frame_id": 140,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.800608947049487,
+      "ocr_confidence": 0.8895654967216523,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        423,
+        223,
+        951,
+        458
+      ],
+      "detection_confidence": 0.841368556022644,
+      "timestamp": 1749932301.0024374,
+      "detection_id": "5c3aa682-c95d-4ae6-a84b-a496ba7ccfd4",
+      "frame_id": 141,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.6865864391960648,
+      "ocr_confidence": 0.7628738213289609,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        410,
+        220,
+        940,
+        465
+      ],
+      "detection_confidence": 0.8540266156196594,
+      "timestamp": 1749932301.387351,
+      "detection_id": "cf19af9c-d0de-400a-9842-6e56e0e03b0b",
+      "frame_id": 143,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.44593748246769654,
+      "ocr_confidence": 0.49548609163077395,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        419,
+        239,
+        928,
+        462
+      ],
+      "detection_confidence": 0.867544949054718,
+      "timestamp": 1749932301.6703937,
+      "detection_id": "3640109e-f8dd-46be-a523-ebcac87d2998",
+      "frame_id": 144,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.8561862039055472,
+      "ocr_confidence": 0.9513180043394969,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        415,
+        245,
+        926,
+        473
+      ],
+      "detection_confidence": 0.8600159287452698,
+      "timestamp": 1749932301.9110785,
+      "detection_id": "54950850-2d19-4105-b9c7-7de9cd5224e8",
+      "frame_id": 145,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.877836214762163,
+      "ocr_confidence": 0.9753735719579588,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        420,
+        251,
+        927,
+        472
+      ],
+      "detection_confidence": 0.8746875524520874,
+      "timestamp": 1749932302.328923,
+      "detection_id": "86cf1247-85d4-4b5b-bfcc-0c2f2267721e",
+      "frame_id": 147,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.5895978398866674,
+      "ocr_confidence": 0.655108710985186,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        415,
+        249,
+        924,
+        479
+      ],
+      "detection_confidence": 0.8709089159965515,
+      "timestamp": 1749932302.588436,
+      "detection_id": "92820faa-99b5-4fb5-a565-bf912bc04f11",
+      "frame_id": 148,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.41274103630833253,
+      "ocr_confidence": 0.4586011514537028,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660}",
+      "box": [
+        420,
+        261,
+        918,
+        482
+      ],
+      "detection_confidence": 0.8713230490684509,
+      "timestamp": 1749932302.8046422,
+      "detection_id": "923b9728-1c91-419c-b2c8-c39adcca9953",
+      "frame_id": 149,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.5350437172241151,
+      "ocr_confidence": 0.5944930191379056,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660}",
+      "box": [
+        416,
+        260,
+        918,
+        482
+      ],
+      "detection_confidence": 0.8684359192848206,
+      "timestamp": 1749932302.9882514,
+      "detection_id": "2791bf8b-da61-4f5d-9361-6d9ab0ddbf56",
+      "frame_id": 150,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.8425615757877037,
+      "ocr_confidence": 0.9361795286530041,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        400,
+        260,
+        914,
+        483
+      ],
+      "detection_confidence": 0.8477547764778137,
+      "timestamp": 1749932303.2168875,
+      "detection_id": "fbf8a0f1-9c5e-4c34-83a7-d1f150ffd424",
+      "frame_id": 152,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.5555373898021684,
+      "ocr_confidence": 0.6172637664468538,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660]",
+      "box": [
+        397,
+        259,
+        914,
+        484
+      ],
+      "detection_confidence": 0.8427233099937439,
+      "timestamp": 1749932303.4730155,
+      "detection_id": "cc8f0d9a-feb3-47a3-8f94-34cf5b6e8d3d",
+      "frame_id": 153,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.4008528387184615,
+      "ocr_confidence": 0.4453920430205128,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660]",
+      "box": [
+        402,
+        255,
+        913,
+        476
+      ],
+      "detection_confidence": 0.8455209732055664,
+      "timestamp": 1749932303.6888454,
+      "detection_id": "04a301ad-2054-4e69-9390-e1258b163f77",
+      "frame_id": 154,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.4933840282243856,
+      "ocr_confidence": 0.5482044758048729,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660}",
+      "box": [
+        396,
+        254,
+        909,
+        480
+      ],
+      "detection_confidence": 0.8479604125022888,
+      "timestamp": 1749932303.912982,
+      "detection_id": "f47f30b4-7038-4848-ae74-d1606ed332d6",
+      "frame_id": 155,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.8163870651608961,
+      "ocr_confidence": 0.9070967390676623,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        407,
+        247,
+        917,
+        471
+      ],
+      "detection_confidence": 0.8473520874977112,
+      "timestamp": 1749932304.3237138,
+      "detection_id": "564165a9-933e-4dd0-8b55-b73ded5825e5",
+      "frame_id": 157,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.433532263162098,
+      "ocr_confidence": 0.48170251462455327,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660]",
+      "box": [
+        399,
+        236,
+        911,
+        468
+      ],
+      "detection_confidence": 0.840857744216919,
+      "timestamp": 1749932304.596827,
+      "detection_id": "794bdad0-fb14-4951-af5d-1b9bc4509b40",
+      "frame_id": 158,
+      "status": "active"
+    },
+    {
+      "plate_text": "VBR766O",
+      "confidence": 0.7464495607418717,
+      "ocr_confidence": 0.8293884008243019,
+      "state": "TX",
+      "raw_text": "TEXAS VBR+7660",
+      "box": [
+        425,
+        220,
+        941,
+        455
+      ],
+      "detection_confidence": 0.8444411754608154,
+      "timestamp": 1749932304.8231208,
+      "detection_id": "0114827c-8dcb-4fef-b317-2ab975203b28",
+      "frame_id": 159,
+      "status": "active"
+    }
+  ]
+}

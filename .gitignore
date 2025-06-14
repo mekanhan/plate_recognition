@@ -8,6 +8,12 @@ temp_stream.mp4
 utils/__pycache__
 .venv
 data/license_plates/*
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+data/*.db
+data/*_backup_*.db
 scripts/__init__.py
 scripts/__pycache__
 tests/__init__.py

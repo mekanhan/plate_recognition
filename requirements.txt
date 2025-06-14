@@ -35,6 +35,7 @@ coloredlogs>=15.0.1
 psutil>=5.9.5
 GPUtil>=1.4.0
 aiohttp>=3.8.0
+qrcode>=7.4.0
 
 # Testing
 pytest>=7.4.0

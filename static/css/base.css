@@ -276,11 +276,40 @@ th {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+	/* Typography scaling */
 	h1 { font-size: 1.875rem; }
 	h2 { font-size: 1.5rem; }
 	h3 { font-size: 1.25rem; }
 	
 	/* Mobile Grid Adjustments */
+	.grid-cols-2 { grid-template-columns: 1fr; }
 	.grid-cols-3 { grid-template-columns: 1fr; }
+	.grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
 	.col-span-2 { grid-column: span 1 / span 1; }
+	.col-span-3 { grid-column: span 1 / span 1; }
+	
+	/* Better mobile spacing */
+	.container {
+		padding: 0 var(--space-3);
+	}
+	
+	/* Mobile-friendly flex layouts */
+	.flex {
+		flex-wrap: wrap;
+	}
+	
+	/* Text size adjustments */
+	.text-lg { font-size: 1rem; }
+	.text-xl { font-size: 1.125rem; }
+	
+	/* Button adjustments for touch */
+	.btn {
+		padding: var(--space-3) var(--space-4);
+		min-height: 44px; /* iOS recommended touch target */
+	}
+	
+	.btn-sm {
+		padding: var(--space-2) var(--space-3);
+		min-height: 36px;
+	}
 }

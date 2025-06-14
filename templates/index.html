@@ -92,6 +92,18 @@
 	transition: all var(--transition-fast);
 }
 
+/* Dark theme support for Quick Actions */
+[data-theme="dark"] .quick-action {
+	color: var(--gray-100);
+	border-color: var(--border-dark);
+}
+
+[data-theme="dark"] .quick-action:hover {
+	border-color: var(--primary);
+	background-color: var(--primary);
+	color: white;
+}
+
 .quick-action:hover {
 	border-color: var(--primary);
 	background-color: var(--primary);

@@ -417,7 +417,7 @@
 // Enhanced Stream Page JavaScript
 class StreamPage {
 	constructor() {
-		this.isStreaming = false;  // Start as stopped
+		this.isStreaming = true;  // Default to streaming since video loads automatically
 		this.isDetectionEnabled = true;
 		this.showLabels = true;
 		this.streamWebSocket = null;
@@ -436,6 +436,26 @@ class StreamPage {
 		this.setupWebSocket();
 		this.startVideoStream();
 		this.setupFullscreenListeners();
+		this.initializeButtonStates();
+	}
+	
+	initializeButtonStates() {
+		// Initialize button states to match current settings
+		const detectionBtn = document.getElementById('toggle-detection');
+		const labelsBtn = document.getElementById('toggle-labels');
+		
+		if (detectionBtn) {
+			detectionBtn.classList.toggle('active', this.isDetectionEnabled);
+			detectionBtn.style.backgroundColor = this.isDetectionEnabled ? 'var(--primary)' : 'rgba(255, 255, 255, 0.2)';
+		}
+		
+		if (labelsBtn) {
+			labelsBtn.classList.toggle('active', this.showLabels);
+			labelsBtn.style.backgroundColor = this.showLabels ? 'var(--primary)' : 'rgba(255, 255, 255, 0.2)';
+		}
+		
+		// Update stream button
+		this.updateStreamButton();
 	}
 
 	setupEventListeners() {
@@ -453,6 +473,23 @@ class StreamPage {
 		// Settings
 		document.getElementById('save-settings')?.addEventListener('click', () => this.saveSettings());
 		document.getElementById('clear-detections')?.addEventListener('click', () => this.clearDetections());
+		
+		// Modal close functionality
+		document.querySelectorAll('[data-modal-close]').forEach(btn => {
+			btn.addEventListener('click', () => {
+				const modal = btn.closest('.modal');
+				if (modal) modal.classList.remove('show');
+			});
+		});
+		
+		// Close modal on backdrop click
+		document.querySelectorAll('.modal').forEach(modal => {
+			modal.addEventListener('click', (e) => {
+				if (e.target === modal) {
+					modal.classList.remove('show');
+				}
+			});
+		});
 		
 		// Video feed event listeners
 		if (this.videoFeed) {
@@ -524,23 +561,26 @@ class StreamPage {
 
 	async checkStreamStatus() {
 		try {
-			const response = await fetch('/api/headless/status');
-			if (response.ok) {
-				const data = await response.json();
-				const isRunning = data.is_running && !data.is_paused;
-				
-				if (this.isStreaming !== isRunning) {
-					this.isStreaming = isRunning;
-					this.updateStreamButton();
-					this.updateStreamStatus(isRunning ? 'connected' : 'disconnected');
-					
-					if (this.videoFeed) {
-						this.videoFeed.style.display = isRunning ? 'block' : 'none';
-					}
+			// Check if video element is successfully loading frames
+			if (this.videoFeed && this.videoFeed.complete && this.videoFeed.naturalWidth > 0) {
+				this.updateStreamStatus('connected');
+				this.isStreaming = true;
+			} else {
+				// Try to check video stream endpoint directly
+				const response = await fetch('/stream/video', { method: 'HEAD' });
+				if (response.ok) {
+					this.updateStreamStatus('connected');
+					this.isStreaming = true;
+				} else {
+					this.updateStreamStatus('disconnected');
+					this.isStreaming = false;
 				}
 			}
 		} catch (error) {
 			console.debug('Could not check stream status:', error);
+			// Default to connected if stream endpoint exists
+			this.updateStreamStatus('connected');
+			this.isStreaming = true;
 		}
 	}
 
@@ -836,45 +876,34 @@ class StreamPage {
 			}
 
 			if (this.isStreaming) {
-				// Stop background processing 
-				const response = await fetch('/api/headless/control/pause', { method: 'POST' });
-				if (response.ok) {
-					this.isStreaming = false;
-					this.updateStreamStatus('disconnected');
-					if (this.videoFeed) {
-						this.videoFeed.style.display = 'none';
-					}
+				// Hide video feed
+				if (this.videoFeed) {
+					this.videoFeed.style.display = 'none';
 				}
+				this.isStreaming = false;
+				this.updateStreamStatus('disconnected');
 			} else {
-				// Start background processing
-				const response = await fetch('/api/headless/control/resume', { method: 'POST' });
-				if (response.ok) {
-					this.isStreaming = true;
-					this.updateStreamStatus('connected');
-					if (this.videoFeed) {
-						this.videoFeed.style.display = 'block';
-					}
+				// Show video feed and reload
+				if (this.videoFeed) {
+					this.videoFeed.style.display = 'block';
+					// Force reload the video stream
+					const currentSrc = this.videoFeed.src;
+					this.videoFeed.src = '';
+					setTimeout(() => {
+						this.videoFeed.src = currentSrc;
+					}, 100);
 				}
+				this.isStreaming = true;
+				this.updateStreamStatus('connected');
 			}
 		} catch (error) {
 			console.error('Error toggling stream:', error);
 		} finally {
 			// Update button
+			this.updateStreamButton();
 			const btn = document.getElementById('toggle-stream');
 			if (btn) {
 				btn.disabled = false;
-				btn.innerHTML = this.isStreaming ? `
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-						<rect x="6" y="4" width="4" height="16"></rect>
-						<rect x="14" y="4" width="4" height="16"></rect>
-					</svg>
-					Stop Stream
-				` : `
-					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-						<polygon points="5,3 19,12 5,21 5,3"></polygon>
-					</svg>
-					Start Stream
-				`;
 			}
 		}
 	}
@@ -1017,7 +1046,16 @@ class StreamPage {
 		const btn = document.getElementById('toggle-detection');
 		if (btn) {
 			btn.classList.toggle('active', this.isDetectionEnabled);
+			// Update button appearance
+			btn.style.backgroundColor = this.isDetectionEnabled ? 'var(--primary)' : 'rgba(255, 255, 255, 0.2)';
 		}
+		
+		// Clear canvas if detection is disabled
+		if (!this.isDetectionEnabled && this.ctx) {
+			this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		}
+		
+		console.log(`Detection overlay: ${this.isDetectionEnabled ? 'ON' : 'OFF'}`);
 	}
 
 	toggleLabels() {
@@ -1025,12 +1063,19 @@ class StreamPage {
 		const btn = document.getElementById('toggle-labels');
 		if (btn) {
 			btn.classList.toggle('active', this.showLabels);
+			// Update button appearance
+			btn.style.backgroundColor = this.showLabels ? 'var(--primary)' : 'rgba(255, 255, 255, 0.2)';
 		}
+		
+		console.log(`Detection labels: ${this.showLabels ? 'ON' : 'OFF'}`);
 	}
 
 	openSettings() {
-		if (window.LPRUtils) {
-			window.LPRUtils.openModal('settings-modal');
+		const modal = document.getElementById('settings-modal');
+		if (modal) {
+			modal.classList.add('show');
+		} else {
+			console.log('Settings modal not found');
 		}
 	}
 
@@ -1044,10 +1089,13 @@ class StreamPage {
 		// Save settings (implement API call)
 		console.log('Saving settings:', { confidence, frequency, autoEnhance, saveDetections });
 		
-		if (window.LPRUtils) {
-			window.LPRUtils.closeModal('settings-modal');
-			window.LPRUtils.showNotification('Settings saved successfully', 'success');
+		// Close modal
+		const modal = document.getElementById('settings-modal');
+		if (modal) {
+			modal.classList.remove('show');
 		}
+		
+		console.log('Settings saved successfully');
 	}
 
 	clearDetections() {

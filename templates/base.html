@@ -37,11 +37,13 @@
 					<!-- Brand -->
 					<a href="/" class="header-brand">
 						<div class="header-logo">
-							<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+							<img src="/static/images/logo.png" alt="Vision Port Logo" class="header-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+							<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="header-logo-fallback" style="display: none;">
 								<path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
 							</svg>
 						</div>
-						<span>LPR System</span>
+						<img src="/static/images/vision_port_text_2.png" alt="Vision Port" class="header-text-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+						<span class="header-text-fallback" style="display: none;">Vision Port</span>
 					</a>
 				</div>
 				

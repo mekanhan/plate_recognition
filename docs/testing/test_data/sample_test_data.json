@@ -1,0 +1,441 @@
+{
+  "test_data_catalog": {
+    "version": "1.0.0",
+    "generated_date": "2024-01-15T10:00:00Z",
+    "description": "Sample test data catalog for LPR automation testing framework",
+    
+    "license_plate_samples": [
+      {
+        "id": "lp_001",
+        "text": "ABC123",
+        "state": "california",
+        "format": "7ABC123",
+        "expected_confidence": 0.95,
+        "image_file": "sample_images/california_abc123_excellent.jpg",
+        "quality": "excellent",
+        "resolution": "1920x1080",
+        "file_size": "1.2MB",
+        "bbox": [100, 200, 350, 280],
+        "test_scenarios": ["positive_detection", "high_confidence", "clear_image"]
+      },
+      {
+        "id": "lp_002", 
+        "text": "XYZ789",
+        "state": "texas",
+        "format": "XYZ-789",
+        "expected_confidence": 0.82,
+        "image_file": "sample_images/texas_xyz789_good.jpg",
+        "quality": "good",
+        "resolution": "1280x720",
+        "file_size": "800KB",
+        "bbox": [150, 180, 400, 260],
+        "test_scenarios": ["positive_detection", "medium_confidence", "standard_quality"]
+      },
+      {
+        "id": "lp_003",
+        "text": "DEF456",
+        "state": "new_york", 
+        "format": "DEF-456",
+        "expected_confidence": 0.65,
+        "image_file": "sample_images/newyork_def456_fair.jpg",
+        "quality": "fair",
+        "resolution": "640x480",
+        "file_size": "400KB",
+        "bbox": [80, 150, 280, 210],
+        "test_scenarios": ["positive_detection", "low_confidence", "challenging_conditions"]
+      },
+      {
+        "id": "lp_004",
+        "text": "GHI789",
+        "state": "florida",
+        "format": "GHI 789", 
+        "expected_confidence": 0.42,
+        "image_file": "sample_images/florida_ghi789_poor.jpg",
+        "quality": "poor",
+        "resolution": "1920x1080",
+        "file_size": "1.5MB",
+        "bbox": [200, 300, 450, 380],
+        "test_scenarios": ["edge_case", "poor_quality", "low_confidence"]
+      },
+      {
+        "id": "lp_005",
+        "text": null,
+        "state": null,
+        "format": null,
+        "expected_confidence": 0.05,
+        "image_file": "sample_images/no_plate_vehicle.jpg",
+        "quality": "excellent",
+        "resolution": "1920x1080", 
+        "file_size": "1.8MB",
+        "bbox": null,
+        "test_scenarios": ["negative_testing", "no_detection", "false_positive_check"]
+      }
+    ],
+    
+    "video_samples": [
+      {
+        "id": "vid_001",
+        "file_name": "test_videos/highway_traffic_30s.mp4",
+        "duration": 30,
+        "resolution": "1920x1080",
+        "fps": 30,
+        "file_size": "25MB",
+        "scenario": "highway_traffic",
+        "total_frames": 900,
+        "expected_detections": [
+          {
+            "frame": 45,
+            "license_plate": "ABC123",
+            "confidence": 0.88,
+            "bbox": [300, 400, 500, 460]
+          },
+          {
+            "frame": 120,
+            "license_plate": "XYZ789", 
+            "confidence": 0.75,
+            "bbox": [150, 350, 350, 410]
+          },
+          {
+            "frame": 340,
+            "license_plate": "DEF456",
+            "confidence": 0.92,
+            "bbox": [400, 300, 600, 360]
+          }
+        ],
+        "test_scenarios": ["video_processing", "multiple_detections", "real_time_simulation"]
+      },
+      {
+        "id": "vid_002",
+        "file_name": "test_videos/parking_lot_60s.mp4",
+        "duration": 60,
+        "resolution": "1280x720",
+        "fps": 15,
+        "file_size": "15MB",
+        "scenario": "parking_lot",
+        "total_frames": 900,
+        "expected_detections": [
+          {
+            "frame": 150,
+            "license_plate": "GHI789",
+            "confidence": 0.96,
+            "bbox": [200, 250, 400, 310]
+          },
+          {
+            "frame": 300,
+            "license_plate": "JKL012",
+            "confidence": 0.91,
+            "bbox": [350, 200, 550, 260]
+          }
+        ],
+        "test_scenarios": ["stationary_vehicles", "high_accuracy", "controlled_environment"]
+      }
+    ],
+    
+    "database_test_records": [
+      {
+        "id": 1,
+        "license_plate": "TEST001",
+        "confidence": 0.95,
+        "bbox_x1": 100,
+        "bbox_y1": 200,
+        "bbox_x2": 300,
+        "bbox_y2": 250,
+        "image_path": "/data/test_images/test001.jpg",
+        "camera_id": "test_camera_001",
+        "timestamp": "2024-01-15T10:30:00Z",
+        "processed": "completed",
+        "session_id": "test_session_001",
+        "enhanced_image_path": "/data/enhanced/test001_enhanced.jpg",
+        "ocr_confidence": 0.92,
+        "plate_region": "CA",
+        "vehicle_type": "sedan"
+      },
+      {
+        "id": 2,
+        "license_plate": "TEST002",
+        "confidence": 0.78,
+        "bbox_x1": 150,
+        "bbox_y1": 180,
+        "bbox_x2": 350,
+        "bbox_y2": 230,
+        "image_path": "/data/test_images/test002.jpg",
+        "camera_id": "test_camera_002",
+        "timestamp": "2024-01-15T11:15:00Z",
+        "processed": "pending",
+        "session_id": "test_session_002",
+        "enhanced_image_path": null,
+        "ocr_confidence": 0.75,
+        "plate_region": "TX",
+        "vehicle_type": "suv"
+      },
+      {
+        "id": 3,
+        "license_plate": "TEST003",
+        "confidence": 0.65,
+        "bbox_x1": 80,
+        "bbox_y1": 220,
+        "bbox_x2": 280,
+        "bbox_y2": 270,
+        "image_path": "/data/test_images/test003.jpg",
+        "camera_id": "test_camera_001",
+        "timestamp": "2024-01-15T12:00:00Z",
+        "processed": "failed",
+        "session_id": "test_session_003",
+        "enhanced_image_path": null,
+        "ocr_confidence": 0.60,
+        "plate_region": "NY",
+        "vehicle_type": "truck"
+      }
+    ],
+    
+    "api_test_payloads": {
+      "detection_upload": {
+        "valid_request": {
+          "settings": {
+            "confidence_threshold": 0.7,
+            "save_results": true
+          }
+        },
+        "invalid_request": {
+          "settings": {
+            "confidence_threshold": 1.5,
+            "save_results": "invalid_boolean"
+          }
+        }
+      },
+      
+      "search_request": {
+        "simple_search": {
+          "query": {
+            "license_plate": "ABC123"
+          },
+          "pagination": {
+            "page": 1,
+            "limit": 10
+          }
+        },
+        "complex_search": {
+          "query": {
+            "license_plate": "ABC*",
+            "confidence_min": 0.7,
+            "date_range": {
+              "start": "2024-01-01T00:00:00Z",
+              "end": "2024-01-31T23:59:59Z"
+            },
+            "camera_ids": ["camera_001", "camera_002"],
+            "fuzzy_search": true
+          },
+          "sort": {
+            "field": "timestamp",
+            "order": "desc"
+          },
+          "pagination": {
+            "page": 1,
+            "limit": 20
+          }
+        }
+      },
+      
+      "configuration_update": {
+        "valid_config": {
+          "detection": {
+            "confidence_threshold": 0.8,
+            "model_path": "/app/models/yolo11m_best.pt"
+          },
+          "camera": {
+            "resolution": "1920x1080",
+            "fps": 30
+          }
+        },
+        "invalid_config": {
+          "detection": {
+            "confidence_threshold": -0.5,
+            "model_path": "/nonexistent/path.pt"
+          }
+        }
+      }
+    },
+    
+    "webhook_test_data": {
+      "detection_webhook": {
+        "url": "https://webhook-test.example.com/detection",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer test_token_12345"
+        },
+        "payload": {
+          "event_type": "detection_created",
+          "timestamp": "2024-01-15T10:30:00Z",
+          "data": {
+            "license_plate": "ABC123",
+            "confidence": 0.85,
+            "camera_id": "camera_001",
+            "image_url": "https://api.example.com/images/detection_123.jpg",
+            "bbox": [100, 200, 300, 250]
+          }
+        },
+        "expected_response": {
+          "status_code": 200,
+          "response_body": {
+            "status": "received",
+            "message": "Detection processed successfully"
+          }
+        }
+      }
+    },
+    
+    "performance_test_data": {
+      "load_test_scenarios": [
+        {
+          "name": "normal_load",
+          "concurrent_users": 50,
+          "duration": 300,
+          "requests_per_user": 100,
+          "expected_avg_response_time": 500,
+          "expected_max_response_time": 2000,
+          "expected_error_rate": 0.01
+        },
+        {
+          "name": "stress_test",
+          "concurrent_users": 200,
+          "duration": 600,
+          "requests_per_user": 50,
+          "expected_avg_response_time": 1500,
+          "expected_max_response_time": 5000,
+          "expected_error_rate": 0.05
+        }
+      ],
+      
+      "file_sizes": {
+        "small_image": {
+          "size": "100KB",
+          "count": 100,
+          "expected_processing_time": 200
+        },
+        "medium_image": {
+          "size": "1MB", 
+          "count": 50,
+          "expected_processing_time": 500
+        },
+        "large_image": {
+          "size": "10MB",
+          "count": 10,
+          "expected_processing_time": 2000
+        }
+      }
+    },
+    
+    "security_test_data": {
+      "authentication": {
+        "valid_api_key": "test_api_key_valid_12345",
+        "invalid_api_key": "test_api_key_invalid_67890",
+        "expired_api_key": "test_api_key_expired_11111"
+      },
+      
+      "malicious_inputs": [
+        {
+          "type": "sql_injection",
+          "input": "'; DROP TABLE detections; --",
+          "target_field": "license_plate",
+          "expected_behavior": "input_sanitized"
+        },
+        {
+          "type": "xss_attempt",
+          "input": "<script>alert('xss')</script>",
+          "target_field": "camera_id",
+          "expected_behavior": "input_escaped"
+        },
+        {
+          "type": "path_traversal",
+          "input": "../../../../etc/passwd",
+          "target_field": "image_path",
+          "expected_behavior": "path_validation_error"
+        }
+      ]
+    },
+    
+    "configuration_test_data": {
+      "camera_configs": [
+        {
+          "name": "usb_camera_config",
+          "type": "USB",
+          "device_id": 0,
+          "resolution": "1920x1080",
+          "fps": 30,
+          "auto_focus": true,
+          "expected_result": "success"
+        },
+        {
+          "name": "rtsp_camera_config",
+          "type": "RTSP",
+          "url": "rtsp://test-camera.local:554/stream",
+          "username": "test_user",
+          "password": "test_pass",
+          "timeout": 10,
+          "expected_result": "success"
+        },
+        {
+          "name": "invalid_camera_config",
+          "type": "INVALID",
+          "device_id": -1,
+          "resolution": "invalid_resolution",
+          "fps": -5,
+          "expected_result": "validation_error"
+        }
+      ],
+      
+      "detection_configs": [
+        {
+          "name": "high_accuracy_config",
+          "confidence_threshold": 0.9,
+          "model": "yolo11m_best.pt",
+          "batch_size": 1,
+          "gpu_enabled": true,
+          "expected_result": "success"
+        },
+        {
+          "name": "invalid_confidence_config",
+          "confidence_threshold": 1.5,
+          "model": "yolo11m_best.pt",
+          "batch_size": 1,
+          "gpu_enabled": true,
+          "expected_result": "validation_error"
+        }
+      ]
+    },
+    
+    "mock_external_responses": {
+      "license_validation_api": {
+        "valid_response": {
+          "license_plate": "ABC123",
+          "state": "CA",
+          "valid": true,
+          "expired": false,
+          "registration_date": "2023-01-15"
+        },
+        "invalid_response": {
+          "license_plate": "INVALID",
+          "state": "CA",
+          "valid": false,
+          "expired": false,
+          "error": "License plate not found"
+        }
+      },
+      
+      "vehicle_database_api": {
+        "successful_lookup": {
+          "license_plate": "ABC123",
+          "make": "Toyota",
+          "model": "Camry",
+          "year": 2022,
+          "color": "Blue"
+        },
+        "not_found_response": {
+          "license_plate": "UNKNOWN",
+          "error": "Vehicle not found in database"
+        }
+      }
+    }
+  }
+}

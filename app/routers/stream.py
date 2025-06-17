@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 import cv2
+import numpy as np
 import asyncio
 import time
 import uuid
@@ -54,6 +55,15 @@ frame_processor = {
     "session_start_time": time.time()
 }
 
+# Detection overlay persistence system
+overlay_memory = {
+    "last_detections": [],  # Store recent detections with timestamps
+    "last_annotated_frame": None,  # Cache last annotated frame
+    "overlay_duration": 3.0,  # Keep overlays visible for 3 seconds
+    "fade_duration": 1.0,  # Fade out over 1 second
+    "detection_timestamp": 0  # When detections were last updated
+}
+
 async def get_camera_service():
     """Dependency to get the camera service"""
     return camera_service
@@ -61,6 +71,85 @@ async def get_camera_service():
 async def get_detection_service():
     """Dependency to get the detection service"""
     return detection_service
+
+def draw_persistent_overlays(frame: np.ndarray, current_time: float) -> np.ndarray:
+    """Draw persistent detection overlays that fade over time"""
+    global overlay_memory
+    
+    # Check if we have cached detections to draw
+    if not overlay_memory["last_detections"]:
+        return frame
+    
+    # Calculate time since last detection
+    time_since_detection = current_time - overlay_memory["detection_timestamp"]
+    
+    # Remove expired detections
+    if time_since_detection > overlay_memory["overlay_duration"]:
+        overlay_memory["last_detections"] = []
+        overlay_memory["last_annotated_frame"] = None
+        return frame
+    
+    # Calculate fade opacity
+    fade_start = overlay_memory["overlay_duration"] - overlay_memory["fade_duration"]
+    if time_since_detection > fade_start:
+        # Fade out over the last second
+        fade_progress = (time_since_detection - fade_start) / overlay_memory["fade_duration"]
+        opacity = max(0.0, 1.0 - fade_progress)
+    else:
+        # Full opacity
+        opacity = 1.0
+    
+    # Create overlay frame
+    overlay_frame = frame.copy()
+    
+    # Draw each detection
+    for detection in overlay_memory["last_detections"]:
+        bbox = detection.get("bbox")
+        if not bbox or len(bbox) != 4:
+            continue
+            
+        x1, y1, x2, y2 = bbox
+        plate_text = detection.get("plate_text", "")
+        confidence = detection.get("confidence", 0)
+        
+        # Determine color based on confidence
+        if confidence >= 0.8:
+            base_color = (0, 255, 0)  # Green
+        elif confidence >= 0.6:
+            base_color = (0, 255, 255)  # Yellow
+        else:
+            base_color = (0, 0, 255)  # Red
+        
+        # Apply opacity to color
+        color = tuple(int(c * opacity) for c in base_color)
+        
+        # Draw bounding box
+        cv2.rectangle(overlay_frame, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
+        
+        # Draw text background
+        text_y = int(y1) - 15
+        if text_y < 25:
+            text_y = int(y2) + 25
+            
+        # Create text with confidence
+        state_prefix = f"{detection.get('state', '')}: " if detection.get('state') else ""
+        main_text = f"{state_prefix}{plate_text} ({confidence:.0%})"
+        
+        # Get text size for background
+        text_size = cv2.getTextSize(main_text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)[0]
+        
+        # Draw text background with opacity
+        bg_color = tuple(int(c * opacity * 0.8) for c in (0, 0, 0))  # Semi-transparent black
+        cv2.rectangle(overlay_frame, 
+                     (int(x1), text_y - text_size[1] - 5), 
+                     (int(x1) + text_size[0] + 10, text_y + 5), 
+                     bg_color, -1)
+        
+        # Draw text
+        cv2.putText(overlay_frame, main_text, (int(x1) + 2, text_y),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+    
+    return overlay_frame
 
 async def process_detection_queue():
     """Process any pending detections in the queue"""
@@ -160,12 +249,12 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                     try:
                         processed_frame, detections = await asyncio.wait_for(process_task, timeout=2.0)
                         
-                        # Use the processed frame (with annotations)
-                        frame = processed_frame
-                        annotated_frame = processed_frame  # Save annotated frame for video recording
-                        
-                        # Debug logging for detection processing (reduced frequency)
+                        # Update overlay memory with new detections
                         if detections:
+                            overlay_memory["last_detections"] = detections
+                            overlay_memory["detection_timestamp"] = timestamp
+                            overlay_memory["last_annotated_frame"] = processed_frame
+                            
                             logger.info(f"Frame {frame_processor['frame_count']}: Detected {len(detections)} license plates")
                             for i, detection in enumerate(detections):
                                 plate_text = detection.get('plate_text', 'Unknown')
@@ -173,6 +262,10 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                                 logger.info(f"  Detection {i+1}: '{plate_text}' (confidence: {confidence:.2f})")
                         elif frame_processor['frame_count'] % 100 == 0:  # Log every 100 frames instead of every frame
                             logger.debug(f"Frame {frame_processor['frame_count']}: No license plates detected")
+                        
+                        # Use the processed frame (with annotations)
+                        frame = processed_frame
+                        annotated_frame = processed_frame  # Save annotated frame for video recording
                         
                         # Add valid detections to the queue
                         if detections:
@@ -209,6 +302,14 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                     logger.error(f"Error in license plate detection: {e}")
                     # Fall back to the original frame if detection fails
                     # Already using raw_frame as default
+            else:
+                # No detection processing this frame, but check for persistent overlays
+                frame = draw_persistent_overlays(raw_frame, timestamp)
+                # Use cached annotated frame for video recording if available
+                if overlay_memory["last_annotated_frame"] is not None:
+                    time_since_detection = timestamp - overlay_memory["detection_timestamp"]
+                    if time_since_detection <= overlay_memory["overlay_duration"]:
+                        annotated_frame = draw_persistent_overlays(overlay_memory["last_annotated_frame"], timestamp)
 
             # Add system overlays to frame BEFORE video recording
             # This ensures overlays are included in both display AND recorded video

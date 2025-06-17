@@ -45,6 +45,7 @@ class ConfigUpdateRequest(BaseModel):
 	model_path: Optional[str] = None
 	camera_settings: Optional[Dict[str, Any]] = None
 	detection_settings: Optional[Dict[str, Any]] = None
+	camera_source: Optional[str] = None
 
 @router.get("/health", response_model=SystemHealthResponse)
 async def get_system_health():
@@ -257,6 +258,9 @@ async def get_system_logs(
 async def get_system_config():
 	"""Get current system configuration"""
 	try:
+		# Load camera configuration from persistent storage
+		camera_config = await load_camera_config()
+		
 		# This would typically load from a config file or database
 		config = {
 			"detection": {
@@ -269,7 +273,7 @@ async def get_system_config():
 				"width": 1280,
 				"height": 720,
 				"fps": 30,
-				"source": "0"
+				"source": camera_config.get("camera_source", "0")
 			},
 			"storage": {
 				"max_detections": 10000,
@@ -305,7 +309,22 @@ async def update_system_config(config_update: ConfigUpdateRequest):
 				raise HTTPException(status_code=400, detail="Model file not found")
 			updated_fields.append("model_path")
 		
-		# Here you would actually update the configuration
+		if config_update.camera_source is not None:
+			# Validate camera source
+			from app.services.camera_service import CameraService
+			available_cameras = CameraService.detect_available_cameras()
+			valid_sources = [cam['id'] for cam in available_cameras]
+			
+			if config_update.camera_source not in valid_sources:
+				raise HTTPException(status_code=400, detail=f"Invalid camera source. Available: {valid_sources}")
+			
+			# Save camera source to config
+			await save_camera_config(config_update.camera_source)
+			updated_fields.append("camera_source")
+			
+			logger.info(f"Camera source updated to: {config_update.camera_source}")
+		
+		# Here you would actually update other configuration
 		# This might involve updating a config file, database, or service settings
 		
 		logger.info(f"Configuration updated: {updated_fields}")
@@ -313,7 +332,8 @@ async def update_system_config(config_update: ConfigUpdateRequest):
 		return {
 			"success": True,
 			"message": f"Updated {len(updated_fields)} configuration fields",
-			"updated_fields": updated_fields
+			"updated_fields": updated_fields,
+			"restart_required": "camera_source" in updated_fields
 		}
 		
 	except HTTPException:
@@ -321,6 +341,38 @@ async def update_system_config(config_update: ConfigUpdateRequest):
 	except Exception as e:
 		logger.error(f"Error updating config: {e}")
 		raise HTTPException(status_code=500, detail="Failed to update configuration")
+
+async def save_camera_config(camera_source: str):
+	"""Save camera configuration to persistent storage"""
+	import json
+	config_file = "config/camera_config.json"
+	
+	# Create config directory if it doesn't exist
+	os.makedirs(os.path.dirname(config_file), exist_ok=True)
+	
+	config_data = {
+		"camera_source": camera_source,
+		"updated_at": datetime.now().isoformat()
+	}
+	
+	with open(config_file, 'w') as f:
+		json.dump(config_data, f, indent=2)
+	
+	logger.info(f"Camera configuration saved to {config_file}")
+
+async def load_camera_config():
+	"""Load camera configuration from persistent storage"""
+	import json
+	config_file = "config/camera_config.json"
+	
+	try:
+		if os.path.exists(config_file):
+			with open(config_file, 'r') as f:
+				return json.load(f)
+	except Exception as e:
+		logger.warning(f"Could not load camera config: {e}")
+	
+	return {"camera_source": "0"}  # Default to camera 0
 
 @router.get("/status")
 async def get_system_status():
@@ -375,24 +427,64 @@ async def get_system_status():
 			"last_check": datetime.now().isoformat()
 		}
 
+class RestartRequest(BaseModel):
+	component: str = "all"
+
 @router.post("/restart")
-async def restart_service(component: str = "all"):
+async def restart_service(request: RestartRequest):
 	"""Restart system components"""
 	try:
+		component = request.component
 		logger.info(f"Restart requested for: {component}")
 		
-		# This would implement actual restart logic
-		# For safety, this is just a placeholder
-		
-		return {
-			"success": True,
-			"message": f"Restart initiated for {component}",
-			"restart_time": datetime.now().isoformat()
-		}
+		if component == "camera":
+			# Signal camera service to restart
+			await restart_camera_service()
+			return {
+				"success": True,
+				"message": "Camera service restart initiated",
+				"restart_time": datetime.now().isoformat()
+			}
+		else:
+			# This would implement actual restart logic for other components
+			# For safety, this is just a placeholder
+			return {
+				"success": True,
+				"message": f"Restart initiated for {component}",
+				"restart_time": datetime.now().isoformat()
+			}
 		
 	except Exception as e:
 		logger.error(f"Error restarting {component}: {e}")
 		raise HTTPException(status_code=500, detail=f"Failed to restart {component}")
+
+async def restart_camera_service():
+	"""Restart the camera service with new configuration"""
+	try:
+		# Import here to avoid circular imports
+		from app.main import app
+		
+		# Get camera service from app state if available
+		if hasattr(app.state, 'camera_service'):
+			camera_service = app.state.camera_service
+			
+			# Shutdown current camera
+			await camera_service.shutdown()
+			
+			# Load new camera config
+			camera_config = await load_camera_config()
+			camera_source = camera_config.get("camera_source", "0")
+			
+			# Reinitialize with new source
+			await camera_service.initialize(camera_source)
+			
+			logger.info(f"Camera service restarted with source: {camera_source}")
+		else:
+			logger.warning("Camera service not found in app state")
+			
+	except Exception as e:
+		logger.error(f"Error restarting camera service: {e}")
+		raise
 
 @router.get("/activity/recent")
 async def get_recent_activity(limit: int = 10):
@@ -429,3 +521,22 @@ async def get_recent_activity(limit: int = 10):
 	except Exception as e:
 		logger.error(f"Error getting recent activity: {e}")
 		raise HTTPException(status_code=500, detail="Failed to get recent activity")
+
+@router.get("/cameras")
+async def get_available_cameras():
+	"""Get list of available cameras on the system"""
+	try:
+		from app.services.camera_service import CameraService
+		
+		logger.info("Scanning for available cameras...")
+		cameras = CameraService.detect_available_cameras()
+		
+		return {
+			"cameras": cameras,
+			"count": len([c for c in cameras if c['type'] == 'usb']),
+			"timestamp": datetime.now().isoformat()
+		}
+		
+	except Exception as e:
+		logger.error(f"Error detecting cameras: {e}")
+		raise HTTPException(status_code=500, detail="Failed to detect available cameras")

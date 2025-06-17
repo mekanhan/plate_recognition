@@ -33,8 +33,14 @@ class DetectionService:
         self.performance_metrics = {
             "avg_detection_time": 0,
             "detection_count": 0,
-            "total_detection_time": 0
+            "total_detection_time": 0,
+            "tracking_objects_count": 0,
+            "tracking_success_rate": 0
         }
+        # Initialize object tracker
+        from app.services.tracker import ObjectTracker
+        self.object_tracker = ObjectTracker()
+        self.tracked_objects = {}  # Maps tracking_id to last seen info
 
     async def initialize(self, camera_service=None, enhancer_service=None):
         """Initialize the detection service"""
@@ -101,7 +107,52 @@ class DetectionService:
             # Use the annotated frame for display
             display_frame = annotated_frame
             
-            # Add tracking IDs and detection IDs to detections
+            # Update object tracker with detections
+            if detections:
+                try:
+                    # Convert detections to format expected by tracker
+                    tracker_detections = []
+                    for detection in detections:
+                        if "box" in detection:
+                            box = detection["box"]
+                            confidence = detection.get("confidence", 0.5)
+                            tracker_detections.append({
+                                "box": box,
+                                "confidence": confidence,
+                                "class_name": detection.get("class_name", "license_plate")
+                            })
+                    
+                    # Update tracker and get tracking IDs
+                    if tracker_detections:
+                        tracked_detections = self.object_tracker.update(tracker_detections, frame)
+                        
+                        # Merge tracking IDs back into original detections
+                        for i, detection in enumerate(detections):
+                            if i < len(tracked_detections) and "object_id" in tracked_detections[i]:
+                                tracking_id = tracked_detections[i]["object_id"]
+                                detection["tracking_id"] = f"trk-{tracking_id}"
+                                
+                                # Update tracked objects registry
+                                current_time = time.time()
+                                self.tracked_objects[tracking_id] = {
+                                    "last_seen": current_time,
+                                    "frame_count": self.frame_count,
+                                    "class_name": detection.get("class_name", "license_plate")
+                                }
+                                
+                                # Update tracking metrics
+                                self.performance_metrics["tracking_objects_count"] = len(self.tracked_objects)
+                            else:
+                                # Fallback: assign simple tracking ID
+                                detection["tracking_id"] = f"det-{self.frame_count}-{i}"
+                                
+                except Exception as e:
+                    logger.warning(f"Error in object tracking: {e}")
+                    # Fallback: assign simple tracking IDs
+                    for i, detection in enumerate(detections):
+                        detection["tracking_id"] = f"det-{self.frame_count}-{i}"
+            
+            # Add detection IDs and metadata to detections
             for detection in detections:
                 # Generate a detection ID if not present
                 if "detection_id" not in detection:
@@ -127,8 +178,13 @@ class DetectionService:
             # NOTE: In headless mode, storage is handled by BackgroundStreamManager
             # to avoid duplicate storage attempts and implement proper cooldown/deduplication
             for detection in detections:
+                # Only process license plate detections for storage/OCR
+                class_name = detection.get("class_name", "license_plate")
+                
                 # Only save to storage if we have a plate text AND we're not in headless mode
+                # AND it's actually a license plate detection
                 if (detection.get("plate_text") and 
+                    class_name == "license_plate" and
                     hasattr(self, 'storage_service') and self.storage_service and
                     not self._is_headless_mode()):
                     try:
@@ -147,8 +203,10 @@ class DetectionService:
                     except Exception as e:
                         logger.error(f"Error saving detection to storage: {e}")
                         logger.error(traceback.format_exc())
-                elif detection.get("plate_text") and self._is_headless_mode():
+                elif detection.get("plate_text") and class_name == "license_plate" and self._is_headless_mode():
                     logger.debug(f"Headless mode: storage handled by BackgroundStreamManager for {detection['detection_id']}")
+                elif class_name != "license_plate":
+                    logger.debug(f"Skipping non-license-plate detection: {class_name} for {detection['detection_id']}")
 
             return display_frame, detections
         except Exception as e:
@@ -299,7 +357,7 @@ class DetectionService:
                     "state": detection_result.get('state', None),
                     "box": detection_result.get('box', []),
                     "frame_id": detection_result.get('frame_id', 0),
-                    "tracking_id": detection_result.get('tracking_id', f"trk-{detection_id}"),
+                    "tracking_id": detection_result.get('tracking_id', f"det-{detection_id}"),
                     "status": "active",
                     "processed_at": time.time(),
                     "processed_by": detection_result.get('processed_by', 'detection_service')

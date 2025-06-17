@@ -171,10 +171,10 @@ EOF
 
 ```bash
 # Method 1: Using uvicorn directly
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
 # Method 2: If uvicorn is not in PATH
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
 
 # Method 3: Create a run.py file for easier execution
 cat > run.py << EOF

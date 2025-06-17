@@ -204,6 +204,7 @@ class LicensePlateRecognitionService:
                 plate_result["box"] = [int(x1), int(y1), int(x2), int(y2)]
                 plate_result["detection_confidence"] = float(conf)
                 plate_result["timestamp"] = time.time()
+                plate_result["class_name"] = "license_plate"  # Add class name for tracking
                 
                 # Get confidence values for display
                 ocr_confidence = plate_result.get('confidence', 0) * 100

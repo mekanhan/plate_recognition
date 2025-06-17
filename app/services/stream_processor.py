@@ -34,6 +34,11 @@ class StreamProcessor:
         self.frame_skip = 5
         self.processing_interval = 0.5
         
+        # Object lifecycle management
+        self.tracked_objects_cleanup_interval = 30.0  # Clean up every 30 seconds
+        self.object_expiry_time = 60.0  # Objects expire after 60 seconds
+        self.last_cleanup_time = time.time()
+        
     def configure(self, frame_skip: int = 5, processing_interval: float = 0.5):
         """Configure stream processing parameters"""
         self.frame_skip = frame_skip
@@ -109,6 +114,9 @@ class StreamProcessor:
             # Process frame for detections
             processed_frame, detections = await detection_service.process_frame(frame)
             
+            # Cleanup expired tracking objects if needed
+            await self._cleanup_expired_objects(detection_service)
+            
             # Update metrics
             processing_time = time.time() - start_time
             self.processing_metrics["frames_processed"] += 1
@@ -171,6 +179,9 @@ class StreamProcessor:
         """Get processing metrics"""
         uptime = time.time() - self.processing_metrics["start_time"]
         
+        # Get tracking metrics if available
+        tracking_metrics = {}
+        
         return {
             "frame_count": self.frame_count,
             "frames_processed": self.processing_metrics["frames_processed"],
@@ -180,7 +191,9 @@ class StreamProcessor:
             "processing_rate": self.processing_metrics["frames_processed"] / max(uptime, 1),
             "detection_rate": self.processing_metrics["detections_found"] / max(uptime, 1),
             "frame_skip": self.frame_skip,
-            "processing_interval": self.processing_interval
+            "processing_interval": self.processing_interval,
+            "object_cleanup_interval": self.tracked_objects_cleanup_interval,
+            "object_expiry_time": self.object_expiry_time
         }
     
     def reset_metrics(self):
@@ -194,6 +207,35 @@ class StreamProcessor:
         }
         self.frame_count = 0
         logger.info("Stream processor metrics reset")
+    
+    async def _cleanup_expired_objects(self, detection_service):
+        """Clean up expired tracking objects"""
+        current_time = time.time()
+        
+        # Only cleanup periodically
+        if current_time - self.last_cleanup_time < self.tracked_objects_cleanup_interval:
+            return
+            
+        self.last_cleanup_time = current_time
+        
+        # Check if detection service has tracked objects
+        if not hasattr(detection_service, 'tracked_objects'):
+            return
+            
+        # Find expired objects
+        expired_ids = []
+        for tracking_id, obj_info in detection_service.tracked_objects.items():
+            last_seen = obj_info.get("last_seen", 0)
+            if current_time - last_seen > self.object_expiry_time:
+                expired_ids.append(tracking_id)
+        
+        # Remove expired objects
+        for tracking_id in expired_ids:
+            del detection_service.tracked_objects[tracking_id]
+            logger.debug(f"Cleaned up expired tracking object: {tracking_id}")
+        
+        if expired_ids:
+            logger.info(f"Cleaned up {len(expired_ids)} expired tracking objects")
 
 class PlateTracker:
     """

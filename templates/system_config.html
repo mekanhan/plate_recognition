@@ -7,6 +7,13 @@
 
 {% block page_actions %}
 <div class="flex items-center gap-3">
+	<button id="reset-config" class="btn btn-outline">
+		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="M3 7v6h6"></path>
+			<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+		</svg>
+		Reset to Defaults
+	</button>
 	<button id="export-config" class="btn btn-outline">
 		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 			<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -589,9 +596,10 @@ class SystemConfig {
 	}
 
 	setupEventListeners() {
-		// Save and export buttons
+		// Save, export, and reset buttons
 		document.getElementById('save-config')?.addEventListener('click', () => this.saveConfig());
 		document.getElementById('export-config')?.addEventListener('click', () => this.exportConfig());
+		document.getElementById('reset-config')?.addEventListener('click', () => this.resetConfig());
 		
 		// Range sliders
 		document.getElementById('confidence-threshold')?.addEventListener('input', (e) => {
@@ -748,6 +756,8 @@ class SystemConfig {
 	populateForm() {
 		const config = this.config;
 		
+		console.log('Populating form with config:', config);
+		
 		// Detection settings
 		if (config.detection) {
 			this.setFormValue('confidence-threshold', config.detection.confidence_threshold);
@@ -765,6 +775,11 @@ class SystemConfig {
 			this.setFormValue('camera-resolution', `${config.camera.width}x${config.camera.height}`);
 			this.setFormValue('frame-rate', config.camera.fps);
 			this.setFormValue('buffer-size', config.camera.buffer_size);
+			
+			// Handle IP camera URL if present
+			if (config.camera.ip_url) {
+				this.setFormValue('ip-camera-url', config.camera.ip_url);
+			}
 		}
 		
 		// Storage settings
@@ -776,9 +791,15 @@ class SystemConfig {
 			this.setFormValue('export-csv', config.storage.export_csv);
 		}
 		
+		// Processing settings (if available)
+		if (config.processing) {
+			// These would be handled in a more advanced settings section
+			console.log('Processing settings available:', config.processing);
+		}
+		
 		// Advanced settings
 		if (config.advanced) {
-			this.setFormValue('gpu-device', config.advanced.gpu_device);
+			this.setFormValue('gpu-device', config.advanced.gpu_device || 0);
 			this.setFormValue('worker-threads', config.advanced.worker_threads);
 			this.setFormValue('rate-limit', config.advanced.rate_limit);
 			this.setFormValue('log-level', config.advanced.log_level);
@@ -787,6 +808,15 @@ class SystemConfig {
 		
 		// Update range displays
 		this.updateRangeDisplays();
+		
+		// Update camera source visibility
+		this.handleCameraSourceChange(config.camera?.source || '0');
+		
+		// Update resolution visibility
+		const resolution = `${config.camera?.width || 1280}x${config.camera?.height || 720}`;
+		this.handleResolutionChange(resolution);
+		
+		console.log('Form populated successfully');
 	}
 
 	setFormValue(id, value) {
@@ -930,21 +960,14 @@ class SystemConfig {
 		try {
 			const formData = this.collectFormData();
 			
-			// Send camera source separately as required by API
-			const updateData = {
-				confidence_threshold: formData.detection.confidence_threshold,
-				model_path: formData.detection.model_path,
-				camera_source: formData.camera.source,
-				camera_settings: formData.camera,
-				detection_settings: formData.detection
-			};
+			console.log('Saving configuration with data:', formData);
 			
 			const response = await fetch('/api/system/config', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(updateData)
+				body: JSON.stringify(formData)
 			});
 			
 			const result = await response.json();
@@ -952,18 +975,18 @@ class SystemConfig {
 			if (response.ok) {
 				this.hasChanges = false;
 				
-				let message = 'Configuration saved successfully';
+				let message = result.message || 'Configuration saved successfully';
 				if (result.restart_required) {
-					message += '. Stream will restart with new camera.';
-					// Trigger stream restart if camera changed
-					this.restartStream();
+					message += '. Some changes require application restart to take effect.';
 				}
 				
 				if (window.lprApp) {
 					window.lprApp.showNotification(message, 'success');
 				}
+				
+				console.log('Configuration saved successfully:', result);
 			} else {
-				throw new Error(result.detail || 'Failed to save configuration');
+				throw new Error(result.detail || result.message || 'Failed to save configuration');
 			}
 		} catch (error) {
 			console.error('Error saving config:', error);
@@ -1005,38 +1028,38 @@ class SystemConfig {
 			[width, height] = resolution.split('x').map(Number);
 		}
 		
+		// Collect all form data in the new API format
 		return {
-			detection: {
-				confidence_threshold: parseFloat(document.getElementById('confidence-threshold').value),
-				model_path: document.getElementById('model-selection').value,
-				enhancement_enabled: document.getElementById('auto-enhance').checked,
-				save_detections: document.getElementById('save-detections').checked,
-				processing_frequency: parseInt(document.getElementById('processing-frequency').value),
-				detection_timeout: parseInt(document.getElementById('detection-timeout').value),
-				max_detections: parseInt(document.getElementById('max-detections').value)
-			},
-			camera: {
-				source: document.getElementById('camera-source').value,
-				width: width,
-				height: height,
-				fps: parseInt(document.getElementById('frame-rate').value),
-				buffer_size: parseInt(document.getElementById('buffer-size').value),
-				ip_url: document.getElementById('ip-camera-url')?.value || null
-			},
-			storage: {
-				max_detections: parseInt(document.getElementById('max-stored-detections').value),
-				cleanup_days: parseInt(document.getElementById('cleanup-days').value),
-				backup_frequency: document.getElementById('backup-frequency').value,
-				compress_images: document.getElementById('compress-images').checked,
-				export_csv: document.getElementById('export-csv').checked
-			},
-			advanced: {
-				gpu_device: parseInt(document.getElementById('gpu-device').value),
-				worker_threads: parseInt(document.getElementById('worker-threads').value),
-				rate_limit: parseInt(document.getElementById('rate-limit').value),
-				log_level: document.getElementById('log-level').value,
-				debug_mode: document.getElementById('debug-mode').checked
-			}
+			// Detection settings
+			confidence_threshold: parseFloat(document.getElementById('confidence-threshold').value),
+			model_path: document.getElementById('model-selection').value,
+			enhancement_enabled: document.getElementById('auto-enhance').checked,
+			save_detections: document.getElementById('save-detections').checked,
+			processing_frequency: parseInt(document.getElementById('processing-frequency').value),
+			detection_timeout: parseInt(document.getElementById('detection-timeout').value),
+			max_detections: parseInt(document.getElementById('max-detections').value),
+			
+			// Camera settings
+			camera_source: document.getElementById('camera-source').value,
+			camera_width: width,
+			camera_height: height,
+			camera_fps: parseInt(document.getElementById('frame-rate').value),
+			buffer_size: parseInt(document.getElementById('buffer-size').value),
+			ip_camera_url: document.getElementById('ip-camera-url')?.value || null,
+			
+			// Storage settings
+			max_stored_detections: parseInt(document.getElementById('max-stored-detections').value),
+			cleanup_days: parseInt(document.getElementById('cleanup-days').value),
+			backup_frequency: document.getElementById('backup-frequency').value,
+			compress_images: document.getElementById('compress-images').checked,
+			export_csv: document.getElementById('export-csv').checked,
+			
+			// Advanced settings
+			gpu_device: parseInt(document.getElementById('gpu-device').value),
+			worker_threads: parseInt(document.getElementById('worker-threads').value),
+			rate_limit: parseInt(document.getElementById('rate-limit').value),
+			log_level: document.getElementById('log-level').value,
+			debug_mode: document.getElementById('debug-mode').checked
 		};
 	}
 
@@ -1052,6 +1075,43 @@ class SystemConfig {
 		
 		if (window.lprApp) {
 			window.lprApp.showNotification('Configuration exported successfully', 'success');
+		}
+	}
+
+	async resetConfig() {
+		if (!confirm('Are you sure you want to reset all settings to their default values? This action cannot be undone.')) {
+			return;
+		}
+		
+		try {
+			const response = await fetch('/api/system/config/reset', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				}
+			});
+			
+			const result = await response.json();
+			
+			if (response.ok) {
+				this.hasChanges = false;
+				
+				// Reload the configuration to show defaults
+				await this.loadCurrentConfig();
+				
+				if (window.lprApp) {
+					window.lprApp.showNotification(result.message || 'Configuration reset to defaults', 'success');
+				}
+				
+				console.log('Configuration reset successfully');
+			} else {
+				throw new Error(result.detail || result.message || 'Failed to reset configuration');
+			}
+		} catch (error) {
+			console.error('Error resetting config:', error);
+			if (window.lprApp) {
+				window.lprApp.showNotification('Failed to reset configuration: ' + error.message, 'danger');
+			}
 		}
 	}
 

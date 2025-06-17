@@ -156,7 +156,7 @@ docker-compose up -d
 pytest tests/ -v
 
 # Database initialization (automatic on first run)
-# SQLite database created at data/license_plates.db
+# SQLite database created at data/license_plates.db	
 ```
 
 ## AI/ML Service Guidelines

@@ -84,18 +84,19 @@ class DetectionService:
 
         # Make a copy to avoid modifying the original
         display_frame = frame.copy()
-
-        # Add timestamp to the frame
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        cv2.putText(display_frame, timestamp, (10, 30),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
                    
         # Increment frame counter
         self.frame_count += 1
 
         try:
             # Use the specialized license plate service
+            start_time = time.time()
             detections, annotated_frame = await self.license_plate_service.detect_and_recognize(frame)
+            detection_time = (time.time() - start_time) * 1000
+            
+            # Log slow detections
+            if detection_time > 1000:  # Log if detection takes more than 1 second
+                logger.warning(f"Slow detection: {detection_time:.1f}ms for frame {self.frame_count}")
 
             # Use the annotated frame for display
             display_frame = annotated_frame

@@ -582,8 +582,9 @@ class SystemConfig {
 		this.init();
 	}
 
-	init() {
+	async init() {
 		this.setupEventListeners();
+		await this.loadAvailableCameras();
 		this.loadCurrentConfig();
 	}
 
@@ -635,6 +636,63 @@ class SystemConfig {
 				e.returnValue = '';
 			}
 		});
+	}
+
+	async loadAvailableCameras() {
+		try {
+			const response = await fetch('/api/system/cameras');
+			if (!response.ok) {
+				throw new Error('Failed to fetch available cameras');
+			}
+			
+			const data = await response.json();
+			const cameras = data.cameras || [];
+			
+			// Update camera source select options
+			const cameraSelect = document.getElementById('camera-source');
+			if (cameraSelect && cameras.length > 0) {
+				// Clear existing options except IP and file options
+				cameraSelect.innerHTML = '';
+				
+				// Add detected cameras
+				cameras.forEach(camera => {
+					const option = document.createElement('option');
+					option.value = camera.id;
+					
+					if (camera.type === 'usb') {
+						option.textContent = `${camera.name} (${camera.resolution})`;
+						if (!camera.is_working) {
+							option.textContent += ' - Not Available';
+							option.disabled = true;
+						}
+					} else if (camera.type === 'ip') {
+						option.textContent = 'IP Camera (RTSP/HTTP)';
+					} else if (camera.type === 'file') {
+						option.textContent = 'Video File';
+					}
+					
+					cameraSelect.appendChild(option);
+				});
+				
+				console.log(`Loaded ${cameras.length} camera options`);
+				
+				// Store cameras for reference
+				this.availableCameras = cameras;
+			}
+		} catch (error) {
+			console.error('Error loading available cameras:', error);
+			
+			// Fallback to default options if API fails
+			const cameraSelect = document.getElementById('camera-source');
+			if (cameraSelect) {
+				cameraSelect.innerHTML = `
+					<option value="0">USB Camera (0)</option>
+					<option value="1">USB Camera (1)</option>
+					<option value="ip">IP Camera</option>
+					<option value="file">Video File</option>
+				`;
+			}
+		}
 	}
 
 	async loadCurrentConfig() {
@@ -872,27 +930,67 @@ class SystemConfig {
 		try {
 			const formData = this.collectFormData();
 			
+			// Send camera source separately as required by API
+			const updateData = {
+				confidence_threshold: formData.detection.confidence_threshold,
+				model_path: formData.detection.model_path,
+				camera_source: formData.camera.source,
+				camera_settings: formData.camera,
+				detection_settings: formData.detection
+			};
+			
 			const response = await fetch('/api/system/config', {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify(formData)
+				body: JSON.stringify(updateData)
 			});
+			
+			const result = await response.json();
 			
 			if (response.ok) {
 				this.hasChanges = false;
+				
+				let message = 'Configuration saved successfully';
+				if (result.restart_required) {
+					message += '. Stream will restart with new camera.';
+					// Trigger stream restart if camera changed
+					this.restartStream();
+				}
+				
 				if (window.lprApp) {
-					window.lprApp.showNotification('Configuration saved successfully', 'success');
+					window.lprApp.showNotification(message, 'success');
 				}
 			} else {
-				throw new Error('Failed to save configuration');
+				throw new Error(result.detail || 'Failed to save configuration');
 			}
 		} catch (error) {
 			console.error('Error saving config:', error);
 			if (window.lprApp) {
-				window.lprApp.showNotification('Failed to save configuration', 'danger');
+				window.lprApp.showNotification('Failed to save configuration: ' + error.message, 'danger');
 			}
+		}
+	}
+
+	async restartStream() {
+		try {
+			// Call the stream restart endpoint
+			const response = await fetch('/api/system/restart', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ component: 'camera' })
+			});
+			
+			if (response.ok) {
+				console.log('Stream restart requested');
+			} else {
+				console.warn('Failed to restart stream');
+			}
+		} catch (error) {
+			console.error('Error restarting stream:', error);
 		}
 	}
 

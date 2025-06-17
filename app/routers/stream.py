@@ -158,11 +158,21 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                     
                     # Set a timeout to avoid blocking for too long
                     try:
-                        processed_frame, detections = await asyncio.wait_for(process_task, timeout=0.5)
+                        processed_frame, detections = await asyncio.wait_for(process_task, timeout=2.0)
                         
                         # Use the processed frame (with annotations)
                         frame = processed_frame
                         annotated_frame = processed_frame  # Save annotated frame for video recording
+                        
+                        # Debug logging for detection processing (reduced frequency)
+                        if detections:
+                            logger.info(f"Frame {frame_processor['frame_count']}: Detected {len(detections)} license plates")
+                            for i, detection in enumerate(detections):
+                                plate_text = detection.get('plate_text', 'Unknown')
+                                confidence = detection.get('confidence', 0)
+                                logger.info(f"  Detection {i+1}: '{plate_text}' (confidence: {confidence:.2f})")
+                        elif frame_processor['frame_count'] % 100 == 0:  # Log every 100 frames instead of every frame
+                            logger.debug(f"Frame {frame_processor['frame_count']}: No license plates detected")
                         
                         # Add valid detections to the queue
                         if detections:
@@ -200,16 +210,9 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                     # Fall back to the original frame if detection fails
                     # Already using raw_frame as default
 
-            # Send frame to video recording service
-            # Use annotated frame if available, otherwise use raw frame
-            frame_for_video = annotated_frame if annotated_frame is not None else raw_frame
+            # Add system overlays to frame BEFORE video recording
+            # This ensures overlays are included in both display AND recorded video
             
-            if video_recording_service:
-                try:
-                    await video_recording_service.add_frame(frame_for_video, timestamp)
-                except Exception as e:
-                    logger.error(f"Error adding frame to video recording: {e}")
-
             # Add timestamp overlay (always visible)
             import datetime
             current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]  # Include milliseconds
@@ -231,7 +234,12 @@ async def generate_frames(camera: CameraService, detection_svc=None):
             cv2.putText(frame, uptime_info, (10, 85),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
 
-            # Add performance metrics to the frame
+            # Send frame to video recording service AFTER adding system overlays
+            # Use annotated frame (with detection overlays) if available, otherwise use raw frame
+            # All frames now include system overlays (timestamp, system info, uptime)
+            frame_for_video = annotated_frame if annotated_frame is not None else raw_frame
+            
+            # Add performance metrics to the frame (display and video)
             if should_process:
                 # Add processing time
                 processing_time = frame_processor["processing_time_ms"]
@@ -243,6 +251,35 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                 fps_info = f"Process Rate: Every {frame_processor['process_every_n_frames']} frames"
                 cv2.putText(frame, fps_info, (10, frame.shape[0] - 20),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+
+            # Apply system overlays to video frame if it's different from display frame
+            if annotated_frame is not None and annotated_frame is not frame:
+                # Add same system overlays to video frame
+                cv2.putText(frame_for_video, current_time, (10, 30),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+                cv2.putText(frame_for_video, system_info, (10, 60),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+                cv2.putText(frame_for_video, uptime_info, (10, 85),
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200, 200, 200), 1)
+                
+                # Add performance metrics to video frame as well
+                if should_process:
+                    cv2.putText(frame_for_video, perf_text, (10, frame_for_video.shape[0] - 40),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                    cv2.putText(frame_for_video, fps_info, (10, frame_for_video.shape[0] - 20),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+            
+            # Debug logging for detection overlays (reduced frequency)
+            if annotated_frame is not None:
+                logger.debug(f"Frame {frame_processor['frame_count']}: Using annotated frame with detection overlays")
+            elif frame_processor['frame_count'] % 50 == 0:  # Log every 50 frames
+                logger.debug(f"Frame {frame_processor['frame_count']}: Using raw frame (no detections)")
+            
+            if video_recording_service:
+                try:
+                    await video_recording_service.add_frame(frame_for_video, timestamp)
+                except Exception as e:
+                    logger.error(f"Error adding frame to video recording: {e}")
 
             # Convert the frame to JPEG
             success, jpeg_buffer = cv2.imencode('.jpg', frame)

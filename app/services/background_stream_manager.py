@@ -13,6 +13,7 @@ import asyncio
 import logging
 import time
 import uuid
+import cv2
 from typing import Optional, Dict, Any, List, Callable
 from datetime import datetime
 import json
@@ -252,14 +253,34 @@ class BackgroundStreamManager:
 				self.frame_counter += 1
 				should_process = self.frame_counter % self.config["frame_skip"] == 0
 				
+				annotated_frame = None
 				if should_process:
-					# Process frame for detections
-					await self._process_frame(frame, timestamp)
+					# Process frame for detections and get annotated frame
+					annotated_frame = await self._process_frame(frame, timestamp)
 				
-				# Send frame to video recording service (every frame, not just processed ones)
+				# Add system overlays to frame before recording
+				frame_for_video = annotated_frame if annotated_frame is not None else frame
+				
+				# Add timestamp and system info overlays
+				import datetime
+				current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+				cv2.putText(frame_for_video, current_time, (10, 30),
+				           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+				
+				system_info = f"LPR Background | Frame: {self.frame_counter} | Detections: {self.stats['total_detections']}"
+				cv2.putText(frame_for_video, system_info, (10, 60),
+				           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
+				
+				# Add processing time
+				processing_time = self.stats.get("processing_time_ms", 0)
+				perf_text = f"Processing: {processing_time:.1f}ms"
+				cv2.putText(frame_for_video, perf_text, (10, frame_for_video.shape[0] - 40),
+				           cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+				
+				# Send frame to video recording service (with overlays)
 				if self.video_recording_service:
 					try:
-						await self.video_recording_service.add_frame(frame, timestamp)
+						await self.video_recording_service.add_frame(frame_for_video, timestamp)
 					except Exception as e:
 						logger.debug(f"Error adding frame to video recording: {e}")
 				
@@ -285,7 +306,7 @@ class BackgroundStreamManager:
 		"""Process a single frame for license plate detection."""
 		try:
 			if not self.detection_service:
-				return
+				return None
 			
 			# Run detection
 			processed_frame, detections = await self.detection_service.process_frame(frame)
@@ -309,9 +330,13 @@ class BackgroundStreamManager:
 						# Increment detection counter
 						self.stats["total_detections"] += 1
 			
+			# Return the processed frame with annotations
+			return processed_frame
+			
 		except Exception as e:
 			logger.error(f"Frame processing error: {e}")
 			self.stats["errors"] += 1
+			return None
 	
 	async def _queue_detection(self, detection_data):
 		"""Add detection to processing queue."""

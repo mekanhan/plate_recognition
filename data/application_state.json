@@ -1,0 +1,31 @@
+{
+  "shutdown_time": "2025-06-18T13:56:42.231913",
+  "application_state": "stopping",
+  "services": {
+    "camera": {
+      "state": "stopped",
+      "restart_count": 0,
+      "last_restart": null
+    },
+    "detection": {
+      "state": "stopped",
+      "restart_count": 0,
+      "last_restart": null
+    },
+    "storage": {
+      "state": "stopped",
+      "restart_count": 0,
+      "last_restart": null
+    },
+    "enhancer": {
+      "state": "stopped",
+      "restart_count": 0,
+      "last_restart": null
+    },
+    "video_recording": {
+      "state": "stopped",
+      "restart_count": 0,
+      "last_restart": null
+    }
+  }
+}

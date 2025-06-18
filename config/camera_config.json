@@ -1,4 +1,11 @@
 {
-  "camera_source": "1",
-  "updated_at": "2025-06-17T13:49:49.585544"
+  "camera_source": "",
+  "ip_camera_url": null,
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  "fps": 60,
+  "buffer_size": 1,
+  "updated_at": "2025-06-18T12:50:01.106870"
 }

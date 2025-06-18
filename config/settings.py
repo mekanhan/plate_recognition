@@ -33,6 +33,9 @@ class Config(BaseSettings):
     background_health_check_interval: float = 30.0
     enable_background_metrics: bool = True
     
+    # Stream Processing Configuration (separate from background)
+    stream_processing_frequency: int = 5
+    
     # Output Channels Configuration
     enable_storage_output: bool = True
     enable_websocket_output: bool = True

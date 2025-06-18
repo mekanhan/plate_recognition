@@ -160,13 +160,36 @@ async def startup_event():
         )
         logger.info("Storage service initialized")
 
-        # Then camera with config values
+        # Validate camera availability before initialization
+        logger.info(f"Validating camera availability for: {config.camera_id}")
+        available_cameras = CameraService.detect_available_cameras()
+        selected_camera_available = False
+        
+        # Check if selected camera is available
+        for camera in available_cameras:
+            if camera["id"] == config.camera_id and camera["is_working"]:
+                selected_camera_available = True
+                logger.info(f"Selected camera {config.camera_id} is available and working")
+                break
+        
+        # Graceful fallback if selected camera unavailable
+        camera_id_to_use = config.camera_id
+        if not selected_camera_available:
+            # Try to find first working camera
+            working_camera = next((cam for cam in available_cameras if cam["is_working"]), None)
+            if working_camera:
+                camera_id_to_use = working_camera["id"]
+                logger.warning(f"Selected camera {config.camera_id} unavailable, falling back to camera {camera_id_to_use}")
+            else:
+                logger.warning(f"No working cameras found, attempting to use selected camera {config.camera_id} anyway")
+        
+        # Initialize camera with validated ID
         await camera_service.initialize(
-            camera_id=config.camera_id,
+            camera_id=camera_id_to_use,
             width=config.camera_width,
             height=config.camera_height
         )
-        logger.info(f"Camera service initialized: {config.camera_id} ({config.camera_width}x{config.camera_height})")
+        logger.info(f"Camera service initialized: {camera_id_to_use} ({config.camera_width}x{config.camera_height})")
 
         # Then enhancer service
         await enhancer_service.initialize(storage_service=storage_service)
@@ -181,6 +204,30 @@ async def startup_event():
         logger.info("Detection service initialized")
 
         logger.info("All core services initialized successfully")
+
+        # Initialize camera cache service for performance optimization
+        logger.info("Initializing camera cache service...")
+        from app.services.camera_cache_service import camera_cache
+        # Perform initial cache population in background
+        try:
+            import asyncio
+            asyncio.create_task(camera_cache.get_cameras())
+            logger.info("Camera cache initialization started in background")
+        except Exception as e:
+            logger.warning(f"Camera cache initialization failed: {e}")
+
+        # Initialize lifecycle service and register all services
+        from app.services.lifecycle_service import lifecycle_service
+        await lifecycle_service.initialize()
+        
+        # Register all services for lifecycle management
+        lifecycle_service.register_service("camera", camera_service, shutdown_order=10)
+        lifecycle_service.register_service("detection", detection_service, shutdown_order=20)
+        lifecycle_service.register_service("storage", storage_service, shutdown_order=30)
+        lifecycle_service.register_service("enhancer", enhancer_service, shutdown_order=40)
+        lifecycle_service.register_service("video_recording", video_recording_service, shutdown_order=50)
+        
+        logger.info("Lifecycle service initialized with registered services")
 
         # Initialize background processing if enabled
         if config.is_background_processing_enabled:
@@ -223,6 +270,10 @@ async def startup_event():
             # Start background processing
             await background_stream_manager.start()
             logger.info("Background stream manager started")
+            
+            # Register background services with lifecycle manager
+            lifecycle_service.register_service("output_manager", output_manager, shutdown_order=60)
+            lifecycle_service.register_service("background_stream_manager", background_stream_manager, shutdown_order=70)
 
         # Set the services in app.state after successful initialization
         app.state.camera_service = camera_service
@@ -234,6 +285,7 @@ async def startup_event():
         # Add headless components to app state
         app.state.output_manager = output_manager
         app.state.background_stream_manager = background_stream_manager
+        app.state.lifecycle_service = lifecycle_service
             
         logger.info("All services assigned to app.state")
 
@@ -242,16 +294,27 @@ async def startup_event():
             storage_service.task.add_done_callback(handle_task_exception)
             background_tasks.append(storage_service.task)
 
-        # Set processing parameters
-        # Increase the frame skip count to process fewer frames
-        if hasattr(stream, 'frame_processor'):
-            stream.frame_processor["process_every_n_frames"] = 5  # Only process every 5th frame
-            logger.info(f"Set frame processing interval to every {stream.frame_processor['process_every_n_frames']} frames")
+        # Set processing parameters from configuration
+        try:
+            # Use the config value directly
+            processing_frequency = config.stream_processing_frequency
+            
+            if hasattr(stream, 'frame_processor'):
+                stream.frame_processor["process_every_n_frames"] = processing_frequency
+                logger.info(f"Set frame processing interval to every {processing_frequency} frames (from config)")
 
-        # Set queue processing interval
-        if hasattr(stream, 'plate_tracker'):
-            stream.plate_tracker["process_interval"] = 1.0  # Process queue every 1 second
-            logger.info(f"Set detection queue processing interval to {stream.plate_tracker['process_interval']}s")
+            # Set queue processing interval
+            if hasattr(stream, 'plate_tracker'):
+                stream.plate_tracker["process_interval"] = 1.0  # Process queue every 1 second
+                logger.info(f"Set detection queue processing interval to {stream.plate_tracker['process_interval']}s")
+                
+        except Exception as e:
+            logger.warning(f"Could not load processing frequency from config, using default: {e}")
+            # Fallback to default
+            processing_frequency = 5
+            if hasattr(stream, 'frame_processor'):
+                stream.frame_processor["process_every_n_frames"] = processing_frequency
+                logger.info(f"Set frame processing interval to every {processing_frequency} frames (fallback default)")
 
     except Exception as e:
         logger.error(f"Error during startup: {e}")
@@ -260,35 +323,53 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Properly shut down all services"""
-    logger.info("Shutting down services...")
+    """Properly shut down all services using lifecycle service"""
+    logger.info("Starting application shutdown...")
 
-    # Stop headless components first
-    if background_stream_manager:
-        logger.info("Stopping background stream manager...")
-        try:
-            await asyncio.wait_for(background_stream_manager.stop(), timeout=10.0)
-        except Exception as e:
-            logger.error(f"Error stopping background stream manager: {e}")
+    try:
+        # Use lifecycle service for coordinated shutdown
+        from app.services.lifecycle_service import lifecycle_service
+        
+        # Cancel all background tasks first
+        for task in background_tasks:
+            if not task.done():
+                task.cancel()
 
-    if output_manager:
-        logger.info("Stopping output manager...")
-        try:
-            await asyncio.wait_for(output_manager.stop(), timeout=5.0)
-        except Exception as e:
-            logger.error(f"Error stopping output manager: {e}")
+        # Wait for all tasks to complete (with a timeout)
+        if background_tasks:
+            await asyncio.wait(background_tasks, timeout=5.0)
 
-    # Cancel all background tasks
-    for task in background_tasks:
-        if not task.done():
-            task.cancel()
+        # Perform graceful shutdown of all registered services
+        success = await lifecycle_service.graceful_shutdown(timeout=30.0)
+        
+        if success:
+            logger.info("Application shutdown completed successfully")
+        else:
+            logger.warning("Application shutdown completed with some failures")
+            
+    except Exception as e:
+        logger.error(f"Error during application shutdown: {e}")
+        
+        # Fallback to individual service shutdown
+        logger.info("Falling back to individual service shutdown...")
+        
+        # Stop headless components first
+        if background_stream_manager:
+            logger.info("Stopping background stream manager...")
+            try:
+                await asyncio.wait_for(background_stream_manager.stop(), timeout=10.0)
+            except Exception as e:
+                logger.error(f"Error stopping background stream manager: {e}")
 
-    # Wait for all tasks to complete (with a timeout)
-    if background_tasks:
-        await asyncio.wait(background_tasks, timeout=5.0)
+        if output_manager:
+            logger.info("Stopping output manager...")
+            try:
+                await asyncio.wait_for(output_manager.stop(), timeout=5.0)
+            except Exception as e:
+                logger.error(f"Error stopping output manager: {e}")
 
-    # Shutdown services in reverse order of initialization
-    logger.info("Shutting down detection service...")
+        # Individual service shutdowns
+        logger.info("Shutting down detection service...")
     if detection_service:
         try:
             await asyncio.wait_for(detection_service.shutdown(), timeout=5.0)

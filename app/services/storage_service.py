@@ -28,6 +28,7 @@ class StorageService:
         self.storage_lock = asyncio.Lock()
         self.last_save_time = 0
         self.save_interval = 2.0  # seconds - reduced from 10.0 to save more frequently
+        self.running = True
         self.task = None
         self.initialization_complete = False
         self.save_count = 0

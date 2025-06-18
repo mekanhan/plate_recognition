@@ -48,6 +48,7 @@ class BackgroundStreamManager:
 		# Processing state
 		self.is_running = False
 		self.is_paused = False
+		self.shutdown_requested = False
 		self.processing_task: Optional[asyncio.Task] = None
 		
 		# Configuration
@@ -253,6 +254,11 @@ class BackgroundStreamManager:
 		except Exception as e:
 			logger.error(f"Error stopping background stream manager: {e}")
 			return False
+	
+	async def shutdown(self) -> None:
+		"""Shutdown the background stream manager (alias for stop)"""
+		await self.stop()
+		logger.info("Background stream manager shutdown complete")
 	
 	async def pause(self) -> bool:
 		"""Pause processing without stopping the service."""

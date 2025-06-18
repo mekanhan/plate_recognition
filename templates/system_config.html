@@ -22,9 +22,25 @@
 		</svg>
 		Export Config
 	</button>
+	<div class="flex items-center gap-2 border-l pl-3 ml-3">
+		<button id="restart-app" class="btn btn-warning">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M3 7v6h6"></path>
+				<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+			</svg>
+			Restart System
+		</button>
+		<button id="shutdown-app" class="btn btn-danger">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+				<line x1="12" y1="2" x2="12" y2="12"></line>
+			</svg>
+			Shutdown
+		</button>
+	</div>
 	<button id="save-config" class="btn btn-primary">
 		<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-			<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+			<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1-2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
 			<polyline points="17,21 17,13 7,13 7,21"></polyline>
 			<polyline points="7,3 7,8 15,8"></polyline>
 		</svg>
@@ -261,6 +277,144 @@
 	background: var(--gray-800);
 	border-color: var(--border-dark);
 }
+
+/* Restart and shutdown button styles */
+.btn-warning {
+	background: #f59e0b;
+	color: white;
+	border: 1px solid #f59e0b;
+}
+
+.btn-warning:hover {
+	background: #d97706;
+	border-color: #d97706;
+}
+
+.btn-danger {
+	background: #dc2626;
+	color: white;
+	border: 1px solid #dc2626;
+}
+
+.btn-danger:hover {
+	background: #b91c1c;
+	border-color: #b91c1c;
+}
+
+.btn-warning:disabled,
+.btn-danger:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* Confirmation modal styles */
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+}
+
+.modal-content {
+	background: white;
+	border-radius: var(--radius-lg);
+	padding: var(--space-6);
+	min-width: 400px;
+	max-width: 500px;
+	box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-header {
+	display: flex;
+	align-items: center;
+	gap: var(--space-3);
+	margin-bottom: var(--space-4);
+	position: relative;
+}
+
+.modal-icon {
+	padding: var(--space-2);
+	border-radius: 50%;
+}
+
+.modal-icon.warning {
+	background: #fef3c7;
+	color: #f59e0b;
+}
+
+.modal-icon.danger {
+	background: #fee2e2;
+	color: #dc2626;
+}
+
+.modal-title {
+	font-size: 1.25rem;
+	font-weight: 600;
+	margin: 0;
+	flex: 1;
+}
+
+.modal-close {
+	position: absolute;
+	top: -8px;
+	right: -8px;
+	background: white;
+	border: 1px solid var(--border-light);
+	border-radius: 50%;
+	width: 32px;
+	height: 32px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all var(--transition-fast);
+	color: var(--gray-500);
+}
+
+.modal-close:hover {
+	background: var(--gray-100);
+	color: var(--gray-700);
+	border-color: var(--gray-300);
+}
+
+.modal-body {
+	margin-bottom: var(--space-6);
+}
+
+.modal-actions {
+	display: flex;
+	gap: var(--space-3);
+	justify-content: flex-end;
+}
+
+[data-theme="dark"] .modal-content {
+	background: var(--surface-dark);
+	color: var(--gray-100);
+}
+
+[data-theme="dark"] .modal-close {
+	background: var(--surface-dark);
+	border-color: var(--border-dark);
+	color: var(--gray-400);
+}
+
+[data-theme="dark"] .modal-close:hover {
+	background: var(--gray-800);
+	color: var(--gray-200);
+	border-color: var(--gray-600);
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
 </style>
 {% endblock %}
 
@@ -385,14 +539,21 @@
 							</svg>
 							Camera Source
 						</label>
-						<select id="camera-source" class="form-input form-select">
-							<option value="0">USB Camera (0)</option>
-							<option value="1">USB Camera (1)</option>
-							<option value="2">USB Camera (2)</option>
-							<option value="csi">CSI Camera (Jetson)</option>
-							<option value="ip">IP Camera</option>
-						</select>
-						<div class="form-help">Select your camera input source</div>
+						<div class="flex gap-2 items-end">
+							<div class="flex-1">
+								<select id="camera-source" class="form-input form-select">
+									<option value="">Loading cameras...</option>
+								</select>
+							</div>
+							<button id="refresh-cameras" class="btn btn-outline" type="button" title="Refresh camera list">
+								<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M3 7v6h6"></path>
+									<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+								</svg>
+								Refresh
+							</button>
+						</div>
+						<div id="camera-info" class="form-help">Select your camera input source</div>
 					</div>
 
 					<!-- IP Camera URL (conditional) -->
@@ -591,8 +752,7 @@ class SystemConfig {
 
 	async init() {
 		this.setupEventListeners();
-		await this.loadAvailableCameras();
-		this.loadCurrentConfig();
+		await this.loadCurrentConfig(); // Load config first
 	}
 
 	setupEventListeners() {
@@ -600,6 +760,10 @@ class SystemConfig {
 		document.getElementById('save-config')?.addEventListener('click', () => this.saveConfig());
 		document.getElementById('export-config')?.addEventListener('click', () => this.exportConfig());
 		document.getElementById('reset-config')?.addEventListener('click', () => this.resetConfig());
+		
+		// Restart and shutdown buttons
+		document.getElementById('restart-app')?.addEventListener('click', () => this.confirmRestart());
+		document.getElementById('shutdown-app')?.addEventListener('click', () => this.confirmShutdown());
 		
 		// Range sliders
 		document.getElementById('confidence-threshold')?.addEventListener('input', (e) => {
@@ -614,8 +778,14 @@ class SystemConfig {
 		
 		// Camera source changes
 		document.getElementById('camera-source')?.addEventListener('change', (e) => {
-			this.handleCameraSourceChange(e.target.value);
-			this.markChanged();
+			try {
+				const selectedValue = e.target.value;
+				console.log(`Camera source changed to: ${selectedValue}`);
+				this.handleCameraSourceChange(selectedValue);
+				this.markChanged();
+			} catch (error) {
+				console.error('Error handling camera source change:', error);
+			}
 		});
 		
 		// Resolution changes
@@ -627,6 +797,9 @@ class SystemConfig {
 		// Test buttons
 		document.getElementById('test-camera')?.addEventListener('click', () => this.testCamera());
 		document.getElementById('test-model')?.addEventListener('click', () => this.testModel());
+		
+		// Camera refresh button
+		document.getElementById('refresh-cameras')?.addEventListener('click', () => this.refreshCameras());
 		
 		// Advanced toggle
 		document.getElementById('toggle-advanced')?.addEventListener('click', () => this.toggleAdvanced());
@@ -690,14 +863,13 @@ class SystemConfig {
 		} catch (error) {
 			console.error('Error loading available cameras:', error);
 			
-			// Fallback to default options if API fails
+			// Fallback to minimal options if API fails
 			const cameraSelect = document.getElementById('camera-source');
 			if (cameraSelect) {
 				cameraSelect.innerHTML = `
-					<option value="0">USB Camera (0)</option>
-					<option value="1">USB Camera (1)</option>
+					<option value="">Failed to load cameras</option>
+					<option value="0">Camera 0 (Fallback)</option>
 					<option value="ip">IP Camera</option>
-					<option value="file">Video File</option>
 				`;
 			}
 		}
@@ -708,15 +880,174 @@ class SystemConfig {
 			const response = await fetch('/api/system/config');
 			if (response.ok) {
 				this.config = await response.json();
-				this.populateForm();
+				await this.populateForm();
 			}
 		} catch (error) {
 			console.error('Error loading config:', error);
-			this.loadDefaultConfig();
+			await this.loadDefaultConfig();
 		}
 	}
 
-	loadDefaultConfig() {
+	async loadAvailableCameras(forceRefresh = false) {
+		try {
+			this.updateCameraInfo('Loading cameras...');
+			
+			const url = forceRefresh 
+				? '/api/system/cameras?force_refresh=true'
+				: '/api/system/cameras';
+			
+			const response = await fetch(url);
+			if (response.ok) {
+				const result = await response.json();
+				this.populateCameraDropdown(result);
+				this.updateCameraInfo(result);
+			}
+		} catch (error) {
+			console.error('Error loading available cameras:', error);
+			this.updateCameraInfo('Failed to load cameras');
+		}
+	}
+
+	async refreshCameras() {
+		const button = document.getElementById('refresh-cameras');
+		if (button) {
+			button.disabled = true;
+			button.innerHTML = `
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin">
+					<path d="M3 7v6h6"></path>
+					<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+				</svg>
+				Scanning...
+			`;
+		}
+		
+		try {
+			console.log('Manual camera refresh triggered');
+			this.updateCameraInfo('Scanning for cameras...');
+			
+			const response = await fetch('/api/system/cameras/refresh', {
+				method: 'POST'
+			});
+			
+			if (response.ok) {
+				const result = await response.json();
+				this.populateCameraDropdown(result);
+				this.updateCameraInfo(result);
+				console.log('Camera refresh completed');
+			} else {
+				throw new Error('Camera refresh failed');
+			}
+		} catch (error) {
+			console.error('Camera refresh error:', error);
+			this.updateCameraInfo('Camera refresh failed');
+		} finally {
+			if (button) {
+				button.disabled = false;
+				button.innerHTML = `
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M3 7v6h6"></path>
+						<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+					</svg>
+					Refresh
+				`;
+			}
+		}
+	}
+
+	updateCameraInfo(result) {
+		const infoElement = document.getElementById('camera-info');
+		if (!infoElement) return;
+		
+		if (typeof result === 'string') {
+			infoElement.textContent = result;
+			return;
+		}
+		
+		// Display cache info and camera count
+		const cacheInfo = result.cache_info || {};
+		const count = result.count || 0;
+		const cached = result.cached || false;
+		
+		let infoText = `${count} camera(s) found`;
+		
+		if (cached) {
+			const ageSeconds = cacheInfo.age_seconds || 0;
+			const ageText = ageSeconds < 60 
+				? `${ageSeconds}s ago`
+				: `${Math.floor(ageSeconds / 60)}m ago`;
+			infoText += ` (cached ${ageText})`;
+		} else {
+			infoText += ' (fresh scan)';
+		}
+		
+		if (result.scan_duration) {
+			infoText += ` • Scan took ${result.scan_duration.toFixed(1)}s`;
+		}
+		
+		infoElement.textContent = infoText;
+	}
+
+	populateCameraDropdown(result) {
+		const select = document.getElementById('camera-source');
+		if (!select) return;
+
+		// Store current selection before clearing
+		const currentValue = select.value;
+
+		// Clear existing options
+		select.innerHTML = '';
+
+		// Handle both old and new result formats
+		const cameras = result.cameras || result;
+		const usbCameras = cameras.filter(c => c.type === 'usb' && c.is_working);
+		
+		if (usbCameras.length === 0) {
+			const noOption = document.createElement('option');
+			noOption.value = '';
+			noOption.textContent = 'No working cameras detected';
+			noOption.disabled = true;
+			select.appendChild(noOption);
+		}
+
+		for (const camera of usbCameras) {
+			const option = document.createElement('option');
+			option.value = camera.id;
+			
+			// Build descriptive name
+			let displayName = camera.name || camera.description;
+			
+			// Add duplicate indicator if detected
+			if (camera.is_duplicate) {
+				displayName += ` [DUPLICATE]`;
+				option.style.color = '#f59e0b'; // Orange color for duplicates
+				option.style.fontStyle = 'italic';
+			}
+
+			option.textContent = displayName;
+			select.appendChild(option);
+		}
+
+		// Add IP camera option
+		const ipOption = document.createElement('option');
+		ipOption.value = 'ip';
+		ipOption.textContent = 'IP Camera (RTSP/HTTP)';
+		select.appendChild(ipOption);
+
+		// Add file option  
+		const fileOption = document.createElement('option');
+		fileOption.value = 'file';
+		fileOption.textContent = 'Video File';
+		select.appendChild(fileOption);
+
+		// Restore previous selection if it still exists
+		if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+			select.value = currentValue;
+		}
+
+		console.log(`Populated camera dropdown with ${usbCameras.length} working cameras`);
+	}
+
+	async loadDefaultConfig() {
 		// Load default configuration
 		this.config = {
 			detection: {
@@ -750,13 +1081,16 @@ class SystemConfig {
 				debug_mode: false
 			}
 		};
-		this.populateForm();
+		await this.populateForm();
 	}
 
-	populateForm() {
+	async populateForm() {
 		const config = this.config;
 		
 		console.log('Populating form with config:', config);
+		
+		// Load available cameras first
+		await this.loadAvailableCameras();
 		
 		// Detection settings
 		if (config.detection) {
@@ -771,20 +1105,28 @@ class SystemConfig {
 		
 		// Camera settings
 		if (config.camera) {
-			this.setFormValue('camera-source', config.camera.source);
-			this.setFormValue('camera-resolution', `${config.camera.width}x${config.camera.height}`);
-			this.setFormValue('frame-rate', config.camera.fps);
+			this.setFormValue('camera-source', config.camera.source || config.camera.camera_source);
+			
+			// Handle resolution - check multiple possible field names
+			const width = config.camera.width || config.camera.camera_width || 1280;
+			const height = config.camera.height || config.camera.camera_height || 720;
+			this.setFormValue('camera-resolution', `${width}x${height}`);
+			
+			// Handle FPS - check multiple possible field names
+			const fps = config.camera.fps || config.camera.camera_fps || 30;
+			this.setFormValue('frame-rate', fps);
+			
 			this.setFormValue('buffer-size', config.camera.buffer_size);
 			
 			// Handle IP camera URL if present
-			if (config.camera.ip_url) {
-				this.setFormValue('ip-camera-url', config.camera.ip_url);
+			if (config.camera.ip_url || config.camera.ip_camera_url) {
+				this.setFormValue('ip-camera-url', config.camera.ip_url || config.camera.ip_camera_url);
 			}
 		}
 		
 		// Storage settings
 		if (config.storage) {
-			this.setFormValue('max-stored-detections', config.storage.max_detections);
+			this.setFormValue('max-stored-detections', config.storage.max_detections || config.storage.max_stored_detections);
 			this.setFormValue('cleanup-days', config.storage.cleanup_days);
 			this.setFormValue('backup-frequency', config.storage.backup_frequency);
 			this.setFormValue('compress-images', config.storage.compress_images);
@@ -810,10 +1152,13 @@ class SystemConfig {
 		this.updateRangeDisplays();
 		
 		// Update camera source visibility
-		this.handleCameraSourceChange(config.camera?.source || '0');
+		const cameraSource = config.camera?.source || config.camera?.camera_source || '0';
+		this.handleCameraSourceChange(cameraSource);
 		
 		// Update resolution visibility
-		const resolution = `${config.camera?.width || 1280}x${config.camera?.height || 720}`;
+		const width = config.camera?.width || config.camera?.camera_width || 1280;
+		const height = config.camera?.height || config.camera?.camera_height || 720;
+		const resolution = `${width}x${height}`;
 		this.handleResolutionChange(resolution);
 		
 		console.log('Form populated successfully');
@@ -821,13 +1166,23 @@ class SystemConfig {
 
 	setFormValue(id, value) {
 		const element = document.getElementById(id);
-		if (!element) return;
+		if (!element) {
+			console.warn(`Element with id '${id}' not found`);
+			return;
+		}
+		
+		if (value === undefined || value === null) {
+			console.debug(`Skipping ${id} - value is ${value}`);
+			return;
+		}
 		
 		if (element.type === 'checkbox') {
-			element.checked = value;
+			element.checked = Boolean(value);
 		} else {
-			element.value = value;
+			element.value = String(value);
 		}
+		
+		console.debug(`Set ${id} = ${value} (type: ${element.type})`);
 	}
 
 	updateRangeDisplays() {
@@ -845,9 +1200,20 @@ class SystemConfig {
 	}
 
 	handleCameraSourceChange(source) {
+		console.log(`Handling camera source change to: ${source}`);
+		
+		// Show/hide IP camera URL input
 		const ipGroup = document.getElementById('ip-camera-group');
 		if (ipGroup) {
-			ipGroup.style.display = source === 'ip' ? 'block' : 'none';
+			const shouldShow = source === 'ip';
+			ipGroup.style.display = shouldShow ? 'block' : 'none';
+			console.log(`IP camera group ${shouldShow ? 'shown' : 'hidden'}`);
+		}
+		
+		// Update camera status display if available
+		const statusElement = document.getElementById('camera-status');
+		if (statusElement && source !== 'ip' && source !== 'file' && source !== '') {
+			statusElement.style.display = 'none'; // Clear previous status
 		}
 	}
 
@@ -861,6 +1227,7 @@ class SystemConfig {
 	async testCamera() {
 		const button = document.getElementById('test-camera');
 		const status = document.getElementById('camera-status');
+		const cameraSource = document.getElementById('camera-source').value;
 		
 		if (button) {
 			button.disabled = true;
@@ -868,37 +1235,47 @@ class SystemConfig {
 		}
 		
 		try {
-			// Simulate camera test - replace with actual API call
-			await new Promise(resolve => setTimeout(resolve, 2000));
+			// Call actual camera test API
+			const response = await fetch(`/api/system/cameras/test?source=${encodeURIComponent(cameraSource)}`, {
+				method: 'GET'
+			});
 			
-			if (status) {
-				status.className = 'status-display status-success';
-				status.innerHTML = `
-					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-						<path d="M9 12l2 2 4-4"/>
-					</svg>
-					Camera connection successful
-				`;
-				status.style.display = 'flex';
-			}
+			const result = await response.json();
 			
-			if (window.lprApp) {
-				window.lprApp.showNotification('Camera test successful', 'success');
+			if (response.ok && result.success) {
+				if (status) {
+					status.className = 'status-display status-success';
+					status.innerHTML = `
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M9 12l2 2 4-4"/>
+						</svg>
+						Camera connection successful (${result.resolution || 'Unknown resolution'})
+					`;
+					status.style.display = 'flex';
+				}
+				
+				if (window.lprApp) {
+					window.lprApp.showNotification('Camera test successful', 'success');
+				}
+			} else {
+				throw new Error(result.message || 'Camera test failed');
 			}
 		} catch (error) {
+			console.error('Camera test error:', error);
+			
 			if (status) {
 				status.className = 'status-display status-error';
 				status.innerHTML = `
 					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M6 18L18 6M6 6l12 12"/>
 					</svg>
-					Camera connection failed
+					Camera connection failed: ${error.message}
 				`;
 				status.style.display = 'flex';
 			}
 			
 			if (window.lprApp) {
-				window.lprApp.showNotification('Camera test failed', 'danger');
+				window.lprApp.showNotification('Camera test failed: ' + error.message, 'danger');
 			}
 		} finally {
 			if (button) {
@@ -961,6 +1338,11 @@ class SystemConfig {
 			const formData = this.collectFormData();
 			
 			console.log('Saving configuration with data:', formData);
+			console.log('Form data keys:', Object.keys(formData));
+			console.log('Processing frequency value:', formData.processing_frequency);
+			console.log('Detection timeout value:', formData.detection_timeout);
+			console.log('Max detections value:', formData.max_detections);
+			console.log('Camera FPS value:', formData.camera_fps);
 			
 			const response = await fetch('/api/system/config', {
 				method: 'PUT',
@@ -985,6 +1367,9 @@ class SystemConfig {
 				}
 				
 				console.log('Configuration saved successfully:', result);
+				
+				// Reload config to verify it was saved
+				await this.loadCurrentConfig();
 			} else {
 				throw new Error(result.detail || result.message || 'Failed to save configuration');
 			}
@@ -1028,22 +1413,39 @@ class SystemConfig {
 			[width, height] = resolution.split('x').map(Number);
 		}
 		
+		// Get form elements and log if they exist
+		const processingFreqElement = document.getElementById('processing-frequency');
+		const detectionTimeoutElement = document.getElementById('detection-timeout');
+		const maxDetectionsElement = document.getElementById('max-detections');
+		const frameRateElement = document.getElementById('frame-rate');
+		
+		console.debug('Form elements found:', {
+			'processing-frequency': !!processingFreqElement,
+			'detection-timeout': !!detectionTimeoutElement,
+			'max-detections': !!maxDetectionsElement,
+			'frame-rate': !!frameRateElement
+		});
+		
+		if (processingFreqElement) {
+			console.debug('Processing frequency element value:', processingFreqElement.value, 'selected index:', processingFreqElement.selectedIndex);
+		}
+		
 		// Collect all form data in the new API format
-		return {
+		const formData = {
 			// Detection settings
 			confidence_threshold: parseFloat(document.getElementById('confidence-threshold').value),
 			model_path: document.getElementById('model-selection').value,
 			enhancement_enabled: document.getElementById('auto-enhance').checked,
 			save_detections: document.getElementById('save-detections').checked,
-			processing_frequency: parseInt(document.getElementById('processing-frequency').value),
-			detection_timeout: parseInt(document.getElementById('detection-timeout').value),
-			max_detections: parseInt(document.getElementById('max-detections').value),
+			processing_frequency: processingFreqElement ? parseInt(processingFreqElement.value) : 3,
+			detection_timeout: detectionTimeoutElement ? parseInt(detectionTimeoutElement.value) : 5,
+			max_detections: maxDetectionsElement ? parseInt(maxDetectionsElement.value) : 10,
 			
 			// Camera settings
 			camera_source: document.getElementById('camera-source').value,
 			camera_width: width,
 			camera_height: height,
-			camera_fps: parseInt(document.getElementById('frame-rate').value),
+			camera_fps: frameRateElement ? parseInt(frameRateElement.value) : 30,
 			buffer_size: parseInt(document.getElementById('buffer-size').value),
 			ip_camera_url: document.getElementById('ip-camera-url')?.value || null,
 			
@@ -1061,6 +1463,9 @@ class SystemConfig {
 			log_level: document.getElementById('log-level').value,
 			debug_mode: document.getElementById('debug-mode').checked
 		};
+		
+		console.debug('Collected form data:', formData);
+		return formData;
 	}
 
 	exportConfig() {
@@ -1117,6 +1522,395 @@ class SystemConfig {
 
 	markChanged() {
 		this.hasChanges = true;
+	}
+
+	confirmRestart() {
+		this.showConfirmationModal({
+			type: 'warning',
+			title: 'Restart System',
+			message: 'Are you sure you want to restart the License Plate Recognition system? This will temporarily interrupt detection services.',
+			confirmText: 'Restart System',
+			onConfirm: () => this.restartSystem()
+		});
+	}
+
+	confirmShutdown() {
+		this.showConfirmationModal({
+			type: 'danger',
+			title: 'Shutdown System',
+			message: 'Are you sure you want to shutdown the system? This will stop all detection services and require manual restart.',
+			confirmText: 'Shutdown System',
+			onConfirm: () => this.shutdownSystem()
+		});
+	}
+
+	showConfirmationModal({ type, title, message, confirmText, onConfirm }) {
+		// Remove any existing modal
+		this.removeModal();
+
+		const modalOverlay = document.createElement('div');
+		modalOverlay.className = 'modal-overlay';
+		modalOverlay.id = 'confirmation-modal';
+
+		const iconSvg = type === 'danger' 
+			? '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>'
+			: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line>';
+
+		modalOverlay.innerHTML = `
+			<div class="modal-content">
+				<div class="modal-header">
+					<div class="modal-icon ${type}">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							${iconSvg}
+						</svg>
+					</div>
+					<h3 class="modal-title">${title}</h3>
+					<button class="modal-close" id="modal-close-btn">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p>${message}</p>
+				</div>
+				<div class="modal-actions">
+					<button class="btn btn-outline" id="modal-cancel-btn">Cancel</button>
+					<button class="btn btn-${type}" id="modal-confirm-btn">${confirmText}</button>
+				</div>
+			</div>
+		`;
+
+		// Close modal when clicking overlay
+		modalOverlay.addEventListener('click', (e) => {
+			if (e.target === modalOverlay) {
+				this.removeModal();
+			}
+		});
+
+		// Close modal on escape key
+		const handleEscape = (e) => {
+			if (e.key === 'Escape') {
+				this.removeModal();
+				document.removeEventListener('keydown', handleEscape);
+			}
+		};
+		document.addEventListener('keydown', handleEscape);
+
+		document.body.appendChild(modalOverlay);
+
+		// Add event listeners after the modal is in the DOM
+		const closeBtn = document.getElementById('modal-close-btn');
+		const cancelBtn = document.getElementById('modal-cancel-btn');
+		const confirmBtn = document.getElementById('modal-confirm-btn');
+
+		if (closeBtn) {
+			closeBtn.addEventListener('click', () => {
+				this.removeModal();
+			});
+		}
+
+		if (cancelBtn) {
+			cancelBtn.addEventListener('click', () => {
+				this.removeModal();
+			});
+		}
+
+		if (confirmBtn) {
+			confirmBtn.addEventListener('click', () => {
+				this.removeModal();
+				onConfirm();
+			});
+		}
+	}
+
+	removeModal() {
+		// Remove all possible modal types
+		const modals = [
+			'confirmation-modal',
+			'restart-progress',
+			'shutdown-message'
+		];
+		
+		modals.forEach(modalId => {
+			const modal = document.getElementById(modalId);
+			if (modal) {
+				modal.remove();
+			}
+		});
+	}
+
+	async restartSystem() {
+		try {
+			const button = document.getElementById('restart-app');
+			if (button) {
+				button.disabled = true;
+				button.innerHTML = `
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M3 7v6h6"></path>
+						<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+					</svg>
+					Restarting...
+				`;
+			}
+
+			const response = await fetch('/api/system/restart', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					component: 'all',
+					restart_type: 'graceful'
+				})
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				if (window.lprApp) {
+					window.lprApp.showNotification('System restart initiated successfully', 'success');
+				}
+
+				// Show restart progress
+				this.showRestartProgress();
+			} else {
+				throw new Error(result.detail || result.message || 'Failed to restart system');
+			}
+		} catch (error) {
+			console.error('Error restarting system:', error);
+			if (window.lprApp) {
+				window.lprApp.showNotification('Failed to restart system: ' + error.message, 'danger');
+			}
+
+			// Re-enable button on error
+			const button = document.getElementById('restart-app');
+			if (button) {
+				button.disabled = false;
+				button.innerHTML = `
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M3 7v6h6"></path>
+						<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+					</svg>
+					Restart System
+				`;
+			}
+		}
+	}
+
+	async shutdownSystem() {
+		try {
+			const button = document.getElementById('shutdown-app');
+			if (button) {
+				button.disabled = true;
+				button.innerHTML = `
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+						<line x1="12" y1="2" x2="12" y2="12"></line>
+					</svg>
+					Shutting down...
+				`;
+			}
+
+			const response = await fetch('/api/system/shutdown', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					timeout: 30.0
+				})
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				if (window.lprApp) {
+					window.lprApp.showNotification('System shutdown initiated successfully', 'warning');
+				}
+
+				// Show shutdown message
+				this.showShutdownMessage();
+			} else {
+				throw new Error(result.detail || result.message || 'Failed to shutdown system');
+			}
+		} catch (error) {
+			console.error('Error shutting down system:', error);
+			if (window.lprApp) {
+				window.lprApp.showNotification('Failed to shutdown system: ' + error.message, 'danger');
+			}
+
+			// Re-enable button on error
+			const button = document.getElementById('shutdown-app');
+			if (button) {
+				button.disabled = false;
+				button.innerHTML = `
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+						<line x1="12" y1="2" x2="12" y2="12"></line>
+					</svg>
+					Shutdown
+				`;
+			}
+		}
+	}
+
+	showRestartProgress() {
+		const progressOverlay = document.createElement('div');
+		progressOverlay.className = 'modal-overlay';
+		progressOverlay.id = 'restart-progress';
+
+		progressOverlay.innerHTML = `
+			<div class="modal-content">
+				<div class="modal-header">
+					<div class="modal-icon warning">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M3 7v6h6"></path>
+							<path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path>
+						</svg>
+					</div>
+					<h3 class="modal-title">System Restarting</h3>
+					<button class="modal-close" id="restart-progress-close-btn">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p>The system is restarting. This page will automatically reload when the system is back online.</p>
+					<div style="text-align: center; margin-top: 20px;">
+						<div class="loading-spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+					</div>
+				</div>
+			</div>
+		`;
+
+		// Close modal when clicking overlay
+		progressOverlay.addEventListener('click', (e) => {
+			if (e.target === progressOverlay) {
+				this.removeModal();
+			}
+		});
+
+		document.body.appendChild(progressOverlay);
+
+		// Add event listener for close button
+		const closeBtn = document.getElementById('restart-progress-close-btn');
+		if (closeBtn) {
+			closeBtn.addEventListener('click', () => {
+				this.removeModal();
+			});
+		}
+
+		// Check system status and reload when ready
+		this.checkSystemStatus();
+	}
+
+	showShutdownMessage() {
+		const shutdownOverlay = document.createElement('div');
+		shutdownOverlay.className = 'modal-overlay';
+		shutdownOverlay.id = 'shutdown-message';
+
+		shutdownOverlay.innerHTML = `
+			<div class="modal-content">
+				<div class="modal-header">
+					<div class="modal-icon danger">
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+							<line x1="12" y1="2" x2="12" y2="12"></line>
+						</svg>
+					</div>
+					<h3 class="modal-title">System Shutdown</h3>
+					<button class="modal-close" id="shutdown-message-close-btn">
+						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+							<line x1="18" y1="6" x2="6" y2="18"></line>
+							<line x1="6" y1="6" x2="18" y2="18"></line>
+						</svg>
+					</button>
+				</div>
+				<div class="modal-body">
+					<p>The system is shutting down. The application will be unavailable until manually restarted.</p>
+					<p style="margin-top: 10px; font-weight: bold;">You can safely close this browser window.</p>
+				</div>
+			</div>
+		`;
+
+		// Close modal when clicking overlay
+		shutdownOverlay.addEventListener('click', (e) => {
+			if (e.target === shutdownOverlay) {
+				this.removeModal();
+			}
+		});
+
+		document.body.appendChild(shutdownOverlay);
+
+		// Add event listener for close button
+		const closeBtn = document.getElementById('shutdown-message-close-btn');
+		if (closeBtn) {
+			closeBtn.addEventListener('click', () => {
+				this.removeModal();
+			});
+		}
+	}
+
+	async checkSystemStatus() {
+		let attempts = 0;
+		const maxAttempts = 60; // Try for 2 minutes
+		
+		const checkStatus = async () => {
+			try {
+				const response = await fetch('/api/system/health/detailed', {
+					method: 'GET',
+					timeout: 5000
+				});
+				
+				if (response.ok) {
+					// System is back online, reload the page
+					window.location.reload();
+				} else {
+					throw new Error('System not ready');
+				}
+			} catch (error) {
+				attempts++;
+				if (attempts < maxAttempts) {
+					setTimeout(checkStatus, 2000); // Check every 2 seconds
+				} else {
+					// Max attempts reached, show error and allow manual reload
+					this.showRestartError();
+				}
+			}
+		};
+
+		// Start checking after a short delay
+		setTimeout(checkStatus, 5000);
+	}
+
+	showRestartError() {
+		const progressModal = document.getElementById('restart-progress');
+		if (progressModal) {
+			progressModal.innerHTML = `
+				<div class="modal-content">
+					<div class="modal-header">
+						<div class="modal-icon danger">
+							<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<circle cx="12" cy="12" r="10"></circle>
+								<line x1="15" y1="9" x2="9" y2="15"></line>
+								<line x1="9" y1="9" x2="15" y2="15"></line>
+							</svg>
+						</div>
+						<h3 class="modal-title">Restart Taking Longer Than Expected</h3>
+					</div>
+					<div class="modal-body">
+						<p>The system restart is taking longer than expected. Please wait a few more moments or try refreshing the page manually.</p>
+					</div>
+					<div class="modal-actions">
+						<button class="btn btn-primary" onclick="window.location.reload()">Refresh Page</button>
+					</div>
+				</div>
+			`;
+		}
 	}
 }
 

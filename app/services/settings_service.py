@@ -35,7 +35,7 @@ class SettingsService:
                     "confidence_threshold": self.config.confidence_threshold,
                     "model_path": self.config.model_path,
                     "model_device": self.config.model_device,
-                    "processing_frequency": self.config.background_frame_skip,
+                    "processing_frequency": self.config.stream_processing_frequency,
                     "detection_timeout": 30,  # Default timeout
                     "max_detections": 10,  # Default max detections
                     "enhancement_enabled": True,  # Default enhancement
@@ -45,14 +45,7 @@ class SettingsService:
                     "match_threshold": self.config.match_threshold,
                     "cooldown_period": self.config.cooldown_period
                 },
-                "camera": {
-                    "source": self.config.camera_id,
-                    "width": self.config.camera_width,
-                    "height": self.config.camera_height,
-                    "fps": self.config.camera_fps,
-                    "buffer_size": 1,  # Default buffer size
-                    "ip_url": None  # Will be loaded from camera config if exists
-                },
+                "camera": await self._get_unified_camera_config(),
                 "storage": {
                     "max_detections": 10000,  # Default
                     "cleanup_days": 30,  # Default
@@ -109,11 +102,6 @@ class SettingsService:
                 }
             }
             
-            # Load camera-specific settings
-            camera_config = await self._load_camera_config()
-            if camera_config:
-                settings["camera"].update(camera_config)
-            
             return settings
             
         except Exception as e:
@@ -135,20 +123,33 @@ class SettingsService:
             # Write to .env file
             await self._update_env_file(env_updates)
             
-            # Save camera-specific configuration
+            # Save camera-specific configuration and attempt hot switch
+            camera_switched = False
             if "camera" in validated_settings:
                 await self._save_camera_config(validated_settings["camera"])
+                
+                # Attempt hot camera switch if only camera source changed
+                if ("source" in validated_settings["camera"] and 
+                    len(validated_settings) == 1 and 
+                    len(validated_settings["camera"]) == 1):
+                    try:
+                        camera_switched = await self._attempt_hot_camera_switch(validated_settings["camera"]["source"])
+                    except Exception as e:
+                        logger.warning(f"Hot camera switch failed, restart will be required: {e}")
             
             # Update runtime config
             self._update_runtime_config(validated_settings)
             
             logger.info("Settings saved successfully")
             
+            restart_required = self._check_restart_required(validated_settings) and not camera_switched
+            
             return {
                 "success": True,
-                "message": "Settings saved successfully",
+                "message": "Settings saved successfully" + (" - Camera switched without restart" if camera_switched else ""),
                 "updated_fields": list(validated_settings.keys()),
-                "restart_required": self._check_restart_required(validated_settings),
+                "restart_required": restart_required,
+                "camera_switched": camera_switched,
                 "timestamp": datetime.now().isoformat()
             }
             
@@ -366,6 +367,7 @@ class SettingsService:
         
         return "app/models/yolo11m_best.pt"  # Fallback
     
+    
     async def _prepare_env_updates(self, settings: Dict[str, Any]) -> Dict[str, str]:
         """Prepare environment variable updates"""
         env_updates = {}
@@ -377,6 +379,7 @@ class SettingsService:
                 "CONFIDENCE_THRESHOLD": str(det["confidence_threshold"]),
                 "MODEL_PATH": det["model_path"],
                 "MODEL_DEVICE": det["model_device"],
+                "STREAM_PROCESSING_FREQUENCY": str(det["processing_frequency"]),
                 "MIN_OCR_CONFIDENCE": str(det["min_ocr_confidence"]),
                 "USE_KNOWN_PLATES_DB": str(det["use_known_plates_db"]).lower(),
                 "MATCH_THRESHOLD": str(det["match_threshold"]),
@@ -481,6 +484,25 @@ class SettingsService:
             logger.error(f"Error saving camera config: {e}")
             raise
     
+    async def _get_unified_camera_config(self) -> Dict[str, Any]:
+        """Get unified camera configuration from all sources with proper precedence"""
+        # Start with defaults from config
+        unified_config = {
+            "source": self.config.camera_id,
+            "width": self.config.camera_width,
+            "height": self.config.camera_height,
+            "fps": self.config.camera_fps,
+            "buffer_size": 1,  # Default buffer size
+            "ip_url": None  # Default no IP camera
+        }
+        
+        # Override with saved camera config if exists
+        saved_config = await self._load_camera_config()
+        if saved_config:
+            unified_config.update(saved_config)
+        
+        return unified_config
+    
     async def _load_camera_config(self) -> Optional[Dict[str, Any]]:
         """Load camera-specific configuration"""
         try:
@@ -502,6 +524,63 @@ class SettingsService:
             logger.debug(f"Could not load camera config: {e}")
         
         return None
+    
+    async def _attempt_hot_camera_switch(self, camera_id: str) -> bool:
+        """Attempt to switch camera without restart"""
+        try:
+            # Import here to avoid circular imports
+            from app.services.camera_service import CameraService
+            
+            # Validate camera is available
+            available_cameras = CameraService.detect_available_cameras()
+            target_camera = next((cam for cam in available_cameras if cam["id"] == camera_id), None)
+            
+            if not target_camera or not target_camera["is_working"]:
+                logger.warning(f"Camera {camera_id} not available for hot switch")
+                return False
+            
+            # Get app instance to access services
+            try:
+                from app.main import app
+                if hasattr(app.state, 'camera_service'):
+                    camera_service = app.state.camera_service
+                    
+                    logger.info(f"Attempting hot switch to camera {camera_id}")
+                    
+                    # Reinitialize camera service with new camera ID
+                    await camera_service.initialize(
+                        camera_id=camera_id,
+                        width=self.config.camera_width,
+                        height=self.config.camera_height
+                    )
+                    
+                    # Update background stream manager if it exists
+                    if hasattr(app.state, 'background_stream_manager'):
+                        background_manager = app.state.background_stream_manager
+                        if hasattr(background_manager, 'set_services'):
+                            background_manager.set_services(camera_service=camera_service)
+                    
+                    # Test the switch worked
+                    await asyncio.sleep(1.0)
+                    frame, _ = await camera_service.get_frame()
+                    
+                    if frame is not None and frame.size > 0:
+                        logger.info(f"Successfully switched to camera {camera_id}")
+                        return True
+                    else:
+                        logger.warning(f"Hot switch failed - no frames from camera {camera_id}")
+                        return False
+                else:
+                    logger.warning("Camera service not available for hot switch")
+                    return False
+                    
+            except ImportError:
+                logger.warning("App not available for hot switch")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Hot camera switch failed: {e}")
+            return False
     
     async def _backup_current_config(self):
         """Backup current configuration"""
@@ -562,7 +641,7 @@ class SettingsService:
                 "confidence_threshold": 0.5,
                 "model_path": "app/models/yolo11m_best.pt",
                 "model_device": "auto",
-                "processing_frequency": 3,
+                "processing_frequency": 5,
                 "detection_timeout": 30,
                 "max_detections": 10,
                 "enhancement_enabled": True,

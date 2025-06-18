@@ -425,6 +425,9 @@ async def update_system_config(config_update: ConfigUpdateRequest):
 		
 		if result["success"]:
 			logger.info(f"Configuration updated successfully: {result['updated_fields']}")
+			
+			# Update runtime settings that don't require restart
+			await _update_runtime_settings(settings_data)
 		else:
 			logger.error(f"Configuration update failed: {result['message']}")
 			raise HTTPException(status_code=400, detail=result["message"])
@@ -589,16 +592,36 @@ async def get_system_status():
 
 class RestartRequest(BaseModel):
 	component: str = "all"
+	restart_type: Optional[str] = "graceful"  # graceful, immediate, full_process
+
+class ShutdownRequest(BaseModel):
+	timeout: Optional[float] = 30.0
 
 @router.post("/restart")
 async def restart_service(request: RestartRequest):
 	"""Restart system components"""
 	try:
-		component = request.component
-		logger.info(f"Restart requested for: {component}")
+		from app.services.lifecycle_service import lifecycle_service, RestartType
 		
-		if component == "camera":
-			# Signal camera service to restart
+		component = request.component
+		restart_type_str = request.restart_type or "graceful"
+		
+		logger.info(f"Restart requested for: {component} (type: {restart_type_str})")
+		
+		# Map string to enum
+		restart_type_map = {
+			"graceful": RestartType.GRACEFUL,
+			"immediate": RestartType.IMMEDIATE,
+			"full_process": RestartType.FULL_PROCESS
+		}
+		restart_type = restart_type_map.get(restart_type_str, RestartType.GRACEFUL)
+		
+		if component == "all":
+			# Restart entire application
+			result = await lifecycle_service.restart_application(restart_type)
+			return result
+		elif component == "camera":
+			# Restart specific camera service
 			await restart_camera_service()
 			return {
 				"success": True,
@@ -606,17 +629,114 @@ async def restart_service(request: RestartRequest):
 				"restart_time": datetime.now().isoformat()
 			}
 		else:
-			# This would implement actual restart logic for other components
-			# For safety, this is just a placeholder
-			return {
-				"success": True,
-				"message": f"Restart initiated for {component}",
-				"restart_time": datetime.now().isoformat()
-			}
+			# Restart specific service
+			result = await lifecycle_service.restart_service(component)
+			return result
 		
 	except Exception as e:
 		logger.error(f"Error restarting {component}: {e}")
 		raise HTTPException(status_code=500, detail=f"Failed to restart {component}")
+
+@router.post("/shutdown")
+async def shutdown_application(request: ShutdownRequest):
+	"""Gracefully shutdown the entire application"""
+	try:
+		from app.services.lifecycle_service import lifecycle_service
+		
+		timeout = request.timeout
+		logger.info(f"Shutdown requested with timeout: {timeout}s")
+		
+		# Perform graceful shutdown
+		success = await lifecycle_service.graceful_shutdown(timeout)
+		
+		if success:
+			return {
+				"success": True,
+				"message": "Application shutdown initiated successfully",
+				"timeout": timeout,
+				"shutdown_time": datetime.now().isoformat()
+			}
+		else:
+			raise HTTPException(status_code=500, detail="Shutdown failed or timed out")
+		
+	except Exception as e:
+		logger.error(f"Error during shutdown: {e}")
+		raise HTTPException(status_code=500, detail=f"Failed to shutdown application: {str(e)}")
+
+@router.get("/health/detailed")
+async def application_health():
+	"""Get comprehensive application health status"""
+	try:
+		from app.services.lifecycle_service import lifecycle_service
+		
+		health_data = await lifecycle_service.health_check()
+		return health_data
+		
+	except Exception as e:
+		logger.error(f"Error getting health status: {e}")
+		return {
+			"overall_status": "critical",
+			"error": str(e),
+			"timestamp": datetime.now().isoformat()
+		}
+
+@router.get("/status/lifecycle") 
+async def lifecycle_status():
+	"""Get application lifecycle status"""
+	try:
+		from app.services.lifecycle_service import lifecycle_service
+		
+		status = await lifecycle_service.get_status()
+		return status
+		
+	except Exception as e:
+		logger.error(f"Error getting lifecycle status: {e}")
+		return {
+			"error": str(e),
+			"timestamp": datetime.now().isoformat()
+		}
+
+async def _update_runtime_settings(settings_data: Dict[str, Any]):
+	"""Update runtime settings that don't require application restart"""
+	try:
+		# Update stream processing frequency
+		if "detection" in settings_data and "processing_frequency" in settings_data["detection"]:
+			processing_frequency = settings_data["detection"]["processing_frequency"]
+			
+			# Update stream frame processor
+			from app.routers import stream
+			if hasattr(stream, 'frame_processor'):
+				old_frequency = stream.frame_processor.get("process_every_n_frames", 5)
+				stream.frame_processor["process_every_n_frames"] = processing_frequency
+				logger.info(f"Updated stream processing frequency: {old_frequency} -> {processing_frequency}")
+			
+			# Also try to update the main app config if accessible
+			try:
+				from app.main import app
+				if hasattr(app.state, 'config'):
+					app.state.config.stream_processing_frequency = processing_frequency
+					logger.info(f"Updated config stream_processing_frequency: {processing_frequency}")
+			except Exception as e:
+				logger.debug(f"Could not update app config: {e}")
+		
+		# Update plate tracker settings
+		if "detection" in settings_data:
+			detection_settings = settings_data["detection"]
+			from app.routers import stream
+			
+			if hasattr(stream, 'plate_tracker'):
+				# Update cooldown period
+				if "cooldown_period" in detection_settings:
+					stream.plate_tracker["cooldown_period"] = detection_settings["cooldown_period"]
+					logger.info(f"Updated plate tracker cooldown period: {detection_settings['cooldown_period']}")
+				
+				# Update confidence threshold
+				if "confidence_threshold" in detection_settings:
+					stream.plate_tracker["confidence_threshold"] = detection_settings["confidence_threshold"]
+					logger.info(f"Updated plate tracker confidence threshold: {detection_settings['confidence_threshold']}")
+		
+	except Exception as e:
+		logger.warning(f"Error updating runtime settings: {e}")
 
 async def restart_camera_service():
 	"""Restart the camera service with new configuration"""
@@ -683,20 +803,583 @@ async def get_recent_activity(limit: int = 10):
 		raise HTTPException(status_code=500, detail="Failed to get recent activity")
 
 @router.get("/cameras")
-async def get_available_cameras():
-	"""Get list of available cameras on the system"""
+async def get_available_cameras(force_refresh: bool = False):
+	"""Get list of available cameras with caching for performance"""
+	try:
+		logger.info(f"Getting cameras (force_refresh={force_refresh})")
+		from app.services.camera_service import CameraService
+		
+		# Use cached cameras for performance
+		result = await CameraService.get_cached_cameras(force_refresh=force_refresh)
+		
+		logger.info(f"Returned {result['count']} cameras (cached: {result.get('cached', False)})")
+		return result
+		
+	except Exception as e:
+		logger.error(f"Error getting cameras: {e}")
+		raise HTTPException(status_code=500, detail=f"Failed to get cameras: {str(e)}")
+
+@router.post("/cameras/refresh")
+async def refresh_cameras():
+	"""Trigger fresh camera scan and return results"""
+	try:
+		logger.info("Manual camera refresh requested")
+		from app.services.camera_service import CameraService
+		
+		result = await CameraService.refresh_camera_cache()
+		
+		logger.info(f"Camera refresh completed, returned {result['count']} cameras")
+		return result
+		
+	except Exception as e:
+		logger.error(f"Camera refresh failed: {e}")
+		raise HTTPException(status_code=500, detail=f"Camera refresh failed: {str(e)}")
+
+@router.get("/cameras/status")
+async def get_camera_cache_status():
+	"""Get camera cache status information"""
 	try:
 		from app.services.camera_service import CameraService
 		
-		logger.info("Scanning for available cameras...")
-		cameras = CameraService.detect_available_cameras()
+		cache_info = CameraService.get_cache_status()
 		
 		return {
-			"cameras": cameras,
-			"count": len([c for c in cameras if c['type'] == 'usb']),
+			"cache": cache_info,
 			"timestamp": datetime.now().isoformat()
 		}
 		
 	except Exception as e:
-		logger.error(f"Error detecting cameras: {e}")
-		raise HTTPException(status_code=500, detail="Failed to detect available cameras")
+		logger.error(f"Error getting cache status: {e}")
+		raise HTTPException(status_code=500, detail=f"Failed to get cache status: {str(e)}")
+
+@router.post("/cameras/cache/invalidate")
+async def invalidate_camera_cache():
+	"""Force invalidation of camera cache"""
+	try:
+		logger.info("Camera cache invalidation requested")
+		from app.services.camera_service import CameraService
+		
+		CameraService.invalidate_camera_cache()
+		
+		return {
+			"success": True,
+			"message": "Camera cache invalidated successfully",
+			"timestamp": datetime.now().isoformat()
+		}
+		
+	except Exception as e:
+		logger.error(f"Cache invalidation failed: {e}")
+		raise HTTPException(status_code=500, detail=f"Cache invalidation failed: {str(e)}")
+
+@router.get("/debug/config")
+async def debug_config_structure():
+	"""Debug endpoint to see the exact config structure"""
+	try:
+		from app.services.settings_service import SettingsService
+		settings_service = SettingsService()
+		
+		config = await settings_service.load_settings()
+		
+		return {
+			"success": True,
+			"config_structure": config,
+			"config_keys": list(config.keys()) if isinstance(config, dict) else "not_dict",
+			"detection_keys": list(config.get("detection", {}).keys()) if config.get("detection") else "no_detection",
+			"camera_keys": list(config.get("camera", {}).keys()) if config.get("camera") else "no_camera"
+		}
+		
+	except Exception as e:
+		logger.error(f"Error in debug config: {e}")
+		return {
+			"success": False,
+			"error": str(e)
+		}
+
+@router.get("/cameras/test")
+async def test_camera_connection(source: str = "0"):
+	"""Test camera connection for a specific source"""
+	try:
+		from app.services.camera_service import CameraService
+		
+		logger.info(f"Testing camera connection for source: {source}")
+		
+		# Create a temporary camera service instance for testing
+		test_camera = CameraService()
+		
+		try:
+			# Try to initialize the camera
+			await test_camera.initialize(camera_id=source, width=640, height=480)
+			
+			# Try to get multiple frames to test streaming
+			frames_tested = 0
+			successful_frames = 0
+			
+			for i in range(5):  # Test 5 frame reads
+				try:
+					frame, timestamp = await test_camera.get_frame()
+					frames_tested += 1
+					if frame is not None and frame.size > 0:
+						successful_frames += 1
+				except Exception as e:
+					logger.debug(f"Frame read {i+1} failed: {e}")
+			
+			if successful_frames > 0:
+				frame, timestamp = await test_camera.get_frame()
+				height, width = frame.shape[:2] if frame is not None else (0, 0)
+				resolution = f"{width}x{height}"
+				
+				# Clean up
+				await test_camera.shutdown()
+				
+				return {
+					"success": True,
+					"message": f"Camera streaming test successful ({successful_frames}/{frames_tested} frames)",
+					"source": source,
+					"resolution": resolution,
+					"frames_tested": frames_tested,
+					"successful_frames": successful_frames,
+					"streaming_quality": "Good" if successful_frames >= 4 else "Poor" if successful_frames >= 2 else "Bad",
+					"timestamp": datetime.now().isoformat()
+				}
+			else:
+				await test_camera.shutdown()
+				return {
+					"success": False,
+					"message": f"Camera connected but no frames received ({successful_frames}/{frames_tested} frames)",
+					"source": source,
+					"frames_tested": frames_tested,
+					"successful_frames": successful_frames
+				}
+				
+		except Exception as e:
+			# Ensure cleanup even on error
+			try:
+				await test_camera.shutdown()
+			except:
+				pass
+			raise e
+		
+	except Exception as e:
+		logger.error(f"Camera test failed for source {source}: {e}")
+		return {
+			"success": False,
+			"message": f"Camera test failed: {str(e)}",
+			"source": source,
+			"error": str(e)
+		}
+
+@router.post("/cameras/reconnect")
+async def force_camera_reconnection():
+	"""Force camera reconnection to resolve streaming issues"""
+	try:
+		from app.main import app
+		
+		if hasattr(app.state, 'camera_service'):
+			camera_service = app.state.camera_service
+			
+			logger.info("Forcing camera reconnection...")
+			
+			# First reset failure state to ensure recovery
+			await camera_service.reset_failure_state()
+			
+			# Force reconnection
+			await camera_service._attempt_camera_reconnection()
+			
+			# Test if reconnection worked
+			try:
+				# Wait a moment for camera to stabilize
+				await asyncio.sleep(1.0)
+				
+				frame, timestamp = await camera_service.get_frame()
+				if frame is not None and frame.size > 0:
+					# Check if we're getting a real camera frame or test pattern
+					if await camera_service.is_showing_test_pattern():
+						return {
+							"success": False,
+							"message": "Camera reconnected but still showing test pattern",
+							"timestamp": datetime.now().isoformat()
+						}
+					else:
+						return {
+							"success": True,
+							"message": "Camera reconnection successful - live feed restored",
+							"timestamp": datetime.now().isoformat()
+						}
+				else:
+					return {
+						"success": False,
+						"message": "Camera reconnected but no frames available",
+						"timestamp": datetime.now().isoformat()
+					}
+			except Exception as e:
+				return {
+					"success": False,
+					"message": f"Camera reconnection failed: {str(e)}",
+					"timestamp": datetime.now().isoformat()
+				}
+		else:
+			return {
+				"success": False,
+				"message": "Camera service not found in app state",
+				"timestamp": datetime.now().isoformat()
+			}
+			
+	except Exception as e:
+		logger.error(f"Camera reconnection failed: {e}")
+		return {
+			"success": False,
+			"message": f"Camera reconnection failed: {str(e)}",
+			"error": str(e),
+			"timestamp": datetime.now().isoformat()
+		}
+
+@router.post("/cameras/reset")
+async def reset_camera_service():
+	"""Reset camera service to clear failure state and force fresh initialization"""
+	try:
+		from app.main import app
+		
+		if hasattr(app.state, 'camera_service'):
+			camera_service = app.state.camera_service
+			
+			logger.info("Resetting camera service...")
+			
+			# Reset failure state
+			await camera_service.reset_failure_state()
+			
+			# Full shutdown and reinitialize
+			await camera_service.shutdown()
+			await asyncio.sleep(2.0)  # Give time for cleanup
+			
+			# Reinitialize camera service
+			await camera_service.initialize("0", 1280, 720)
+			
+			# Test if reset worked
+			try:
+				await asyncio.sleep(1.0)  # Give time for initialization
+				
+				frame, timestamp = await camera_service.get_frame()
+				if frame is not None and frame.size > 0:
+					# Check if we're getting a real camera frame or test pattern
+					if await camera_service.is_showing_test_pattern():
+						return {
+							"success": False,
+							"message": "Camera service reset but still showing test pattern",
+							"timestamp": datetime.now().isoformat()
+						}
+					else:
+						return {
+							"success": True,
+							"message": "Camera service reset successful - live camera feed restored",
+							"timestamp": datetime.now().isoformat()
+						}
+				else:
+					return {
+						"success": False,
+						"message": "Camera service reset but no frames available",
+						"timestamp": datetime.now().isoformat()
+					}
+			except Exception as e:
+				return {
+					"success": False,
+					"message": f"Camera service reset failed: {str(e)}",
+					"timestamp": datetime.now().isoformat()
+				}
+		else:
+			return {
+				"success": False,
+				"message": "Camera service not found in app state",
+				"timestamp": datetime.now().isoformat()
+			}
+			
+	except Exception as e:
+		logger.error(f"Camera service reset failed: {e}")
+		return {
+			"success": False,
+			"message": f"Camera service reset failed: {str(e)}",
+			"error": str(e),
+			"timestamp": datetime.now().isoformat()
+		}
+
+@router.post("/cameras/switch")
+async def switch_camera(camera_id: str):
+	"""Hot-switch to a different camera without restarting the application"""
+	try:
+		from app.main import app
+		from app.services.camera_service import CameraService
+		from config.settings import Config
+		
+		# Validate camera is available
+		available_cameras = CameraService.detect_available_cameras()
+		target_camera = next((cam for cam in available_cameras if cam["id"] == camera_id), None)
+		
+		if not target_camera:
+			return {
+				"success": False,
+				"message": f"Camera {camera_id} not found",
+				"timestamp": datetime.now().isoformat()
+			}
+		
+		if not target_camera["is_working"]:
+			return {
+				"success": False,
+				"message": f"Camera {camera_id} is not working",
+				"timestamp": datetime.now().isoformat()
+			}
+		
+		# Get current config for resolution
+		config = Config()
+		
+		if hasattr(app.state, 'camera_service'):
+			camera_service = app.state.camera_service
+			
+			logger.info(f"Switching to camera {camera_id}")
+			
+			# Reinitialize camera service with new camera ID
+			await camera_service.initialize(
+				camera_id=camera_id,
+				width=config.camera_width, 
+				height=config.camera_height
+			)
+			
+			# Update background stream manager if it exists
+			if hasattr(app.state, 'background_stream_manager'):
+				background_manager = app.state.background_stream_manager
+				if hasattr(background_manager, 'set_services'):
+					background_manager.set_services(camera_service=camera_service)
+					logger.info("Updated background stream manager with new camera service")
+			
+			# Test the switch worked
+			await asyncio.sleep(1.0)
+			frame, timestamp = await camera_service.get_frame()
+			
+			if frame is not None and frame.size > 0:
+				return {
+					"success": True,
+					"message": f"Successfully switched to camera {camera_id}",
+					"camera_info": target_camera,
+					"timestamp": datetime.now().isoformat()
+				}
+			else:
+				return {
+					"success": False,
+					"message": f"Camera switch failed - no frames from camera {camera_id}",
+					"timestamp": datetime.now().isoformat()
+				}
+		else:
+			return {
+				"success": False,
+				"message": "Camera service not available",
+				"timestamp": datetime.now().isoformat()
+			}
+			
+	except Exception as e:
+		logger.error(f"Camera switch failed: {e}")
+		return {
+			"success": False,
+			"message": f"Camera switch failed: {str(e)}",
+			"error": str(e),
+			"timestamp": datetime.now().isoformat()
+		}
+
+@router.get("/debug/camera-analysis")
+async def debug_camera_analysis():
+	"""Debug endpoint to analyze camera detection and identify potential duplicates"""
+	try:
+		from app.services.camera_service import CameraService
+		
+		# Get detailed camera information
+		cameras = CameraService.detect_available_cameras()
+		usb_cameras = [c for c in cameras if c['type'] == 'usb']
+		
+		analysis = {
+			"total_cameras": len(usb_cameras),
+			"working_cameras": len([c for c in usb_cameras if c['is_working']]),
+			"duplicates_detected": len([c for c in usb_cameras if c.get('is_duplicate', False)]),
+			"cameras": [],
+			"duplicate_groups": {},
+			"recommendations": []
+		}
+		
+		# Detailed camera analysis
+		for camera in usb_cameras:
+			camera_analysis = {
+				"id": camera['id'],
+				"name": camera['name'],
+				"description": camera['description'],
+				"backend": camera['backend'],
+				"is_working": camera['is_working'],
+				"is_duplicate": camera.get('is_duplicate', False),
+				"frame_fingerprint": camera.get('frame_fingerprint'),
+				"capabilities": camera.get('capabilities', {}),
+				"resolution": camera['resolution'],
+				"fps": camera['fps']
+			}
+			
+			if camera.get('error'):
+				camera_analysis['error'] = camera['error']
+				
+			analysis["cameras"].append(camera_analysis)
+		
+		# Group duplicates
+		for camera in usb_cameras:
+			if camera.get('is_duplicate'):
+				group_id = camera.get('duplicate_group')
+				if group_id not in analysis["duplicate_groups"]:
+					analysis["duplicate_groups"][group_id] = []
+				analysis["duplicate_groups"][group_id].append(camera['id'])
+		
+		# Generate recommendations
+		if analysis["duplicates_detected"] > 0:
+			analysis["recommendations"].append("Duplicate cameras detected - these likely point to the same physical device")
+			for group_id, camera_ids in analysis["duplicate_groups"].items():
+				primary_id = min(camera_ids)
+				analysis["recommendations"].append(f"Use Camera {primary_id} instead of {', '.join(camera_ids[1:])}")
+		
+		if analysis["working_cameras"] == 0:
+			analysis["recommendations"].append("No working cameras detected - check camera connections and permissions")
+		elif analysis["working_cameras"] == 1:
+			analysis["recommendations"].append("Single camera detected - no duplicates to worry about")
+		
+		return analysis
+		
+	except Exception as e:
+		logger.error(f"Camera analysis failed: {e}")
+		return {
+			"error": f"Camera analysis failed: {str(e)}",
+			"timestamp": datetime.now().isoformat()
+		}
+
+@router.get("/debug/camera-state")
+async def debug_camera_state():
+	"""Debug endpoint to check camera service state vs configuration"""
+	try:
+		import time
+		import cv2
+		from app.main import app
+		from config.settings import Config
+		
+		result = {
+			"config": {},
+			"camera_service": {},
+			"comparison": {}
+		}
+		
+		# Get config values
+		config = Config()
+		result["config"] = {
+			"camera_id": config.camera_id,
+			"camera_width": config.camera_width,
+			"camera_height": config.camera_height,
+			"camera_fps": config.camera_fps
+		}
+		
+		# Get camera service state
+		if hasattr(app.state, 'camera_service'):
+			camera_service = app.state.camera_service
+			result["camera_service"] = {
+				"has_camera": camera_service.camera is not None,
+				"camera_opened": camera_service.camera.isOpened() if camera_service.camera else False,
+				"camera_failed": camera_service.camera_failed,
+				"consecutive_failures": camera_service.consecutive_failures,
+				"failure_pause_until": camera_service.failure_pause_until,
+				"current_time": time.time(),
+				"is_paused": time.time() < camera_service.failure_pause_until
+			}
+			
+			# Get camera properties if available
+			if camera_service.camera and camera_service.camera.isOpened():
+				try:
+					actual_width = int(camera_service.camera.get(cv2.CAP_PROP_FRAME_WIDTH))
+					actual_height = int(camera_service.camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
+					actual_fps = int(camera_service.camera.get(cv2.CAP_PROP_FPS))
+					result["camera_service"]["actual_resolution"] = f"{actual_width}x{actual_height}"
+					result["camera_service"]["actual_fps"] = actual_fps
+				except Exception as e:
+					result["camera_service"]["resolution_error"] = str(e)
+			
+			# Determine why test pattern is showing
+			result["test_pattern_reason"] = []
+			if camera_service.camera_failed:
+				result["test_pattern_reason"].append("camera_failed=True")
+			if camera_service.camera is None:
+				result["test_pattern_reason"].append("camera is None")
+			elif not camera_service.camera.isOpened():
+				result["test_pattern_reason"].append("camera.isOpened()=False")
+			if time.time() < camera_service.failure_pause_until:
+				result["test_pattern_reason"].append(f"failure pause active until {camera_service.failure_pause_until}")
+		else:
+			result["camera_service"]["error"] = "Camera service not found in app state"
+			result["test_pattern_reason"] = ["Camera service not in app.state"]
+		
+		return result
+		
+	except Exception as e:
+		logger.error(f"Error in camera state debug: {e}")
+		return {
+			"success": False,
+			"error": str(e)
+		}
+
+@router.post("/fix/camera-test-pattern")
+async def fix_camera_test_pattern():
+	"""Simple fix for camera test pattern issue - directly reset failure flags"""
+	try:
+		from app.main import app
+		import time
+		
+		if hasattr(app.state, 'camera_service'):
+			camera_service = app.state.camera_service
+			
+			logger.info("Fixing camera test pattern by resetting failure flags...")
+			
+			# Record the current state for debugging
+			old_state = {
+				"camera_failed": camera_service.camera_failed,
+				"consecutive_failures": camera_service.consecutive_failures,
+				"failure_pause_until": camera_service.failure_pause_until,
+				"has_camera": camera_service.camera is not None,
+				"camera_opened": camera_service.camera.isOpened() if camera_service.camera else False
+			}
+			
+			# Reset all failure flags directly
+			camera_service.camera_failed = False
+			camera_service.consecutive_failures = 0
+			camera_service.failure_pause_until = 0
+			camera_service.last_error_log = 0
+			
+			logger.info(f"Camera failure flags reset: {old_state} -> Reset")
+			
+			# Wait a moment for the capture loop to pick up the changes
+			await asyncio.sleep(1.0)
+			
+			# Check if the fix worked
+			new_state = {
+				"camera_failed": camera_service.camera_failed,
+				"consecutive_failures": camera_service.consecutive_failures,
+				"failure_pause_until": camera_service.failure_pause_until,
+				"has_camera": camera_service.camera is not None,
+				"camera_opened": camera_service.camera.isOpened() if camera_service.camera else False
+			}
+			
+			return {
+				"success": True,
+				"message": "Camera failure flags reset successfully",
+				"old_state": old_state,
+				"new_state": new_state,
+				"timestamp": datetime.now().isoformat()
+			}
+		else:
+			return {
+				"success": False,
+				"message": "Camera service not found in app state",
+				"timestamp": datetime.now().isoformat()
+			}
+			
+	except Exception as e:
+		logger.error(f"Error fixing camera test pattern: {e}")
+		return {
+			"success": False,
+			"error": str(e),
+			"timestamp": datetime.now().isoformat()
+		}

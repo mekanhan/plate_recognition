@@ -1,0 +1,80 @@
+{
+  "detection": {
+    "confidence_threshold": 0.5,
+    "model_path": "app/models/yolo11m_best.pt",
+    "model_device": "auto",
+    "processing_frequency": 5,
+    "detection_timeout": 30,
+    "max_detections": 10,
+    "enhancement_enabled": true,
+    "save_detections": true,
+    "min_ocr_confidence": 0.3,
+    "use_known_plates_db": true,
+    "match_threshold": 0.8,
+    "cooldown_period": 5.0
+  },
+  "camera": {
+    "source": "0",
+    "width": 640,
+    "height": 480,
+    "fps": 30,
+    "buffer_size": 1,
+    "ip_url": null
+  },
+  "storage": {
+    "max_detections": 10000,
+    "cleanup_days": 30,
+    "backup_frequency": "daily",
+    "compress_images": true,
+    "export_csv": false,
+    "license_plates_dir": "data/license_plates",
+    "enhanced_plates_dir": "data/enhanced_plates",
+    "known_plates_path": "data/known_plates.json"
+  },
+  "processing": {
+    "deployment_mode": "web_ui",
+    "enable_web_ui": true,
+    "enable_background_processing": false,
+    "web_ui_port": 8001,
+    "background_processing_mode": "interval",
+    "background_frame_skip": 5,
+    "background_processing_interval": 0.5,
+    "background_max_queue_size": 100,
+    "background_batch_size": 10,
+    "enable_background_metrics": true
+  },
+  "output_channels": {
+    "enable_storage_output": true,
+    "enable_websocket_output": false,
+    "enable_api_output": true,
+    "enable_webhook_output": false,
+    "webhook_url": null,
+    "webhook_timeout": 5.0
+  },
+  "advanced": {
+    "gpu_device": null,
+    "worker_threads": 5,
+    "rate_limit": 100,
+    "log_level": "INFO",
+    "debug_mode": false,
+    "max_concurrent_detections": 5,
+    "max_frame_buffer_size": 30,
+    "enable_gpu_acceleration": true,
+    "enable_performance_logging": true,
+    "batch_size": 10,
+    "process_interval": 0.5
+  },
+  "security": {
+    "enable_cors": true,
+    "cors_origins": [
+      "*"
+    ],
+    "api_key": null,
+    "require_api_key": false
+  },
+  "database": {
+    "database_url": "sqlite+aiosqlite:///data/license_plates.db",
+    "enable_database_backup": true,
+    "backup_interval_hours": 24
+  }
+}

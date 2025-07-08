@@ -18,7 +18,7 @@ from app.services.output_channel_manager import OutputChannelManager
 from config.settings import Config
 from app.repositories.sql_repository import SQLiteDetectionRepository, SQLiteVideoRepository
 from app.database import async_session
-from app.routers import stream, detection, results, headless
+from app.routers import stream, detection, results, headless, system
 from app.utils.logging_config import setup_logging
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable
 
@@ -415,7 +415,6 @@ if config.is_web_ui_enabled:
     logger.info("Web UI routers included")
 
 # Always include system API router for monitoring
-from app.routers import system
 app.include_router(system.router, prefix="/api/system", tags=["system"])
 
 # Always include headless API router for background processing control

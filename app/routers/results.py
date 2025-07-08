@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 import datetime
 import time
 import logging
+import os
 from app.services.detection_service import DetectionService
 from app.services.storage_service import StorageService
 from app.dependencies.detection import get_detection_service
@@ -139,7 +140,8 @@ async def get_latest_detections(
                 'timestamp': None,
                 'state': detection.get('state', 'Unknown'),
                 'detection_id': detection.get('detection_id', ''),
-                'bbox': detection.get('bbox', detection.get('box', []))
+                'bbox': detection.get('bbox', detection.get('box', [])),
+                'thumbnail_path': f"thumbnails/{detection.get('detection_id', '')}_thumb.jpg" if detection.get('detection_id') else None
             }
             
             # Handle timestamp conversion
@@ -201,7 +203,8 @@ async def get_all_detections(
                 'timestamp': None,
                 'state': detection.get('state', 'Unknown'),
                 'detection_id': detection.get('detection_id', ''),
-                'bbox': detection.get('bbox', detection.get('box', []))
+                'bbox': detection.get('bbox', detection.get('box', [])),
+                'thumbnail_path': f"thumbnails/{detection.get('detection_id', '')}_thumb.jpg" if detection.get('detection_id') else None
             }
             
             # Handle timestamp conversion
@@ -572,6 +575,7 @@ async def get_detections_with_filters(
             for detection in detections:
                 detection_dict = {
                     "id": detection.id,
+                    "detection_id": detection.id,  # Add detection_id field for thumbnail lookup
                     "plate_text": detection.plate_text,
                     "confidence": detection.confidence,
                     "timestamp": detection.timestamp.isoformat() if detection.timestamp else None,
@@ -583,7 +587,8 @@ async def get_detections_with_filters(
                     "state": detection.state,
                     "status": detection.status,
                     "image_path": detection.image_path,
-                    "video_path": detection.video_path
+                    "video_path": detection.video_path,
+                    "thumbnail_path": f"thumbnails/{detection.id}_thumb.jpg" if detection.image_path else None  # Add thumbnail_path
                 }
                 detection_list.append(detection_dict)
             
@@ -958,6 +963,155 @@ async def debug_search_test(plate: str = "VBR7660"):
             
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/detection/{detection_id}")
+async def get_detection_detail_json(detection_id: str):
+    """Get detailed detection data as JSON for modal display"""
+    try:
+        from app.database import async_session
+        from app.models import Detection, EnhancedResult
+        from sqlalchemy import select
+        from sqlalchemy.orm import selectinload
+        
+        async with async_session() as session:
+            # Get the specific detection with enhanced results
+            result = await session.execute(
+                select(Detection)
+                .options(selectinload(Detection.enhanced_results))
+                .where(Detection.id == detection_id)
+            )
+            detection = result.scalar_one_or_none()
+            
+            if not detection:
+                raise HTTPException(status_code=404, detail="Detection not found")
+            
+            # Check if media files actually exist for this detection
+            import glob
+            thumbnail_exists = bool(glob.glob(f"data/thumbnails/**/{detection.id}_*_thumb.jpg", recursive=True))
+            video_exists = bool(glob.glob(f"data/videos/**/{detection.id}_*.mp4", recursive=True))
+            # Check for full-size source images in the new location
+            image_exists = bool(glob.glob(f"data/source_images/**/{detection.id}_*.jpg", recursive=True))
+            # Also check database image_path if available
+            if not image_exists and detection.image_path:
+                image_path = detection.image_path if os.path.isabs(detection.image_path) else os.path.join("data", detection.image_path)
+                image_exists = os.path.exists(image_path)
+            
+            # Format detection data with comprehensive information
+            detection_data = {
+                'id': detection.id,
+                'detection_id': detection.id,
+                'plate_text': detection.plate_text,
+                'confidence': detection.confidence,
+                'timestamp': detection.timestamp.isoformat() if detection.timestamp else None,
+                'formatted_timestamp': detection.timestamp.strftime('%Y-%m-%d %H:%M:%S') if detection.timestamp else None,
+                'bbox': [detection.box_x1, detection.box_y1, detection.box_x2, detection.box_y2] 
+                    if all(x is not None for x in [detection.box_x1, detection.box_y1, detection.box_x2, detection.box_y2]) 
+                    else None,
+                'bbox_info': {
+                    'x1': detection.box_x1,
+                    'y1': detection.box_y1, 
+                    'x2': detection.box_x2,
+                    'y2': detection.box_y2,
+                    'width': detection.box_x2 - detection.box_x1 if detection.box_x1 and detection.box_x2 else None,
+                    'height': detection.box_y2 - detection.box_y1 if detection.box_y1 and detection.box_y2 else None
+                } if all(x is not None for x in [detection.box_x1, detection.box_y1, detection.box_x2, detection.box_y2]) else None,
+                'frame_id': detection.frame_id,
+                'raw_text': detection.raw_text,
+                'state': detection.state,
+                'status': detection.status,
+                'vehicle_type': detection.vehicle_type,
+                'direction': detection.direction,
+                'location': detection.location,
+                'image_path': detection.image_path,
+                'video_path': detection.video_path,
+                'video_start_time': detection.video_start_time.isoformat() if detection.video_start_time else None,
+                'video_end_time': detection.video_end_time.isoformat() if detection.video_end_time else None,
+                'thumbnail_url': f"/api/system/thumbnails/{detection.id}",
+                'full_image_url': f"/api/system/images/{detection.id}",
+                'video_url': f"/api/system/videos/{detection.id}",
+                'enhanced_results': [],
+                'confidence_category': 'high' if detection.confidence >= 0.7 else 'medium' if detection.confidence >= 0.4 else 'low',
+                # Use actual file existence for has_video and has_image flags
+                'has_video': video_exists,
+                'has_image': image_exists or thumbnail_exists,  # Use thumbnail as fallback for now
+                'media_debug': {
+                    'thumbnail_exists': thumbnail_exists,
+                    'video_exists': video_exists, 
+                    'image_exists': image_exists
+                },
+                'metadata': {
+                    'processing_time': None,  # Could be added from processing logs
+                    'model_version': 'yolo11m',  # Default model
+                    'ocr_engine': 'easyocr'
+                }
+            }
+            
+            # Add enhanced results if available
+            for enhanced in detection.enhanced_results:
+                enhanced_data = {
+                    'id': enhanced.id,
+                    'plate_text': enhanced.plate_text,
+                    'confidence': enhanced.confidence,
+                    'timestamp': enhanced.timestamp.isoformat() if enhanced.timestamp else None,
+                    'match_type': enhanced.match_type,
+                    'confidence_category': enhanced.confidence_category,
+                    'enhanced_image_path': enhanced.enhanced_image_path
+                }
+                detection_data['enhanced_results'].append(enhanced_data)
+            
+            # Get navigation context (previous/next detections)
+            # Get previous detection (older timestamp or lower ID)
+            prev_result = await session.execute(
+                select(Detection.id).where(Detection.id < detection_id).order_by(Detection.id.desc()).limit(1)
+            )
+            prev_detection_id = prev_result.scalar_one_or_none()
+            
+            # Get next detection (newer timestamp or higher ID)
+            next_result = await session.execute(
+                select(Detection.id).where(Detection.id > detection_id).order_by(Detection.id.asc()).limit(1)
+            )
+            next_detection_id = next_result.scalar_one_or_none()
+            
+            detection_data['navigation'] = {
+                'prev_id': prev_detection_id,
+                'next_id': next_detection_id
+            }
+            
+            return detection_data
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting detection detail: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.get("/detection/{detection_id}/page", response_class=HTMLResponse)
+async def get_detection_detail_page(
+    detection_id: str,
+    request: Request
+):
+    """Get detailed view of a specific detection as a page (Web UI only)"""
+    if not config.is_web_ui_enabled or not templates:
+        raise HTTPException(status_code=503, detail="Web UI not available in headless mode")
+    
+    try:
+        # Get detection data using the JSON endpoint
+        detection_data = await get_detection_detail_json(detection_id)
+        
+        return templates.TemplateResponse(
+            "detection_detail.html",
+            {
+                "request": request,
+                "detection": detection_data,
+                "navigation": detection_data.get('navigation', {})
+            }
+        )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting detection detail page: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/debug/timestamps")
 async def debug_timestamps():

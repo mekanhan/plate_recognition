@@ -164,6 +164,19 @@ class DetectionService:
                     
                 # Add frame ID
                 detection["frame_id"] = self.frame_count
+                
+                # Extract license plate thumbnail if we have valid detection
+                if ("box" in detection and detection.get("plate_text") and 
+                    detection.get("confidence", 0) > 0.4):
+                    try:
+                        thumbnail_path = await self._extract_plate_thumbnail(
+                            frame, detection, detection["detection_id"]
+                        )
+                        if thumbnail_path:
+                            detection["thumbnail_path"] = thumbnail_path
+                            logger.debug(f"Thumbnail extracted for detection {detection['detection_id']}")
+                    except Exception as e:
+                        logger.warning(f"Failed to extract thumbnail for detection {detection['detection_id']}: {e}")
                     
             # Update latest detections for UI display if we have valid plate texts
             valid_detections = [d for d in detections if d.get("plate_text") and d.get("confidence", 0) > 0.4]
@@ -181,28 +194,10 @@ class DetectionService:
                 # Only process license plate detections for storage/OCR
                 class_name = detection.get("class_name", "license_plate")
                 
-                # Only save to storage if we have a plate text AND we're not in headless mode
-                # AND it's actually a license plate detection
-                if (detection.get("plate_text") and 
-                    class_name == "license_plate" and
-                    hasattr(self, 'storage_service') and self.storage_service and
-                    not self._is_headless_mode()):
-                    try:
-                        logger.info(f"Sending detection {detection['detection_id']} to storage service")
-                        await self.storage_service.add_detections([detection])
-                        
-                        # Trigger video recording if video service is available
-                        if hasattr(self, 'video_recording_service') and self.video_recording_service:
-                            try:
-                                logger.info(f"Triggering video recording for detection {detection['detection_id']}")
-                                await self.video_recording_service.trigger_recording(detection['detection_id'])
-                            except Exception as e:
-                                logger.error(f"Error triggering video recording: {e}")
-                                logger.error(traceback.format_exc())
-                                
-                    except Exception as e:
-                        logger.error(f"Error saving detection to storage: {e}")
-                        logger.error(traceback.format_exc())
+                # NOTE: Storage is now handled by the stream pipeline's process_detection_queue()
+                # This avoids duplicate storage and ensures both thumbnail and full-size images are saved together
+                if detection.get("plate_text") and class_name == "license_plate" and not self._is_headless_mode():
+                    logger.debug(f"Detection {detection['detection_id']} will be processed by stream pipeline for storage")
                 elif detection.get("plate_text") and class_name == "license_plate" and self._is_headless_mode():
                     logger.debug(f"Headless mode: storage handled by BackgroundStreamManager for {detection['detection_id']}")
                 elif class_name != "license_plate":
@@ -303,13 +298,14 @@ class DetectionService:
         # Return the first detection
         return detections[0]
 
-    async def process_detection(self, detection_id: str, detection_result: Dict[str, Any]) -> None:
+    async def process_detection(self, detection_id: str, detection_result: Dict[str, Any], frame: Optional[np.ndarray] = None) -> None:
         """
         Process a detection (background task)
 
         Args:
             detection_id: Unique detection ID
             detection_result: Detection result dict
+            frame: Optional source camera frame for full-size image saving
         """
         # Apply the enhanced license plate processor
         if detection_result and 'raw_text' in detection_result:
@@ -347,6 +343,20 @@ class DetectionService:
         if hasattr(self, 'storage_service') and self.storage_service:
             logger.info(f"Sending detection {detection_id} to storage service")
             try:
+                # Save full-size source image if frame is provided
+                image_path = None
+                if frame is not None:
+                    try:
+                        image_path = await self.storage_service.save_full_source_image(
+                            detection_id, 
+                            frame, 
+                            detection_result.get('timestamp', time.time())
+                        )
+                        if image_path:
+                            logger.debug(f"Saved source image for detection {detection_id}: {image_path}")
+                    except Exception as e:
+                        logger.error(f"Error saving source image for detection {detection_id}: {e}")
+                
                 # Create a properly formatted detection record
                 detection_record = {
                     "detection_id": detection_id,
@@ -360,7 +370,9 @@ class DetectionService:
                     "tracking_id": detection_result.get('tracking_id', f"det-{detection_id}"),
                     "status": "active",
                     "processed_at": time.time(),
-                    "processed_by": detection_result.get('processed_by', 'detection_service')
+                    "processed_by": detection_result.get('processed_by', 'detection_service'),
+                    "image_path": image_path,  # Full-size source image path
+                    "thumbnail_path": detection_result.get('thumbnail_path')  # Cropped license plate thumbnail
                 }
 
                 # Add to storage
@@ -393,6 +405,150 @@ class DetectionService:
             except Exception as e:
                 logger.error(f"Error enhancing detection: {e}")
                 logger.error(traceback.format_exc())
+    
+    def _is_headless_mode(self) -> bool:
+        """Check if we're running in headless mode"""
+        try:
+            from config.settings import Config
+            config = Config()
+            return config.is_headless_mode
+        except Exception:
+            return False
+    
+    async def _extract_plate_thumbnail(self, frame: np.ndarray, detection: Dict[str, Any], detection_id: str) -> Optional[str]:
+        """
+        Extract license plate thumbnail from detection bounding box
+        
+        Args:
+            frame: Original camera frame
+            detection: Detection dictionary with 'box' field
+            detection_id: Unique detection ID for filename
+            
+        Returns:
+            Path to saved thumbnail file or None if failed
+        """
+        try:
+            box = detection.get("box")
+            if not box or len(box) != 4:
+                logger.warning(f"Invalid bounding box for detection {detection_id}: {box}")
+                return None
+            
+            x1, y1, x2, y2 = map(int, box)
+            
+            # Validate bounding box coordinates
+            h, w = frame.shape[:2]
+            if x1 < 0 or y1 < 0 or x2 > w or y2 > h or x1 >= x2 or y1 >= y2:
+                logger.warning(f"Bounding box out of frame bounds for detection {detection_id}: {box}")
+                return None
+            
+            # Add small padding around the plate (5% on each side)
+            padding_x = max(1, int((x2 - x1) * 0.05))
+            padding_y = max(1, int((y2 - y1) * 0.05))
+            
+            # Apply padding with bounds checking
+            x1_padded = max(0, x1 - padding_x)
+            y1_padded = max(0, y1 - padding_y)
+            x2_padded = min(w, x2 + padding_x)
+            y2_padded = min(h, y2 + padding_y)
+            
+            # Extract the license plate region
+            plate_crop = frame[y1_padded:y2_padded, x1_padded:x2_padded]
+            
+            if plate_crop.size == 0:
+                logger.warning(f"Empty crop for detection {detection_id}")
+                return None
+            
+            # Create thumbnail directory structure
+            from datetime import datetime
+            date_str = datetime.now().strftime("%Y/%m/%d")
+            thumbnail_dir = f"data/thumbnails/{date_str}"
+            os.makedirs(thumbnail_dir, exist_ok=True)
+            
+            # Generate thumbnail filename
+            timestamp = int(time.time() * 1000)  # Millisecond timestamp
+            thumbnail_filename = f"{detection_id}_{timestamp}_thumb.jpg"
+            thumbnail_path = os.path.join(thumbnail_dir, thumbnail_filename)
+            
+            # Resize to standard thumbnail size (typical license plate aspect ratio)
+            # Standard size: 120x40 pixels (3:1 aspect ratio)
+            target_width = 120
+            target_height = 40
+            
+            # Resize while maintaining aspect ratio
+            crop_h, crop_w = plate_crop.shape[:2]
+            crop_aspect = crop_w / crop_h
+            target_aspect = target_width / target_height
+            
+            if crop_aspect > target_aspect:
+                # Crop is wider, fit to width
+                new_width = target_width
+                new_height = int(target_width / crop_aspect)
+            else:
+                # Crop is taller, fit to height
+                new_height = target_height
+                new_width = int(target_height * crop_aspect)
+            
+            # Resize the crop
+            resized_crop = cv2.resize(plate_crop, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4)
+            
+            # Create final thumbnail with padding to exact target size
+            thumbnail = np.zeros((target_height, target_width, 3), dtype=np.uint8)
+            
+            # Center the resized crop in the thumbnail
+            y_offset = (target_height - new_height) // 2
+            x_offset = (target_width - new_width) // 2
+            thumbnail[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = resized_crop
+            
+            # Enhance thumbnail quality
+            thumbnail = await self._enhance_thumbnail(thumbnail)
+            
+            # Save thumbnail as JPEG with high quality
+            cv2.imwrite(thumbnail_path, thumbnail, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            
+            # Return relative path for storage
+            relative_path = f"thumbnails/{date_str}/{thumbnail_filename}"
+            logger.debug(f"Thumbnail saved: {relative_path}")
+            return relative_path
+            
+        except Exception as e:
+            logger.error(f"Error extracting thumbnail for detection {detection_id}: {e}")
+            return None
+    
+    async def _enhance_thumbnail(self, thumbnail: np.ndarray) -> np.ndarray:
+        """
+        Apply image enhancement to improve thumbnail readability
+        
+        Args:
+            thumbnail: Input thumbnail image
+            
+        Returns:
+            Enhanced thumbnail image
+        """
+        try:
+            # Convert to LAB color space for better enhancement
+            lab = cv2.cvtColor(thumbnail, cv2.COLOR_BGR2LAB)
+            l, a, b = cv2.split(lab)
+            
+            # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization) to L channel
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(2, 2))
+            l_enhanced = clahe.apply(l)
+            
+            # Merge channels back
+            enhanced_lab = cv2.merge([l_enhanced, a, b])
+            enhanced = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+            
+            # Apply slight sharpening
+            kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+            enhanced = cv2.filter2D(enhanced, -1, kernel)
+            
+            # Ensure values are in valid range
+            enhanced = np.clip(enhanced, 0, 255)
+            
+            return enhanced.astype(np.uint8)
+            
+        except Exception as e:
+            logger.warning(f"Thumbnail enhancement failed: {e}")
+            return thumbnail
 
 # Router part stays the same
 router = APIRouter()

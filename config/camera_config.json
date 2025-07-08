@@ -1,5 +1,5 @@
 {
-  "camera_source": "",
+  "camera_source": "0",
   "ip_camera_url": null,
   "resolution": {
     "width": 1920,
@@ -7,5 +7,5 @@
   },
   "fps": 60,
   "buffer_size": 1,
-  "updated_at": "2025-06-18T12:50:01.106870"
+  "updated_at": "2025-06-18T14:25:45.220484"
 }

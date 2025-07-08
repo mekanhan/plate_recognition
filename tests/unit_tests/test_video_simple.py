@@ -14,7 +14,7 @@ def test_relative_path():
     os.makedirs("data/videos/2025-06-10", exist_ok=True)
     
     # Create a simple video
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264 for better browser compatibility
     out = cv2.VideoWriter(video_path, fourcc, 15.0, (640, 480))
     
     if not out.isOpened():

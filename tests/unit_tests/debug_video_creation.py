@@ -10,7 +10,7 @@ def test_opencv_video():
     print(f"Testing video creation at: {video_path}")
     
     # Create a simple video
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264 for better browser compatibility
     out = cv2.VideoWriter(video_path, fourcc, 15.0, (640, 480))
     
     if not out.isOpened():

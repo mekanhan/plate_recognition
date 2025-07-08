@@ -38,7 +38,7 @@ def detect_license_plate_in_video(video_path):
     fps = int(cap.get(cv2.CAP_PROP_FPS))
 
     # Define the codec and create a VideoWriter object to save the output video
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264 for better browser compatibility
     out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
 
     # Process each frame

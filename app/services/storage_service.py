@@ -5,6 +5,7 @@ import time
 import datetime
 import traceback
 import uuid
+import numpy as np
 from typing import List, Dict, Any, Optional
 from app.utils.plate_database import PlateDatabase
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable, save_json_file, load_json_file
@@ -315,6 +316,21 @@ class StorageService:
                 # Add unique ID if missing
                 if "detection_id" not in detection:
                     detection["detection_id"] = str(uuid.uuid4())
+                
+                # Ensure thumbnail path is properly handled
+                if "thumbnail_path" in detection:
+                    thumbnail_path = detection["thumbnail_path"]
+                    # Convert relative path to absolute for storage verification
+                    if thumbnail_path and not os.path.isabs(thumbnail_path):
+                        abs_thumbnail_path = os.path.join("data", thumbnail_path)
+                        if os.path.exists(abs_thumbnail_path):
+                            detection["thumbnail_verified"] = True
+                            logger.debug(f"Thumbnail verified for detection {detection['detection_id']}: {thumbnail_path}")
+                        else:
+                            detection["thumbnail_verified"] = False
+                            logger.warning(f"Thumbnail not found for detection {detection['detection_id']}: {abs_thumbnail_path}")
+                    else:
+                        detection["thumbnail_verified"] = False
             
             # Save to JSON storage (existing logic)
             self.plate_database["detections"].extend(detections)
@@ -336,9 +352,14 @@ class StorageService:
             # Log details of first detection for debugging
             if detections:
                 first_detection = detections[0]
+                thumbnail_info = ""
+                if first_detection.get("thumbnail_path"):
+                    thumbnail_status = "✓" if first_detection.get("thumbnail_verified") else "✗"
+                    thumbnail_info = f", Thumbnail={thumbnail_status}"
+                
                 logger.info(f"Added detection: ID={first_detection.get('detection_id', 'unknown')}, "
                            f"Plate={first_detection.get('plate_text', 'unknown')}, "
-                           f"Confidence={first_detection.get('confidence', 0)}")
+                           f"Confidence={first_detection.get('confidence', 0)}{thumbnail_info}")
                 logger.info(f"Storage stats: JSON={self.detections_saved_to_json}, SQL={self.detections_saved_to_db}")
 
     async def add_enhanced_results(self, results: List[Dict[str, Any]]) -> None:
@@ -401,3 +422,147 @@ class StorageService:
         async with self.storage_lock:
             return [d.copy() for d in self.plate_database["detections"] 
                   if d.get("tracking_id") == tracking_id]
+    
+    async def get_thumbnail_path(self, detection_id: str) -> Optional[str]:
+        """
+        Get the thumbnail path for a specific detection
+        
+        Args:
+            detection_id: The detection ID to get thumbnail for
+            
+        Returns:
+            Absolute path to thumbnail file or None if not found
+        """
+        async with self.storage_lock:
+            for detection in self.plate_database["detections"]:
+                if detection.get("detection_id") == detection_id:
+                    thumbnail_path = detection.get("thumbnail_path")
+                    if thumbnail_path:
+                        # Convert relative path to absolute
+                        if not os.path.isabs(thumbnail_path):
+                            abs_path = os.path.join("data", thumbnail_path)
+                            if os.path.exists(abs_path):
+                                return abs_path
+                        elif os.path.exists(thumbnail_path):
+                            return thumbnail_path
+            return None
+    
+    async def get_detections_with_thumbnails(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+        """
+        Get detections that have thumbnail images
+        
+        Args:
+            limit: Maximum number of detections to return
+            
+        Returns:
+            List of detection records that have valid thumbnails
+        """
+        async with self.storage_lock:
+            # Get detections with thumbnails
+            thumbnail_detections = []
+            for detection in self.plate_database["detections"]:
+                if detection.get("thumbnail_path") and detection.get("thumbnail_verified"):
+                    thumbnail_detections.append(detection.copy())
+            
+            # Sort by timestamp (newest first)
+            thumbnail_detections.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+            
+            # Apply limit if specified
+            if limit:
+                thumbnail_detections = thumbnail_detections[:limit]
+            
+            return thumbnail_detections
+
+    async def save_full_source_image(self, detection_id: str, frame: np.ndarray, timestamp: Optional[float] = None) -> Optional[str]:
+        """
+        Save full-size source camera frame for a detection
+        
+        Args:
+            detection_id: Unique detection ID
+            frame: OpenCV image frame (BGR format)
+            timestamp: Optional timestamp, defaults to current time
+            
+        Returns:
+            Relative path to saved image or None if failed
+        """
+        try:
+            import cv2
+            import numpy as np
+            from datetime import datetime
+            from config.settings import Config
+            
+            # Load configuration
+            config = Config()
+            
+            # Check if full image saving is enabled
+            if not config.save_full_images:
+                logger.debug("Full image saving is disabled in configuration")
+                return None
+            
+            if frame is None or frame.size == 0:
+                logger.warning(f"Empty frame for detection {detection_id}")
+                return None
+            
+            # Create source images directory structure
+            date_str = datetime.now().strftime("%Y/%m/%d")
+            source_images_dir = os.path.join(config.source_images_dir, date_str)
+            os.makedirs(source_images_dir, exist_ok=True)
+            
+            # Generate source image filename
+            if timestamp is None:
+                timestamp = time.time()
+            timestamp_ms = int(timestamp * 1000)  # Millisecond timestamp
+            source_filename = f"{detection_id}_{timestamp_ms}.jpg"
+            source_path = os.path.join(source_images_dir, source_filename)
+            
+            # Resize image if configured max dimensions are set
+            if config.max_image_width > 0 and config.max_image_height > 0:
+                frame_h, frame_w = frame.shape[:2]
+                
+                # Calculate scaling factor to fit within max dimensions
+                scale_w = config.max_image_width / frame_w
+                scale_h = config.max_image_height / frame_h
+                scale = min(scale_w, scale_h, 1.0)  # Don't upscale
+                
+                if scale < 1.0:
+                    new_width = int(frame_w * scale)
+                    new_height = int(frame_h * scale)
+                    frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4)
+                    logger.debug(f"Resized source image from {frame_w}x{frame_h} to {new_width}x{new_height}")
+            
+            # Save full-size image as JPEG with configured quality
+            cv2.imwrite(source_path, frame, [cv2.IMWRITE_JPEG_QUALITY, config.image_quality])
+            
+            # Return relative path for storage
+            relative_path = f"source_images/{date_str}/{source_filename}"
+            logger.debug(f"Source image saved: {relative_path}")
+            return relative_path
+            
+        except Exception as e:
+            logger.error(f"Error saving source image for detection {detection_id}: {e}")
+            logger.error(traceback.format_exc())
+            return None
+
+    async def get_source_image_path(self, detection_id: str) -> Optional[str]:
+        """
+        Get the source image path for a specific detection
+        
+        Args:
+            detection_id: The detection ID to get source image for
+            
+        Returns:
+            Absolute path to source image file or None if not found
+        """
+        async with self.storage_lock:
+            for detection in self.plate_database["detections"]:
+                if detection.get("detection_id") == detection_id:
+                    source_path = detection.get("image_path")
+                    if source_path:
+                        # Convert relative path to absolute
+                        if not os.path.isabs(source_path):
+                            abs_path = os.path.join("data", source_path)
+                            if os.path.exists(abs_path):
+                                return abs_path
+                        elif os.path.exists(source_path):
+                            return source_path
+            return None

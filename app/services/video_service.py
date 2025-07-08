@@ -103,7 +103,7 @@ class VideoRecorder:
         # Initialize video writer
         if buffer_frames:
             height, width = buffer_frames[0][0].shape[:2]
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # or 'avc1' for H.264
+            fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264 for better browser compatibility
             self.current_output = cv2.VideoWriter(
                 video_path, fourcc, self.fps, (width, height))
             

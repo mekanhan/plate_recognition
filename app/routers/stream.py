@@ -180,7 +180,9 @@ async def process_detection_queue():
 
         # Group by plate text to find the best confidence for each plate
         plates_to_process = {}
-        for detection in queue:
+        for item in queue:
+            # Handle new structure with detection and frame
+            detection = item.get("detection") if isinstance(item, dict) and "detection" in item else item
             plate_text = detection.get("plate_text", "").upper()
             if not plate_text:
                 continue
@@ -188,11 +190,15 @@ async def process_detection_queue():
             # Check if this is a better detection than what we already have
             current_confidence = detection.get("confidence", 0)
             if (plate_text not in plates_to_process or
-                current_confidence > plates_to_process[plate_text].get("confidence", 0)):
-                plates_to_process[plate_text] = detection
+                current_confidence > plates_to_process[plate_text]["detection"].get("confidence", 0)):
+                plates_to_process[plate_text] = item
 
         # Process each unique plate (best confidence version)
-        for plate_text, detection in plates_to_process.items():
+        for plate_text, item in plates_to_process.items():
+            # Extract detection and frame from the item
+            detection = item.get("detection") if isinstance(item, dict) and "detection" in item else item
+            frame = item.get("frame") if isinstance(item, dict) and "frame" in item else None
+            
             # Skip low confidence detections
             confidence = detection.get("confidence", 0)
             if confidence < plate_tracker["confidence_threshold"]:
@@ -211,11 +217,13 @@ async def process_detection_queue():
             # Process this detection (which also saves it to storage)
             if detection_service:
                 try:
-                    detection_id = str(uuid.uuid4())
-                    logger.info(f"Processing plate: {plate_text} (Confidence: {confidence:.2f})")
+                    # Use existing detection_id if available, otherwise create new one
+                    detection_id = detection.get("detection_id", str(uuid.uuid4()))
+                    logger.info(f"Processing plate: {plate_text} (Confidence: {confidence:.2f}, ID: {detection_id})")
 
                     # Create a background task for processing to avoid blocking
-                    asyncio.create_task(detection_service.process_detection(detection_id, detection))
+                    # Pass the frame for full-size image saving
+                    asyncio.create_task(detection_service.process_detection(detection_id, detection, frame))
                 except Exception as e:
                     logger.error(f"Error processing detection: {e}")
 
@@ -275,8 +283,12 @@ async def generate_frames(camera: CameraService, detection_svc=None):
                                     if "timestamp" not in detection:
                                         detection["timestamp"] = time.time()
                                     
-                                    # Add to queue
-                                    plate_tracker["detection_queue"].append(detection)
+                                    # Add to queue with the source frame for full-size image saving
+                                    detection_with_frame = {
+                                        "detection": detection,
+                                        "frame": raw_frame.copy()  # Store copy of source frame
+                                    }
+                                    plate_tracker["detection_queue"].append(detection_with_frame)
                                     
                                     # Increment detection counter
                                     frame_processor["total_detections"] += 1

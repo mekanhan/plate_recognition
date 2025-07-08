@@ -5,7 +5,7 @@ import os
 import asyncio
 from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 import logging
 import time
@@ -1383,3 +1383,354 @@ async def fix_camera_test_pattern():
 			"error": str(e),
 			"timestamp": datetime.now().isoformat()
 		}
+
+# Thumbnail endpoints for license plate images
+@router.get("/thumbnails/{detection_id}")
+async def get_detection_thumbnail(detection_id: str):
+	"""Serve thumbnail image for a specific detection"""
+	try:
+		import glob
+		
+		# Search for thumbnail files using the detection_id
+		# Thumbnails are stored as: data/thumbnails/YYYY/MM/DD/{detection_id}_{timestamp}_thumb.jpg
+		thumbnail_base = "data/thumbnails"
+		
+		# Try multiple search patterns to find the thumbnail
+		search_patterns = [
+			f"{thumbnail_base}/**/{detection_id}_*_thumb.jpg",  # Full pattern with timestamp
+			f"{thumbnail_base}/**/{detection_id}_thumb.jpg",    # Pattern without timestamp  
+		]
+		
+		thumbnail_path = None
+		for pattern in search_patterns:
+			matches = glob.glob(pattern, recursive=True)
+			if matches:
+				# Use the most recent match if multiple found
+				thumbnail_path = max(matches, key=os.path.getmtime)
+				logger.debug(f"Found thumbnail for {detection_id}: {thumbnail_path}")
+				break
+		
+		if thumbnail_path and os.path.exists(thumbnail_path):
+			# Serve the thumbnail file
+			return FileResponse(
+				thumbnail_path,
+				media_type="image/jpeg",
+				headers={"Cache-Control": "public, max-age=3600"}  # Cache for 1 hour
+			)
+		else:
+			logger.warning(f"Thumbnail not found for detection {detection_id}, tried patterns: {search_patterns}")
+			raise HTTPException(status_code=404, detail="Thumbnail not found")
+			
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger.error(f"Error serving thumbnail for detection {detection_id}: {e}")
+		raise HTTPException(status_code=500, detail="Failed to serve thumbnail")
+
+
+@router.get("/thumbnails")
+async def get_detections_with_thumbnails(limit: int = 20):
+	"""Get recent detections that have thumbnail images"""
+	try:
+		from app.main import app
+		
+		# Get storage service from app state
+		if hasattr(app.state, 'storage_service'):
+			storage_service = app.state.storage_service
+			
+			# Get detections with thumbnails
+			detections = await storage_service.get_detections_with_thumbnails(limit=limit)
+			
+			# Add thumbnail URL to each detection
+			for detection in detections:
+				if detection.get("detection_id"):
+					detection["thumbnail_url"] = f"/api/system/thumbnails/{detection['detection_id']}"
+			
+			return {
+				"success": True,
+				"count": len(detections),
+				"detections": detections,
+				"timestamp": datetime.now().isoformat()
+			}
+		else:
+			raise HTTPException(status_code=500, detail="Storage service not available")
+			
+	except Exception as e:
+		logger.error(f"Error getting detections with thumbnails: {e}")
+		raise HTTPException(status_code=500, detail="Failed to get thumbnail detections")
+
+@router.get("/thumbnails/stats")
+async def get_thumbnail_stats():
+	"""Get statistics about thumbnail storage"""
+	try:
+		from app.main import app
+		import os
+		import glob
+		from datetime import datetime, timedelta
+		
+		stats = {
+			"total_thumbnails": 0,
+			"today_thumbnails": 0,
+			"directory_size_mb": 0,
+			"oldest_thumbnail": None,
+			"newest_thumbnail": None,
+			"daily_breakdown": {}
+		}
+		
+		# Count thumbnails in the data/thumbnails directory
+		thumbnail_base = "data/thumbnails"
+		if os.path.exists(thumbnail_base):
+			# Get all thumbnail files
+			thumbnail_pattern = os.path.join(thumbnail_base, "**", "*_thumb.jpg")
+			thumbnail_files = glob.glob(thumbnail_pattern, recursive=True)
+			
+			stats["total_thumbnails"] = len(thumbnail_files)
+			
+			# Calculate directory size
+			total_size = 0
+			file_times = []
+			today = datetime.now().date()
+			
+			for file_path in thumbnail_files:
+				try:
+					file_stat = os.stat(file_path)
+					total_size += file_stat.st_size
+					file_time = datetime.fromtimestamp(file_stat.st_mtime)
+					file_times.append(file_time)
+					
+					# Count today's thumbnails
+					if file_time.date() == today:
+						stats["today_thumbnails"] += 1
+					
+					# Daily breakdown
+					date_key = file_time.date().isoformat()
+					if date_key not in stats["daily_breakdown"]:
+						stats["daily_breakdown"][date_key] = 0
+					stats["daily_breakdown"][date_key] += 1
+					
+				except Exception as e:
+					logger.debug(f"Error processing thumbnail file {file_path}: {e}")
+			
+			stats["directory_size_mb"] = round(total_size / (1024 * 1024), 2)
+			
+			if file_times:
+				stats["oldest_thumbnail"] = min(file_times).isoformat()
+				stats["newest_thumbnail"] = max(file_times).isoformat()
+		
+		return {
+			"success": True,
+			"stats": stats,
+			"timestamp": datetime.now().isoformat()
+		}
+		
+	except Exception as e:
+		logger.error(f"Error getting thumbnail stats: {e}")
+		raise HTTPException(status_code=500, detail="Failed to get thumbnail statistics")
+
+@router.get("/images/{detection_id}")
+async def get_detection_image(detection_id: str):
+	"""Serve full-size source image for a specific detection"""
+	try:
+		from app.main import app
+		from app.database import async_session
+		from app.models import Detection
+		from sqlalchemy import select
+		
+		async with async_session() as session:
+			# Get detection with image path
+			result = await session.execute(
+				select(Detection).where(Detection.id == detection_id)
+			)
+			detection = result.scalar_one_or_none()
+			
+			if not detection:
+				raise HTTPException(status_code=404, detail="Detection not found")
+			
+			if not detection.image_path:
+				raise HTTPException(status_code=404, detail="No image available for this detection")
+			
+			# Construct full image path
+			image_path = detection.image_path
+			if not os.path.isabs(image_path):
+				image_path = os.path.join("data", image_path)
+			
+			if not os.path.exists(image_path):
+				raise HTTPException(status_code=404, detail="Image file not found")
+			
+			# Serve the image file
+			return FileResponse(
+				image_path,
+				media_type="image/jpeg",
+				headers={"Cache-Control": "public, max-age=3600"}  # Cache for 1 hour
+			)
+			
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger.error(f"Error serving image for detection {detection_id}: {e}")
+		raise HTTPException(status_code=500, detail="Failed to serve image")
+
+@router.get("/videos/{detection_id}")
+async def get_detection_video(detection_id: str):
+	"""Serve video file for a specific detection"""
+	try:
+		import glob
+		
+		# Search for video files using detection_id
+		# Videos are stored as: data/videos/YYYY-MM-DD/{detection_id}_{timestamp}.mp4
+		videos_base = "data/videos"
+		
+		# Try multiple search patterns for video files
+		search_patterns = [
+			f"{videos_base}/**/{detection_id}_*.mp4",     # Full pattern with timestamp
+			f"{videos_base}/**/{detection_id}.mp4",       # Pattern without timestamp
+			f"{videos_base}/**/*{detection_id}*.mp4",     # Broader pattern
+		]
+		
+		video_path = None
+		for pattern in search_patterns:
+			matches = glob.glob(pattern, recursive=True)
+			if matches:
+				# Use the most recent match if multiple found
+				video_path = max(matches, key=os.path.getmtime)
+				logger.debug(f"Found video for {detection_id}: {video_path}")
+				break
+		
+		# Fallback: Try database video_path (for legacy data)
+		if not video_path:
+			try:
+				from app.database import async_session
+				from app.models import Detection
+				from sqlalchemy import select
+				
+				async with async_session() as session:
+					result = await session.execute(
+						select(Detection).where(Detection.id == detection_id)
+					)
+					detection = result.scalar_one_or_none()
+					
+					if detection and detection.video_path:
+						db_video_path = detection.video_path
+						if not os.path.isabs(db_video_path):
+							db_video_path = os.path.join("data", db_video_path)
+						
+						if os.path.exists(db_video_path):
+							video_path = db_video_path
+							logger.debug(f"Found database video for {detection_id}: {video_path}")
+						elif detection.video_end_time is None:
+							# Video recording might still be in progress
+							raise HTTPException(status_code=202, detail="Video recording in progress")
+			except Exception as e:
+				logger.debug(f"Could not query database for video path: {e}")
+		
+		if video_path and os.path.exists(video_path):
+			# Serve the video file with proper headers for streaming
+			return FileResponse(
+				video_path,
+				media_type="video/mp4",
+				headers={
+					"Cache-Control": "public, max-age=86400",  # Cache for 24 hours
+					"Accept-Ranges": "bytes",  # Enable range requests for video seeking
+					"Content-Type": "video/mp4"
+				}
+			)
+		else:
+			logger.warning(f"No video found for detection {detection_id}, tried patterns: {search_patterns}")
+			raise HTTPException(status_code=404, detail="Video not found")
+	
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger.error(f"Error serving video for detection {detection_id}: {e}")
+		raise HTTPException(status_code=500, detail="Failed to serve video")
+
+@router.get("/export/{detection_id}")
+async def export_detection_data(detection_id: str):
+	"""Export complete detection data as JSON file"""
+	try:
+		from app.main import app
+		from app.database import async_session
+		from app.models import Detection, EnhancedResult
+		from sqlalchemy import select
+		from sqlalchemy.orm import selectinload
+		from fastapi.responses import JSONResponse
+		import datetime
+		
+		async with async_session() as session:
+			# Get the detection with all related data
+			result = await session.execute(
+				select(Detection)
+				.options(selectinload(Detection.enhanced_results))
+				.where(Detection.id == detection_id)
+			)
+			detection = result.scalar_one_or_none()
+			
+			if not detection:
+				raise HTTPException(status_code=404, detail="Detection not found")
+			
+			# Build comprehensive export data
+			export_data = {
+				'export_info': {
+					'exported_at': datetime.datetime.now().isoformat(),
+					'detection_id': detection.id,
+					'export_version': '1.0'
+				},
+				'detection': {
+					'id': detection.id,
+					'plate_text': detection.plate_text,
+					'confidence': detection.confidence,
+					'timestamp': detection.timestamp.isoformat() if detection.timestamp else None,
+					'bounding_box': {
+						'x1': detection.box_x1,
+						'y1': detection.box_y1,
+						'x2': detection.box_x2,
+						'y2': detection.box_y2
+					} if all(x is not None for x in [detection.box_x1, detection.box_y1, detection.box_x2, detection.box_y2]) else None,
+					'frame_id': detection.frame_id,
+					'raw_text': detection.raw_text,
+					'state': detection.state,
+					'status': detection.status,
+					'vehicle_type': detection.vehicle_type,
+					'direction': detection.direction,
+					'location': detection.location,
+					'image_path': detection.image_path,
+					'video_path': detection.video_path,
+					'video_start_time': detection.video_start_time.isoformat() if detection.video_start_time else None,
+					'video_end_time': detection.video_end_time.isoformat() if detection.video_end_time else None
+				},
+				'enhanced_results': [
+					{
+						'id': enhanced.id,
+						'plate_text': enhanced.plate_text,
+						'confidence': enhanced.confidence,
+						'timestamp': enhanced.timestamp.isoformat() if enhanced.timestamp else None,
+						'match_type': enhanced.match_type,
+						'confidence_category': enhanced.confidence_category,
+						'enhanced_image_path': enhanced.enhanced_image_path
+					}
+					for enhanced in detection.enhanced_results
+				],
+				'metadata': {
+					'processing_model': 'yolo11m',
+					'ocr_engine': 'easyocr',
+					'confidence_category': 'high' if detection.confidence >= 0.7 else 'medium' if detection.confidence >= 0.4 else 'low'
+				}
+			}
+			
+			# Generate filename
+			timestamp = detection.timestamp.strftime('%Y%m%d_%H%M%S') if detection.timestamp else 'unknown'
+			filename = f"detection_{detection.plate_text}_{timestamp}.json"
+			
+			return JSONResponse(
+				content=export_data,
+				headers={
+					"Content-Disposition": f"attachment; filename={filename}",
+					"Content-Type": "application/json"
+				}
+			)
+			
+	except HTTPException:
+		raise
+	except Exception as e:
+		logger.error(f"Error exporting detection {detection_id}: {e}")
+		raise HTTPException(status_code=500, detail="Failed to export detection data")

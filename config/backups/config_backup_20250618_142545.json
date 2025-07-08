@@ -3,7 +3,7 @@
     "confidence_threshold": 0.5,
     "model_path": "app/models/yolo11m_best.pt",
     "model_device": "auto",
-    "processing_frequency": 5,
+    "processing_frequency": 3,
     "detection_timeout": 30,
     "max_detections": 10,
     "enhancement_enabled": true,
@@ -14,10 +14,10 @@
     "cooldown_period": 5.0
   },
   "camera": {
-    "source": "0",
-    "width": 640,
-    "height": 480,
-    "fps": 30,
+    "source": "",
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
     "buffer_size": 1,
     "ip_url": null
   },

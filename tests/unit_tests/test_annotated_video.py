@@ -138,7 +138,7 @@ async def test_annotated_video_creation():
     frame_width, frame_height = 640, 480
     
     # Initialize video writer
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264 for better browser compatibility
     video_writer = cv2.VideoWriter(video_path, fourcc, fps, (frame_width, frame_height))
     
     if not video_writer.isOpened():

@@ -55,6 +55,13 @@ class Config(BaseSettings):
     known_plates_path: str = "data/known_plates.json"
     license_plates_dir: str = "data/license_plates"
     enhanced_plates_dir: str = "data/enhanced_plates"
+    source_images_dir: str = "data/source_images"
+    
+    # Full-size image saving configuration
+    save_full_images: bool = True
+    image_quality: int = 85  # JPEG compression quality (1-100)
+    max_image_width: int = 1920  # Optional resize for storage efficiency
+    max_image_height: int = 1080
     
     # Camera Configuration
     camera_id: str = "0"

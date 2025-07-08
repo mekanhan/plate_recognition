@@ -752,7 +752,15 @@ class StreamPage {
 								 confidence > 0.4 ? 'confidence-medium' : 'confidence-low';
 		
 		item.innerHTML = `
-			<div class="detection-thumbnail">${detection.plate_text ? detection.plate_text.substring(0, 3) : 'IMG'}</div>
+			<div class="detection-thumbnail">
+				${detection.thumbnail_path ? 
+					`<img src="/api/system/thumbnails/${detection.detection_id}" 
+						  alt="${detection.plate_text}" 
+						  style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius);"
+						  onerror="this.style.display='none'; this.parentElement.innerHTML='${detection.plate_text ? detection.plate_text.substring(0, 3) : 'IMG'}';">` :
+					(detection.plate_text ? detection.plate_text.substring(0, 3) : 'IMG')
+				}
+			</div>
 			<div class="detection-info">
 				<div class="detection-plate">${detection.plate_text || 'Unknown'}</div>
 				<div class="detection-meta">
@@ -1163,8 +1171,8 @@ class StreamPage {
 		detectionEl.className = 'detection-item';
 		detectionEl.innerHTML = `
 			<div class="detection-thumbnail">
-				${detection.image_path ? 
-					`<img src="${detection.image_path}" alt="Detection" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius);">` : 
+				${detection.thumbnail_path ? 
+					`<img src="/api/system/thumbnails/${detection.detection_id}" alt="${detection.plate_text}" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius);" onerror="this.style.display='none'; this.parentElement.innerHTML='IMG';">` : 
 					'IMG'
 				}
 			</div>

@@ -19,6 +19,7 @@ from app.utils.logging_config import setup_logging
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable
 from pydantic_settings import BaseSettings
 
+
 class Config(BaseSettings):
     # Add the missing fields:
     camera_id: str = "0"
@@ -28,7 +29,6 @@ class Config(BaseSettings):
     license_plates_dir: str = "data/license_plates"
     enhanced_plates_dir: str = "data/enhanced_plates"
     known_plates_path: str = "data/known_plates.json"
-    github_token: str = None
 
 
     class Config:

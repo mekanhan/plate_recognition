@@ -47,7 +47,6 @@ class Config(BaseSettings):
     license_plates_dir: str = "data/license_plates"
     enhanced_plates_dir: str = "data/enhanced_plates"
     known_plates_path: str = "data/known_plates.json"
-    github_token: str = None
 
     class Config:
         env_file = ".env"

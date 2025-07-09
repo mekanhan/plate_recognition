@@ -1,11 +1,25 @@
 # app/models.py
-from sqlalchemy import Column, String, Float, DateTime, Integer, ForeignKey, Boolean, Text
+from sqlalchemy import Column, String, Float, DateTime, Integer, ForeignKey, Boolean, Text, JSON, Enum as SQLEnum, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import datetime
 import uuid
+import enum
 
 Base = declarative_base()
+
+# Enums for sync status
+class SyncStatus(enum.Enum):
+    PENDING = "pending"
+    SYNCED = "synced"
+    FAILED = "failed"
+    RETRY = "retry"
+
+class Priority(enum.Enum):
+    LOW = 1
+    NORMAL = 2
+    HIGH = 3
+    CRITICAL = 4
 
 class Detection(Base):
     """License plate detection records"""
@@ -37,8 +51,61 @@ class Detection(Base):
     video_start_time = Column(DateTime)
     video_end_time = Column(DateTime)
     
+    # Sync-related fields
+    synced = Column(Boolean, default=False, index=True)
+    sync_attempts = Column(Integer, default=0)
+    last_sync_attempt = Column(DateTime)
+    sync_error = Column(Text)
+    
+    # Processing metadata
+    processing_time_ms = Column(Float)
+    ocr_results = Column(JSON)
+    
     # Relationships
     enhanced_results = relationship("EnhancedResult", back_populates="detection")
+    
+    # Indexes for common queries
+    __table_args__ = (
+        Index('idx_detection_time_synced', 'timestamp', 'synced'),
+        Index('idx_plate_text_time', 'plate_text', 'timestamp'),
+        Index('idx_confidence_time', 'confidence', 'timestamp'),
+    )
+
+class SyncQueue(Base):
+    """Queue for managing data synchronization with cloud"""
+    __tablename__ = "sync_queue"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    item_type = Column(String, nullable=False, index=True)  # 'detection', 'health', 'logs'
+    item_id = Column(String, nullable=False, index=True)    # Reference to the actual record
+    data = Column(JSON, nullable=False)                     # Serialized data to sync
+    
+    # Sync management
+    status = Column(SQLEnum(SyncStatus), default=SyncStatus.PENDING, index=True)
+    priority = Column(SQLEnum(Priority), default=Priority.NORMAL, index=True)
+    
+    # Timing
+    created_at = Column(DateTime, default=datetime.datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    synced_at = Column(DateTime)
+    next_retry_at = Column(DateTime, index=True)
+    
+    # Error handling
+    attempts = Column(Integer, default=0)
+    max_attempts = Column(Integer, default=3)
+    error_count = Column(Integer, default=0)
+    last_error = Column(Text)
+    
+    # Metadata
+    device_id = Column(String, index=True)  # For tracking which device created this
+    batch_id = Column(String, index=True)   # For grouping related sync items
+    
+    # Indexes for efficient querying
+    __table_args__ = (
+        Index('idx_sync_status_priority', 'status', 'priority', 'created_at'),
+        Index('idx_sync_retry_time', 'status', 'next_retry_at'),
+        Index('idx_sync_device_time', 'device_id', 'created_at'),
+    )
 
 class EnhancedResult(Base):
     """Enhanced license plate results after processing"""
@@ -52,6 +119,10 @@ class EnhancedResult(Base):
     match_type = Column(String)
     confidence_category = Column(String)
     enhanced_image_path = Column(String)
+    
+    # Sync fields
+    synced = Column(Boolean, default=False, index=True)
+    sync_attempts = Column(Integer, default=0)
     
     # Relationship
     detection = relationship("Detection", back_populates="enhanced_results")
@@ -81,6 +152,9 @@ class VideoSegment(Base):
     resolution = Column(String, nullable=False)
     archived = Column(Boolean, default=False)
     detection_ids = Column(String)  # Comma-separated list of detection IDs
+    
+    # Sync fields
+    synced = Column(Boolean, default=False, index=True)
 
 class SystemEvent(Base):
     """System events for monitoring"""
@@ -91,3 +165,36 @@ class SystemEvent(Base):
     event_type = Column(String, nullable=False, index=True)
     details = Column(Text)  # JSON formatted
     level = Column(String, nullable=False, index=True)
+    
+    # Sync fields  
+    synced = Column(Boolean, default=False, index=True)
+
+class DeviceConfig(Base):
+    """Device configuration and identity"""
+    __tablename__ = "device_config"
+    
+    id = Column(Integer, primary_key=True)
+    device_id = Column(String, unique=True, nullable=False)
+    api_key_hash = Column(String)  # Hashed for security
+    cloud_endpoint = Column(String)
+    
+    # Device info
+    device_type = Column(String, default="edge_lpr")
+    capabilities = Column(JSON)
+    location_name = Column(String)
+    location_lat = Column(Float)
+    location_lng = Column(Float)
+    
+    # Registration
+    registration_token = Column(String)
+    registered_at = Column(DateTime)
+    last_seen = Column(DateTime)
+    
+    # Sync configuration
+    sync_interval = Column(Integer, default=300)  # seconds
+    sync_batch_size = Column(Integer, default=50)
+    immediate_sync = Column(Boolean, default=True)
+    
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)

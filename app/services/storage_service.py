@@ -11,12 +11,13 @@ from app.utils.plate_database import PlateDatabase
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable, save_json_file, load_json_file
 from app.repositories.sql_repository import SQLiteDetectionRepository
 from app.database import async_session
+from app.models import SyncQueue, SyncStatus, Priority
 import logging
 
 logger = logging.getLogger(__name__)
 
 class StorageService:
-    """Service for storing detection data with dual JSON and SQL storage"""
+    """Service for storing detection data with dual JSON and SQL storage plus sync queue"""
     
     def __init__(self):
         self.license_plates_dir = None
@@ -41,6 +42,13 @@ class StorageService:
         self.detections_saved_to_db = 0
         self.detections_saved_to_json = 0
     
+        # Sync service will be injected
+        self.sync_service = None
+
+    def set_sync_service(self, sync_service):
+        """Set the sync service for cloud synchronization"""
+        self.sync_service = sync_service
+
     async def initialize(self, license_plates_dir: str = "data/license_plates",
                          enhanced_plates_dir: str = "data/enhanced_plates") -> None:
         """Initialize the storage service"""
@@ -88,7 +96,7 @@ class StorageService:
                     "source": "camera_service",
                     "configuration": {
                         "model": "yolov11",
-                        "storage_version": "1.0"
+                        "storage_version": "2.0"
                     }
                 },
                 "detections": []
@@ -101,7 +109,7 @@ class StorageService:
                     "enhancement_model": "v1.0",
                     "configuration": {
                         "confidence_threshold": 0.4,
-                        "storage_version": "1.0"
+                        "storage_version": "2.0"
                     }
                 },
                 "enhanced_results": []
@@ -127,7 +135,7 @@ class StorageService:
             
             self.initialization_complete = True
             
-            logger.info("Storage service initialized with dual JSON/SQL storage")
+            logger.info("Storage service initialized with dual JSON/SQL storage and sync queue")
             logger.info("License plate data will be saved to: %s", self.session_file)
             logger.info("Enhanced results will be saved to: %s", self.enhanced_session_file)
             logger.info("Database storage enabled for persistent data")
@@ -292,7 +300,7 @@ class StorageService:
             return False
     
     async def add_detections(self, detections: List[Dict[str, Any]]) -> None:
-        """Add detections to both JSON and SQL storage"""
+        """Add detections to JSON, SQL storage, and sync queue"""
         if not detections:
             logger.debug("No detections to add")
             return
@@ -302,7 +310,7 @@ class StorageService:
             return
 
         async with self.storage_lock:
-            logger.info(f"Adding {len(detections)} detections to storage (JSON + SQL)")
+            logger.info(f"Adding {len(detections)} detections to storage (JSON + SQL + Sync)")
             
             # Add timestamp and ID if missing
             for detection in detections:
@@ -346,6 +354,24 @@ class StorageService:
                 logger.error(f"Error saving detections to SQL database: {e}")
                 logger.error(traceback.format_exc())
 
+            # Queue for cloud sync if sync service is available
+            if self.sync_service:
+                try:
+                    for detection in detections:
+                        # Determine priority based on confidence
+                        priority = Priority.NORMAL
+                        confidence = detection.get('confidence', 0)
+                        if confidence > 0.9:
+                            priority = Priority.HIGH
+                        elif confidence < 0.6:
+                            priority = Priority.LOW
+
+                        await self.sync_service.queue_detection_sync(detection, priority)
+
+                    logger.debug(f"Queued {len(detections)} detections for cloud sync")
+                except Exception as e:
+                    logger.error(f"Error queuing detections for sync: {e}")
+
             # Don't force immediate save - just mark as pending for JSON
             self.pending_save = True
             
@@ -371,7 +397,6 @@ class StorageService:
         if not self.initialization_complete:
             logger.warning("Attempted to add enhanced results before initialization complete")
             return
-            
         async with self.storage_lock:
             logger.debug(f"Adding {len(results)} enhanced results to database")
             

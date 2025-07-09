@@ -1,5 +1,5 @@
 {
-  "shutdown_time": "2025-07-03T21:59:10.107716",
+  "shutdown_time": "2025-07-08T19:23:07.173921",
   "application_state": "stopping",
   "services": {
     "camera": {
@@ -23,6 +23,16 @@
       "last_restart": null
     },
     "video_recording": {
+      "state": "stopped",
+      "restart_count": 0,
+      "last_restart": null
+    },
+    "device": {
+      "state": "stopped",
+      "restart_count": 0,
+      "last_restart": null
+    },
+    "sync": {
       "state": "stopped",
       "restart_count": 0,
       "last_restart": null

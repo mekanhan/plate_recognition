@@ -15,10 +15,12 @@ from app.services.enhancer_service import EnhancerService
 from app.services.video_service import VideoRecordingService
 from app.services.background_stream_manager import BackgroundStreamManager
 from app.services.output_channel_manager import OutputChannelManager
+from app.services.device_service import DeviceService
+from app.services.sync_service import SyncService
 from config.settings import Config
 from app.repositories.sql_repository import SQLiteDetectionRepository, SQLiteVideoRepository
 from app.database import async_session
-from app.routers import stream, detection, results, headless, system
+from app.routers import stream, detection, results, headless, system, sync
 from app.utils.logging_config import setup_logging
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable
 
@@ -97,9 +99,23 @@ except Exception as e:
 
 # Initialize core services
 camera_service = CameraService()
+camera_service.initialize()
 detection_service = DetectionService()
 storage_service = StorageService()
 enhancer_service = EnhancerService()
+
+# Initialize new edge services
+device_service = DeviceService(config={
+    'cloud_api_url': getattr(config, 'cloud_api_url', 'https://api.lprcloud.com'),
+    'registration_token': getattr(config, 'registration_token', 'default-token')
+})
+
+sync_service = SyncService(device_service, config={
+    'sync_mode': getattr(config, 'sync_mode', 'batch'),
+    'sync_interval': getattr(config, 'sync_interval', 300),
+    'sync_batch_size': getattr(config, 'sync_batch_size', 50),
+    'data_retention_days': getattr(config, 'data_retention_days', 30)
+})
 
 # Initialize video recording service with repositories
 detection_repository = SQLiteDetectionRepository(async_session)
@@ -152,6 +168,14 @@ async def startup_event():
         await init_database()
         logger.info("Database initialized successfully")
 
+        # Initialize device service
+        logger.info("Initializing device service...")
+        device_initialized = await device_service.initialize()
+        if device_initialized:
+            logger.info(f"Device service initialized: {device_service.device_id}")
+        else:
+            logger.warning("Device service initialization failed - continuing in offline mode")
+
         # Initialize storage first with explicit absolute paths
         logger.info(f"Initializing storage service with dirs: {license_plates_dir}, {enhanced_plates_dir}")
         await storage_service.initialize(
@@ -160,18 +184,25 @@ async def startup_event():
         )
         logger.info("Storage service initialized")
 
+        # Connect sync service to storage
+        storage_service.set_sync_service(sync_service)
+        # Initialize sync service
+        logger.info("Initializing sync service...")
+        await sync_service.start()
+        logger.info("Sync service started")
+
         # Validate camera availability before initialization
         logger.info(f"Validating camera availability for: {config.camera_id}")
         available_cameras = CameraService.detect_available_cameras()
         selected_camera_available = False
-        
+
         # Check if selected camera is available
         for camera in available_cameras:
             if camera["id"] == config.camera_id and camera["is_working"]:
                 selected_camera_available = True
                 logger.info(f"Selected camera {config.camera_id} is available and working")
                 break
-        
+
         # Graceful fallback if selected camera unavailable
         camera_id_to_use = config.camera_id
         if not selected_camera_available:
@@ -182,7 +213,7 @@ async def startup_event():
                 logger.warning(f"Selected camera {config.camera_id} unavailable, falling back to camera {camera_id_to_use}")
             else:
                 logger.warning(f"No working cameras found, attempting to use selected camera {config.camera_id} anyway")
-        
+
         # Initialize camera with validated ID
         await camera_service.initialize(
             camera_id=camera_id_to_use,
@@ -226,6 +257,8 @@ async def startup_event():
         lifecycle_service.register_service("storage", storage_service, shutdown_order=30)
         lifecycle_service.register_service("enhancer", enhancer_service, shutdown_order=40)
         lifecycle_service.register_service("video_recording", video_recording_service, shutdown_order=50)
+        lifecycle_service.register_service("device", device_service, shutdown_order=60)
+        lifecycle_service.register_service("sync", sync_service, shutdown_order=70)
         
         logger.info("Lifecycle service initialized with registered services")
 
@@ -282,6 +315,10 @@ async def startup_event():
         app.state.enhancer_service = enhancer_service
         app.state.video_recording_service = video_recording_service
         
+        # Add new edge services to app state
+        app.state.device_service = device_service
+        app.state.sync_service = sync_service
+            
         # Add headless components to app state
         app.state.output_manager = output_manager
         app.state.background_stream_manager = background_stream_manager
@@ -325,8 +362,15 @@ async def startup_event():
 async def shutdown_event():
     """Properly shut down all services using lifecycle service"""
     logger.info("Starting application shutdown...")
-
     try:
+        # Stop sync service first
+        logger.info("Stopping sync service...")
+        if sync_service:
+            try:
+                await asyncio.wait_for(sync_service.stop(), timeout=10.0)
+            except Exception as e:
+                logger.error(f"Error stopping sync service: {e}")
+
         # Use lifecycle service for coordinated shutdown
         from app.services.lifecycle_service import lifecycle_service
         
@@ -419,6 +463,9 @@ app.include_router(system.router, prefix="/api/system", tags=["system"])
 
 # Always include headless API router for background processing control
 app.include_router(headless.router, prefix="/api/headless", tags=["headless"])
+
+# Always include sync API router for edge device management
+app.include_router(sync.router, prefix="/api/sync", tags=["sync"])
 
 # Add headless-specific API endpoints
 if config.is_background_processing_enabled:

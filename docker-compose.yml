@@ -5,10 +5,21 @@ services:
   lpr-app:
     build: .
     volumes:
+      - ./.env:/app/.env
       - ./data:/app/data
       - ./logs:/app/logs
+      - ./config:/app/config
     ports:
-      - "8001:8001"
+      - "8002:8002"
+    environment:
+      - DEPLOYMENT_MODE=hybrid
+      - SYNC_MODE=batch
+      - PROCESSING_MODE=continuous
+      - CAMERA_SOURCE=mock           # Use mock camera for development
+      - SYNC_INTERVAL=300            # seconds between syncs
+      - CLOUD_API_URL=http://api.example.com/v1
+      - REGISTRATION_TOKEN=dev_token
+      - DEVICE_ID=LPR-DEV01          # Optional: Custom device ID
     restart: unless-stopped
     depends_on:
       - lpr-backup

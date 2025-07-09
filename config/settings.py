@@ -14,6 +14,12 @@ class ProcessingMode(str, Enum):
     INTERVAL = "interval"       # Process at fixed intervals
     TRIGGERED = "triggered"     # Process only when triggered
 
+class SyncMode(str, Enum):
+    """Sync modes for cloud synchronization"""
+    IMMEDIATE = "immediate"     # Sync each detection immediately
+    BATCH = "batch"            # Sync in batches at intervals
+    MANUAL = "manual"          # Manual sync only
+
 class Config(BaseSettings):
     """Application configuration loaded from environment variables."""
     
@@ -23,6 +29,22 @@ class Config(BaseSettings):
     enable_background_processing: bool = False
     web_ui_port: int = 8001
     api_only_port: Optional[int] = None  # Separate port for API-only mode
+    
+    # Edge Device Configuration
+    device_name: Optional[str] = None
+    device_location: Optional[str] = None
+    registration_token: str = "default-registration-token"
+    
+    # Cloud Sync Configuration
+    cloud_api_url: str = "https://api.lprcloud.com"
+    sync_mode: SyncMode = SyncMode.BATCH
+    sync_interval: int = 300  # seconds
+    sync_batch_size: int = 50
+    sync_max_retries: int = 3
+    sync_retry_delay: int = 60  # seconds
+    data_retention_days: int = 30
+    enable_compression: bool = True
+    compression_threshold: int = 10240  # bytes
     
     # Background Processing Configuration
     background_processing_mode: ProcessingMode = ProcessingMode.INTERVAL
@@ -114,6 +136,11 @@ class Config(BaseSettings):
         """Check if background processing should be enabled"""
         return (self.deployment_mode in [DeploymentMode.HEADLESS, DeploymentMode.HYBRID] or 
                 self.enable_background_processing)
+
+    @property 
+    def is_sync_enabled(self) -> bool:
+        """Check if cloud sync should be enabled"""
+        return self.sync_mode != SyncMode.MANUAL
 
     class Config:
         env_file = ".env"

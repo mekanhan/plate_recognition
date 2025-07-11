@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPR Security System - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <img src="vision_port_text.png" alt="Vision Port" class="logo-text">
+                <img src="logo.png" alt="LPR System Logo" class="logo-icon">
+            </div>
+            <button class="sidebar-collapse-btn" id="sidebar-collapse-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li class="menu-item active">
+                <a href="#dashboard" class="menu-link" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#cameras" class="menu-link" data-page="cameras">
+                    <i class="fas fa-video"></i>
+                    <span>Cameras</span>
+                    <span class="badge" id="camera-count">12</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#detections" class="menu-link" data-page="detections">
+                    <i class="fas fa-search"></i>
+                    <span>Detections</span>
+                    <span class="badge warning" id="detection-alerts">3</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#analytics" class="menu-link" data-page="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#alerts" class="menu-link" data-page="alerts">
+                    <i class="fas fa-bell"></i>
+                    <span>Alerts</span>
+                    <span class="badge danger" id="alert-count">2</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#reports" class="menu-link" data-page="reports">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+            <li class="menu-item">
+                <a href="#settings" class="menu-link" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <div class="user-details">
+                    <span class="user-name">Security Admin</span>
+                    <span class="user-role">Administrator</span>
+                </div>
+            </div>
+            <button class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <div class="header-right">
+                <div class="system-status">
+                    <span class="status-indicator online"></span>
+                    <span>System Online</span>
+                    <span class="uptime">Uptime: 15d 4h 23m</span>
+                    <span class="last-update">Last Update: <span id="last-update-time">--</span></span>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" id="refresh-btn" title="Refresh Data">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                    <div class="notification-menu">
+                        <button class="header-btn" id="notifications-btn" title="Notifications">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-dot"></span>
+                        </button>
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="notification-header">
+                                <h4>Notifications</h4>
+                                <button class="mark-all-read" id="mark-all-read">Mark all read</button>
+                            </div>
+                            <div class="notification-list" id="notification-list">
+                                <!-- Notifications will be loaded dynamically -->
+                            </div>
+                            <div class="notification-footer">
+                                <a href="#alerts" class="view-all-notifications">View all alerts</a>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="header-btn" id="dark-mode-toggle" title="Toggle Dark Mode">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="header-btn" id="fullscreen-btn" title="Fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <div class="user-menu">
+                        <button class="header-btn user-avatar">
+                            <i class="fas fa-user"></i>
+                        </button>
+                        <div class="user-dropdown">
+                            <a href="#profile">Profile</a>
+                            <a href="#preferences">Preferences</a>
+                            <hr>
+                            <a href="#logout">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Page -->
+        <section id="dashboard" class="content-section active">
+            <div class="page-header">
+                <h1 class="page-title">Dashboard</h1>
+                <p class="page-subtitle">Real-time monitoring and system overview</p>
+            </div>
+
+            <!-- Quick Actions Bar -->
+            <div class="quick-actions">
+                <button class="quick-action-btn" id="add-camera-quick">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Camera</span>
+                </button>
+                <button class="quick-action-btn" id="view-live-feeds">
+                    <i class="fas fa-play"></i>
+                    <span>Live Feeds</span>
+                </button>
+                <button class="quick-action-btn" id="export-data">
+                    <i class="fas fa-download"></i>
+                    <span>Export Data</span>
+                </button>
+                <button class="quick-action-btn" id="system-health">
+                    <i class="fas fa-heartbeat"></i>
+                    <span>System Health</span>
+                </button>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="metrics-grid">
+                <div class="metric-card clickable" data-action="view-cameras" style="animation-delay: 0.1s">
+                    <div class="metric-icon">
+                        <i class="fas fa-video text-blue"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="active-cameras-count">12</h3>
+                        <p>Active Cameras</p>
+                        <span class="metric-change positive">+2 this week</span>
+                    </div>
+                    <div class="metric-trend">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+                
+                <div class="metric-card clickable" data-action="view-detections" style="animation-delay: 0.2s">
+                    <div class="metric-icon">
+                        <i class="fas fa-car text-green"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="detections-today">1,247</h3>
+                        <p>Detections Today</p>
+                        <span class="metric-change positive">+8.5%</span>
+                    </div>
+                    <div class="metric-trend">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+                
+                <div class="metric-card clickable" data-action="view-alerts" style="animation-delay: 0.3s">
+                    <div class="metric-icon">
+                        <i class="fas fa-exclamation-triangle text-orange"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="active-alerts-count">3</h3>
+                        <p>Active Alerts</p>
+                        <span class="metric-change neutral">2 resolved</span>
+                    </div>
+                    <div class="metric-trend">
+                        <i class="fas fa-minus"></i>
+                    </div>
+                </div>
+                
+                <div class="metric-card clickable" data-action="view-analytics" style="animation-delay: 0.4s">
+                    <div class="metric-icon">
+                        <i class="fas fa-percentage text-purple"></i>
+                    </div>
+                    <div class="metric-content">
+                        <h3 id="accuracy-rate">94.2%</h3>
+                        <p>Detection Accuracy</p>
+                        <span class="metric-change positive">+1.2%</span>
+                    </div>
+                    <div class="metric-trend">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Section -->
+            <div class="dashboard-grid">
+                <!-- Live Camera Feeds -->
+                <div class="dashboard-card camera-feeds">
+                    <div class="card-header">
+                        <h3>Live Camera Feeds</h3>
+                        <div class="card-actions">
+                            <select id="camera-count-select" class="camera-count-select">
+                                <option value="1">1 Camera</option>
+                                <option value="2">2 Cameras</option>
+                                <option value="3">3 Cameras</option>
+                                <option value="4" selected>4 Cameras</option>
+                            </select>
+                            <button class="card-action" id="camera-layout-btn">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="card-action" id="fullscreen-feeds">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="camera-grid" id="live-camera-grid">
+                        <!-- Live feeds will be dynamically loaded -->
+                    </div>
+                    <div class="camera-pagination" id="camera-pagination">
+                        <!-- Pagination will be dynamically added if needed -->
+                    </div>
+                </div>
+
+                <!-- Recent Detections -->
+                <div class="dashboard-card recent-detections">
+                    <div class="card-header">
+                        <h3>Recent Detections</h3>
+                        <div class="card-actions">
+                            <button class="card-action" id="filter-detections">
+                                <i class="fas fa-filter"></i>
+                            </button>
+                            <button class="card-action" id="view-all-detections">View All</button>
+                        </div>
+                    </div>
+                    <div class="detections-list" id="recent-detections-list">
+                        <!-- Recent detections will be dynamically loaded -->
+                    </div>
+                </div>
+
+                <!-- System Health -->
+                <div class="dashboard-card system-health">
+                    <div class="card-header">
+                        <h3>System Health</h3>
+                        <div class="health-indicator good">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="system-status-text">Healthy</span>
+                        </div>
+                    </div>
+                    <div class="health-metrics" id="health-metrics">
+                        <!-- Health metrics will be dynamically loaded -->
+                    </div>
+                    <div class="health-actions">
+                        <button class="btn btn-small" id="run-diagnostics">Run Diagnostics</button>
+                        <button class="btn btn-small btn-secondary" id="view-logs">View Logs</button>
+                    </div>
+                </div>
+
+                <!-- Analytics Chart -->
+                <div class="dashboard-card analytics-chart">
+                    <div class="card-header">
+                        <h3>Detection Analytics</h3>
+                        <select class="chart-filter" id="chart-time-filter">
+                            <option value="24h">Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                            <option value="90d">Last 90 Days</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <div style="text-align: center;">
+                            <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+                            <p>Detection Analytics Chart</p>
+                            <small>Real-time detection trends and patterns</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Banner -->
+            <div class="alert-banner" id="alert-banner" style="display: none;">
+                <div class="alert-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="alert-message"></span>
+                </div>
+                <button class="alert-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Cameras Page -->
+        <section id="cameras" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title">Cameras</h1>
+                <p class="page-subtitle">Manage and monitor all security cameras</p>
+            </div>
+            
+            <!-- Camera Management Controls -->
+            <div class="quick-actions">
+                <button class="quick-action-btn" id="add-camera-btn">
+                    <i class="fas fa-plus"></i>
+                    <span>Add Camera</span>
+                </button>
+                <button class="quick-action-btn" id="bulk-actions-btn">
+                    <i class="fas fa-cog"></i>
+                    <span>Bulk Actions</span>
+                </button>
+                <button class="quick-action-btn" id="refresh-cameras-btn">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Refresh All</span>
+                </button>
+            </div>
+            
+            <!-- Camera Quick Filters -->
+            <div class="camera-filters">
+                <div class="filter-group">
+                    <label for="camera-status-filter">Status:</label>
+                    <select id="camera-status-filter" class="filter-select">
+                        <option value="">All Status</option>
+                        <option value="online">Online</option>
+                        <option value="offline">Offline</option>
+                        <option value="warning">Warning</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="camera-location-filter">Location:</label>
+                    <select id="camera-location-filter" class="filter-select">
+                        <option value="">All Locations</option>
+                        <option value="entrance">Entrance</option>
+                        <option value="parking">Parking</option>
+                        <option value="exit">Exit</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="camera-search-filter">Search:</label>
+                    <input type="text" id="camera-search-filter" class="filter-input" placeholder="Search by name or IP...">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn btn-primary" id="apply-camera-filters">Apply Filters</button>
+                    <button class="btn btn-secondary" id="clear-camera-filters">Clear</button>
+                </div>
+            </div>
+            
+            <!-- Camera Grid -->
+            <div class="cameras-grid" id="cameras-grid">
+                <!-- Camera cards will be dynamically loaded -->
+            </div>
+        </section>
+
+        <section id="detections" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title">Detection Results</h1>
+                <p class="page-subtitle">License plate detection history and analysis</p>
+            </div>
+            
+            <!-- Detection Action Bar -->
+            <div class="detection-action-bar">
+                <button class="btn btn-primary" id="export-csv-btn">
+                    <i class="fas fa-file-csv"></i>
+                    Export CSV
+                </button>
+                <button class="btn btn-primary" id="export-pdf-btn">
+                    <i class="fas fa-file-pdf"></i>
+                    Export PDF
+                </button>
+                <button class="btn btn-secondary" id="manual-detection-btn">
+                    <i class="fas fa-search"></i>
+                    Manual Detection
+                </button>
+                <button class="btn btn-secondary" id="detection-report-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    Detection Report
+                </button>
+            </div>
+            
+            <!-- Detection Filters -->
+            <div class="detection-filters">
+                <!-- Filter Row 1 -->
+                <div class="filter-row filter-row-1">
+                    <div class="filter-group smart-search-group">
+                        <label for="smart-search">Smart Search:</label>
+                        <input type="text" id="smart-search" class="filter-input smart-search-input" 
+                               placeholder="🔍 License plate, vehicle type, color...">
+                    </div>
+                    <div class="filter-group quick-filters-group">
+                        <label>Quick Time:</label>
+                        <div class="quick-filter-row">
+                            <button class="quick-filter-btn" data-period="1h">Last Hour</button>
+                            <button class="quick-filter-btn" data-period="24h">Last 24h</button>
+                            <button class="quick-filter-btn" data-period="today">Today</button>
+                            <button class="quick-filter-btn" data-period="yesterday">Yesterday</button>
+                        </div>
+                    </div>
+                    <div class="filter-group date-range-group">
+                        <label>Date Range:</label>
+                        <div class="date-inputs">
+                            <input type="date" id="date-from" class="filter-input date-input">
+                            <input type="date" id="date-to" class="filter-input date-input">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label>Camera:</label>
+                        <select id="camera-filter" class="filter-select">
+                            <option value="">All Cameras</option>
+                            <option value="cam_001">Entrance Gate</option>
+                            <option value="cam_002">Parking Lot A</option>
+                            <option value="cam_003">Loading Dock</option>
+                            <option value="cam_004">Side Entrance</option>
+                            <option value="cam_005">Rear Exit</option>
+                            <option value="cam_006">Visitor Parking</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Filter Row 2 -->
+                <div class="filter-row filter-row-2">
+                    <div class="filter-group direction-speed-group">
+                        <div class="filter-subgroup">
+                            <label>Direction:</label>
+                            <select id="direction-filter" class="filter-select compact">
+                                <option value="">All Directions</option>
+                                <option value="entering">Entering</option>
+                                <option value="exiting">Exiting</option>
+                                <option value="parking">Parking</option>
+                                <option value="loading">Loading</option>
+                            </select>
+                        </div>
+                        <div class="filter-subgroup speed-range-subgroup">
+                            <label>Speed (mph):</label>
+                            <div class="range-inputs">
+                                <input type="number" id="speed-min" class="filter-input range-input" placeholder="Min" min="0" max="100">
+                                <span class="range-separator">-</span>
+                                <input type="number" id="speed-max" class="filter-input range-input" placeholder="Max" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="filter-group quick-filters-group">
+                        <label>Extended Time:</label>
+                        <div class="quick-filter-row">
+                            <button class="quick-filter-btn" data-period="this-week">This Week</button>
+                            <button class="quick-filter-btn" data-period="last-week">Last Week</button>
+                            <button class="quick-filter-btn" data-period="30d">Last 30 Days</button>
+                        </div>
+                    </div>
+                    <div class="filter-group confidence-status-group">
+                        <div class="filter-subgroup">
+                            <label>Confidence:</label>
+                            <select id="confidence-filter" class="filter-select compact">
+                                <option value="">All Confidence</option>
+                                <option value="high">High (90%+)</option>
+                                <option value="medium">Medium (70-89%)</option>
+                                <option value="low">Low (<70%)</option>
+                            </select>
+                        </div>
+                        <div class="filter-subgroup">
+                            <label>Status:</label>
+                            <select id="status-filter" class="filter-select compact">
+                                <option value="">All Status</option>
+                                <option value="verified">Verified</option>
+                                <option value="flagged">Flagged</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
+                        <button class="btn btn-secondary" id="clear-all-filters-btn">Clear All</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detection Results -->
+            <div class="detection-results-container">
+                <div class="detection-table-header">
+                    <h3>Detection Results</h3>
+                    <div class="bulk-actions" id="bulk-actions" style="display: none;">
+                        <button class="btn btn-small btn-secondary" id="bulk-verify">Verify Selected</button>
+                        <button class="btn btn-small btn-warning" id="bulk-flag">Flag Selected</button>
+                        <button class="btn btn-small btn-danger" id="bulk-delete">Delete Selected</button>
+                    </div>
+                </div>
+                <div class="detection-table-wrapper">
+                    <table class="detection-table" id="detection-table">
+                        <thead>
+                            <tr>
+                                <th class="checkbox-column">
+                                    <input type="checkbox" id="select-all-detections">
+                                </th>
+                                <th class="sortable" data-sort="timestamp">
+                                    Timestamp
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="plate">
+                                    Plate Number
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="camera">
+                                    Camera
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="confidence">
+                                    Confidence
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="vehicle">
+                                    Vehicle
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="sortable" data-sort="status">
+                                    Status
+                                    <i class="fas fa-sort sort-icon"></i>
+                                </th>
+                                <th class="actions-column">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detection-table-body">
+                            <!-- Detection rows will be dynamically loaded -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="detection-pagination" id="detection-pagination">
+                    <!-- Pagination will be dynamically loaded -->
+                </div>
+            </div>
+        </section>
+
+        <section id="analytics" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title">Analytics</h1>
+                <p class="page-subtitle">Traffic patterns, trends, and system performance</p>
+            </div>
+            
+            <!-- Analytics Controls -->
+            <div class="analytics-controls">
+                <select id="analytics-timeframe" class="analytics-select">
+                    <option value="24h">Last 24 Hours</option>
+                    <option value="7d">Last 7 Days</option>
+                    <option value="30d">Last 30 Days</option>
+                    <option value="90d">Last 90 Days</option>
+                </select>
+                <button class="btn btn-primary" id="export-analytics-btn">
+                    <i class="fas fa-download"></i>
+                    Export Report
+                </button>
+            </div>
+            
+            <!-- Analytics Grid -->
+            <div class="analytics-grid" id="analytics-grid">
+                <!-- Analytics charts will be dynamically loaded -->
+            </div>
+        </section>
+
+        <section id="alerts" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title">Alerts</h1>
+                <p class="page-subtitle">Monitor and manage system alerts and notifications</p>
+            </div>
+            
+            <!-- Alert Actions -->
+            <div class="alert-actions">
+                <button class="btn btn-primary" id="acknowledge-all-btn">
+                    <i class="fas fa-check"></i>
+                    Acknowledge All
+                </button>
+                <button class="btn btn-secondary" id="filter-alerts-btn">
+                    <i class="fas fa-filter"></i>
+                    Filter Alerts
+                </button>
+                <button class="btn btn-secondary" id="export-alerts-btn">
+                    <i class="fas fa-download"></i>
+                    Export
+                </button>
+            </div>
+            
+            <!-- Alert List -->
+            <div class="alerts-list" id="alerts-list">
+                <!-- Alerts will be dynamically loaded -->
+            </div>
+        </section>
+
+        <section id="reports" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title">Reports</h1>
+                <p class="page-subtitle">Generate and manage system reports</p>
+            </div>
+            
+            <!-- Report Actions -->
+            <div class="report-actions">
+                <button class="btn btn-primary" id="generate-report-btn">
+                    <i class="fas fa-plus"></i>
+                    Generate New Report
+                </button>
+                <button class="btn btn-secondary" id="schedule-report-btn">
+                    <i class="fas fa-clock"></i>
+                    Schedule Report
+                </button>
+                <button class="btn btn-secondary" id="report-templates-btn">
+                    <i class="fas fa-file-contract"></i>
+                    Templates
+                </button>
+            </div>
+            
+            <!-- Report List -->
+            <div class="reports-list" id="reports-list">
+                <!-- Reports will be dynamically loaded -->
+            </div>
+        </section>
+
+        <section id="settings" class="content-section">
+            <div class="page-header">
+                <h1 class="page-title">Settings</h1>
+                <p class="page-subtitle">Configure system preferences and user management</p>
+            </div>
+            
+            <!-- Settings Navigation -->
+            <div class="settings-nav">
+                <button class="settings-nav-btn active" data-settings="general">
+                    <i class="fas fa-sliders-h"></i>
+                    General
+                </button>
+                <button class="settings-nav-btn" data-settings="cameras">
+                    <i class="fas fa-video"></i>
+                    Cameras
+                </button>
+                <button class="settings-nav-btn" data-settings="alerts">
+                    <i class="fas fa-bell"></i>
+                    Alerts
+                </button>
+                <button class="settings-nav-btn" data-settings="users">
+                    <i class="fas fa-users"></i>
+                    Users
+                </button>
+                <button class="settings-nav-btn" data-settings="system">
+                    <i class="fas fa-server"></i>
+                    System
+                </button>
+            </div>
+            
+            <!-- Settings Content -->
+            <div class="settings-content" id="settings-content">
+                <!-- Settings panels will be dynamically loaded -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Detection Details Modal -->
+    <div class="modal-overlay" id="detection-details-modal" style="display: none;">
+        <div class="modal-container detection-details-container">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <i class="fas fa-search"></i>
+                    <span>Detection Details - <span id="modal-plate-number">ABC-123</span></span>
+                </div>
+                <button class="modal-close" id="close-detection-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-content">
+                <div class="detection-details-layout">
+                    <!-- Left side - Vehicle Image -->
+                    <div class="detection-image-section">
+                        <div class="vehicle-image-container">
+                            <div class="vehicle-image" id="modal-vehicle-image">
+                                <i class="fas fa-car"></i>
+                                <div class="plate-overlay">
+                                    <span class="plate-text" id="modal-plate-overlay">ABC-123</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="image-actions">
+                            <button class="btn btn-small btn-secondary" id="enhanced-image-btn">
+                                <i class="fas fa-magic"></i>
+                                Enhanced Image
+                            </button>
+                            <button class="btn btn-small btn-secondary" id="video-clip-btn">
+                                <i class="fas fa-video"></i>
+                                Video Clip
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Right side - Detection Information -->
+                    <div class="detection-info-section">
+                        <div class="detection-tabs">
+                            <button class="detection-tab active" data-tab="basic">Basic Info</button>
+                            <button class="detection-tab" data-tab="vehicle">Vehicle Details</button>
+                            <button class="detection-tab" data-tab="confidence">Confidence Analysis</button>
+                        </div>
+                        
+                        <div class="detection-tab-content">
+                            <!-- Basic Info Tab -->
+                            <div class="tab-panel active" id="basic-tab">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Timestamp:</label>
+                                        <span id="modal-timestamp">2025-01-09 14:32:15</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Camera:</label>
+                                        <span id="modal-camera">Entrance Gate</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Location:</label>
+                                        <span id="modal-location">Main Entrance</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Confidence:</label>
+                                        <span id="modal-confidence" class="confidence-badge high">98.5%</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Status:</label>
+                                        <span id="modal-status" class="status-badge verified">Verified</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Processing Time:</label>
+                                        <span id="modal-processing-time">234ms</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Vehicle Details Tab -->
+                            <div class="tab-panel" id="vehicle-tab">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Vehicle Type:</label>
+                                        <span id="modal-vehicle-type">Sedan</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Color:</label>
+                                        <span id="modal-vehicle-color">Blue</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Make/Model:</label>
+                                        <span id="modal-vehicle-model">Unknown</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Direction:</label>
+                                        <span id="modal-direction">Entering</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Speed:</label>
+                                        <span id="modal-speed">25 mph</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Confidence Analysis Tab -->
+                            <div class="tab-panel" id="confidence-tab">
+                                <div class="confidence-breakdown">
+                                    <div class="confidence-item">
+                                        <label>Overall Confidence:</label>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: 98.5%"></div>
+                                            <span class="confidence-percent">98.5%</span>
+                                        </div>
+                                    </div>
+                                    <div class="confidence-item">
+                                        <label>Character Recognition:</label>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: 97.2%"></div>
+                                            <span class="confidence-percent">97.2%</span>
+                                        </div>
+                                    </div>
+                                    <div class="confidence-item">
+                                        <label>Plate Detection:</label>
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: 99.8%"></div>
+                                            <span class="confidence-percent">99.8%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-warning" id="flag-detection-btn">
+                    <i class="fas fa-flag"></i>
+                    Flag Detection
+                </button>
+                <button class="btn btn-success" id="download-detection-btn">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+                <button class="btn btn-secondary" id="close-modal-btn">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Other Modals will be dynamically created -->
+    <div id="modal-container"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Loading...</span>
+        </div>
+    </div>
+    
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

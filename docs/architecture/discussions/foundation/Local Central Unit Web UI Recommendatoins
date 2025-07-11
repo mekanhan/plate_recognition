@@ -1,0 +1,488 @@
+# Local Central Unit Web UI: Feature Analysis & Recommendations
+
+## Header & Navigation Design
+
+### 🎯 **Header Components (Top Bar)**
+
+#### **Page Title Location**
+**Recommendation**: Keep page title in the header (as currently implemented)
+- **Rationale**: Consistent navigation context, saves vertical space
+- **Implementation**: Dynamic title updates based on current page
+- **Breadcrumb**: Add breadcrumb trail for sub-pages (e.g., Cameras > Camera Details)
+
+#### **System Status Indicators**
+```
+[🟢 System Online] [Uptime: 15d 4h 23m] [Last Update: 2s ago]
+```
+**Status Types**:
+- 🟢 **Online**: All systems operational
+- 🟡 **Degraded**: Some cameras offline or performance issues
+- 🔴 **Critical**: Major system failures
+- ⚪ **Maintenance**: System in maintenance mode
+
+#### **Header Action Buttons**
+1. **Refresh Button**: 
+   - Refreshes current page data
+   - Shows loading indicator during refresh
+   - Updates "Last Update" timestamp
+
+2. **Notification Bell**: 
+   - Badge shows count of unread notifications
+   - Dropdown panel with recent alerts, detections, and system events
+   - Click-to-acknowledge functionality
+
+3. **Fullscreen Button**: 
+   - Toggles fullscreen mode for current view
+   - Especially useful for live camera feeds and analytics
+   - ESC key returns to normal view
+
+4. **Profile Menu**: 
+   - User info, preferences, logout
+   - Quick access to user-specific settings
+
+### 📋 **Sidebar Navigation**
+
+#### **Core Structure**
+```
+[Logo: LPR System]
+────────────────────
+📊 Dashboard
+📹 Cameras        [12]
+🔍 Detections     [3]
+📈 Analytics
+🚨 Alerts         [2]
+📋 Reports
+⚙️  Settings
+────────────────────
+[User: Admin] [↗️]
+```
+
+#### **Navigation Features**
+- **Expand/Collapse**: Mobile-responsive sidebar
+- **Active State**: Clear indication of current page
+- **Badges**: Dynamic counters (camera count, active alerts, flagged detections)
+- **Tooltips**: Helpful hints for collapsed state
+
+---
+
+## 📊 Dashboard: Real-Time Operations Center
+
+### **Key Metrics Cards (Top Row)**
+```
+┌─────────────┬─────────────┬─────────────┬─────────────┐
+│🎥 12        │🚗 1,247     │⚠️ 3         │✅ 94.2%     │
+│Active Cams  │Detect Today │Active Alert │Accuracy     │
+│+2 this week │+8.5%        │2 resolved   │+1.2%        │
+└─────────────┴─────────────┴─────────────┴─────────────┘
+```
+
+### **Dashboard Grid Layout**
+```
+┌─────────────────────────┬───────────────┐
+│    Live Camera Feeds    │Recent Detects │
+│   [4-camera grid]       │[Last 10 items]│
+├─────────────────────────┼───────────────┤
+│   Detection Analytics   │ System Health │
+│   [Real-time chart]     │ [CPU/Memory]  │
+└─────────────────────────┴───────────────┘
+```
+
+### **Live Camera Feeds Card**
+- **Grid Layout**: 2x2 for 4 cameras maximum
+- **Camera Info Overlay**: Name, status, location
+- **Pagination**: Navigate through camera groups
+- **Click Action**: Opens camera detail modal
+- **Status Indicators**: 🟢 Online, 🔴 Offline, 🟡 Warning
+
+### **Recent Detections Card**
+- **List Format**: Thumbnail, plate number, camera, confidence, time
+- **Click Action**: Opens detection detail modal
+- **Confidence Color Coding**: Green (90%+), Orange (70-89%), Red (<70%)
+- **"View All" Button**: Navigate to full detections page
+
+---
+
+## 📹 Camera Management: Device Control Center
+
+### **Action Bar**
+```
+[➕ Add Camera] [📥 Import] [🔄 Bulk Actions] [📊 Camera Health Report]
+```
+
+### **Filter & Search Bar**
+```
+Status: [All Status ▼] Location: [All Locations ▼] Search: [🔍 ___________] [🗑️ Reset]
+```
+
+### **Camera Display Options**
+- **View Toggle**: Grid view (cards) vs List view (table)
+- **Sort Options**: Name, Status, Location, Date Added, Uptime
+- **Items per Page**: 12, 24, 48 cameras
+
+### **Camera Card Information**
+```
+┌─────────────────────────────────┐
+│ 📹 Entrance Gate        🟢 Online│
+├─────────────────────────────────┤
+│        [Video Preview]           │
+├─────────────────────────────────┤
+│ IP: 192.168.1.101               │
+│ Resolution: 1920x1080           │
+│ FPS: 30                         │
+│ Location: Main Entrance         │
+│ Uptime: 15d 4h 23m              │
+├─────────────────────────────────┤
+│ [⚙️ Configure] [👁️ View Live] [⋮]│
+└─────────────────────────────────┘
+```
+
+### **Offline Camera Handling**
+```
+┌─────────────────────────────────┐
+│ 📹 Exit Point           🔴 Offline│
+├─────────────────────────────────┤
+│         [⚠️ No Signal]           │
+├─────────────────────────────────┤
+│ IP: 192.168.1.103               │
+│ Last Seen: 2 hours ago          │
+│ Issue: Connection timeout       │
+├─────────────────────────────────┤
+│ [🔄 Reconnect] [🔧 Diagnose] [⋮] │
+└─────────────────────────────────┘
+```
+
+### **Add Camera Modal**
+```
+┌─────────────────────────────────────┐
+│ ➕ Add New Camera            [❌]   │
+├─────────────────────────────────────┤
+│ Camera Name: [___________] *        │
+│ IP Address:  [___________] *        │
+│ Location:    [___________] *        │
+│ Stream URL:  [___________] *        │
+│ Resolution:  [1920x1080 ▼]         │
+│ Frame Rate:  [30 FPS ▼]            │
+│ Username:    [___________]          │
+│ Password:    [***********]          │
+│                                     │
+│ [🧪 Test Connection]                │
+├─────────────────────────────────────┤
+│        [Cancel] [✅ Add Camera]     │
+└─────────────────────────────────────┘
+```
+
+---
+
+## 🔍 Detection Results: Search & Analysis Hub
+
+### **Action Bar**
+```
+[📤 Export CSV] [📤 Export PDF] [🔍 Manual Detection] [📊 Detection Report]
+```
+
+### **Smart Search & Filters**
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Smart Search: [🔍 License plate, vehicle type, color...   ] │
+├─────────────────────────────────────────────────────────────┤
+│ Quick Filters: [Last Hour] [Today] [Yesterday] [Last 7 Days]│
+├─────────────────────────────────────────────────────────────┤
+│ From: [📅 ________] To: [📅 ________]                       │
+│ Camera: [All Cameras ▼] Confidence: [All Levels ▼]         │
+│                              [Apply] [Clear All]            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **Detection Results Table**
+```
+☑️ | Timestamp          | Plate    | Camera      | Confidence | Vehicle | Status    | Actions
+---|--------------------|---------|-----------  |------------|---------|-----------|--------
+☐  | 2025-01-09 14:32  | ABC-123 | Entrance    | 98.5% 🟢   | Blue    | Verified  | 👁️📥🚩
+☐  | 2025-01-09 14:28  | XYZ-789 | Parking A   | 87.2% 🟡   | White   | Flagged   | 👁️📥🚩
+☐  | 2025-01-09 14:25  | DEF-456 | Loading     | 92.8% 🟢   | Red     | Verified  | 👁️📥🚩
+```
+
+### **Detection Detail Modal**
+```
+┌─────────────────────────────────────────────────────────┐
+│ 🔍 Detection Details - ABC-123               [❌]      │
+├─────────────────────────────────────────────────────────┤
+│ ┌─────────────────┐ │ Timestamp: 2025-01-09 14:32:15  │
+│ │                 │ │ Camera: Entrance Gate            │
+│ │   [Vehicle      │ │ Location: Main Entrance          │
+│ │    Image]       │ │ Confidence: 98.5%                │
+│ │                 │ │ Vehicle: Blue Sedan              │
+│ │ [ABC-123]       │ │ Status: Verified                 │
+│ └─────────────────┘ │ Processing Time: 234ms           │
+├─────────────────────────────────────────────────────────┤
+│ 📹 View Video Clip | 🖼️ Enhanced Image | 📊 Confidence Details │
+├─────────────────────────────────────────────────────────┤
+│        [🚩 Flag] [📥 Download] [❌ Close]               │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📈 Analytics: Intelligence Dashboard
+
+### **Suggested Analytics Features**
+
+#### **Traffic Overview**
+- **Purpose**: Vehicle flow patterns over time
+- **Metrics**: Vehicles per hour/day, peak traffic times
+- **Visualization**: Line charts, heat maps
+
+#### **Peak Hours Analysis**
+- **Purpose**: Identify busy periods for staffing/security
+- **Metrics**: Hourly vehicle counts, day-of-week patterns
+- **Visualization**: Bar charts, calendar heat maps
+
+#### **Camera Performance**
+- **Purpose**: Monitor detection efficiency per camera
+- **Metrics**: Detection rate, uptime, accuracy by camera
+- **Visualization**: Performance scorecards, comparison charts
+
+#### **Detection Accuracy Trends**
+- **Purpose**: Monitor AI model performance over time
+- **Metrics**: Confidence levels, manual corrections needed
+- **Visualization**: Trend lines, accuracy distribution
+
+#### **Frequent Vehicles**
+- **Purpose**: Identify regular visitors, suspicious patterns
+- **Metrics**: Repeat plate detections, visit frequency
+- **Visualization**: Top plates list, frequency charts
+
+#### **Alerts Summary**
+- **Purpose**: System health and security incident overview
+- **Metrics**: Alert types, resolution times, trends
+- **Visualization**: Alert distribution, timeline views
+
+### **Analytics Interface**
+```
+┌─────────────────────────────────────────────────────────┐
+│ 📈 Analytics & Insights                                 │
+├─────────────────────────────────────────────────────────┤
+│ Time Range: [24H] [7D] [30D] [90D] [Custom]            │
+├─────────────────────────────────────────────────────────┤
+│ ┌─────────────────┬─────────────────┬─────────────────┐ │
+│ │ Traffic Overview│   Peak Hours    │ Camera Perform. │ │
+│ │ [Line Chart]    │ [Bar Chart]     │ [Score Cards]   │ │
+│ └─────────────────┴─────────────────┴─────────────────┘ │
+│ ┌─────────────────┬─────────────────┬─────────────────┐ │
+│ │ Detection Acc.  │ Frequent Plates │ Alerts Summary  │ │
+│ │ [Trend Chart]   │ [Top 10 List]   │ [Status Cards]  │ │
+│ └─────────────────┴─────────────────┴─────────────────┘ │
+├─────────────────────────────────────────────────────────┤
+│              [📅 Schedule Report] [📊 Generate Report]  │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🚨 Alerts: Security & System Monitoring
+
+### **Alert Categories & Types**
+
+#### **Severity Levels**
+- 🔴 **Critical**: System failures, security breaches
+- 🟡 **Warning**: Performance issues, camera offline
+- ℹ️ **Info**: Routine notifications, completed tasks
+- ✅ **Resolved**: Previously active alerts that were addressed
+
+#### **Alert Categories**
+- **Camera**: Offline, connection issues, poor image quality
+- **System**: High CPU/memory, storage space, software errors
+- **Detection**: Low confidence rates, processing delays
+- **Security**: Unauthorized access, suspicious activity
+
+### **Alerts Interface**
+```
+┌─────────────────────────────────────────────────────────┐
+│ 🚨 System Alerts                                        │
+├─────────────────────────────────────────────────────────┤
+│ Filters: Severity [All ▼] Status [Active ▼] Category [All ▼] │
+├─────────────────────────────────────────────────────────┤
+│ ┌─────┬─────┬─────┬─────┐                               │
+│ │🔴 2 │🟡 5 │ℹ️ 8 │✅ 23│                               │
+│ │Crit.│Warn │Info │Rslvd│                               │
+│ └─────┴─────┴─────┴─────┘                               │
+├─────────────────────────────────────────────────────────┤
+│ 🔴 Camera Offline - Exit Point (2 hours ago)           │
+│    Camera has been offline for 2 hours                 │
+│    [Acknowledge] [Resolve] [View Details]               │
+│                                                         │
+│ 🟡 High System Load - CPU at 85% (30 mins ago)        │
+│    CPU usage above 80% for extended period             │
+│    [Acknowledge] [Resolve] [View Details]               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### **Alert Configuration**
+- **Alert Rules**: Define thresholds and conditions
+- **Notification Settings**: Email, SMS, push notifications
+- **Escalation Policies**: Auto-escalate unresolved alerts
+- **Maintenance Windows**: Suppress alerts during maintenance
+
+---
+
+## 📋 Reports: Documentation & Compliance
+
+### **Report Types**
+
+#### **Traffic Reports**
+- **Daily/Weekly/Monthly traffic summaries**
+- **Vehicle count trends and patterns**
+- **Peak hour analysis and recommendations**
+- **Camera utilization statistics**
+
+#### **Performance Reports**
+- **System performance metrics (CPU, memory, storage)**
+- **Camera uptime and reliability statistics**
+- **Detection accuracy and processing times**
+- **Alert response and resolution times**
+
+#### **Security Reports**
+- **Security incident summaries**
+- **Suspicious activity detected**
+- **Access attempts and authentication logs**
+- **Compliance audit trails**
+
+#### **Compliance Reports**
+- **Data retention and privacy compliance**
+- **System access and user activity logs**
+- **Backup and recovery status**
+- **Security policy adherence**
+
+### **Reports Interface**
+```
+┌─────────────────────────────────────────────────────────┐
+│ 📋 Reports                                              │
+├─────────────────────────────────────────────────────────┤
+│ Report Templates:                                       │
+│ ┌─────────────┬─────────────┬─────────────┬───────────┐ │
+│ │🚗 Traffic   │📊 Performance│🛡️ Security  │📋 Complian│ │
+│ │Generate     │Generate     │Generate     │Generate   │ │
+│ └─────────────┴─────────────┴─────────────┴───────────┘ │
+├─────────────────────────────────────────────────────────┤
+│ Recent Reports:                                         │
+│ Name                    │Type    │Generated│Status│Size │
+│ Daily Traffic - Jan 9   │Traffic │2h ago   │✅    │2.4MB│
+│ Weekly Performance      │Perf.   │Generating│⏳   │--   │
+│ Security Incident - W1  │Security│1d ago   │✅    │856KB│
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## ⚙️ Settings: System Configuration
+
+### **Settings Categories**
+
+#### **General Settings**
+- **System Name**: Customizable system identifier
+- **Timezone**: Local timezone configuration
+- **Date/Time Format**: Display preferences
+- **Language**: Interface language (if multilingual)
+- **Auto-backup**: Scheduled backup configuration
+
+#### **Camera Settings**
+- **Default Resolution**: New camera default (1920x1080, 1280x720, etc.)
+- **Default Frame Rate**: New camera default (30, 25, 15 FPS)
+- **Recording Duration**: How long to keep recordings (days)
+- **Auto-discovery**: Automatic camera detection on network
+- **Stream Timeout**: Connection timeout settings
+
+#### **Detection Settings**
+- **Confidence Threshold**: Minimum confidence for valid detection (80%)
+- **Detection Model**: AI model selection (YOLO v8, v10, custom)
+- **Image Enhancement**: Enable/disable image preprocessing
+- **Real-time Processing**: Enable/disable live detection
+- **Batch Processing**: Configure batch detection settings
+
+#### **Alert Settings**
+- **Alert Thresholds**: Configure when alerts trigger
+- **Notification Methods**: Email, SMS, push notifications
+- **Escalation Rules**: Auto-escalate unresolved alerts
+- **Quiet Hours**: Suppress non-critical alerts during specific times
+
+#### **User Management**
+- **User Accounts**: Add, edit, remove users
+- **Role Assignments**: Administrator, Operator, Viewer roles
+- **Permission Management**: Fine-grained access controls
+- **Session Management**: Login timeouts, concurrent sessions
+
+#### **Security Settings**
+- **Password Policies**: Complexity requirements
+- **Two-Factor Authentication**: Enable/configure 2FA
+- **API Keys**: Generate and manage API access
+- **Audit Logging**: Configure audit trail settings
+- **Encryption**: Data encryption settings
+
+#### **System Maintenance**
+- **Backup & Restore**: Manual and scheduled backups
+- **Log Management**: Log retention and rotation
+- **System Updates**: Software update management
+- **Diagnostics**: System health check tools
+- **Storage Management**: Data cleanup and optimization
+
+### **System Health Monitoring**
+
+#### **Real-time Metrics**
+```
+┌─────────────────────────────────────────────────────────┐
+│ 🏥 System Health                                        │
+├─────────────────────────────────────────────────────────┤
+│ CPU Usage:    ████████░░ 85%  🟡 High                  │
+│ Memory:       ██████░░░░ 62%  🟢 Normal                │
+│ Storage:      ████████░░ 78%  🟡 Monitor               │
+│ Network:      ████░░░░░░ 32%  🟢 Good                  │
+│                                                         │
+│ Active Cameras: 11/12 🟢    Processing Queue: 12 frames│
+│ Detection Rate: 1.2/sec     Database Size: 2.4 GB      │
+│                                                         │
+│ [🔍 Run Diagnostics] [🧹 Optimize System] [📋 View Logs]│
+└─────────────────────────────────────────────────────────┘
+```
+
+#### **Health Indicators**
+- **🟢 Healthy**: All systems operating normally
+- **🟡 Warning**: Some issues detected, monitoring required
+- **🔴 Critical**: Immediate attention required
+- **⚫ Offline**: Component not responding
+
+---
+
+## 🔧 Additional Recommendations
+
+### **Keyboard Shortcuts**
+- `Ctrl+R`: Refresh current page
+- `Ctrl+K`: Focus search/filter
+- `F11`: Toggle fullscreen
+- `Esc`: Close modals/exit fullscreen
+- `Tab`: Navigate through interface elements
+
+### **Mobile Responsiveness**
+- **Responsive Sidebar**: Collapsible on mobile devices
+- **Touch-Friendly**: Large buttons and touch targets
+- **Simplified Views**: Streamlined mobile layouts
+- **Gesture Support**: Swipe navigation where appropriate
+
+### **Accessibility Features**
+- **Screen Reader Support**: Proper ARIA labels
+- **High Contrast Mode**: For visually impaired users
+- **Keyboard Navigation**: Full keyboard accessibility
+- **Font Size Options**: Adjustable text size
+
+### **Performance Optimization**
+- **Lazy Loading**: Load content as needed
+- **Caching**: Cache frequently accessed data
+- **Compression**: Minimize data transfer
+- **Progressive Enhancement**: Core functionality works without JavaScript
+
+### **Data Export Options**
+- **CSV Export**: For spreadsheet analysis
+- **PDF Reports**: For documentation and sharing
+- **JSON API**: For programmatic access
+- **Image/Video Export**: Detection evidence
+
+This comprehensive local UI design prioritizes real-time operations, immediate system control, and efficient monitoring - exactly what security personnel need for effective daily operations.

@@ -1,0 +1,11 @@
+{
+  "device_id": "LPR-4941D0EBE9B0",
+  "api_key_hash": "3296f0a3286a9d9d0a5156473b62695c129f46109814ee08b8d52f9cffb61c3d",
+  "cloud_endpoint": "https://api.lprcloud.com",
+  "registered_at": "2025-07-08T23:34:40.651176",
+  "device_type": "edge_lpr",
+  "capabilities": {
+    "model_version": "2.0.0",
+    "has_gpu": true
+  }
+}

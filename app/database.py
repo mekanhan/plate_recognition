@@ -29,7 +29,7 @@ async def init_database():
     """Initialize database and create all tables"""
     try:
         # Import models to ensure they're registered
-        from app.models import Base, Detection, EnhancedResult, KnownPlate, VideoSegment, SystemEvent
+        from app.models import Base, Detection, EnhancedResult, KnownPlate, VideoSegment, SystemEvent, Location, Camera, CameraGroup, CameraHealth, ProcessingQueue, User
         
         logger.info("Creating database tables...")
         

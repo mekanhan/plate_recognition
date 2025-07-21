@@ -1,0 +1,862 @@
+{
+	"info": {
+		"_postman_id": "camera-api-collection",
+		"name": "Camera API Testing Collection",
+		"description": "Comprehensive API testing for License Plate Recognition Camera Management System",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8002/api",
+			"type": "string"
+		},
+		{
+			"key": "camera_id",
+			"value": "065d0400-90ca-4f15-a25e-7adb001c2c18",
+			"type": "string"
+		},
+		{
+			"key": "location_id",
+			"value": "6d882a8a-2ad8-46d9-b254-987c5e5d5eba",
+			"type": "string"
+		},
+		{
+			"key": "test_ip",
+			"value": "10.0.0.181",
+			"type": "string"
+		},
+		{
+			"key": "test_username",
+			"value": "admin",
+			"type": "string"
+		},
+		{
+			"key": "test_password",
+			"value": "Mekus_1987",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "📁 Camera Management",
+			"item": [
+				{
+					"name": "GET List All Cameras",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Camera has required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0]).to.have.property('id');",
+									"        pm.expect(jsonData[0]).to.have.property('name');",
+									"        pm.expect(jsonData[0]).to.have.property('ip_address');",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/cameras/",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", ""]
+						}
+					}
+				},
+				{
+					"name": "GET Camera by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Camera has correct ID\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.id).to.eql(pm.collectionVariables.get('camera_id'));",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/cameras/{{camera_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "{{camera_id}}"]
+						}
+					}
+				},
+				{
+					"name": "POST Create New Camera",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Camera created with ID\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.collectionVariables.set('new_camera_id', jsonData.id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test Camera {{$randomInt}}\",\n  \"ip_address\": \"192.168.1.{{$randomInt}}\",\n  \"port\": 554,\n  \"username\": \"admin\",\n  \"password\": \"test123\",\n  \"stream_path\": \"/stream1\",\n  \"location_id\": \"{{location_id}}\",\n  \"manufacturer\": \"hikvision\",\n  \"camera_type\": \"ip_camera\",\n  \"connection_type\": \"rtsp\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", ""]
+						}
+					}
+				},
+				{
+					"name": "PUT Update Camera",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Camera updated successfully\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Front Gate Camera\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": 554,\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/h264Preview_01_main\",\n  \"location_id\": \"{{location_id}}\",\n  \"manufacturer\": \"reolink\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/{{camera_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "{{camera_id}}"]
+						}
+					}
+				},
+				{
+					"name": "DELETE Camera",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cameras/{{new_camera_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "{{new_camera_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📁 Connection Testing",
+			"item": [
+				{
+					"name": "POST Test RTSP Connection - /stream1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"});",
+									"",
+									"pm.test(\"Response has connection details\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData).to.have.property('url');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/stream1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/test-connection",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "test-connection"]
+						}
+					}
+				},
+				{
+					"name": "POST Test RTSP Connection - Reolink Path",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/h264Preview_01_main\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/test-connection",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "test-connection"]
+						}
+					}
+				},
+				{
+					"name": "POST Test RTSP Connection - Hikvision Path",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/Streaming/Channels/101/\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/test-connection",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "test-connection"]
+						}
+					}
+				},
+				{
+					"name": "POST Test HTTP Connection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"connection_type\": \"http\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"80\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/test-connection",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "test-connection"]
+						}
+					}
+				},
+				{
+					"name": "POST Test Invalid Credentials",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Connection should fail\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.false;",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"wrong_user\",\n  \"password\": \"wrong_pass\",\n  \"stream_path\": \"/stream1\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/test-connection",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "test-connection"]
+						}
+					}
+				},
+				{
+					"name": "POST Test Enhanced Connection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ip_address\": \"{{test_ip}}\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"test_multiple_paths\": true,\n  \"include_onvif\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/test-connection-enhanced",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "test-connection-enhanced"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📁 Stream Management",
+			"item": [
+				{
+					"name": "GET Camera Snapshot",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 or 404\", function () {",
+									"    pm.expect([200, 404]).to.include(pm.response.code);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cameras/{{camera_id}}/snapshot",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "{{camera_id}}", "snapshot"]
+						}
+					}
+				},
+				{
+					"name": "GET Stream Info",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cameras/{{camera_id}}/stream",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "{{camera_id}}", "stream"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📁 Health & Monitoring",
+			"item": [
+				{
+					"name": "GET Camera Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Health response has status\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cameras/{{camera_id}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "{{camera_id}}", "health"]
+						}
+					}
+				},
+				{
+					"name": "GET All Locations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Location has required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        pm.expect(jsonData[0]).to.have.property('id');",
+									"        pm.expect(jsonData[0]).to.have.property('name');",
+									"    }",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/locations/",
+							"host": ["{{base_url}}"],
+							"path": ["locations", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📁 Error Scenarios",
+			"item": [
+				{
+					"name": "GET Non-existent Camera (404)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Error response format\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cameras/invalid-camera-id",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", "invalid-camera-id"]
+						}
+					}
+				},
+				{
+					"name": "POST Create Camera - Validation Error (400)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Validation error format\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"\",\n  \"ip_address\": \"invalid_ip\",\n  \"location_id\": \"invalid_uuid\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", ""]
+						}
+					}
+				},
+				{
+					"name": "POST Create Duplicate Camera (409)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 409\", function () {",
+									"    pm.response.to.have.status(409);",
+									"});",
+									"",
+									"pm.test(\"Conflict error format\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Duplicate Camera\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"location_id\": \"{{location_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/cameras/",
+							"host": ["{{base_url}}"],
+							"path": ["cameras", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📁 Complete Workflows",
+			"item": [
+				{
+					"name": "🔄 Full Camera Lifecycle",
+					"item": [
+						{
+							"name": "1. Get Locations",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/locations/",
+									"host": ["{{base_url}}"],
+									"path": ["locations", ""]
+								}
+							}
+						},
+						{
+							"name": "2. Test Connection",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"192.168.1.200\",\n  \"port\": \"554\",\n  \"username\": \"admin\",\n  \"password\": \"test123\",\n  \"stream_path\": \"/stream1\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/test-connection",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "test-connection"]
+								}
+							}
+						},
+						{
+							"name": "3. Create Camera",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    const jsonData = pm.response.json();",
+											"    pm.collectionVariables.set('workflow_camera_id', jsonData.id);",
+											"}"
+										]
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Workflow Test Camera\",\n  \"ip_address\": \"192.168.1.200\",\n  \"port\": 554,\n  \"username\": \"admin\",\n  \"password\": \"test123\",\n  \"stream_path\": \"/stream1\",\n  \"location_id\": \"{{location_id}}\",\n  \"manufacturer\": \"generic\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", ""]
+								}
+							}
+						},
+						{
+							"name": "4. Verify Camera",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/cameras/{{workflow_camera_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "{{workflow_camera_id}}"]
+								}
+							}
+						},
+						{
+							"name": "5. Update Camera",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Updated Workflow Camera\",\n  \"ip_address\": \"192.168.1.200\",\n  \"stream_path\": \"/h264Preview_01_main\",\n  \"manufacturer\": \"hikvision\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/{{workflow_camera_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "{{workflow_camera_id}}"]
+								}
+							}
+						},
+						{
+							"name": "6. Check Health",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/cameras/{{workflow_camera_id}}/health",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "{{workflow_camera_id}}", "health"]
+								}
+							}
+						},
+						{
+							"name": "7. Cleanup - Delete Camera",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/cameras/{{workflow_camera_id}}",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "{{workflow_camera_id}}"]
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "🔍 Real Camera Discovery (10.0.0.181)",
+					"item": [
+						{
+							"name": "Test /stream1",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/stream1\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/test-connection",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "test-connection"]
+								}
+							}
+						},
+						{
+							"name": "Test /stream2",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/stream2\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/test-connection",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "test-connection"]
+								}
+							}
+						},
+						{
+							"name": "Test /live1.sdp",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/live1.sdp\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/test-connection",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "test-connection"]
+								}
+							}
+						},
+						{
+							"name": "Test /axis-media/media.amp",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"connection_type\": \"rtsp\",\n  \"ip_address\": \"{{test_ip}}\",\n  \"port\": \"554\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"stream_path\": \"/axis-media/media.amp\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/test-connection",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "test-connection"]
+								}
+							}
+						},
+						{
+							"name": "Test Enhanced Discovery",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"ip_address\": \"{{test_ip}}\",\n  \"username\": \"{{test_username}}\",\n  \"password\": \"{{test_password}}\",\n  \"test_multiple_paths\": true,\n  \"include_onvif\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/cameras/test-connection-enhanced",
+									"host": ["{{base_url}}"],
+									"path": ["cameras", "test-connection-enhanced"]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	]
+}

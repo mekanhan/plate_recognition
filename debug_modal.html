@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Modal Test</title>
+    <script>
+        function testModal() {
+            // Open the main page
+            fetch('http://localhost:8002/')
+                .then(response => response.text())
+                .then(html => {
+                    console.log('Page loaded');
+                    
+                    // Test if window.ipCameraWizard exists
+                    setTimeout(() => {
+                        if (window.ipCameraWizard) {
+                            console.log('✅ ipCameraWizard exists');
+                            console.log('Methods available:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.ipCameraWizard)));
+                        } else {
+                            console.log('❌ ipCameraWizard NOT found');
+                        }
+                        
+                        // Test button click
+                        const nextBtn = document.getElementById('nextBtn');
+                        if (nextBtn) {
+                            console.log('✅ Next button found');
+                            nextBtn.click();
+                        } else {
+                            console.log('❌ Next button NOT found');
+                        }
+                    }, 1000);
+                });
+        }
+        
+        window.onload = testModal;
+    </script>
+</head>
+<body>
+    <h1>Debug Modal Test</h1>
+    <p>Check the console for debug output</p>
+    
+    <iframe src="http://localhost:8002/" width="100%" height="600px"></iframe>
+    
+    <button onclick="
+        const iframe = document.querySelector('iframe');
+        const iframeWindow = iframe.contentWindow;
+        console.log('Iframe ipCameraWizard:', iframeWindow.ipCameraWizard);
+        if (iframeWindow.ipCameraWizard) {
+            console.log('Opening modal...');
+            iframeWindow.ipCameraWizard.showModal();
+        }
+    ">Test Open Modal</button>
+    
+    <button onclick="
+        const iframe = document.querySelector('iframe');
+        const iframeDoc = iframe.contentDocument;
+        const nextBtn = iframeDoc.getElementById('nextBtn');
+        console.log('Next button:', nextBtn);
+        if (nextBtn) {
+            nextBtn.click();
+            console.log('Clicked next button');
+        }
+    ">Test Next Button</button>
+</body>
+</html>

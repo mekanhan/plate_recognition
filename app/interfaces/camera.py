@@ -9,8 +9,10 @@ class Camera(ABC):
     """Interface for camera implementations."""
     
     @abstractmethod
-    async def initialize(self, camera_id: int = 0, width: int = 1280, height: int = 720) -> None:
-        """Initialize the camera."""
+    async def initialize(self, camera_id: int = 0, width: int = 1280, height: int = 720, ip_address: str = None, username: str = None, password: str = None) -> None:
+        """
+        Initialize the camera. Supports local and IP cameras with credentials.
+        """
         pass
         
     @abstractmethod

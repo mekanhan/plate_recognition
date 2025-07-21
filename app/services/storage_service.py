@@ -11,7 +11,7 @@ from app.utils.plate_database import PlateDatabase
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable, save_json_file, load_json_file
 from app.repositories.sql_repository import SQLiteDetectionRepository
 from app.database import async_session
-from app.models import SyncQueue, SyncStatus, Priority
+from app.models import Priority
 import logging
 
 logger = logging.getLogger(__name__)

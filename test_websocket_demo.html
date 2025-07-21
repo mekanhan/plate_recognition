@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Multiplexing Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .controls {
+            margin: 20px 0;
+            text-align: center;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .camera-feeds {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .camera-feed {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #f9f9f9;
+        }
+        .camera-feed h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .camera-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .camera-status.online {
+            background-color: #28a745;
+            color: white;
+        }
+        .camera-status.offline {
+            background-color: #dc3545;
+            color: white;
+        }
+        .video-placeholder {
+            width: 100%;
+            height: 200px;
+            background-color: #e9ecef;
+            border: 2px dashed #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .system-info {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .messages {
+            height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-y: auto;
+            background-color: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebSocket Multiplexing Demo</h1>
+        
+        <div id="connection-status" class="status disconnected">
+            Disconnected
+        </div>
+        
+        <div class="controls">
+            <button id="connect-btn" onclick="connect()">Connect</button>
+            <button id="disconnect-btn" onclick="disconnect()" disabled>Disconnect</button>
+            <button id="test-cameras-btn" onclick="testCameras()" disabled>Test Cameras</button>
+            <button id="clear-messages-btn" onclick="clearMessages()">Clear Messages</button>
+        </div>
+        
+        <div class="system-info">
+            <h3>System Information</h3>
+            <p><strong>Server:</strong> <span id="server-url">ws://localhost:8002</span></p>
+            <p><strong>Connected Cameras:</strong> <span id="camera-count">0</span></p>
+            <p><strong>Active Streams:</strong> <span id="stream-count">0</span></p>
+            <p><strong>Last Update:</strong> <span id="last-update">Never</span></p>
+        </div>
+        
+        <div class="camera-feeds" id="camera-feeds">
+            <!-- Camera feeds will be populated here -->
+        </div>
+        
+        <div>
+            <h3>WebSocket Messages</h3>
+            <div id="messages" class="messages"></div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let reconnectInterval = null;
+        let cameras = [];
+        let streams = [];
+        
+        function addMessage(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function updateStatus(connected) {
+            const statusDiv = document.getElementById('connection-status');
+            const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            const testCamerasBtn = document.getElementById('test-cameras-btn');
+            
+            if (connected) {
+                statusDiv.className = 'status connected';
+                statusDiv.textContent = 'Connected to WebSocket';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                testCamerasBtn.disabled = false;
+            } else {
+                statusDiv.className = 'status disconnected';
+                statusDiv.textContent = 'Disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                testCamerasBtn.disabled = true;
+            }
+        }
+        
+        function connect() {
+            if (ws) {
+                return;
+            }
+            
+            const serverUrl = 'ws://localhost:8002/ws/dashboard';
+            addMessage(`Connecting to ${serverUrl}...`, 'info');
+            
+            ws = new WebSocket(serverUrl);
+            
+            ws.onopen = function(event) {
+                addMessage('Connected to WebSocket successfully!', 'success');
+                updateStatus(true);
+                
+                // Request system info
+                sendMessage({
+                    type: 'system_info_request'
+                });
+                
+                // Request camera list
+                sendMessage({
+                    type: 'camera_list_request'
+                });
+                
+                updateLastUpdate();
+            };
+            
+            ws.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                } catch (e) {
+                    addMessage(`Error parsing message: ${e.message}`, 'error');
+                }
+            };
+            
+            ws.onclose = function(event) {
+                addMessage(`WebSocket closed: ${event.code} ${event.reason}`, 'info');
+                updateStatus(false);
+                ws = null;
+                
+                // Try to reconnect after 3 seconds
+                if (!reconnectInterval) {
+                    reconnectInterval = setTimeout(() => {
+                        reconnectInterval = null;
+                        addMessage('Attempting to reconnect...', 'info');
+                        connect();
+                    }, 3000);
+                }
+            };
+            
+            ws.onerror = function(event) {
+                addMessage('WebSocket error occurred', 'error');
+                updateStatus(false);
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            
+            if (reconnectInterval) {
+                clearTimeout(reconnectInterval);
+                reconnectInterval = null;
+            }
+            
+            updateStatus(false);
+            addMessage('Disconnected from WebSocket', 'info');
+        }
+        
+        function sendMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                addMessage(`Sent: ${JSON.stringify(message)}`, 'info');
+            } else {
+                addMessage('WebSocket not connected', 'error');
+            }
+        }
+        
+        function handleMessage(data) {
+            addMessage(`Received: ${JSON.stringify(data)}`, 'info');
+            
+            switch (data.type) {
+                case 'system_info':
+                    updateSystemInfo(data.data);
+                    break;
+                case 'camera_list':
+                    updateCameraList(data.data);
+                    break;
+                case 'camera_status':
+                    updateCameraStatus(data.data);
+                    break;
+                case 'stream_data':
+                    updateStreamData(data.data);
+                    break;
+                case 'detection_result':
+                    handleDetectionResult(data.data);
+                    break;
+                default:
+                    addMessage(`Unknown message type: ${data.type}`, 'error');
+            }
+        }
+        
+        function updateSystemInfo(info) {
+            if (info.camera_count !== undefined) {
+                document.getElementById('camera-count').textContent = info.camera_count;
+            }
+            if (info.stream_count !== undefined) {
+                document.getElementById('stream-count').textContent = info.stream_count;
+            }
+            updateLastUpdate();
+        }
+        
+        function updateCameraList(cameraList) {
+            cameras = cameraList || [];
+            document.getElementById('camera-count').textContent = cameras.length;
+            renderCameraFeeds();
+        }
+        
+        function updateCameraStatus(statusData) {
+            const camera = cameras.find(c => c.id === statusData.camera_id);
+            if (camera) {
+                camera.status = statusData.status;
+                renderCameraFeeds();
+            }
+        }
+        
+        function updateStreamData(streamData) {
+            // Handle stream data updates
+            updateLastUpdate();
+        }
+        
+        function handleDetectionResult(detection) {
+            addMessage(`Detection: ${detection.plate_text} (${detection.confidence}% confidence)`, 'success');
+        }
+        
+        function renderCameraFeeds() {
+            const feedsDiv = document.getElementById('camera-feeds');
+            feedsDiv.innerHTML = '';
+            
+            cameras.forEach(camera => {
+                const feedDiv = document.createElement('div');
+                feedDiv.className = 'camera-feed';
+                feedDiv.innerHTML = `
+                    <h3>
+                        ${camera.name}
+                        <span class="camera-status ${camera.status || 'offline'}">
+                            ${(camera.status || 'offline').toUpperCase()}
+                        </span>
+                    </h3>
+                    <div class="video-placeholder">
+                        📹 ${camera.name}<br>
+                        ${camera.ip_address || 'No IP'}<br>
+                        Status: ${camera.status || 'offline'}
+                    </div>
+                    <p><strong>Location:</strong> ${camera.location || 'Unknown'}</p>
+                    <p><strong>Type:</strong> ${camera.type || 'Unknown'}</p>
+                `;
+                feedsDiv.appendChild(feedDiv);
+            });
+            
+            if (cameras.length === 0) {
+                feedsDiv.innerHTML = '<p>No cameras detected. Use the "Test Cameras" button to simulate camera data.</p>';
+            }
+        }
+        
+        function testCameras() {
+            addMessage('Requesting test camera data...', 'info');
+            sendMessage({
+                type: 'test_cameras_request'
+            });
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        function updateLastUpdate() {
+            document.getElementById('last-update').textContent = new Date().toLocaleString();
+        }
+        
+        // Auto-connect when page loads
+        window.onload = function() {
+            connect();
+        };
+        
+        // Cleanup on page unload
+        window.onbeforeunload = function() {
+            disconnect();
+        };
+    </script>
+</body>
+</html>

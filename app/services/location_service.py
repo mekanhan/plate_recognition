@@ -22,6 +22,47 @@ class LocationService:
         self.cached_locations: Dict[str, Location] = {}
         self.cache_timestamp = 0
         self.cache_ttl = 300  # 5 minutes
+        self.initialization_complete = False
+    
+    async def initialize(self):
+        """Initialize the location service"""
+        try:
+            # Check if we have any locations in the database
+            async with async_session() as session:
+                result = await session.execute(select(Location).limit(1))
+                has_locations = result.scalar_one_or_none() is not None
+            
+            if not has_locations:
+                logger.info("No locations found, creating default location")
+                await self.create_default_location()
+            
+            self.initialization_complete = True
+            logger.info("LocationService initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Error initializing LocationService: {e}")
+            raise
+    
+    async def create_default_location(self):
+        """Create a default location for initial setup"""
+        try:
+            default_location = {
+                "name": "Main Site",
+                "address": "Default Location",
+                "city": "Unknown",
+                "state": "Unknown",
+                "country": "USA",
+                "timezone": "UTC",
+                "description": "Default location created during system initialization"
+            }
+            
+            location_id = await self.create_location(default_location)
+            logger.info(f"Created default location: {location_id}")
+            return location_id
+            
+        except Exception as e:
+            logger.error(f"Error creating default location: {e}")
+            raise
     
     async def create_location(self, location_data: Dict[str, Any]) -> str:
         """

@@ -22,10 +22,8 @@ index:
     - .cache/**
 
 docs:
-  - path: docs/guides/**
-  - path: docs/rules.md
-  - path: docs/class_diagram.md
-  - path: docs/technicals.md
+  - path: docs/architecture/**
+  - path: docs/camera_setup/**
 
 chatOptions:
   baseSystemMessage: |-

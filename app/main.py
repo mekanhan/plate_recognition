@@ -20,12 +20,15 @@ from app.services.video_service import VideoRecordingService
 from app.services.multi_camera_service import MultiCameraService
 from app.services.location_service import LocationService
 from app.services.camera_registry_service import CameraRegistryService
+from app.services.gpu_resource_manager import GPUResourceManager
+from app.services.multi_stream_processor import MultiStreamProcessor, StreamProcessingConfig
+from app.services.websocket_manager import WebSocketMultiplexer
 from config.settings import Config
 from app.repositories.sql_repository import SQLiteDetectionRepository, SQLiteVideoRepository
 from app.database import async_session
 
 # Import centralized routers (including new ones)
-from app.routers import stream, detection, results, system, cameras, locations
+from app.routers import stream, detection, results, system, cameras, locations, websocket_router
 
 from app.utils.logging_config import setup_logging
 from app.utils.file_helpers import ensure_directory_exists, is_directory_writable
@@ -97,6 +100,24 @@ multi_camera_service = MultiCameraService()
 location_service = LocationService()
 camera_registry_service = CameraRegistryService()
 
+# Initialize GPU resource manager and multi-stream processor
+gpu_resource_manager = GPUResourceManager(max_workers_per_gpu=2)
+stream_config = StreamProcessingConfig(
+    max_concurrent_streams=16,
+    detection_threshold=0.7,
+    processing_fps=2,
+    enable_gpu_acceleration=True,
+    adaptive_quality=True
+)
+multi_stream_processor = MultiStreamProcessor(
+    gpu_resource_manager, multi_camera_service, detection_service, stream_config
+)
+
+# Initialize WebSocket multiplexer
+websocket_multiplexer = WebSocketMultiplexer(
+    multi_camera_service, multi_stream_processor, gpu_resource_manager
+)
+
 # Initialize video recording service with repositories
 detection_repository = SQLiteDetectionRepository(async_session)
 video_repository = SQLiteVideoRepository(async_session)
@@ -121,7 +142,12 @@ results.storage_service = storage_service
 cameras.multi_camera_service = multi_camera_service
 cameras.camera_registry_service = camera_registry_service
 cameras.location_service = location_service
+cameras.gpu_resource_manager = gpu_resource_manager
+cameras.multi_stream_processor = multi_stream_processor
 locations.location_service = location_service
+
+# Inject WebSocket multiplexer
+websocket_router.websocket_multiplexer = websocket_multiplexer
 
 # Track background tasks for proper cleanup
 background_tasks = []
@@ -155,8 +181,20 @@ async def startup_event():
         logger.info("Camera registry service initialized")
 
         # Initialize multi-camera service
-        await multi_camera_service.initialize()
+        await multi_camera_service.initialize(camera_registry_service, location_service)
         logger.info("Multi-camera service initialized")
+
+        # Initialize GPU resource manager
+        await gpu_resource_manager.initialize()
+        logger.info("GPU resource manager initialized")
+
+        # Initialize multi-stream processor
+        await multi_stream_processor.initialize()
+        logger.info("Multi-stream processor initialized")
+
+        # Initialize WebSocket multiplexer
+        await websocket_multiplexer.initialize()
+        logger.info("WebSocket multiplexer initialized")
 
         # Initialize enhancer service
         await enhancer_service.initialize(storage_service=storage_service)
@@ -180,6 +218,9 @@ async def startup_event():
         app.state.multi_camera_service = multi_camera_service
         app.state.location_service = location_service
         app.state.camera_registry_service = camera_registry_service
+        app.state.gpu_resource_manager = gpu_resource_manager
+        app.state.multi_stream_processor = multi_stream_processor
+        app.state.websocket_multiplexer = websocket_multiplexer
             
         logger.info("All centralized services assigned to app.state")
 
@@ -220,6 +261,27 @@ async def shutdown_event():
                 await asyncio.wait_for(enhancer_service.shutdown(), timeout=5.0)
             except Exception as e:
                 logger.error(f"Error shutting down enhancer service: {e}")
+
+        logger.info("Shutting down WebSocket multiplexer...")
+        if websocket_multiplexer:
+            try:
+                await asyncio.wait_for(websocket_multiplexer.shutdown(), timeout=10.0)
+            except Exception as e:
+                logger.error(f"Error shutting down WebSocket multiplexer: {e}")
+
+        logger.info("Shutting down multi-stream processor...")
+        if multi_stream_processor:
+            try:
+                await asyncio.wait_for(multi_stream_processor.shutdown(), timeout=10.0)
+            except Exception as e:
+                logger.error(f"Error shutting down multi-stream processor: {e}")
+
+        logger.info("Shutting down GPU resource manager...")
+        if gpu_resource_manager:
+            try:
+                await asyncio.wait_for(gpu_resource_manager.shutdown(), timeout=10.0)
+            except Exception as e:
+                logger.error(f"Error shutting down GPU resource manager: {e}")
 
         logger.info("Shutting down multi-camera service...")
         if multi_camera_service:
@@ -264,6 +326,12 @@ app.include_router(system.router, prefix="/api/system", tags=["system"])
 app.include_router(cameras.router, prefix="/api/cameras", tags=["cameras"])
 app.include_router(locations.router, prefix="/api/locations", tags=["locations"])
 
+# Include WebSocket router
+app.include_router(websocket_router.router, prefix="/api/ws", tags=["websocket"])
+
+# Add alias route for cameras without /api prefix (for backward compatibility)
+app.include_router(cameras.router, prefix="/cameras", tags=["cameras-alias"])
+
 logger.info("Centralized management routers included")
 
 # WebSocket connection manager for real-time dashboard updates
@@ -298,8 +366,13 @@ dashboard_manager = ConnectionManager()
 # Web UI endpoints
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    """Main centralized dashboard"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    """Main centralized dashboard - Prototype 6 UI"""
+    return templates.TemplateResponse("prototype6.html", {"request": request})
+
+@app.get("/simple-camera", response_class=HTMLResponse)
+async def simple_camera_modal(request: Request):
+    """Simple working camera modal"""
+    return templates.TemplateResponse("simple_camera_modal.html", {"request": request})
 
 @app.get("/detection-test", response_class=HTMLResponse)
 async def detection_test_page(request: Request):
@@ -330,6 +403,16 @@ async def system_monitoring_page(request: Request):
 async def system_config_page(request: Request):
     """System configuration interface"""
     return templates.TemplateResponse("system_config.html", {"request": request})
+
+@app.get("/modal/ip-camera", response_class=HTMLResponse)
+async def ip_camera_modal_standalone(request: Request):
+    """Standalone IP Camera Modal"""
+    return templates.TemplateResponse("ip_camera_modal_standalone.html", {"request": request})
+
+@app.get("/websocket-demo", response_class=HTMLResponse)
+async def websocket_demo_page(request: Request):
+    """WebSocket multiplexing demo interface"""
+    return templates.TemplateResponse("websocket_demo.html", {"request": request})
 
 # WebSocket endpoint for real-time dashboard updates
 @app.websocket("/ws/dashboard")
@@ -406,6 +489,10 @@ async def system_info():
         "features": [
             "multi_camera_support",
             "centralized_processing",
+            "gpu_resource_management",
+            "multi_stream_processing",
+            "camera_discovery",
+            "websocket_multiplexing",
             "real_time_dashboard",
             "advanced_analytics",
             "web_ui"

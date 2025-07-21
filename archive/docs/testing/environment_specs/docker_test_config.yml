@@ -1,0 +1,386 @@
+# Docker Test Configuration for License Plate Recognition System
+# This file defines Docker Compose configurations for different testing environments
+
+version: '3.8'
+
+# =============================================================================
+# SERVICES CONFIGURATION
+# =============================================================================
+
+services:
+  # Main LPR Application for Testing
+  lpr-app:
+    build:
+      context: ../../../  # Relative to plate_recognition root
+      dockerfile: Dockerfile
+      target: test
+      args:
+        - ENVIRONMENT=test
+        - DISABLE_GPU=true
+    container_name: lpr-app-test
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=test
+      - DATABASE_URL=sqlite:///data/test_license_plates.db
+      - REDIS_URL=redis://redis-test:6379
+      - LOG_LEVEL=DEBUG
+      - DISABLE_GPU=true
+      - TEST_MODE=true
+      - API_RATE_LIMIT=1000  # Higher limit for testing
+      - MAX_FILE_SIZE_MB=100
+      - WEBHOOK_TIMEOUT=30
+    volumes:
+      - test_data:/app/test_data
+      - test_logs:/app/logs
+      - ./test_configs:/app/test_configs:ro
+    depends_on:
+      redis-test:
+        condition: service_healthy
+      mock-services:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/system/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Redis for Caching and Session Management
+  redis-test:
+    image: redis:7-alpine
+    container_name: redis-test
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_test_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # PostgreSQL Database for Integration Testing
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: postgres-test
+    environment:
+      - POSTGRES_DB=lpr_test
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password_123
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./sql/init_test_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d lpr_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Mock Services for External Dependencies
+  mock-services:
+    build:
+      context: ./mock_services
+      dockerfile: Dockerfile
+    container_name: mock-services-test
+    ports:
+      - "8080:8080"  # Mock webhook server
+      - "8081:8081"  # Mock external APIs
+      - "8082:8082"  # Mock file server
+    environment:
+      - MOCK_MODE=test
+      - WEBHOOK_DELAY_MS=100
+      - API_SUCCESS_RATE=0.95
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./mock_data:/app/mock_data:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Selenium Grid Hub for UI Testing
+  selenium-hub:
+    image: selenium/hub:4.15.0
+    container_name: selenium-hub-test
+    ports:
+      - "4444:4444"
+      - "4442:4442"
+      - "4443:4443"
+    environment:
+      - GRID_MAX_SESSION=16
+      - GRID_BROWSER_TIMEOUT=30
+      - GRID_TIMEOUT=30
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/status"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Chrome Browser Node
+  selenium-chrome:
+    image: selenium/node-chrome:4.15.0
+    container_name: selenium-chrome-test
+    shm_size: 2gb
+    environment:
+      - HUB_HOST=selenium-hub
+      - NODE_MAX_INSTANCES=4
+      - NODE_MAX_SESSION=4
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - selenium-hub
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Firefox Browser Node
+  selenium-firefox:
+    image: selenium/node-firefox:4.15.0
+    container_name: selenium-firefox-test
+    shm_size: 2gb
+    environment:
+      - HUB_HOST=selenium-hub
+      - NODE_MAX_INSTANCES=2
+      - NODE_MAX_SESSION=2
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - selenium-hub
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Edge Browser Node
+  selenium-edge:
+    image: selenium/node-edge:4.15.0
+    container_name: selenium-edge-test
+    shm_size: 2gb
+    environment:
+      - HUB_HOST=selenium-hub
+      - NODE_MAX_INSTANCES=2
+      - NODE_MAX_SESSION=2
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - selenium-hub
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # RTSP Mock Camera Server
+  mock-camera:
+    image: aler9/rtsp-simple-server:latest
+    container_name: mock-camera-test
+    ports:
+      - "8554:8554"  # RTSP port
+      - "8888:8888"  # Web interface
+    volumes:
+      - ./mock_camera/config.yml:/rtsp-simple-server.yml:ro
+      - ./test_videos:/videos:ro
+    environment:
+      - RTSP_PROTOCOLS=tcp
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Performance Monitoring (Prometheus)
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus-test
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=1h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Metrics Visualization (Grafana)
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: grafana-test
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Test Report Server
+  test-reports:
+    image: nginx:alpine
+    container_name: test-reports-server
+    ports:
+      - "8090:80"
+    volumes:
+      - test_reports:/usr/share/nginx/html:ro
+      - ./nginx/reports.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # MailHog for Email Testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog-test
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI port
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  # Test Data Generator Service
+  test-data-generator:
+    build:
+      context: ./test_data_generator
+      dockerfile: Dockerfile
+    container_name: test-data-generator
+    environment:
+      - OUTPUT_PATH=/output
+      - DATABASE_URL=postgresql://test_user:test_password_123@postgres-test:5432/lpr_test
+    volumes:
+      - test_data:/output
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+    networks:
+      - test-network
+    profiles:
+      - setup
+    restart: "no"
+
+# =============================================================================
+# NETWORKS CONFIGURATION
+# =============================================================================
+
+networks:
+  test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# =============================================================================
+# VOLUMES CONFIGURATION
+# =============================================================================
+
+volumes:
+  # Application data volumes
+  test_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./test_data
+
+  test_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+
+  test_reports:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./reports
+
+  # Database volumes
+  postgres_test_data:
+    driver: local
+
+  redis_test_data:
+    driver: local
+
+  # Monitoring volumes
+  prometheus_data:
+    driver: local
+
+  grafana_data:
+    driver: local
+
+# =============================================================================
+# CONFIGURATION PROFILES
+# =============================================================================
+
+# Usage Examples:
+# Full test environment: docker-compose up
+# UI testing only: docker-compose --profile ui-testing up
+# Performance testing: docker-compose --profile performance up
+# Setup only: docker-compose --profile setup up test-data-generator
+
+# Profiles can be combined:
+# docker-compose --profile ui-testing --profile performance up
+
+x-common-healthcheck: &common-healthcheck
+  interval: 10s
+  timeout: 5s
+  retries: 3
+  start_period: 30s
+
+x-common-logging: &common-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+# Additional service configurations for specific test scenarios
+configs:
+  prometheus_config:
+    file: ./monitoring/prometheus.yml
+  
+  grafana_datasources:
+    file: ./monitoring/grafana/datasources/prometheus.yml
+    
+  nginx_reports:
+    file: ./nginx/reports.conf

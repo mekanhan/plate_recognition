@@ -120,6 +120,9 @@ class Camera(Base):
     # Network configuration
     ip_address = Column(String, unique=True, index=True)
     port = Column(Integer, default=554)
+    connection_type = Column(String, default="rtsp")  # rtsp, rtsps, http, https, onvif
+    stream_path = Column(String)  # Stream path for RTSP/HTTP
+    auth_type = Column(String, default="basic")  # basic, digest, none
     username = Column(String)
     password_hash = Column(String)  # Encrypted password
     
@@ -133,6 +136,16 @@ class Camera(Base):
     resolution_height = Column(Integer, default=1080)
     fps = Column(Integer, default=30)
     codec = Column(String, default="H.264")
+    
+    # Manufacturer database integration
+    manufacturer_config = Column(JSON)  # Store manufacturer-specific settings
+    supported_codecs = Column(JSON)  # List of supported codecs
+    capabilities = Column(JSON)  # Camera capabilities (PTZ, night vision, etc.)
+    
+    # Connection test results
+    connection_test_results = Column(JSON)  # Last connection test results
+    last_tested_at = Column(DateTime)
+    last_successful_connection = Column(DateTime)
     
     # Status and health
     status = Column(SQLEnum(CameraStatus), default=CameraStatus.OFFLINE, index=True)

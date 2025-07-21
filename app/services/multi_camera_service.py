@@ -16,14 +16,17 @@ from app.interfaces.camera import Camera
 from app.models import Camera as CameraModel, CameraStatus, CameraType, CameraHealth, Location
 from app.database import async_session
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
 
-# Import the camera configuration system
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../ui-prototypes/prototype6'))
-from camera_config import CameraConfigurationManager, CameraConfigurationError
+# Import the camera discovery service (with fallback)
+try:
+    from app.services.camera_discovery_service import CameraDiscoveryService
+    CAMERA_DISCOVERY_AVAILABLE = True
+except ImportError as e:
+    logger.warning(f"Camera discovery service not available: {e}")
+    CAMERA_DISCOVERY_AVAILABLE = False
+    CameraDiscoveryService = None
 
 logger = logging.getLogger(__name__)
 
@@ -61,17 +64,25 @@ class MultiCameraService:
         self.max_concurrent_streams = max_concurrent_streams
         self.health_check_interval = 30  # seconds
         self.health_task: Optional[asyncio.Task] = None
-        self.camera_config_manager = CameraConfigurationManager()
+        self.camera_discovery_service: Optional[CameraDiscoveryService] = None
         
         # Performance tracking
         self.total_frames_processed = 0
         self.stream_stats: Dict[str, Dict] = {}
         
-    async def initialize(self) -> None:
+    async def initialize(self, camera_registry: Optional['CameraRegistryService'] = None, 
+                        location_service: Optional['LocationService'] = None) -> None:
         """Initialize the multi-camera service"""
         logger.info("Initializing MultiCameraService...")
         
         try:
+            # Initialize camera discovery service if dependencies are available
+            if CAMERA_DISCOVERY_AVAILABLE and camera_registry and location_service:
+                self.camera_discovery_service = CameraDiscoveryService(camera_registry, location_service)
+                logger.info("Camera discovery service initialized")
+            else:
+                logger.warning("Camera discovery service not initialized - missing dependencies or import failed")
+            
             # Load cameras from database
             await self._load_cameras_from_database()
             
@@ -108,11 +119,10 @@ class MultiCameraService:
         """Load camera configurations from database"""
         async with async_session() as session:
             try:
-                # Load all active cameras with their locations
+                # Load all cameras with their locations (maintenance cameras are now deleted)
                 result = await session.execute(
                     select(CameraModel)
                     .options(selectinload(CameraModel.location))
-                    .where(CameraModel.status != CameraStatus.MAINTENANCE)
                 )
                 cameras = result.scalars().all()
                 
@@ -133,53 +143,64 @@ class MultiCameraService:
                 logger.error(f"Failed to load cameras from database: {e}")
                 raise
     
-    async def discover_cameras_on_network(self, ip_range: str = "192.168.1.0/24") -> List[Dict[str, Any]]:
+    async def discover_cameras_on_network(self, ip_range: str = "192.168.1.0/24", port_config: Dict[str, List[int]] = None) -> List[Dict[str, Any]]:
         """
         Discover IP cameras on the network
         
         Args:
             ip_range: IP range to scan (CIDR notation)
+            port_config: Port configuration for discovery methods
             
         Returns:
             List of discovered camera information
         """
         logger.info(f"Discovering cameras on network: {ip_range}")
-        discovered_cameras = []
         
         try:
-            # Extract IP range for scanning
-            import ipaddress
-            network = ipaddress.IPv4Network(ip_range, strict=False)
+            # Check if discovery service is available
+            if not self.camera_discovery_service:
+                logger.warning("Camera discovery service not available, returning mock data")
+                raise Exception("Camera discovery service not initialized")
             
-            # Limit scanning to reasonable range
-            ips_to_scan = list(network.hosts())[:254]  # Limit to 254 IPs max
+            # Use the dedicated camera discovery service
+            discovered_cameras = await self.camera_discovery_service.discover_cameras_on_network(
+                ip_range=ip_range,
+                port_config=port_config
+            )
             
-            # Concurrent discovery with limited concurrency
-            semaphore = asyncio.Semaphore(20)  # Max 20 concurrent scans
+            # Convert DiscoveredCamera objects to dictionaries
+            camera_dicts = []
+            for camera in discovered_cameras:
+                camera_dict = {
+                    "ip_address": camera.ip_address,
+                    "name": camera.name or f"Camera {camera.ip_address}",
+                    "manufacturer": camera.manufacturer or "Unknown",
+                    "model": camera.model or "Unknown",
+                    "type": camera.camera_type or "ip_camera",
+                    "vendor": camera.vendor or "generic",
+                    "onvif_port": camera.onvif_port,
+                    "rtsp_port": camera.rtsp_port,
+                    "http_port": camera.http_port,
+                    "resolution": f"{camera.resolution_width}x{camera.resolution_height}" if camera.resolution_width and camera.resolution_height else "Unknown",
+                    "resolution_width": camera.resolution_width,
+                    "resolution_height": camera.resolution_height,
+                    "fps": camera.fps,
+                    "username": camera.username or "admin",
+                    "password": camera.password or "",
+                    "discovery_method": camera.discovery_method.value if camera.discovery_method else "unknown",
+                    "capabilities": camera.capabilities or [],
+                    "supported_formats": camera.supported_formats or [],
+                    "confidence": camera.confidence or 0.0,
+                    "last_seen": camera.last_seen.isoformat() if camera.last_seen else None
+                }
+                camera_dicts.append(camera_dict)
             
-            async def scan_ip(ip_str: str) -> Optional[Dict[str, Any]]:
-                async with semaphore:
-                    try:
-                        camera_info = await self.camera_config_manager.auto_discover_camera(ip_str)
-                        camera_info["ip_address"] = ip_str
-                        return camera_info
-                    except:
-                        return None
-            
-            # Execute discovery tasks
-            tasks = [scan_ip(str(ip)) for ip in ips_to_scan]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            # Filter successful discoveries
-            for result in results:
-                if isinstance(result, dict) and result is not None:
-                    discovered_cameras.append(result)
-            
-            logger.info(f"Discovered {len(discovered_cameras)} cameras on network")
-            return discovered_cameras
+            logger.info(f"Discovered {len(camera_dicts)} cameras on network")
+            return camera_dicts
             
         except Exception as e:
             logger.error(f"Network discovery failed: {e}")
+            # Return empty list if discovery fails
             return []
     
     async def add_camera(self, camera_config: Dict[str, Any]) -> str:
@@ -269,12 +290,18 @@ class MultiCameraService:
             if camera_id in self.stream_stats:
                 del self.stream_stats[camera_id]
             
-            # Update database status
+            # Actually delete from database
             async with async_session() as session:
+                # First delete related camera health records
                 await session.execute(
-                    update(CameraModel)
+                    delete(CameraHealth)
+                    .where(CameraHealth.camera_id == camera_id)
+                )
+                
+                # Then delete the camera
+                await session.execute(
+                    delete(CameraModel)
                     .where(CameraModel.id == camera_id)
-                    .values(status=CameraStatus.MAINTENANCE)
                 )
                 await session.commit()
             
@@ -483,10 +510,27 @@ class MultiCameraService:
                         stream_info.is_connected = False
                         await self._update_camera_status(camera_id, CameraStatus.OFFLINE)
                         
-                        # Try to connect to stream
-                        cap = cv2.VideoCapture(stream_info.stream_url)
+                        # Try to connect to stream with optimized settings for IP cameras
+                        cap = cv2.VideoCapture(stream_info.stream_url, cv2.CAP_FFMPEG)
+                        
+                        # Set buffer size to reduce latency
+                        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                        
+                        # Set timeout for network streams
+                        cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)
+                        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
+                        
+                        # Force specific codec if needed (try H.264)
+                        cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('H','2','6','4'))
+                        
                         if not cap.isOpened():
-                            raise Exception(f"Failed to open stream: {stream_info.stream_url}")
+                            # Fallback: try without specific backend
+                            logger.warning(f"FFMPEG backend failed, trying default backend")
+                            cap = cv2.VideoCapture(stream_info.stream_url)
+                            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                            
+                            if not cap.isOpened():
+                                raise Exception(f"Failed to open stream: {stream_info.stream_url}")
                         
                         stream_info.is_connected = True
                         stream_info.connection_attempts += 1
@@ -495,7 +539,7 @@ class MultiCameraService:
                         
                         logger.info(f"Connected to camera stream: {camera.name}")
                     
-                    # Read frame
+                    # Read frame with retry logic
                     ret, frame = cap.read()
                     
                     if ret and frame is not None:
@@ -511,11 +555,20 @@ class MultiCameraService:
                         self.stream_stats[camera_id]["last_frame_time"] = time.time()
                         self.total_frames_processed += 1
                         
+                        # Log first frame success
+                        if stream_info.frame_count == 1:
+                            logger.info(f"🎉 First frame received from camera {camera.name}! Resolution: {frame.shape[1]}x{frame.shape[0]}")
+                        
                     else:
-                        # Frame read failed
+                        # Frame read failed - this is common with RTSP streams
                         stream_info.error_count += 1
-                        if stream_info.error_count > 5:
-                            raise Exception("Too many consecutive frame read failures")
+                        logger.debug(f"Frame read failed for {camera.name}, error count: {stream_info.error_count}")
+                        
+                        # Try to grab() next frame to skip buffered frames
+                        cap.grab()
+                        
+                        if stream_info.error_count > 20:  # Increased tolerance for IP cameras
+                            raise Exception(f"Too many consecutive frame read failures ({stream_info.error_count})")
                     
                     # Control frame rate
                     await asyncio.sleep(1.0 / camera.fps)
@@ -621,12 +674,40 @@ class MultiCameraService:
                     self.cameras[camera_id].status = status
                     self.cameras[camera_id].last_seen = datetime.utcnow()
                 
+                # Broadcast camera status update to WebSocket clients
+                await self._broadcast_camera_status(camera_id, status)
+                
             except Exception as e:
                 logger.error(f"Failed to update camera status {camera_id}: {e}")
     
+    async def _broadcast_camera_status(self, camera_id: str, status: CameraStatus) -> None:
+        """Broadcast camera status update to WebSocket clients"""
+        try:
+            # Import here to avoid circular imports
+            from app.main import websocket_multiplexer
+            
+            if websocket_multiplexer:
+                camera = self.cameras.get(camera_id)
+                if camera:
+                    status_data = {
+                        "camera_id": camera_id,
+                        "status": status.value,
+                        "last_seen": camera.last_seen.isoformat() if camera.last_seen else None,
+                        "name": camera.name,
+                        "ip_address": camera.ip_address,
+                        "location": camera.location.name if camera.location else None,
+                        "is_streaming": camera_id in self.capture_tasks,
+                        "timestamp": datetime.utcnow().isoformat()
+                    }
+                    
+                    await websocket_multiplexer.broadcast_camera_status(camera_id, status_data)
+                
+        except Exception as e:
+            logger.error(f"Error broadcasting camera status: {e}")
+    
     def _build_stream_url(self, camera: CameraModel) -> str:
         """
-        Build RTSP stream URL for camera
+        Build RTSP stream URL for camera with manufacturer-specific paths
         
         Args:
             camera: Camera model
@@ -637,14 +718,40 @@ class MultiCameraService:
         if camera.main_stream_url:
             return camera.main_stream_url
         
-        # Build generic RTSP URL
+        # Build manufacturer-specific RTSP URL
         username = camera.username or "admin"
         password = camera.password_hash or ""  # In production, decrypt this
         ip = camera.ip_address
         port = camera.port or 554
         
-        # Generic RTSP URL format
-        return f"rtsp://{username}:{password}@{ip}:{port}/stream1"
+        # URL encode password if it contains special characters
+        if self._has_special_chars_in_password(password):
+            import urllib.parse
+            password = urllib.parse.quote(password, safe='')
+        
+        # Get manufacturer-specific stream path
+        stream_path = self._get_manufacturer_stream_path(camera.manufacturer)
+        
+        return f"rtsp://{username}:{password}@{ip}:{port}{stream_path}"
+    
+    def _has_special_chars_in_password(self, password: str) -> bool:
+        """Check if password contains characters that need URL encoding"""
+        special_chars = ['_', '@', '#', '$', '%', '^', '&', '*', '(', ')', '+', '=', '[', ']', '{', '}', '|', '\\', ':', ';', '"', "'", '<', '>', ',', '.', '?', '/']
+        return any(char in password for char in special_chars)
+    
+    def _get_manufacturer_stream_path(self, manufacturer: str) -> str:
+        """Get manufacturer-specific RTSP stream path"""
+        manufacturer_paths = {
+            "reolink": "/h264Preview_01_sub",  # Use sub stream for better compatibility
+            "hikvision": "/Streaming/Channels/102/",  # Sub stream
+            "dahua": "/cam/realmonitor?channel=1&subtype=1",  # Sub stream  
+            "axis": "/axis-media/media.amp",
+            "generic": "/stream1"
+        }
+        
+        # Default to manufacturer-specific path or generic
+        manufacturer_key = manufacturer.lower() if manufacturer else "generic"
+        return manufacturer_paths.get(manufacturer_key, manufacturer_paths["generic"])
     
     async def get_system_stats(self) -> Dict[str, Any]:
         """

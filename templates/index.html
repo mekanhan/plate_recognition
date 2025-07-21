@@ -433,4 +433,14 @@ class Dashboard {
 
 // Initialize dashboard
 const dashboard = new Dashboard();
+
+</script>
+{% endblock %}
+
+<!-- Include Camera Wizard Modal -->
+{% include 'camera_wizard.html' %}
+
+{% block extra_js %}
+<script src="/static/js/script.js"></script>
+<script src="/static/js/camera_wizard.js"></script>
 {% endblock %}

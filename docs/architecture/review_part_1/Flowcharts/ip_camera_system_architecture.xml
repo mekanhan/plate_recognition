@@ -1,0 +1,211 @@
+<mxfile host="app.diagrams.net" modified="2025-01-01T00:00:00.000Z" agent="5.0" etag="arch123" version="24.7.17" type="device">
+  <diagram name="IP Camera - System Architecture" id="architecture-flow">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- User Layer -->
+        <mxCell id="userLayer" value="👥 USER LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="40" width="1000" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="webBrowser" value="🌐 Web Browser&lt;br&gt;Chrome / Firefox" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="120" y="70" width="140" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="mobileApp" value="📱 Mobile App&lt;br&gt;iOS / Android" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="280" y="70" width="140" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="desktopApp" value="🖥️ Desktop App&lt;br&gt;Electron" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="440" y="70" width="140" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="tvApp" value="📺 Smart TV&lt;br&gt;Android TV" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="600" y="70" width="140" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="apiConsumer" value="🔌 API Consumer&lt;br&gt;Third-party" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="760" y="70" width="140" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Load Balancer -->
+        <mxCell id="loadBalancer" value="⚖️ LOAD BALANCER&lt;br&gt;Nginx / HAProxy&lt;br&gt;SSL Termination" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="180" width="200" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- Application Layer -->
+        <mxCell id="appLayer" value="🚀 APPLICATION LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="280" width="1000" height="140" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="webServer1" value="🌐 Web Server 1&lt;br&gt;Node.js + Express&lt;br&gt;Port: 3001" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="320" width="130" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="webServer2" value="🌐 Web Server 2&lt;br&gt;Node.js + Express&lt;br&gt;Port: 3002" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="270" y="320" width="130" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="streamServer1" value="📡 Stream Server 1&lt;br&gt;FFmpeg Cluster&lt;br&gt;Port: 8001" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="420" y="320" width="130" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="streamServer2" value="📡 Stream Server 2&lt;br&gt;FFmpeg Cluster&lt;br&gt;Port: 8002" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="570" y="320" width="130" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="apiGateway" value="🚪 API Gateway&lt;br&gt;Authentication&lt;br&gt;Rate Limiting" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="720" y="320" width="130" height="70" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="websocketServer" value="🔌 WebSocket Server&lt;br&gt;Socket.io&lt;br&gt;Real-time Events" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="870" y="320" width="130" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- Service Layer -->
+        <mxCell id="serviceLayer" value="⚙️ SERVICE LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="450" width="1000" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="cameraService" value="📹 Camera Service&lt;br&gt;ONVIF Discovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="480" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="streamService" value="🎬 Stream Service&lt;br&gt;FFmpeg Control" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="480" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="authService" value="🔐 Auth Service&lt;br&gt;JWT Tokens" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="480" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="notificationService" value="📢 Notification&lt;br&gt;Email / SMS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="480" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="recordingService" value="📼 Recording&lt;br&gt;Video Storage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="480" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="analyticsService" value="📊 Analytics&lt;br&gt;AI Processing" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="820" y="480" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Data Layer -->
+        <mxCell id="dataLayer" value="💾 DATA LAYER" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="580" width="1000" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="postgresql" value="🐘 PostgreSQL&lt;br&gt;Main Database" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="610" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="redis" value="🔴 Redis&lt;br&gt;Cache &amp; Sessions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="610" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="mongodb" value="🍃 MongoDB&lt;br&gt;Logs &amp; Analytics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="610" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="fileStorage" value="📁 File Storage&lt;br&gt;Video Files" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="610" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="influxdb" value="📈 InfluxDB&lt;br&gt;Metrics" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="610" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="elasticsearch" value="🔍 Elasticsearch&lt;br&gt;Search &amp; Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="820" y="610" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Security & Monitoring -->
+        <mxCell id="securityLayer" value="🔒 SECURITY &amp; MONITORING" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=16;fontStyle=1;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="710" width="1000" height="100" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="firewall" value="🔥 Firewall&lt;br&gt;Network Security" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="120" y="740" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="ssl" value="🔐 SSL/TLS&lt;br&gt;Encryption" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="260" y="740" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="oauth" value="🔑 OAuth 2.0&lt;br&gt;Authentication" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="740" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="monitoring" value="📊 Monitoring&lt;br&gt;Prometheus" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="540" y="740" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="logging" value="📝 Logging&lt;br&gt;Centralized Logs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="680" y="740" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="backup" value="💾 Backup&lt;br&gt;Disaster Recovery" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="820" y="740" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Key Connections -->
+        <mxCell id="conn1" edge="1" parent="1" source="webBrowser" target="loadBalancer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn2" edge="1" parent="1" source="mobileApp" target="loadBalancer">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn3" edge="1" parent="1" source="loadBalancer" target="webServer1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn4" edge="1" parent="1" source="loadBalancer" target="streamServer1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn5" edge="1" parent="1" source="webServer1" target="cameraService">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn6" edge="1" parent="1" source="streamServer1" target="streamService">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn7" edge="1" parent="1" source="cameraService" target="postgresql">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn8" edge="1" parent="1" source="authService" target="redis">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn9" edge="1" parent="1" source="recordingService" target="fileStorage">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="conn10" edge="1" parent="1" source="analyticsService" target="mongodb">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Labels -->
+        <mxCell id="label1" value="HTTPS" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="390" y="150" width="40" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="label2" value="Load Balance" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="300" y="260" width="70" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="label3" value="Database" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontColor=#666666;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="570" width="50" height="20" as="geometry"/>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

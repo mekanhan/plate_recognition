@@ -1,0 +1,409 @@
+/**
+ * Base Modal Component
+ * Reusable modal foundation for all modal dialogs
+ */
+class Modal {
+    constructor(options = {}) {
+        this.options = {
+            id: options.id || `modal-${Date.now()}`,
+            className: options.className || '',
+            closable: options.closable !== false,
+            closeOnEscape: options.closeOnEscape !== false,
+            closeOnOverlay: options.closeOnOverlay !== false,
+            animated: options.animated !== false,
+            size: options.size || 'medium', // small, medium, large, xlarge
+            ...options
+        };
+        
+        this.isVisible = false;
+        this.callbacks = {
+            onShow: options.onShow || (() => {}),
+            onHide: options.onHide || (() => {}),
+            onClose: options.onClose || (() => {})
+        };
+        
+        this.element = null;
+        this.focusableElements = [];
+        this.previousActiveElement = null;
+    }
+
+    show() {
+        if (this.isVisible) return;
+
+        this.isVisible = true;
+        this.previousActiveElement = document.activeElement;
+
+        if (!this.element) {
+            this.createElement();
+        }
+
+        this.render();
+        this.attachEventListeners();
+        document.body.appendChild(this.element);
+
+        if (this.options.animated) {
+            // Force reflow for animation
+            this.element.offsetHeight;
+            this.element.classList.add('show');
+        }
+
+        // Focus management
+        this.updateFocusableElements();
+        this.focusFirstElement();
+
+        // Prevent body scroll
+        document.body.classList.add('modal-open');
+
+        this.callbacks.onShow(this);
+    }
+
+    hide() {
+        if (!this.isVisible) return;
+
+        this.isVisible = false;
+
+        if (this.options.animated) {
+            this.element.classList.remove('show');
+            setTimeout(() => this.destroy(), 300);
+        } else {
+            this.destroy();
+        }
+
+        this.callbacks.onHide(this);
+    }
+
+    close() {
+        this.hide();
+        this.callbacks.onClose(this);
+    }
+
+    destroy() {
+        this.removeEventListeners();
+        
+        if (this.element && this.element.parentNode) {
+            this.element.parentNode.removeChild(this.element);
+        }
+
+        // Restore focus
+        if (this.previousActiveElement) {
+            this.previousActiveElement.focus();
+        }
+
+        // Restore body scroll
+        document.body.classList.remove('modal-open');
+
+        this.element = null;
+        this.isVisible = false;
+    }
+
+    createElement() {
+        this.element = document.createElement('div');
+        this.element.id = this.options.id;
+        this.element.className = `modal-overlay ${this.options.size} ${this.options.className}`;
+        this.element.setAttribute('role', 'dialog');
+        this.element.setAttribute('aria-modal', 'true');
+        
+        if (this.options.animated) {
+            this.element.classList.add('animated');
+        }
+    }
+
+    render() {
+        if (!this.element) return;
+
+        this.element.innerHTML = `
+            <div class="modal-container">
+                ${this.getHeaderTemplate()}
+                <div class="modal-content">
+                    ${this.getContentTemplate()}
+                </div>
+                ${this.getFooterTemplate()}
+            </div>
+        `;
+    }
+
+    getHeaderTemplate() {
+        if (!this.options.title && !this.options.closable) return '';
+
+        return `
+            <div class="modal-header">
+                ${this.options.title ? `
+                    <div class="modal-title">
+                        ${this.options.icon ? `<i class="${this.options.icon}"></i>` : ''}
+                        <span>${this.options.title}</span>
+                    </div>
+                ` : ''}
+                ${this.options.closable ? `
+                    <button class="modal-close" aria-label="Close modal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    getContentTemplate() {
+        return this.options.content || '';
+    }
+
+    getFooterTemplate() {
+        if (!this.options.footer) return '';
+
+        return `
+            <div class="modal-footer">
+                ${this.options.footer}
+            </div>
+        `;
+    }
+
+    attachEventListeners() {
+        if (!this.element) return;
+
+        // Close button
+        if (this.options.closable) {
+            const closeBtn = this.element.querySelector('.modal-close');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => this.close());
+            }
+        }
+
+        // Overlay click
+        if (this.options.closeOnOverlay) {
+            this.element.addEventListener('click', (e) => {
+                if (e.target === this.element) {
+                    this.close();
+                }
+            });
+        }
+
+        // Keyboard navigation
+        if (this.options.closeOnEscape) {
+            document.addEventListener('keydown', this.handleKeyDown.bind(this));
+        }
+    }
+
+    removeEventListeners() {
+        document.removeEventListener('keydown', this.handleKeyDown.bind(this));
+    }
+
+    handleKeyDown(e) {
+        if (!this.isVisible) return;
+
+        switch (e.key) {
+            case 'Escape':
+                if (this.options.closeOnEscape) {
+                    this.close();
+                }
+                break;
+            case 'Tab':
+                this.handleTabNavigation(e);
+                break;
+        }
+    }
+
+    handleTabNavigation(e) {
+        if (this.focusableElements.length === 0) return;
+
+        const firstElement = this.focusableElements[0];
+        const lastElement = this.focusableElements[this.focusableElements.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+        }
+    }
+
+    updateFocusableElements() {
+        if (!this.element) return;
+
+        const focusableSelectors = [
+            'button:not([disabled])',
+            'input:not([disabled])',
+            'select:not([disabled])',
+            'textarea:not([disabled])',
+            'a[href]',
+            '[tabindex]:not([tabindex="-1"])'
+        ];
+
+        this.focusableElements = Array.from(
+            this.element.querySelectorAll(focusableSelectors.join(', '))
+        );
+    }
+
+    focusFirstElement() {
+        if (this.focusableElements.length > 0) {
+            this.focusableElements[0].focus();
+        }
+    }
+
+    // Public methods for content updates
+    setTitle(title) {
+        this.options.title = title;
+        if (this.element) {
+            const titleElement = this.element.querySelector('.modal-title span');
+            if (titleElement) {
+                titleElement.textContent = title;
+            }
+        }
+    }
+
+    setContent(content) {
+        this.options.content = content;
+        if (this.element) {
+            const contentElement = this.element.querySelector('.modal-content');
+            if (contentElement) {
+                contentElement.innerHTML = content;
+            }
+        }
+        this.updateFocusableElements();
+    }
+
+    setFooter(footer) {
+        this.options.footer = footer;
+        if (this.element) {
+            let footerElement = this.element.querySelector('.modal-footer');
+            if (footer) {
+                if (!footerElement) {
+                    footerElement = document.createElement('div');
+                    footerElement.className = 'modal-footer';
+                    this.element.querySelector('.modal-container').appendChild(footerElement);
+                }
+                footerElement.innerHTML = footer;
+            } else if (footerElement) {
+                footerElement.remove();
+            }
+        }
+        this.updateFocusableElements();
+    }
+
+    // Utility methods
+    isOpen() {
+        return this.isVisible;
+    }
+
+    getElement() {
+        return this.element;
+    }
+
+    // Static factory methods
+    static alert(message, title = 'Alert') {
+        const modal = new Modal({
+            title,
+            content: `<p>${message}</p>`,
+            footer: '<button class="btn btn-primary modal-alert-ok">OK</button>',
+            closeOnOverlay: false,
+            size: 'small'
+        });
+
+        modal.show();
+
+        return new Promise(resolve => {
+            const handleClose = () => {
+                modal.close();
+                resolve();
+            };
+
+            modal.callbacks.onShow = () => {
+                const okBtn = modal.element.querySelector('.modal-alert-ok');
+                if (okBtn) {
+                    okBtn.addEventListener('click', handleClose);
+                    okBtn.focus();
+                }
+            };
+        });
+    }
+
+    static confirm(message, title = 'Confirm') {
+        const modal = new Modal({
+            title,
+            content: `<p>${message}</p>`,
+            footer: `
+                <button class="btn btn-secondary modal-confirm-cancel">Cancel</button>
+                <button class="btn btn-primary modal-confirm-ok">OK</button>
+            `,
+            closeOnOverlay: false,
+            size: 'small'
+        });
+
+        modal.show();
+
+        return new Promise(resolve => {
+            const handleConfirm = (result) => {
+                modal.close();
+                resolve(result);
+            };
+
+            modal.callbacks.onShow = () => {
+                const okBtn = modal.element.querySelector('.modal-confirm-ok');
+                const cancelBtn = modal.element.querySelector('.modal-confirm-cancel');
+                
+                if (okBtn) {
+                    okBtn.addEventListener('click', () => handleConfirm(true));
+                }
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => handleConfirm(false));
+                    cancelBtn.focus();
+                }
+            };
+        });
+    }
+
+    static prompt(message, defaultValue = '', title = 'Input') {
+        const modal = new Modal({
+            title,
+            content: `
+                <p>${message}</p>
+                <input type="text" class="form-input modal-prompt-input" value="${defaultValue}">
+            `,
+            footer: `
+                <button class="btn btn-secondary modal-prompt-cancel">Cancel</button>
+                <button class="btn btn-primary modal-prompt-ok">OK</button>
+            `,
+            closeOnOverlay: false,
+            size: 'small'
+        });
+
+        modal.show();
+
+        return new Promise(resolve => {
+            const handleResult = (result) => {
+                modal.close();
+                resolve(result);
+            };
+
+            modal.callbacks.onShow = () => {
+                const input = modal.element.querySelector('.modal-prompt-input');
+                const okBtn = modal.element.querySelector('.modal-prompt-ok');
+                const cancelBtn = modal.element.querySelector('.modal-prompt-cancel');
+                
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+                
+                if (okBtn) {
+                    okBtn.addEventListener('click', () => {
+                        handleResult(input ? input.value : null);
+                    });
+                }
+                
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => handleResult(null));
+                }
+
+                if (input) {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            handleResult(input.value);
+                        }
+                    });
+                }
+            };
+        });
+    }
+}
+
+export default Modal;

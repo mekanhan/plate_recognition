@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPR Security System - Dashboard</title>
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Theme Detection -->
+    <script>
+        // Detect and apply theme preference
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+</head>
+<body>
+    <!-- Application will be initialized here by app.js -->
+    <div id="app-root">
+        <!-- Loading indicator while app initializes -->
+        <div class="loading-overlay" id="initial-loading" style="display: flex;">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Initializing LPR System...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Main Application Script -->
+    <script type="module" src="app.js"></script>
+    
+    <!-- Demo Enhancement Script -->
+    <script src="demo.js"></script>
+    
+    <!-- Demo Data Script (for demonstration purposes) -->
+    <script>
+        // Add some demo data and functionality for demonstration
+        window.demoMode = true;
+        
+        // Mock data for cameras
+        window.mockCameras = [
+            {
+                id: '1',
+                name: 'Entrance Gate',
+                location: 'entrance',
+                ipAddress: '192.168.1.101',
+                status: 'online',
+                manufacturer: 'Hikvision',
+                model: 'DS-2CD2T85FWD-I8',
+                resolution: '3840x2160',
+                fps: 30,
+                lastSeen: new Date(Date.now() - 5 * 60 * 1000),
+                uptime: '15d 4h 23m'
+            },
+            {
+                id: '2',
+                name: 'Parking Lot A',
+                location: 'parking',
+                ipAddress: '192.168.1.102',
+                status: 'online',
+                manufacturer: 'Dahua',
+                model: 'IPC-HFW4831E-SE',
+                resolution: '3840x2160',
+                fps: 25,
+                lastSeen: new Date(Date.now() - 2 * 60 * 1000),
+                uptime: '12d 8h 15m'
+            },
+            {
+                id: '3',
+                name: 'Loading Dock',
+                location: 'exit',
+                ipAddress: '192.168.1.103',
+                status: 'warning',
+                manufacturer: 'Axis',
+                model: 'M3046-V',
+                resolution: '1920x1080',
+                fps: 30,
+                lastSeen: new Date(Date.now() - 45 * 60 * 1000),
+                uptime: '8d 12h 45m'
+            },
+            {
+                id: '4',
+                name: 'Side Entrance',
+                location: 'entrance',
+                ipAddress: '192.168.1.104',
+                status: 'offline',
+                manufacturer: 'Reolink',
+                model: 'RLC-810A',
+                resolution: '3840x2160',
+                fps: 25,
+                lastSeen: new Date(Date.now() - 2 * 60 * 60 * 1000),
+                uptime: '0d 0h 0m'
+            }
+        ];
+
+        // Mock detection data
+        window.mockDetections = [
+            {
+                id: '1',
+                plate: 'ABC-123',
+                camera: 'Entrance Gate',
+                timestamp: new Date(Date.now() - 2 * 60 * 1000),
+                confidence: 98.5,
+                vehicle: 'Sedan',
+                color: 'Blue'
+            },
+            {
+                id: '2',
+                plate: 'XYZ-789',
+                camera: 'Parking Lot A',
+                timestamp: new Date(Date.now() - 5 * 60 * 1000),
+                confidence: 92.1,
+                vehicle: 'SUV',
+                color: 'White'
+            },
+            {
+                id: '3',
+                plate: 'DEF-456',
+                camera: 'Loading Dock',
+                timestamp: new Date(Date.now() - 8 * 60 * 1000),
+                confidence: 87.3,
+                vehicle: 'Truck',
+                color: 'Red'
+            }
+        ];
+
+        // Mock system metrics
+        window.mockMetrics = {
+            activeCameras: 12,
+            detectionsToday: 1247,
+            activeAlerts: 3,
+            accuracyRate: 94.2
+        };
+
+        // Hide initial loading once app loads
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loading = document.getElementById('initial-loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

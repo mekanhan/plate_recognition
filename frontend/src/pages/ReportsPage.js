@@ -1,0 +1,1141 @@
+/**
+ * Reports Page Component
+ * Comprehensive reporting and data export functionality
+ */
+class ReportsPage {
+    constructor() {
+        this.reports = [];
+        this.reportTemplates = [];
+        this.scheduledReports = [];
+        this.currentSection = 'overview';
+        this.init();
+    }
+
+    init() {
+        this.loadMockData();
+        this.render();
+        this.attachEventListeners();
+        this.loadReports();
+    }
+
+    loadMockData() {
+        this.reportTemplates = [
+            {
+                id: 'daily-summary',
+                name: 'Daily Summary Report',
+                description: 'Daily overview of vehicle detections, camera performance, and system alerts',
+                category: 'summary',
+                frequency: 'daily',
+                format: 'pdf',
+                fields: ['detections', 'accuracy', 'alerts', 'uptime'],
+                lastGenerated: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+                size: '2.4 MB',
+                enabled: true
+            },
+            {
+                id: 'weekly-analytics',
+                name: 'Weekly Analytics Report',
+                description: 'Comprehensive weekly analysis of traffic patterns and trends',
+                category: 'analytics',
+                frequency: 'weekly',
+                format: 'pdf',
+                fields: ['traffic-patterns', 'peak-hours', 'frequent-vehicles', 'performance'],
+                lastGenerated: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+                size: '5.8 MB',
+                enabled: true
+            },
+            {
+                id: 'security-incidents',
+                name: 'Security Incidents Report',
+                description: 'Report of security alerts, blocked vehicles, and suspicious activities',
+                category: 'security',
+                frequency: 'weekly',
+                format: 'csv',
+                fields: ['security-alerts', 'blocklist-matches', 'suspicious-activity'],
+                lastGenerated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+                size: '1.2 MB',
+                enabled: true
+            },
+            {
+                id: 'maintenance-report',
+                name: 'System Maintenance Report',
+                description: 'Camera health, system performance, and maintenance recommendations',
+                category: 'maintenance',
+                frequency: 'monthly',
+                format: 'pdf',
+                fields: ['camera-health', 'system-performance', 'maintenance-tasks'],
+                lastGenerated: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000),
+                size: '3.1 MB',
+                enabled: false
+            }
+        ];
+
+        this.reports = [
+            {
+                id: '1',
+                name: 'Daily Summary - January 23, 2025',
+                type: 'daily-summary',
+                status: 'completed',
+                createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+                completedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+                format: 'pdf',
+                size: '2.4 MB',
+                downloadUrl: '#'
+            },
+            {
+                id: '2',
+                name: 'Weekly Analytics - Week 3, 2025',
+                type: 'weekly-analytics',
+                status: 'completed',
+                createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+                completedAt: new Date(Date.now() - 23 * 60 * 60 * 1000),
+                format: 'pdf',
+                size: '5.8 MB',
+                downloadUrl: '#'
+            },
+            {
+                id: '3',
+                name: 'Custom Detection Report',
+                type: 'custom',
+                status: 'generating',
+                createdAt: new Date(Date.now() - 15 * 60 * 1000),
+                completedAt: null,
+                format: 'csv',
+                size: null,
+                downloadUrl: null,
+                progress: 65
+            },
+            {
+                id: '4',
+                name: 'Security Incidents - Week 2, 2025',
+                type: 'security-incidents',
+                status: 'failed',
+                createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+                completedAt: null,
+                format: 'csv',
+                size: null,
+                downloadUrl: null,
+                error: 'Insufficient data for selected date range'
+            }
+        ];
+
+        this.scheduledReports = [
+            {
+                id: 'sched-1',
+                templateId: 'daily-summary',
+                name: 'Daily Summary Report',
+                schedule: '0 8 * * *', // Daily at 8 AM
+                nextRun: new Date(Date.now() + 12 * 60 * 60 * 1000),
+                enabled: true,
+                recipients: ['admin@company.com', 'security@company.com']
+            },
+            {
+                id: 'sched-2',
+                templateId: 'weekly-analytics',
+                name: 'Weekly Analytics Report',
+                schedule: '0 9 * * 1', // Monday at 9 AM
+                nextRun: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+                enabled: true,
+                recipients: ['manager@company.com', 'analytics@company.com']
+            }
+        ];
+    }
+
+    render() {
+        const container = document.getElementById('reports');
+        if (!container) return;
+
+        container.innerHTML = this.getTemplate();
+        this.renderCurrentSection();
+    }
+
+    getTemplate() {
+        return `
+            <div class="page-header">
+                <h1 class="page-title">Reports</h1>
+                <p class="page-subtitle">Generate, schedule, and manage system reports</p>
+            </div>
+            
+            <!-- Report Navigation -->
+            <div class="report-navigation">
+                <button class="nav-btn ${this.currentSection === 'overview' ? 'active' : ''}" data-section="overview">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Overview</span>
+                </button>
+                <button class="nav-btn ${this.currentSection === 'generate' ? 'active' : ''}" data-section="generate">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Generate Report</span>
+                </button>
+                <button class="nav-btn ${this.currentSection === 'templates' ? 'active' : ''}" data-section="templates">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Templates</span>
+                </button>
+                <button class="nav-btn ${this.currentSection === 'scheduled' ? 'active' : ''}" data-section="scheduled">
+                    <i class="fas fa-clock"></i>
+                    <span>Scheduled</span>
+                </button>
+                <button class="nav-btn ${this.currentSection === 'history' ? 'active' : ''}" data-section="history">
+                    <i class="fas fa-history"></i>
+                    <span>History</span>
+                </button>
+            </div>
+            
+            <!-- Report Content -->
+            <div class="report-content" id="report-content">
+                <!-- Content will be dynamically loaded -->
+            </div>
+        `;
+    }
+
+    renderCurrentSection() {
+        const container = document.getElementById('report-content');
+        if (!container) return;
+
+        switch (this.currentSection) {
+            case 'overview':
+                container.innerHTML = this.renderOverview();
+                break;
+            case 'generate':
+                container.innerHTML = this.renderGenerateReport();
+                break;
+            case 'templates':
+                container.innerHTML = this.renderTemplates();
+                break;
+            case 'scheduled':
+                container.innerHTML = this.renderScheduled();
+                break;
+            case 'history':
+                container.innerHTML = this.renderHistory();
+                break;
+        }
+
+        this.attachSectionEventListeners();
+    }
+
+    renderOverview() {
+        const recentReports = this.reports.slice(0, 5);
+        const stats = this.calculateReportStats();
+        
+        return `
+            <div class="overview-grid">
+                <!-- Report Statistics -->
+                <div class="stats-cards">
+                    <div class="stat-card">
+                        <div class="stat-icon reports">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${stats.totalReports}</div>
+                            <div class="stat-label">Total Reports</div>
+                            <div class="stat-change positive">+${stats.reportsThisMonth} this month</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon scheduled">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${stats.activeSchedules}</div>
+                            <div class="stat-label">Active Schedules</div>
+                            <div class="stat-sublabel">Auto-generating reports</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon storage">
+                            <i class="fas fa-hdd"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${stats.totalSize}</div>
+                            <div class="stat-label">Storage Used</div>
+                            <div class="stat-sublabel">Report archives</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value">${stats.successRate}%</div>
+                            <div class="stat-label">Success Rate</div>
+                            <div class="stat-sublabel">Last 30 days</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-report-actions">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-card" data-template="daily-summary">
+                            <div class="action-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Daily Summary</h4>
+                                <p>Generate today's summary report</p>
+                            </div>
+                        </button>
+                        <button class="quick-action-card" data-template="weekly-analytics">
+                            <div class="action-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Weekly Analytics</h4>
+                                <p>Generate weekly traffic analysis</p>
+                            </div>
+                        </button>
+                        <button class="quick-action-card" data-template="security-incidents">
+                            <div class="action-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Security Report</h4>
+                                <p>Generate security incidents report</p>
+                            </div>
+                        </button>
+                        <button class="quick-action-card" data-action="custom">
+                            <div class="action-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Custom Report</h4>
+                                <p>Create a custom report</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Reports -->
+                <div class="recent-reports">
+                    <h3>Recent Reports</h3>
+                    <div class="reports-list">
+                        ${recentReports.map(report => `
+                            <div class="report-item ${report.status}">
+                                <div class="report-icon">
+                                    <i class="fas ${this.getReportIcon(report.type)}"></i>
+                                </div>
+                                <div class="report-info">
+                                    <h4 class="report-name">${report.name}</h4>
+                                    <div class="report-meta">
+                                        <span class="report-status ${report.status}">${this.capitalizeFirst(report.status)}</span>
+                                        <span class="report-date">${this.getRelativeTime(report.createdAt)}</span>
+                                        ${report.size ? `<span class="report-size">${report.size}</span>` : ''}
+                                    </div>
+                                </div>
+                                <div class="report-actions">
+                                    ${report.status === 'completed' ? `
+                                        <button class="action-btn download" data-action="download" data-report-id="${report.id}" title="Download">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    ` : ''}
+                                    ${report.status === 'generating' ? `
+                                        <div class="progress-indicator">
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: ${report.progress}%"></div>
+                                            </div>
+                                            <span class="progress-text">${report.progress}%</span>
+                                        </div>
+                                    ` : ''}
+                                    ${report.status === 'failed' ? `
+                                        <button class="action-btn retry" data-action="retry" data-report-id="${report.id}" title="Retry">
+                                            <i class="fas fa-redo"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderGenerateReport() {
+        return `
+            <div class="generate-report-container">
+                <div class="report-wizard">
+                    <h3>Generate New Report</h3>
+                    
+                    <form id="generate-report-form" class="report-form">
+                        <!-- Report Template Selection -->
+                        <div class="form-section">
+                            <h4>Report Template</h4>
+                            <div class="template-grid">
+                                ${this.reportTemplates.map(template => `
+                                    <label class="template-card">
+                                        <input type="radio" name="template" value="${template.id}" ${template.id === 'daily-summary' ? 'checked' : ''}>
+                                        <div class="template-content">
+                                            <div class="template-icon">
+                                                <i class="fas ${this.getTemplateIcon(template.category)}"></i>
+                                            </div>
+                                            <h5>${template.name}</h5>
+                                            <p>${template.description}</p>
+                                            <div class="template-meta">
+                                                <span class="template-frequency">${this.capitalizeFirst(template.frequency)}</span>
+                                                <span class="template-format">${template.format.toUpperCase()}</span>
+                                            </div>
+                                        </div>
+                                    </label>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Date Range Selection -->
+                        <div class="form-section">
+                            <h4>Date Range</h4>
+                            <div class="date-range-options">
+                                <label class="radio-option">
+                                    <input type="radio" name="dateRange" value="today" checked>
+                                    <span>Today</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="dateRange" value="yesterday">
+                                    <span>Yesterday</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="dateRange" value="last7days">
+                                    <span>Last 7 Days</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="dateRange" value="last30days">
+                                    <span>Last 30 Days</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="dateRange" value="custom">
+                                    <span>Custom Range</span>
+                                </label>
+                            </div>
+                            
+                            <div class="custom-date-range" id="custom-date-range" style="display: none;">
+                                <div class="date-inputs">
+                                    <div class="input-group">
+                                        <label for="start-date">Start Date:</label>
+                                        <input type="date" id="start-date" name="startDate">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="end-date">End Date:</label>
+                                        <input type="date" id="end-date" name="endDate">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Format Selection -->
+                        <div class="form-section">
+                            <h4>Output Format</h4>
+                            <div class="format-options">
+                                <label class="radio-option">
+                                    <input type="radio" name="format" value="pdf" checked>
+                                    <span>PDF Document</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="format" value="csv">
+                                    <span>CSV Spreadsheet</span>
+                                </label>
+                                <label class="radio-option">
+                                    <input type="radio" name="format" value="json">
+                                    <span>JSON Data</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Additional Options -->
+                        <div class="form-section">
+                            <h4>Options</h4>
+                            <div class="checkbox-options">
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="includeCharts" checked>
+                                    <span>Include Charts and Graphs</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="includeImages">
+                                    <span>Include Detection Images</span>
+                                </label>
+                                <label class="checkbox-option">
+                                    <input type="checkbox" name="emailReport">
+                                    <span>Email Report When Ready</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="preview-report-btn">
+                                <i class="fas fa-eye"></i>
+                                Preview
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="generate-report-btn">
+                                <i class="fas fa-play"></i>
+                                Generate Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+    }
+
+    renderTemplates() {
+        return `
+            <div class="templates-container">
+                <div class="templates-header">
+                    <h3>Report Templates</h3>
+                    <button class="btn btn-primary" id="create-template-btn">
+                        <i class="fas fa-plus"></i>
+                        Create Template
+                    </button>
+                </div>
+                
+                <div class="templates-grid">
+                    ${this.reportTemplates.map(template => `
+                        <div class="template-card-detailed ${template.enabled ? '' : 'disabled'}">
+                            <div class="template-header">
+                                <div class="template-icon-large">
+                                    <i class="fas ${this.getTemplateIcon(template.category)}"></i>
+                                </div>
+                                <div class="template-status">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" ${template.enabled ? 'checked' : ''} data-template-id="${template.id}">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="template-content">
+                                <h4>${template.name}</h4>
+                                <p>${template.description}</p>
+                                
+                                <div class="template-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Category:</span>
+                                        <span class="detail-value">${this.capitalizeFirst(template.category)}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Frequency:</span>
+                                        <span class="detail-value">${this.capitalizeFirst(template.frequency)}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Format:</span>
+                                        <span class="detail-value">${template.format.toUpperCase()}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Last Generated:</span>
+                                        <span class="detail-value">${this.getRelativeTime(template.lastGenerated)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="template-actions">
+                                <button class="btn btn-small btn-secondary" data-action="edit" data-template-id="${template.id}">
+                                    <i class="fas fa-edit"></i>
+                                    Edit
+                                </button>
+                                <button class="btn btn-small btn-primary" data-action="generate" data-template-id="${template.id}">
+                                    <i class="fas fa-play"></i>
+                                    Generate
+                                </button>
+                                <button class="btn btn-small btn-secondary" data-action="duplicate" data-template-id="${template.id}">
+                                    <i class="fas fa-copy"></i>
+                                    Duplicate
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderScheduled() {
+        return `
+            <div class="scheduled-container">
+                <div class="scheduled-header">
+                    <h3>Scheduled Reports</h3>
+                    <button class="btn btn-primary" id="create-schedule-btn">
+                        <i class="fas fa-plus"></i>
+                        Create Schedule
+                    </button>
+                </div>
+                
+                <div class="scheduled-list">
+                    ${this.scheduledReports.map(schedule => `
+                        <div class="scheduled-item ${schedule.enabled ? 'enabled' : 'disabled'}">
+                            <div class="schedule-main">
+                                <div class="schedule-info">
+                                    <h4>${schedule.name}</h4>
+                                    <div class="schedule-meta">
+                                        <span class="schedule-frequency">${this.getScheduleDescription(schedule.schedule)}</span>
+                                        <span class="schedule-next">Next run: ${this.formatDateTime(schedule.nextRun)}</span>
+                                    </div>
+                                    <div class="schedule-recipients">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>${schedule.recipients.join(', ')}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="schedule-controls">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" ${schedule.enabled ? 'checked' : ''} data-schedule-id="${schedule.id}">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="schedule-actions">
+                                <button class="btn btn-small btn-secondary" data-action="edit" data-schedule-id="${schedule.id}">
+                                    <i class="fas fa-edit"></i>
+                                    Edit
+                                </button>
+                                <button class="btn btn-small btn-primary" data-action="run-now" data-schedule-id="${schedule.id}">
+                                    <i class="fas fa-play"></i>
+                                    Run Now
+                                </button>
+                                <button class="btn btn-small btn-danger" data-action="delete" data-schedule-id="${schedule.id}">
+                                    <i class="fas fa-trash"></i>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    renderHistory() {
+        return `
+            <div class="history-container">
+                <div class="history-header">
+                    <h3>Report History</h3>
+                    <div class="history-controls">
+                        <select id="history-filter" class="filter-select">
+                            <option value="">All Reports</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="generating">In Progress</option>
+                        </select>
+                        <button class="btn btn-secondary" id="clear-history-btn">
+                            <i class="fas fa-trash"></i>
+                            Clear History
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="history-list">
+                    ${this.reports.map(report => `
+                        <div class="history-item ${report.status}">
+                            <div class="report-icon">
+                                <i class="fas ${this.getReportIcon(report.type)}"></i>
+                            </div>
+                            
+                            <div class="report-details">
+                                <h4>${report.name}</h4>
+                                <div class="report-meta">
+                                    <span class="report-type">${this.getReportTypeName(report.type)}</span>
+                                    <span class="report-format">${report.format?.toUpperCase()}</span>
+                                    ${report.size ? `<span class="report-size">${report.size}</span>` : ''}
+                                </div>
+                                <div class="report-timestamps">
+                                    <span class="created-at">Created: ${this.formatDateTime(report.createdAt)}</span>
+                                    ${report.completedAt ? `<span class="completed-at">Completed: ${this.formatDateTime(report.completedAt)}</span>` : ''}
+                                </div>
+                                ${report.error ? `<div class="report-error">${report.error}</div>` : ''}
+                            </div>
+                            
+                            <div class="report-status">
+                                <span class="status-badge ${report.status}">${this.capitalizeFirst(report.status)}</span>
+                                ${report.status === 'generating' && report.progress ? `
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: ${report.progress}%"></div>
+                                    </div>
+                                    <span class="progress-text">${report.progress}%</span>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="report-actions">
+                                ${report.status === 'completed' ? `
+                                    <button class="action-btn download" data-action="download" data-report-id="${report.id}" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="action-btn share" data-action="share" data-report-id="${report.id}" title="Share">
+                                        <i class="fas fa-share"></i>
+                                    </button>
+                                ` : ''}
+                                ${report.status === 'failed' ? `
+                                    <button class="action-btn retry" data-action="retry" data-report-id="${report.id}" title="Retry">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="action-btn delete danger" data-action="delete" data-report-id="${report.id}" title="Delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    attachEventListeners() {
+        // Navigation buttons
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.changeSection(e.target.dataset.section));
+        });
+    }
+
+    attachSectionEventListeners() {
+        // Overview quick actions
+        document.querySelectorAll('.quick-action-card').forEach(card => {
+            card.addEventListener('click', (e) => this.handleQuickAction(e));
+        });
+
+        // Generate report form
+        const generateForm = document.getElementById('generate-report-form');
+        if (generateForm) {
+            generateForm.addEventListener('submit', (e) => this.handleGenerateReport(e));
+            
+            // Date range change handler
+            document.querySelectorAll('input[name="dateRange"]').forEach(radio => {
+                radio.addEventListener('change', (e) => this.handleDateRangeChange(e));
+            });
+        }
+
+        // Template toggles and actions
+        document.querySelectorAll('.template-card-detailed .toggle-switch input').forEach(toggle => {
+            toggle.addEventListener('change', (e) => this.toggleTemplate(e));
+        });
+
+        document.querySelectorAll('.template-actions .btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleTemplateAction(e));
+        });
+
+        // Scheduled report controls
+        document.querySelectorAll('.scheduled-item .toggle-switch input').forEach(toggle => {
+            toggle.addEventListener('change', (e) => this.toggleSchedule(e));
+        });
+
+        document.querySelectorAll('.schedule-actions .btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleScheduleAction(e));
+        });
+
+        // History controls
+        document.getElementById('history-filter')?.addEventListener('change', (e) => this.filterHistory(e));
+        document.getElementById('clear-history-btn')?.addEventListener('click', () => this.clearHistory());
+
+        // Report actions
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleReportAction(e));
+        });
+    }
+
+    async loadReports() {
+        // Simulate loading reports
+        console.log('Loading reports...');
+    }
+
+    changeSection(section) {
+        this.currentSection = section;
+        
+        // Update navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.section === section);
+        });
+        
+        this.renderCurrentSection();
+    }
+
+    handleQuickAction(e) {
+        const templateId = e.currentTarget.dataset.template;
+        const action = e.currentTarget.dataset.action;
+        
+        if (templateId) {
+            this.generateQuickReport(templateId);
+        } else if (action === 'custom') {
+            this.changeSection('generate');
+        }
+    }
+
+    handleDateRangeChange(e) {
+        const customRange = document.getElementById('custom-date-range');
+        if (e.target.value === 'custom') {
+            customRange.style.display = 'block';
+        } else {
+            customRange.style.display = 'none';
+        }
+    }
+
+    async handleGenerateReport(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const reportConfig = {
+            template: formData.get('template'),
+            dateRange: formData.get('dateRange'),
+            startDate: formData.get('startDate'),
+            endDate: formData.get('endDate'),
+            format: formData.get('format'),
+            includeCharts: formData.has('includeCharts'),
+            includeImages: formData.has('includeImages'),
+            emailReport: formData.has('emailReport')
+        };
+
+        try {
+            const reportId = await this.generateReport(reportConfig);
+            this.showToast('Report generation started', 'success');
+            this.changeSection('history');
+        } catch (error) {
+            this.showToast('Failed to generate report', 'error');
+        }
+    }
+
+    async generateQuickReport(templateId) {
+        try {
+            const template = this.reportTemplates.find(t => t.id === templateId);
+            if (!template) return;
+
+            const reportId = await this.generateReport({
+                template: templateId,
+                dateRange: 'today',
+                format: template.format
+            });
+            
+            this.showToast(`Generating ${template.name}...`, 'info');
+        } catch (error) {
+            this.showToast('Failed to generate report', 'error');
+        }
+    }
+
+    async generateReport(config) {
+        // Simulate report generation
+        const reportId = Date.now().toString();
+        const newReport = {
+            id: reportId,
+            name: `${config.template} - ${new Date().toLocaleDateString()}`,
+            type: config.template,
+            status: 'generating',
+            createdAt: new Date(),
+            completedAt: null,
+            format: config.format,
+            size: null,
+            downloadUrl: null,
+            progress: 0
+        };
+
+        this.reports.unshift(newReport);
+
+        // Simulate progress
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+            progress += Math.random() * 20;
+            if (progress >= 100) {
+                progress = 100;
+                newReport.status = 'completed';
+                newReport.completedAt = new Date();
+                newReport.size = `${(Math.random() * 5 + 1).toFixed(1)} MB`;
+                newReport.downloadUrl = '#';
+                clearInterval(progressInterval);
+                
+                if (this.currentSection === 'history') {
+                    this.renderCurrentSection();
+                }
+            }
+            newReport.progress = Math.floor(progress);
+            
+            if (this.currentSection === 'history') {
+                this.renderCurrentSection();
+            }
+        }, 1000);
+
+        return reportId;
+    }
+
+    toggleTemplate(e) {
+        const templateId = e.target.dataset.templateId;
+        const template = this.reportTemplates.find(t => t.id === templateId);
+        if (template) {
+            template.enabled = e.target.checked;
+            this.showToast(`Template ${template.enabled ? 'enabled' : 'disabled'}`, 'info');
+        }
+    }
+
+    handleTemplateAction(e) {
+        const action = e.target.dataset.action;
+        const templateId = e.target.dataset.templateId;
+        
+        switch (action) {
+            case 'edit':
+                this.editTemplate(templateId);
+                break;
+            case 'generate':
+                this.generateQuickReport(templateId);
+                break;
+            case 'duplicate':
+                this.duplicateTemplate(templateId);
+                break;
+        }
+    }
+
+    editTemplate(templateId) {
+        console.log('Edit template:', templateId);
+        // This would open a template editor modal
+    }
+
+    duplicateTemplate(templateId) {
+        const template = this.reportTemplates.find(t => t.id === templateId);
+        if (template) {
+            const newTemplate = {
+                ...template,
+                id: `${template.id}-copy`,
+                name: `${template.name} (Copy)`,
+                enabled: false
+            };
+            this.reportTemplates.push(newTemplate);
+            this.renderCurrentSection();
+            this.showToast('Template duplicated', 'success');
+        }
+    }
+
+    toggleSchedule(e) {
+        const scheduleId = e.target.dataset.scheduleId;
+        const schedule = this.scheduledReports.find(s => s.id === scheduleId);
+        if (schedule) {
+            schedule.enabled = e.target.checked;
+            this.showToast(`Schedule ${schedule.enabled ? 'enabled' : 'disabled'}`, 'info');
+        }
+    }
+
+    handleScheduleAction(e) {
+        const action = e.target.dataset.action;
+        const scheduleId = e.target.dataset.scheduleId;
+        
+        switch (action) {
+            case 'edit':
+                this.editSchedule(scheduleId);
+                break;
+            case 'run-now':
+                this.runScheduleNow(scheduleId);
+                break;
+            case 'delete':
+                this.deleteSchedule(scheduleId);
+                break;
+        }
+    }
+
+    editSchedule(scheduleId) {
+        console.log('Edit schedule:', scheduleId);
+        // This would open a schedule editor modal
+    }
+
+    async runScheduleNow(scheduleId) {
+        const schedule = this.scheduledReports.find(s => s.id === scheduleId);
+        if (schedule) {
+            try {
+                await this.generateQuickReport(schedule.templateId);
+                this.showToast(`Running ${schedule.name} now...`, 'info');
+            } catch (error) {
+                this.showToast('Failed to run scheduled report', 'error');
+            }
+        }
+    }
+
+    deleteSchedule(scheduleId) {
+        const schedule = this.scheduledReports.find(s => s.id === scheduleId);
+        if (schedule && confirm(`Are you sure you want to delete the schedule "${schedule.name}"?`)) {
+            this.scheduledReports = this.scheduledReports.filter(s => s.id !== scheduleId);
+            this.renderCurrentSection();
+            this.showToast('Schedule deleted', 'success');
+        }
+    }
+
+    filterHistory(e) {
+        const filter = e.target.value;
+        // This would filter the history list
+        console.log('Filter history by:', filter);
+    }
+
+    clearHistory() {
+        if (confirm('Are you sure you want to clear all report history?')) {
+            this.reports = this.reports.filter(r => r.status === 'generating');
+            this.renderCurrentSection();
+            this.showToast('History cleared', 'success');
+        }
+    }
+
+    handleReportAction(e) {
+        const action = e.target.dataset.action;
+        const reportId = e.target.dataset.reportId;
+        
+        switch (action) {
+            case 'download':
+                this.downloadReport(reportId);
+                break;
+            case 'share':
+                this.shareReport(reportId);
+                break;
+            case 'retry':
+                this.retryReport(reportId);
+                break;
+            case 'delete':
+                this.deleteReport(reportId);
+                break;
+        }
+    }
+
+    downloadReport(reportId) {
+        const report = this.reports.find(r => r.id === reportId);
+        if (report) {
+            // Simulate download
+            this.showToast(`Downloading ${report.name}...`, 'info');
+        }
+    }
+
+    shareReport(reportId) {
+        const report = this.reports.find(r => r.id === reportId);
+        if (report) {
+            console.log('Share report:', report);
+            // This would open a share modal
+        }
+    }
+
+    async retryReport(reportId) {
+        const report = this.reports.find(r => r.id === reportId);
+        if (report) {
+            report.status = 'generating';
+            report.progress = 0;
+            report.error = null;
+            this.renderCurrentSection();
+            
+            // Simulate retry
+            setTimeout(() => {
+                report.status = 'completed';
+                report.completedAt = new Date();
+                report.size = `${(Math.random() * 5 + 1).toFixed(1)} MB`;
+                this.renderCurrentSection();
+                this.showToast('Report generated successfully', 'success');
+            }, 3000);
+        }
+    }
+
+    deleteReport(reportId) {
+        const report = this.reports.find(r => r.id === reportId);
+        if (report && confirm(`Are you sure you want to delete "${report.name}"?`)) {
+            this.reports = this.reports.filter(r => r.id !== reportId);
+            this.renderCurrentSection();
+            this.showToast('Report deleted', 'success');
+        }
+    }
+
+    // Utility methods
+    calculateReportStats() {
+        const now = new Date();
+        const thisMonth = this.reports.filter(r => 
+            r.createdAt.getMonth() === now.getMonth() && 
+            r.createdAt.getFullYear() === now.getFullYear()
+        ).length;
+        
+        const totalSize = this.reports
+            .filter(r => r.size)
+            .reduce((total, r) => total + parseFloat(r.size), 0)
+            .toFixed(1);
+        
+        const successfulReports = this.reports.filter(r => r.status === 'completed').length;
+        const successRate = this.reports.length > 0 ? Math.round((successfulReports / this.reports.length) * 100) : 100;
+        
+        return {
+            totalReports: this.reports.length,
+            reportsThisMonth: thisMonth,
+            activeSchedules: this.scheduledReports.filter(s => s.enabled).length,
+            totalSize: `${totalSize} MB`,
+            successRate
+        };
+    }
+
+    getReportIcon(type) {
+        const icons = {
+            'daily-summary': 'fa-calendar-day',
+            'weekly-analytics': 'fa-chart-line',
+            'security-incidents': 'fa-shield-alt',
+            'maintenance-report': 'fa-tools',
+            'custom': 'fa-cogs'
+        };
+        return icons[type] || 'fa-file-alt';
+    }
+
+    getTemplateIcon(category) {
+        const icons = {
+            summary: 'fa-chart-bar',
+            analytics: 'fa-chart-line',
+            security: 'fa-shield-alt',
+            maintenance: 'fa-tools'
+        };
+        return icons[category] || 'fa-file-alt';
+    }
+
+    getReportTypeName(type) {
+        const names = {
+            'daily-summary': 'Daily Summary',
+            'weekly-analytics': 'Weekly Analytics',
+            'security-incidents': 'Security Incidents',
+            'maintenance-report': 'Maintenance Report',
+            'custom': 'Custom Report'
+        };
+        return names[type] || 'Unknown Report';
+    }
+
+    getScheduleDescription(cronExpression) {
+        // Simple cron to human readable conversion
+        if (cronExpression === '0 8 * * *') return 'Daily at 8:00 AM';
+        if (cronExpression === '0 9 * * 1') return 'Weekly on Mondays at 9:00 AM';
+        return cronExpression;
+    }
+
+    getRelativeTime(date) {
+        const now = new Date();
+        const diff = now - date;
+        const minutes = Math.floor(diff / 60000);
+        
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
+        return `${Math.floor(minutes / 1440)}d ago`;
+    }
+
+    formatDateTime(date) {
+        return date.toLocaleString();
+    }
+
+    capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+            <span>${message}</span>
+            <button class="toast-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 5000);
+    }
+}
+
+export default ReportsPage;

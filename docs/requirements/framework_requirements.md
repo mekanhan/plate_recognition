@@ -4,84 +4,78 @@ This document defines the framework requirements, coding standards, and architec
 
 ## Project Structure
 
-lpr-system/
-├── backend/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── v1/
-│   │   │       ├── endpoints/
-│   │   │       │   └── cameras.py
-│   │   │       └── router.py
-│   │   ├── core/
-│   │   │   ├── config.py
-│   │   │   └── security.py
-│   │   ├── db/
-│   │   │   ├── models/
-│   │   │   │   └── camera.py
-│   │   │   └── session.py
-│   │   ├── schemas/
-│   │   │   └── camera.py
-│   │   ├── services/
-│   │   │   └── camera_service.py
-│   │   └── main.py
-│   ├── tests/
-│   │   └── test_cameras.py
-│   ├── requirements.txt
-│   └── README.md
+plate_recognition/
+├── app/                    # FastAPI monolithic backend
+│   ├── main.py            # FastAPI application entry
+│   ├── database.py        # SQLAlchemy async database
+│   ├── models.py          # Pydantic & SQLAlchemy models
+│   ├── dependencies/      # Dependency injection
+│   ├── factories/         # Service factories
+│   ├── interfaces/        # Abstract base classes
+│   ├── repositories/      # Data access layer
+│   ├── routers/           # FastAPI route handlers
+│   ├── services/          # Business logic services
+│   └── utils/             # Utility functions
+├── backend/               # Additional FastAPI structure (empty)
+│   └── app/
+│       ├── api/v1/endpoints/cameras.py
+│       ├── core/
+│       ├── db/models/
+│       ├── schemas/
+│       └── services/
 ├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── common/
+│   │   ├── app.js         # Main LPRApplication class
+│   │   ├── components/    # Modular ES6 components
 │   │   │   ├── cameras/
-│   │   │   │   ├── CameraList.js
 │   │   │   │   ├── CameraCard.js
-│   │   │   │   ├── CameraModal.js
-│   │   │   │   └── CameraFilters.js
+│   │   │   │   ├── CameraFilters.js
+│   │   │   │   ├── CameraList.js
+│   │   │   │   └── CameraModal.js
+│   │   │   ├── common/
+│   │   │   │   ├── CameraSetupModal.js
+│   │   │   │   └── Modal.js
 │   │   │   └── layout/
-│   │   │       ├── Sidebar.js
-│   │   │       └── Header.js
-│   │   ├── pages/
-│   │   │   └── CamerasPage.js
+│   │   │       ├── Header.js
+│   │   │       └── Sidebar.js
+│   │   ├── pages/         # Page components
+│   │   │   ├── CamerasPage.js
+│   │   │   ├── Dashboard.js
+│   │   │   └── [other pages]
 │   │   ├── services/
 │   │   │   └── api.js
-│   │   ├── styles/
-│   │   └── utils/
-│   ├── package.json
-│   └── README.md
+│   │   └── styles/
+│   └── drafts/            # Legacy prototypes
+├── data/                  # SQLite database & files
+├── scripts/               # Python utility scripts
+├── tests/                 # Test files
 └── docs/
-    ├── architecture/
-    │   ├── backend.md
-    │   └── frontend.md
-    ├── features/
-    │   └── camera_management.md
-    └── api/
-        └── cameras.md
-
 
 ## Backend (FastAPI)
 
+- **Framework**: FastAPI monolithic application
+- **Database**: SQLite with async SQLAlchemy
 - **Python**: 3.10+
-- **ORM**: SQLAlchemy 2.0
-- **Auth**: JWT with OAuth2
+- **Models**: YOLO (YOLOv11/v8) + EasyOCR
 - **Conventions**:
   - Follow PEP 8
   - Use type hints
-  - Document with Google-style docstrings
-  - Structure models as Base/Create/Update/Response
-  - Implement proper error handling
-  - Use dependency injection
+  - Async/await patterns
+  - Service layer architecture
+  - Repository pattern for data access
 
-## Frontend (React)
+## Frontend (Vanilla JavaScript)
 
-- **JavaScript**: ES6+ with React 18
-- **State**: React Context/Hooks
-- **Styling**: CSS Modules
+- **Framework**: None - Pure ES6+ with modules
+- **Architecture**: Class-based SPA with component system
+- **Main App**: LPRApplication class orchestrates all components
+- **Styling**: CSS with component-specific stylesheets
 - **Conventions**:
+  - ES6 modules and classes
   - Component-based architecture
-  - Functional components with hooks
-  - Prop validation
-  - Consistent file structure
+  - Event-driven communication
   - Responsive design
+  - No build process - direct browser execution
 
 ## Development Practices
 

@@ -6,17 +6,33 @@
     <title>LPR Security System - Dashboard</title>
     
     <!-- Main CSS -->
+    <link rel="stylesheet" href="styles/base/variables.css">
+    <link rel="stylesheet" href="styles/base/reset.css">
+    <link rel="stylesheet" href="styles/base/transitions.css">
     <link rel="stylesheet" href="styles/main.css">
     
     <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <!-- Theme Detection -->
+    <!-- Early Theme Detection (prevent FOUC) -->
     <script>
-        // Detect and apply theme preference
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        if (savedTheme === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
+        // Early theme detection to prevent flash of wrong theme
+        try {
+            const savedTheme = localStorage.getItem('theme');
+            
+            if (savedTheme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            } else if (savedTheme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                // Auto mode or no preference - respect system preference
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    // Don't set data-theme to use the CSS media query fallback
+                }
+            }
+        } catch (e) {
+            // Fallback if localStorage is not available
+            console.warn('Theme detection failed:', e);
         }
     </script>
 </head>
@@ -39,7 +55,7 @@
     <script type="module" src="app.js"></script>
     
     <!-- Demo Enhancement Script -->
-    <script src="demo.js"></script>
+    <!-- <script src="demo.js"></script> -->
     
     <!-- Demo Data Script (for demonstration purposes) -->
     <script>

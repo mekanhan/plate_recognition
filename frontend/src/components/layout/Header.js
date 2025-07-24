@@ -10,8 +10,9 @@ class Header {
             lastUpdate: new Date()
         };
         this.notifications = [];
-        this.isDarkMode = false;
+        
         this.init();
+        this.loadTheme();
     }
 
     init() {
@@ -24,6 +25,9 @@ class Header {
     render() {
         const headerContainer = document.querySelector('.top-header') || this.createHeaderContainer();
         headerContainer.innerHTML = this.getTemplate();
+        
+        // Update theme button after rendering
+        this.updateThemeButton();
     }
 
     createHeaderContainer() {
@@ -73,8 +77,8 @@ class Header {
                             </div>
                         </div>
                     </div>
-                    <button class="header-btn" id="dark-mode-toggle" title="Toggle Dark Mode">
-                        <i class="fas ${this.isDarkMode ? 'fa-sun' : 'fa-moon'}"></i>
+                    <button class="header-btn" id="dark-mode-toggle" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
                     </button>
                     <button class="header-btn" id="fullscreen-btn" title="Fullscreen">
                         <i class="fas fa-expand"></i>
@@ -142,10 +146,10 @@ class Header {
             markAllRead.addEventListener('click', () => this.markAllNotificationsRead());
         }
 
-        // Dark mode toggle
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', () => this.toggleDarkMode());
+        // Theme toggle - simple direct approach
+        const themeToggle = document.getElementById('dark-mode-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => this.toggleDarkMode());
         }
 
         // Fullscreen toggle
@@ -213,21 +217,42 @@ class Header {
     }
 
     toggleDarkMode() {
-        this.isDarkMode = !this.isDarkMode;
+        const currentTheme = document.documentElement.getAttribute('data-theme');
         
-        // Apply theme to document element (matches CSS selector [data-theme="dark"])
-        if (this.isDarkMode) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
+        if (currentTheme === 'dark') {
+            this.enableLightMode();
         } else {
-            document.documentElement.removeAttribute('data-theme');
-            localStorage.setItem('theme', 'light');
+            this.enableDarkMode();
         }
-        
-        // Update icon
-        const icon = document.querySelector('#dark-mode-toggle i');
-        if (icon) {
-            icon.className = `fas ${this.isDarkMode ? 'fa-sun' : 'fa-moon'}`;
+    }
+    
+    enableDarkMode() {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        this.updateThemeButton();
+    }
+    
+    enableLightMode() {
+        document.documentElement.setAttribute('data-theme', 'light');
+        localStorage.setItem('theme', 'light');
+        this.updateThemeButton();
+    }
+    
+    updateThemeButton() {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            const icon = darkModeToggle.querySelector('i');
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            
+            if (icon) {
+                if (currentTheme === 'dark') {
+                    icon.className = 'fas fa-sun';
+                    darkModeToggle.title = 'Switch to Light Mode';
+                } else {
+                    icon.className = 'fas fa-moon';
+                    darkModeToggle.title = 'Switch to Dark Mode';
+                }
+            }
         }
     }
 
@@ -383,27 +408,19 @@ class Header {
         this.render();
     }
 
-    // Initialize from stored preferences
-    loadPreferences() {
+    loadTheme() {
         const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
         if (savedTheme === 'dark') {
-            this.isDarkMode = true;
-            document.documentElement.setAttribute('data-theme', 'dark');
-            
-            // Update icon immediately
-            const icon = document.querySelector('#dark-mode-toggle i');
-            if (icon) {
-                icon.className = 'fas fa-sun';
-            }
+            this.enableDarkMode();
+        } else if (savedTheme === 'light') {
+            this.enableLightMode();
+        } else if (prefersDark) {
+            // Respect system preference if no saved preference
+            this.enableDarkMode();
         } else {
-            this.isDarkMode = false;
-            document.documentElement.removeAttribute('data-theme');
-            
-            // Update icon immediately
-            const icon = document.querySelector('#dark-mode-toggle i');
-            if (icon) {
-                icon.className = 'fas fa-moon';
-            }
+            this.enableLightMode();
         }
     }
 }

@@ -5,13 +5,14 @@
 import Sidebar from './components/layout/Sidebar.js';
 import Header from './components/layout/Header.js';
 import Dashboard from './pages/Dashboard.js';
-import Cameras from './pages/Cameras.js';
+import Cameras from './pages/CamerasPage.js';
 import DetectionsPage from './pages/DetectionsPage.js';
 import AnalyticsPage from './pages/AnalyticsPage.js';
 import AlertsPage from './pages/AlertsPage.js';
 import ReportsPage from './pages/ReportsPage.js';
 import SettingsPage from './pages/SettingsPage.js';
 import CameraSetupModal from './components/common/CameraSetupModal.js';
+import SimpleCameraModal from './components/cameras/SimpleCameraModal.js';
 import Modal from './components/common/Modal.js';
 
 class LPRApplication {
@@ -133,6 +134,7 @@ class LPRApplication {
 
     initializeModals() {
         this.modals.cameraSetup = new CameraSetupModal();
+        this.modals.simpleCamera = new SimpleCameraModal();
     }
 
     attachGlobalEventListeners() {
@@ -311,8 +313,8 @@ class LPRApplication {
 
     // Modal management
     showAddCameraModal() {
-        if (this.modals.cameraSetup) {
-            this.modals.cameraSetup.show();
+        if (this.modals.simpleCamera) {
+            this.modals.simpleCamera.show();
         }
     }
 
@@ -557,9 +559,16 @@ class LPRApplication {
 }
 
 // Initialize application when DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
+function initializeApp() {
     window.lprApp = new LPRApplication();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // DOM is already loaded
+    initializeApp();
+}
 
 // Export for module systems
 export default LPRApplication;

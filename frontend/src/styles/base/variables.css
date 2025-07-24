@@ -1,9 +1,11 @@
 /* CSS Custom Properties for Theme */
 :root {
     /* Light Theme Colors */
-    --bg-primary: #c5c5d0;
+    --bg-primary: #bebec7;
     --bg-secondary: #acaec0;
     --bg-tertiary: #cfd1e4;
+    --surface-color: #afaec0;
+    --card-bg: #cfd0de;
     --text-primary: #1a1d23;
     --text-secondary: #2d3748;
     --text-muted: #4a5568;
@@ -66,6 +68,8 @@
     --bg-primary: #1a202c;
     --bg-secondary: #2d3748;
     --bg-tertiary: #4a5568;
+    --surface-color: #334155;
+    --card-bg: #1e293b;
     --text-primary: #f7fafc;
     --text-secondary: #e2e8f0;
     --text-muted: #a0aec0;

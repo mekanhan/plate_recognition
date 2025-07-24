@@ -1,0 +1,13 @@
+{
+  "name": "lpr-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "License Plate Recognition System Frontend",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "dev": "python3 -m http.server 8080"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

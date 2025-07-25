@@ -38,6 +38,18 @@ class StreamStatusResponse(BaseModel):
     settings: Optional[Dict[str, Any]] = None
 
 
+@router.options("/video/{camera_id}")
+async def stream_video_options(camera_id: int):
+    """Handle CORS preflight for video streaming"""
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
 @router.get("/video/{camera_id}")
 async def stream_video(
     camera_id: int,
@@ -121,9 +133,24 @@ async def stream_video(
             "Cache-Control": "no-cache, no-store, must-revalidate",
             "Pragma": "no-cache",
             "Expires": "0",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
         }
     )
 
+
+@router.options("/thumbnail/{camera_id}")
+async def thumbnail_options(camera_id: int):
+    """Handle CORS preflight for thumbnail endpoint"""
+    return Response(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 @router.get("/thumbnail/{camera_id}")
 async def get_camera_thumbnail(
@@ -192,7 +219,10 @@ async def get_camera_thumbnail(
         media_type="image/jpeg",
         headers={
             "Cache-Control": "no-cache",
-            "Content-Disposition": f"inline; filename=camera_{camera_id}_thumbnail.jpg"
+            "Content-Disposition": f"inline; filename=camera_{camera_id}_thumbnail.jpg",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
         }
     )
 

@@ -321,7 +321,7 @@ class SimpleCameraModal {
         testBtn.disabled = true;
         
         try {
-            const response = await fetch('http://localhost:8000/api/v1/cameras/test-connection', {
+            const response = await fetch('http://localhost:8001/api/v1/cameras/test-connection', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -424,7 +424,7 @@ class SimpleCameraModal {
             
             if (this.editMode) {
                 // Update existing camera
-                response = await fetch(`http://localhost:8000/api/v1/cameras/${parseInt(this.editingCameraId)}`, {
+                response = await fetch(`http://localhost:8001/api/v1/cameras/${parseInt(this.editingCameraId)}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -433,7 +433,7 @@ class SimpleCameraModal {
                 });
             } else {
                 // Create new camera
-                response = await fetch('http://localhost:8000/api/v1/cameras/', {
+                response = await fetch('http://localhost:8001/api/v1/cameras/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

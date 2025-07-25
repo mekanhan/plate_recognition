@@ -2,7 +2,7 @@
 API v1 Router
 """
 from fastapi import APIRouter
-from .endpoints import cameras
+from .endpoints import cameras, streaming
 
 api_router = APIRouter()
 
@@ -11,4 +11,11 @@ api_router.include_router(
     cameras.router,
     prefix="/cameras",
     tags=["cameras"]
+)
+
+# Include streaming endpoints
+api_router.include_router(
+    streaming.router,
+    prefix="/streams",
+    tags=["streaming"]
 )

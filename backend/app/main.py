@@ -4,6 +4,7 @@ FastAPI Backend Application
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.v1.router import api_router
+from .api.v1.endpoints.streaming import router as streaming_router, cleanup_all_streams
 from .database import init_database
 
 # Create FastAPI app
@@ -19,6 +20,12 @@ async def startup_event():
     """Initialize database on startup"""
     await init_database()
 
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup resources on shutdown"""
+    await cleanup_all_streams()
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +37,9 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
+
+# Include direct streaming routes (not under /api/v1 for simple video URLs)
+app.include_router(streaming_router, prefix="/stream", tags=["streaming"])
 
 @app.get("/")
 async def root():

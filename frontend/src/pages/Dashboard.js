@@ -2,6 +2,9 @@
  * Dashboard Page Component
  * Main dashboard with metrics, live feeds, and system overview
  */
+import LiveVideoPlayer from '../components/streaming/LiveVideoPlayer.js';
+import streamingService from '../services/StreamingService.js';
+
 class Dashboard {
     constructor() {
         this.metrics = {
@@ -11,12 +14,16 @@ class Dashboard {
             accuracyRate: 94.2
         };
         this.liveFeeds = [];
+        this.liveCameras = [];
+        this.videoPlayers = new Map();
         this.recentDetections = [];
         this.systemHealth = {
             status: 'healthy',
             metrics: []
         };
         this.refreshInterval = null;
+        this.selectedCameraCount = 4;
+        this.currentPage = 0;
         this.init();
     }
 
@@ -291,41 +298,323 @@ class Dashboard {
 
     handleCameraCountChange(e) {
         const count = parseInt(e.target.value);
-        this.updateCameraGrid(count);
+        this.selectedCameraCount = count;
+        this.currentPage = 0; // Reset to first page
+        this.renderLiveFeeds();
+    }
+
+    attachFeedControlListeners() {
+        document.querySelectorAll('.feed-control-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleFeedControl(e));
+        });
+    }
+
+    async handleFeedControl(e) {
+        e.preventDefault();
+        const action = e.target.dataset.action || e.target.parentElement.dataset.action;
+        const cameraId = e.target.dataset.cameraId || e.target.parentElement.dataset.cameraId;
+        
+        if (!cameraId) return;
+        
+        const camera = this.liveCameras.find(c => c.id.toString() === cameraId);
+        if (!camera) return;
+
+        switch (action) {
+            case 'stream':
+                await this.toggleCameraStream(cameraId);
+                break;
+            case 'fullscreen':
+                this.openFullscreenFeed(cameraId);
+                break;
+            case 'refresh':
+                await this.refreshCameraFeed(cameraId);
+                break;
+        }
+    }
+
+    async toggleCameraStream(cameraId) {
+        const player = this.videoPlayers.get(cameraId);
+        if (!player) return;
+
+        const isStreaming = streamingService.isStreamActive(cameraId);
+        
+        try {
+            if (isStreaming) {
+                await player.stopStream();
+            } else {
+                await player.startStream();
+            }
+            
+            // Update UI
+            this.updateFeedControlButton(cameraId);
+            this.updateCameraStatusIndicator(cameraId);
+            
+        } catch (error) {
+            console.error('Failed to toggle stream:', error);
+            this.showAlert(`Failed to ${isStreaming ? 'stop' : 'start'} stream for camera`, 'error');
+        }
+    }
+
+    openFullscreenFeed(cameraId) {
+        const player = this.videoPlayers.get(cameraId);
+        if (player && streamingService.isStreamActive(cameraId)) {
+            player.openFullscreen();
+        } else {
+            this.showAlert('Start streaming to view in fullscreen', 'info');
+        }
+    }
+
+    async refreshCameraFeed(cameraId) {
+        const player = this.videoPlayers.get(cameraId);
+        if (player) {
+            await player.refreshThumbnail();
+        }
+    }
+
+    updateFeedControlButton(cameraId) {
+        const btn = document.querySelector(`[data-action="stream"][data-camera-id="${cameraId}"]`);
+        if (!btn) return;
+
+        const isStreaming = streamingService.isStreamActive(cameraId);
+        const icon = btn.querySelector('i');
+        const text = btn.childNodes[btn.childNodes.length - 1];
+
+        if (icon) {
+            icon.className = `fas ${isStreaming ? 'fa-stop' : 'fa-play'}`;
+        }
+        if (text && text.textContent) {
+            text.textContent = isStreaming ? 'Stop' : 'Start';
+        }
+    }
+
+    updateCameraStatusIndicator(cameraId) {
+        const indicator = document.querySelector(`[data-camera-id="${cameraId}"] .camera-status-indicator`);
+        if (!indicator) return;
+
+        const isStreaming = streamingService.isStreamActive(cameraId);
+        const existingBadge = indicator.querySelector('.streaming-badge');
+        
+        if (isStreaming && !existingBadge) {
+            indicator.insertAdjacentHTML('beforeend', '<span class="streaming-badge">LIVE</span>');
+        } else if (!isStreaming && existingBadge) {
+            existingBadge.remove();
+        }
+    }
+
+    updateFeedPagination() {
+        const paginationContainer = document.getElementById('camera-pagination');
+        if (!paginationContainer) return;
+
+        const totalPages = Math.ceil(this.liveCameras.length / this.selectedCameraCount);
+        
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+
+        const pagination = [];
+        
+        // Previous button
+        pagination.push(`
+            <button class="pagination-btn ${this.currentPage === 0 ? 'disabled' : ''}" 
+                    data-page="${this.currentPage - 1}" ${this.currentPage === 0 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `);
+
+        // Page numbers
+        for (let i = 0; i < totalPages; i++) {
+            pagination.push(`
+                <button class="pagination-btn ${i === this.currentPage ? 'active' : ''}" 
+                        data-page="${i}">
+                    ${i + 1}
+                </button>
+            `);
+        }
+
+        // Next button
+        pagination.push(`
+            <button class="pagination-btn ${this.currentPage === totalPages - 1 ? 'disabled' : ''}" 
+                    data-page="${this.currentPage + 1}" ${this.currentPage === totalPages - 1 ? 'disabled' : ''}>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `);
+
+        paginationContainer.innerHTML = pagination.join('');
+
+        // Attach pagination event listeners
+        paginationContainer.querySelectorAll('.pagination-btn:not(.disabled)').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const page = parseInt(e.target.dataset.page);
+                if (!isNaN(page) && page !== this.currentPage) {
+                    this.currentPage = page;
+                    this.renderLiveFeeds();
+                }
+            });
+        });
+    }
+
+    // Player event handlers
+    handlePlayerStatusChange(cameraId, status) {
+        console.log(`Camera ${cameraId} status changed to: ${status}`);
+        this.updateCameraStatusIndicator(cameraId);
+    }
+
+    handlePlayerError(cameraId, error) {
+        console.error(`Camera ${cameraId} error:`, error);
+        this.showAlert(`Camera error: ${error}`, 'error');
+    }
+
+    handleStreamStart(cameraId) {
+        console.log(`Stream started for camera ${cameraId}`);
+        this.updateFeedControlButton(cameraId);
+        this.updateCameraStatusIndicator(cameraId);
+    }
+
+    handleStreamStop(cameraId) {
+        console.log(`Stream stopped for camera ${cameraId}`);
+        this.updateFeedControlButton(cameraId);
+        this.updateCameraStatusIndicator(cameraId);
+    }
+
+    async loadLiveCameras() {
+        try {
+            const cameras = await streamingService.getCameras();
+            
+            // Filter for enabled cameras and transform data
+            this.liveCameras = cameras
+                .filter(camera => camera.enabled)
+                .map(camera => ({
+                    id: camera.id,
+                    name: camera.name,
+                    location: camera.location || 'unknown',
+                    status: camera.status || 'offline',
+                    ipAddress: camera.ip_address,
+                    port: camera.port,
+                    connectionType: camera.connection_type,
+                    streamPath: camera.stream_path,
+                    lastSeen: camera.updated_at ? new Date(camera.updated_at) : new Date(),
+                    enabled: camera.enabled,
+                    isStreaming: streamingService.isStreamActive(camera.id)
+                }));
+                
+            this.renderLiveFeeds();
+        } catch (error) {
+            console.error('Failed to load cameras:', error);
+            this.showAlert('Failed to load camera feeds', 'error');
+            this.renderNoFeedsMessage();
+        }
     }
 
     renderLiveFeeds() {
         const container = document.getElementById('live-camera-grid');
         if (!container) return;
 
-        // Simulate camera feeds
-        const mockFeeds = [
-            { id: 'cam1', name: 'Entrance Gate', status: 'online' },
-            { id: 'cam2', name: 'Parking Lot A', status: 'online' },
-            { id: 'cam3', name: 'Loading Dock', status: 'warning' },
-            { id: 'cam4', name: 'Side Entrance', status: 'online' }
-        ];
+        if (!this.liveCameras.length) {
+            this.renderNoFeedsMessage();
+            return;
+        }
 
-        container.innerHTML = mockFeeds.map(feed => `
-            <div class="camera-feed-item ${feed.status}">
+        // Apply camera count filter and pagination
+        const startIndex = this.currentPage * this.selectedCameraCount;
+        const displayCameras = this.liveCameras.slice(startIndex, startIndex + this.selectedCameraCount);
+
+        // Update grid layout class
+        container.className = `camera-grid layout-${Math.min(displayCameras.length, this.selectedCameraCount)}`;
+
+        container.innerHTML = displayCameras.map(camera => this.renderCameraFeedItem(camera)).join('');
+
+        // Initialize video players for each camera
+        displayCameras.forEach(camera => {
+            this.initializeCameraPlayer(camera);
+        });
+
+        // Attach event listeners
+        this.attachFeedControlListeners();
+
+        // Update pagination if needed
+        this.updateFeedPagination();
+    }
+
+    renderCameraFeedItem(camera) {
+        const isStreaming = streamingService.isStreamActive(camera.id);
+        
+        return `
+            <div class="camera-feed-item ${camera.status}" data-camera-id="${camera.id}">
                 <div class="camera-feed-header">
-                    <span class="camera-name">${feed.name}</span>
-                    <span class="camera-status ${feed.status}">
-                        <i class="fas ${feed.status === 'online' ? 'fa-circle' : 'fa-exclamation-triangle'}"></i>
-                    </span>
-                </div>
-                <div class="camera-feed-video">
-                    <div class="video-placeholder">
-                        <i class="fas fa-video"></i>
-                        <span>Live Feed</span>
+                    <span class="camera-name">${camera.name}</span>
+                    <div class="camera-status-indicator ${camera.status}">
+                        <i class="fas ${this.getStatusIcon(camera.status)}"></i>
+                        <span class="status-text">${this.capitalizeFirst(camera.status)}</span>
+                        ${isStreaming ? '<span class="streaming-badge">LIVE</span>' : ''}
                     </div>
                 </div>
-                <div class="camera-feed-info">
-                    <span class="resolution">1920x1080</span>
-                    <span class="fps">30 FPS</span>
+                
+                <div class="camera-feed-video" id="feed-video-${camera.id}">
+                    <!-- LiveVideoPlayer will be inserted here -->
+                </div>
+                
+                <div class="camera-feed-controls">
+                    <button class="feed-control-btn" data-action="stream" data-camera-id="${camera.id}" 
+                            ${camera.status !== 'online' ? 'disabled' : ''}>
+                        <i class="fas ${isStreaming ? 'fa-stop' : 'fa-play'}"></i>
+                        ${isStreaming ? 'Stop' : 'Start'}
+                    </button>
+                    <button class="feed-control-btn" data-action="fullscreen" data-camera-id="${camera.id}">
+                        <i class="fas fa-expand"></i>
+                        Fullscreen
+                    </button>
+                    <button class="feed-control-btn" data-action="refresh" data-camera-id="${camera.id}">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
                 </div>
             </div>
-        `).join('');
+        `;
+    }
+
+    initializeCameraPlayer(camera) {
+        const videoContainer = document.getElementById(`feed-video-${camera.id}`);
+        if (!videoContainer) return;
+
+        // Create LiveVideoPlayer instance
+        const player = new LiveVideoPlayer({
+            cameraId: camera.id,
+            camera: camera,
+            autoStart: false,
+            showControls: false, // We'll use external controls
+            className: 'dashboard-feed-player',
+            onStatusChange: (status) => this.handlePlayerStatusChange(camera.id, status),
+            onError: (error) => this.handlePlayerError(camera.id, error),
+            onStreamStart: () => this.handleStreamStart(camera.id),
+            onStreamStop: () => this.handleStreamStop(camera.id)
+        });
+
+        // Render and initialize player
+        videoContainer.innerHTML = player.render();
+        player.init();
+
+        // Store player reference
+        this.videoPlayers.set(camera.id, player);
+    }
+
+    renderNoFeedsMessage() {
+        const container = document.getElementById('live-camera-grid');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="no-feeds-message">
+                <div class="no-feeds-content">
+                    <i class="fas fa-video-slash"></i>
+                    <h3>No Camera Feeds Available</h3>
+                    <p>Add cameras to start monitoring live feeds</p>
+                    <button class="btn btn-primary" onclick="window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'cameras', action: 'add' } }))">
+                        <i class="fas fa-plus"></i>
+                        Add Camera
+                    </button>
+                </div>
+            </div>
+        `;
     }
 
     renderRecentDetections() {
@@ -381,17 +670,62 @@ class Dashboard {
 
     async loadData() {
         try {
-            // In a real application, this would make API calls
-            // For now, we'll simulate data loading
+            // Load basic dashboard data
             await this.simulateDataLoad();
+            
+            // Load live cameras with streaming integration
+            await this.loadLiveCameras();
+            
+            // Update other sections
             this.updateMetrics();
-            this.renderLiveFeeds();
             this.renderRecentDetections();
             this.renderSystemHealth();
+            
+            // Setup streaming service event listeners
+            this.setupStreamingEventListeners();
+            
         } catch (error) {
             console.error('Error loading dashboard data:', error);
             this.showAlert('Failed to load dashboard data', 'error');
         }
+    }
+
+    setupStreamingEventListeners() {
+        // Listen for streaming service events
+        streamingService.on('streamStarted', (data) => {
+            this.handleStreamStart(data.cameraId);
+        });
+
+        streamingService.on('streamStopped', (data) => {
+            this.handleStreamStop(data.cameraId);
+        });
+
+        streamingService.on('streamError', (data) => {
+            this.handlePlayerError(data.cameraId, data.error);
+        });
+
+        streamingService.on('statusUpdate', (data) => {
+            // Update camera statuses based on server data
+            this.updateCameraStatuses(data);
+        });
+    }
+
+    updateCameraStatuses(statusData) {
+        if (!statusData.activeStreams) return;
+
+        const activeStreamIds = new Set(statusData.activeStreams.map(s => s.cameraId));
+        
+        // Update local camera data
+        this.liveCameras.forEach(camera => {
+            const wasStreaming = camera.isStreaming;
+            camera.isStreaming = activeStreamIds.has(camera.id);
+            
+            // Update UI if status changed
+            if (wasStreaming !== camera.isStreaming) {
+                this.updateFeedControlButton(camera.id);
+                this.updateCameraStatusIndicator(camera.id);
+            }
+        });
     }
 
     async simulateDataLoad() {
@@ -442,10 +776,48 @@ class Dashboard {
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
+    getStatusIcon(status) {
+        const icons = {
+            online: 'fa-circle',
+            offline: 'fa-times-circle',
+            warning: 'fa-exclamation-triangle'
+        };
+        return icons[status] || 'fa-question-circle';
+    }
+
+    getRelativeTime(date) {
+        const now = new Date();
+        const diff = now - date;
+        const minutes = Math.floor(diff / 60000);
+        
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
+        return `${Math.floor(minutes / 1440)}d ago`;
+    }
+
     // Clean up when component is destroyed
     destroy() {
         this.stopAutoRefresh();
-        // Remove event listeners if needed
+        
+        // Cleanup video players
+        this.videoPlayers.forEach(player => {
+            player.destroy();
+        });
+        this.videoPlayers.clear();
+        
+        // Remove streaming service event listeners
+        streamingService.off('streamStarted');
+        streamingService.off('streamStopped');
+        streamingService.off('streamError');
+        streamingService.off('statusUpdate');
+        
+        // Stop any active streams
+        this.liveCameras.forEach(camera => {
+            if (camera.isStreaming) {
+                streamingService.stopStream(camera.id).catch(console.error);
+            }
+        });
     }
 }
 

@@ -1,0 +1,21 @@
+127.0.0.1 - - [25/Jul/2025 13:57:48] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 13:58:03] "GET /src/index.html HTTP/1.1" 304 -
+127.0.0.1 - - [25/Jul/2025 13:58:03] "GET /src/pages/CamerasPage.js HTTP/1.1" 304 -
+127.0.0.1 - - [25/Jul/2025 13:58:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 13:58:52] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [25/Jul/2025 14:08:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 14:25:59] "GET / HTTP/1.1" 304 -
+127.0.0.1 - - [25/Jul/2025 14:25:59] "GET /src/pages/Dashboard.js HTTP/1.1" 304 -
+127.0.0.1 - - [25/Jul/2025 14:25:59] "GET /src/pages/CamerasPage.js HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 14:25:59] "GET /src/components/streaming/LiveVideoPlayer.js HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 14:25:59] "GET /src/services/StreamingService.js HTTP/1.1" 304 -
+127.0.0.1 - - [25/Jul/2025 14:26:35] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 14:26:35] code 404, message File not found
+127.0.0.1 - - [25/Jul/2025 14:26:35] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [25/Jul/2025 14:27:41] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 14:27:41] code 404, message File not found
+127.0.0.1 - - [25/Jul/2025 14:27:41] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [25/Jul/2025 14:27:46] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 14:27:46] "GET /src/components/streaming/LiveVideoPlayer.js HTTP/1.1" 304 -
+127.0.0.1 - - [25/Jul/2025 14:28:33] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [25/Jul/2025 14:28:33] "GET /src/pages/CamerasPage.js HTTP/1.1" 304 -

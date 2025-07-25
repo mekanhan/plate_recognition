@@ -6,8 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 ```bash
-# Start development server
+# Start backend server (from backend directory)
+cd backend
+source venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+
+# Start frontend server (from frontend directory)
+cd frontend
+python3 -m http.server 8080
 
 # Run tests
 pytest tests/ -v --tb=short
@@ -17,6 +23,28 @@ python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 
 # Train YOLO model
 cd train && bash train_yolo.sh
+```
+
+### Frontend Access
+- **Frontend URL**: http://localhost:8080/
+- **Backend API**: http://localhost:8001/
+- **API Documentation**: http://localhost:8001/docs
+
+### Streaming System
+```bash
+# Check streaming status for camera
+curl http://localhost:8001/api/v1/streams/status/3
+
+# Start stream (via API)
+curl -X POST http://localhost:8001/api/v1/streams/start/3 \
+  -H "Content-Type: application/json" \
+  -d '{"quality": "medium", "max_fps": 30, "detection_enabled": false}'
+
+# Stop stream (via API)
+curl -X POST http://localhost:8001/api/v1/streams/stop/3
+
+# Access video stream directly
+curl http://localhost:8001/stream/video/3
 ```
 
 ### Docker
@@ -81,6 +109,59 @@ app/
 - Async SQLAlchemy with aiosqlite driver
 - Main tables: detections, license_plates, system_config
 - Automatic database initialization on first run
+
+## Streaming Integration Architecture
+
+### Frontend Streaming Components
+- **LiveVideoPlayer**: Reusable streaming component for camera feeds
+- **CamerasPage**: Main interface with external stream control buttons
+- **Stream State Management**: Real-time synchronization with backend status
+- **Periodic Polling**: Auto-sync every 30 seconds to maintain state consistency
+
+### Key Features
+- **Smart Button States**: Start/Stop buttons reflect actual backend streaming status
+- **Enhanced Fullscreen**: Loading states, error handling, and timeout management
+- **Camera Validation**: Prevents streaming attempts on offline cameras
+- **Real-time Duration**: Live stream duration counter with timer management
+- **Error Recovery**: Fallback mechanisms and user-friendly error messages
+
+### Stream Control Flow
+1. **Page Load**: Check streaming status for all cameras via `/api/v1/streams/status/{id}`
+2. **Button Sync**: Initialize button states based on backend response
+3. **Stream Operations**: Validate camera status before start/stop operations
+4. **Status Polling**: Maintain sync with periodic backend status checks
+5. **UI Updates**: Dynamic button states, duration timers, and visual feedback
+
+### Troubleshooting Streaming Issues
+
+**Button Shows Wrong State:**
+```bash
+# Check backend streaming status
+curl http://localhost:8001/api/v1/streams/status/3
+
+# If mismatch, check browser console for sync errors
+# Frontend polls every 30 seconds to resync
+```
+
+**Fullscreen Shows Black Screen:**
+```bash
+# Verify stream endpoint is responding
+curl -I http://localhost:8001/stream/video/3
+
+# Check if stream is actually active
+curl http://localhost:8001/api/v1/streams/status/3
+
+# Look for camera connection issues in backend logs
+```
+
+**Stream Won't Start:**
+```bash
+# Check camera status first
+curl http://localhost:8001/api/v1/cameras/
+
+# Verify camera is online before streaming
+# Check backend logs for connection errors
+```
 
 ## Development Guidelines
 

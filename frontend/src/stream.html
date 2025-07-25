@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Stream - License Plate Recognition</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles/base/reset.css">
+    <link rel="stylesheet" href="styles/base/variables.css">
+    <link rel="stylesheet" href="styles/base/transitions.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components/header.css">
+    <link rel="stylesheet" href="styles/components/sidebar.css">
+    <link rel="stylesheet" href="styles/components/modal.css">
+    
+    <style>
+        .stream-container {
+            position: relative;
+            background: #000;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            aspect-ratio: 16/9;
+            max-height: 70vh;
+        }
+
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .stream-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #detection-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .stream-status {
+            position: absolute;
+            top: var(--space-4);
+            right: var(--space-4);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(8px);
+            z-index: 20;
+            font-size: 0.875rem;
+        }
+
+        .stream-controls {
+            position: absolute;
+            bottom: var(--space-4);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: var(--space-2);
+            background: rgba(0, 0, 0, 0.5);
+            padding: var(--space-3);
+            border-radius: var(--radius-lg);
+            backdrop-filter: blur(8px);
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stream-container:hover .stream-controls {
+            opacity: 1;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: var(--space-2);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .control-btn.active {
+            background: var(--primary);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-top: var(--space-6);
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: var(--space-2);
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .recent-detections {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .detection-item {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            padding: var(--space-3);
+            border-bottom: 1px solid var(--border-light);
+            transition: background-color var(--transition-fast);
+        }
+
+        .detection-item:hover {
+            background-color: var(--gray-50);
+        }
+
+        .detection-thumbnail {
+            width: 60px;
+            height: 40px;
+            border-radius: var(--radius);
+            background: var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .detection-info {
+            flex: 1;
+        }
+
+        .detection-plate {
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+        }
+
+        .detection-meta {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .confidence-badge {
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .confidence-high {
+            background: var(--success);
+            color: white;
+        }
+
+        .confidence-medium {
+            background: var(--warning);
+            color: white;
+        }
+
+        .confidence-low {
+            background: var(--danger);
+            color: white;
+        }
+
+        .fullscreen-mode {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: #000 !important;
+            max-height: none !important;
+            border-radius: 0 !important;
+            aspect-ratio: unset !important;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-online .status-dot {
+            background: var(--success);
+        }
+
+        .status-connected .status-dot {
+            background: var(--success);
+        }
+
+        .status-offline .status-dot, .status-disconnected .status-dot {
+            background: var(--danger);
+        }
+
+        .status-error .status-dot {
+            background: var(--warning);
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stream-controls {
+                opacity: 1;
+            }
+        }
+
+        /* Ensure proper grid layout */
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-6);
+            padding: var(--space-6);
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            padding: var(--space-4);
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .card-body {
+            padding: var(--space-4);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-4);
+            border: 1px solid transparent;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-outline {
+            border-color: var(--border);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+
+        .btn-sm {
+            padding: var(--space-1) var(--space-3);
+            font-size: 0.8125rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>Live Stream</h1>
+                    <p>Real-time license plate detection with live annotations</p>
+                </div>
+                <div class="header-actions">
+                    <button id="toggle-stream" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5,3 19,12 5,21 5,3"></polygon>
+                        </svg>
+                        Start Stream
+                    </button>
+                    <button id="toggle-fullscreen" class="btn btn-outline">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                        </svg>
+                        Fullscreen
+                    </button>
+                    <button id="capture-frame" class="btn btn-secondary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                        Capture
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Video Stream -->
+            <div class="video-section">
+                <div class="card" style="padding: 0; overflow: hidden;">
+                    <div class="stream-container" id="stream-container">
+                        <img id="video-feed" src="" alt="Video Stream" class="video-feed" style="display: none;">
+                        <canvas id="detection-canvas" class="stream-overlay"></canvas>
+                        
+                        <!-- Stream Status -->
+                        <div class="stream-status">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="status status-offline" id="stream-status">
+                                    <span class="status-dot"></span>
+                                    <span class="status-text">Disconnected</span>
+                                </div>
+                            </div>
+                            <div class="text-xs opacity-75">
+                                FPS: <span id="fps-counter">0</span> | 
+                                Resolution: <span id="resolution">--x--</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Stream Controls -->
+                        <div class="stream-controls">
+                            <button class="control-btn" id="play-pause" data-tooltip="Play/Pause">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <polygon points="5,3 19,12 5,21 5,3"></polygon>
+                                </svg>
+                            </button>
+                            <button class="control-btn" id="toggle-detection" data-tooltip="Toggle Detection">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                            <button class="control-btn" id="toggle-labels" data-tooltip="Toggle Labels">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                </svg>
+                            </button>
+                            <button class="control-btn" id="settings" data-tooltip="Settings">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stream Statistics -->
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <div class="stat-value" id="detections-count">0</div>
+                        <div class="stat-label">Detections Today</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-value" id="accuracy-rate">0%</div>
+                        <div class="stat-label">Accuracy Rate</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-value" id="processing-speed">0ms</div>
+                        <div class="stat-label">Avg Processing</div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="stat-value" id="stream-quality">HD</div>
+                        <div class="stat-label">Stream Quality</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Detections Sidebar -->
+            <div class="card">
+                <div class="card-header">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <h3 class="card-title">Live Detections</h3>
+                        <button class="btn btn-sm btn-outline" id="clear-detections">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="recent-detections" id="recent-detections">
+                        <div class="detection-item">
+                            <div class="detection-thumbnail">IMG</div>
+                            <div class="detection-info">
+                                <div class="detection-plate">Waiting for stream...</div>
+                                <div class="detection-meta">Click "Start Stream" to begin</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Stream Settings</h3>
+                <button class="btn btn-ghost" data-modal-close>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="display: grid; gap: var(--space-4);">
+                    <div>
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: var(--space-2);">Confidence Threshold</label>
+                        <input type="range" min="0.1" max="1.0" step="0.1" value="0.5" id="confidence-slider" style="width: 100%;">
+                        <div style="font-size: 0.875rem; color: var(--gray-600); margin-top: var(--space-1);">Current: <span id="confidence-value">0.5</span></div>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.875rem; font-weight: 500; margin-bottom: var(--space-2);">Detection Frequency</label>
+                        <select id="detection-frequency" style="width: 100%;">
+                            <option value="1">Every Frame</option>
+                            <option value="3" selected>Every 3rd Frame</option>
+                            <option value="5">Every 5th Frame</option>
+                            <option value="10">Every 10th Frame</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: flex; align-items: center; gap: var(--space-2);">
+                            <input type="checkbox" id="auto-enhance" checked>
+                            <span style="font-size: 0.875rem;">Auto-enhance detected plates</span>
+                        </label>
+                    </div>
+                    <div>
+                        <label style="display: flex; align-items: center; gap: var(--space-2);">
+                            <input type="checkbox" id="save-detections" checked>
+                            <span style="font-size: 0.875rem;">Save detection images</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-modal-close>Cancel</button>
+                <button class="btn btn-primary" id="save-settings">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="pages/StreamPage.js"></script>
+    <script>
+        // Initialize stream page
+        document.addEventListener('DOMContentLoaded', () => {
+            const streamPage = new StreamPage();
+            streamPage.init();
+            
+            // Update confidence slider display
+            document.getElementById('confidence-slider')?.addEventListener('input', function() {
+                document.getElementById('confidence-value').textContent = this.value;
+            });
+        });
+    </script>
+</body>
+</html>

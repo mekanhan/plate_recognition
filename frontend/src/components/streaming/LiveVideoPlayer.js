@@ -221,9 +221,10 @@ class LiveVideoPlayer {
             return;
         }
 
-        // Validate camera is online before starting stream
-        if (this.camera?.status !== 'online') {
-            this.onError(`Cannot start stream: Camera is ${this.camera?.status || 'offline'}`);
+        // Allow streaming attempts for any camera status (for testing/development)
+        // Note: Backend will handle actual connectivity validation
+        if (this.camera?.status === 'disabled') {
+            this.onError(`Cannot start stream: Camera is disabled`);
             return;
         }
 
@@ -295,7 +296,22 @@ class LiveVideoPlayer {
         } catch (error) {
             console.error('Failed to start stream:', error);
             this.hideLoading();
-            this.onError('Failed to start stream: ' + error.message);
+            
+            // Provide more specific error messages
+            let errorMessage = 'Failed to start stream';
+            if (error.message.includes('503')) {
+                errorMessage = 'Camera is not accessible or offline';
+            } else if (error.message.includes('403')) {
+                errorMessage = 'Camera is disabled';
+            } else if (error.message.includes('404')) {
+                errorMessage = 'Camera not found';
+            } else if (error.message.includes('NetworkError') || error.message.includes('CORS')) {
+                errorMessage = 'Network connection error - check camera connectivity';
+            } else {
+                errorMessage = `Stream error: ${error.message}`;
+            }
+            
+            this.onError(errorMessage);
             this.onStatusChange('error');
         } finally {
             this.isLoading = false;

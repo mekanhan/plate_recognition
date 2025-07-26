@@ -14,7 +14,8 @@ from app.services.camera_crud import get_camera_by_id, update_camera_status
 from app.services.camera_streaming_service import CameraStreamingService, StreamConfig
 
 logger = logging.getLogger(__name__)
-router = APIRouter()
+router = APIRouter()  # For management endpoints (/api/v1/streams/*)
+video_router = APIRouter()  # For direct video endpoints (/stream/*)
 
 # Global dictionary to store active streaming services
 active_streams: Dict[int, CameraStreamingService] = {}
@@ -38,7 +39,7 @@ class StreamStatusResponse(BaseModel):
     settings: Optional[Dict[str, Any]] = None
 
 
-@router.options("/video/{camera_id}")
+@video_router.options("/video/{camera_id}")
 async def stream_video_options(camera_id: int):
     """Handle CORS preflight for video streaming"""
     return Response(
@@ -50,7 +51,7 @@ async def stream_video_options(camera_id: int):
         }
     )
 
-@router.get("/video/{camera_id}")
+@video_router.get("/video/{camera_id}")
 async def stream_video(
     camera_id: int,
     quality: str = Query("medium", regex="^(low|medium|high)$"),
@@ -83,7 +84,7 @@ async def stream_video(
         config = StreamConfig(quality=quality)
         streaming_service = CameraStreamingService(camera, config)
         
-        # Test connection
+        # Test connection with optimized timeout
         try:
             if not await streaming_service.connect_camera():
                 await update_camera_status(db, camera_id, "error")
@@ -140,7 +141,7 @@ async def stream_video(
     )
 
 
-@router.options("/thumbnail/{camera_id}")
+@video_router.options("/thumbnail/{camera_id}")
 async def thumbnail_options(camera_id: int):
     """Handle CORS preflight for thumbnail endpoint"""
     return Response(
@@ -152,7 +153,7 @@ async def thumbnail_options(camera_id: int):
         }
     )
 
-@router.get("/thumbnail/{camera_id}")
+@video_router.get("/thumbnail/{camera_id}")
 async def get_camera_thumbnail(
     camera_id: int,
     width: int = Query(320, ge=160, le=1920),
@@ -270,7 +271,7 @@ async def start_camera_stream(
     streaming_service = CameraStreamingService(camera, config)
     
     try:
-        # Test connection
+        # Test connection (but with optimized timeout)
         if not await streaming_service.connect_camera():
             await update_camera_status(db, camera_id, "error")
             raise HTTPException(

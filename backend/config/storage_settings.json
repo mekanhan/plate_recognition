@@ -1,0 +1,35 @@
+{
+  "storage": {
+    "base_storage_path": "recordings",
+    "retention_days": 30,
+    "hot_storage_days": 7,
+    "max_storage_gb_per_camera": 500,
+    "warning_threshold_percent": 80,
+    "critical_threshold_percent": 90,
+    "cleanup_interval_hours": 1,
+    "monitoring_interval_minutes": 30
+  },
+  "video": {
+    "segment_duration_seconds": 600,
+    "buffer_size_frames": 300,
+    "codec_preference": ["H264", "XVID", "MJPG", "mp4v"],
+    "enable_audio": false,
+    "quality_settings": {
+      "low": {
+        "width": 320,
+        "height": 240,
+        "fps": 15
+      },
+      "medium": {
+        "width": 640,
+        "height": 480,
+        "fps": 30
+      },
+      "high": {
+        "width": 1280,
+        "height": 720,
+        "fps": 30
+      }
+    }
+  }
+}

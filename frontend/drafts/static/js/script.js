@@ -3446,8 +3446,8 @@ class CameraManager {
             
             if (result.snapshot_url) {
                 resultsHTML += `
-                    <div class="camera-preview">
-                        <img src="${result.snapshot_url}" alt="Camera Preview" onerror="this.style.display='none'">
+                    <div class="camera-offline">
+                        <img src="${result.snapshot_url}" alt="Camera Offline" onerror="this.style.display='none'">
                     </div>
                 `;
             }

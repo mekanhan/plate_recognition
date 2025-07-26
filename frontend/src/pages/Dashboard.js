@@ -529,8 +529,7 @@ class Dashboard {
             this.initializeCameraPlayer(camera);
         });
 
-        // Attach event listeners
-        this.attachFeedControlListeners();
+        // No external controls needed - streams auto-start
 
         // Update pagination if needed
         this.updateFeedPagination();
@@ -554,21 +553,7 @@ class Dashboard {
                     <!-- LiveVideoPlayer will be inserted here -->
                 </div>
                 
-                <div class="camera-feed-controls">
-                    <button class="feed-control-btn" data-action="stream" data-camera-id="${camera.id}" 
-                            ${camera.status !== 'online' ? 'disabled' : ''}>
-                        <i class="fas ${isStreaming ? 'fa-stop' : 'fa-play'}"></i>
-                        ${isStreaming ? 'Stop' : 'Start'}
-                    </button>
-                    <button class="feed-control-btn" data-action="fullscreen" data-camera-id="${camera.id}">
-                        <i class="fas fa-expand"></i>
-                        Fullscreen
-                    </button>
-                    <button class="feed-control-btn" data-action="refresh" data-camera-id="${camera.id}">
-                        <i class="fas fa-sync-alt"></i>
-                        Refresh
-                    </button>
-                </div>
+                <!-- Controls removed for simplified auto-streaming experience -->
             </div>
         `;
     }
@@ -577,12 +562,12 @@ class Dashboard {
         const videoContainer = document.getElementById(`feed-video-${camera.id}`);
         if (!videoContainer) return;
 
-        // Create LiveVideoPlayer instance
+        // Create LiveVideoPlayer instance with auto-start
         const player = new LiveVideoPlayer({
             cameraId: camera.id,
             camera: camera,
-            autoStart: false,
-            showControls: false, // We'll use external controls
+            autoStart: true, // Always auto-start streaming
+            showControls: false, // No controls for simplified experience
             className: 'dashboard-feed-player',
             onStatusChange: (status) => this.handlePlayerStatusChange(camera.id, status),
             onError: (error) => this.handlePlayerError(camera.id, error),

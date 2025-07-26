@@ -155,7 +155,7 @@ renderPreviewContent(camera, isStreaming) {
     return `
         <div class="camera-thumbnail">
             <img src="http://localhost:8001/stream/thumbnail/${camera.id}" 
-                 alt="Preview from ${camera.name}"
+                //  alt="Preview from ${camera.name}"
                  class="thumbnail-image"
                  onload="this.parentElement.classList.add('thumbnail-loaded')"
                  onerror="this.src='/images/camera-placeholder.jpg'">

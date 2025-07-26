@@ -85,10 +85,18 @@ class CameraStreamingService:
         try:
             camera_url = self._build_camera_url()
             
-            # Create VideoCapture in a thread to avoid blocking
+            # Create VideoCapture with timeout - much faster
             loop = asyncio.get_event_loop()
+            
+            def create_capture_with_timeout():
+                cap = cv2.VideoCapture(camera_url)
+                # Set aggressive timeout properties for faster failure
+                cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 2000)  # 2 second timeout
+                cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 1000)   # 1 second read timeout
+                return cap
+            
             self.capture = await loop.run_in_executor(
-                None, cv2.VideoCapture, camera_url
+                None, create_capture_with_timeout
             )
             
             if not self.capture or not self.capture.isOpened():
@@ -109,15 +117,10 @@ class CameraStreamingService:
                 self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer delay
                 self.capture.set(cv2.CAP_PROP_FPS, self.config.max_fps)
             
-            # Test reading a frame
-            ret, frame = self.capture.read()
-            if not ret or frame is None:
-                logger.error("Failed to read test frame from camera")
-                await self.disconnect_camera()
-                return False
+            # Quick connection test - don't read frame here (too slow)
+            # Frame reading will be tested when streaming starts
             
             logger.info(f"Successfully connected to camera {self.camera.name} at {camera_url}")
-            logger.info(f"Frame size: {frame.shape[1]}x{frame.shape[0]}")
             
             return True
             

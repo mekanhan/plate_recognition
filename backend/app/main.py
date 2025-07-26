@@ -4,7 +4,7 @@ FastAPI Backend Application
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .api.v1.router import api_router
-from .api.v1.endpoints.streaming import router as streaming_router, cleanup_all_streams
+from .api.v1.endpoints.streaming import router as streaming_router, video_router, cleanup_all_streams
 from .database import init_database
 
 # Create FastAPI app
@@ -38,8 +38,8 @@ app.add_middleware(
 # Include API routes
 app.include_router(api_router, prefix="/api/v1")
 
-# Include direct streaming routes (not under /api/v1 for simple video URLs)
-app.include_router(streaming_router, prefix="/stream", tags=["streaming"])
+# Include direct video streaming routes (not under /api/v1 for simple video URLs)
+app.include_router(video_router, prefix="/stream", tags=["video"])
 
 @app.get("/")
 async def root():

@@ -410,25 +410,7 @@ class Cameras {
                     </div>
                 </div>
                 
-                <!-- Stream Controls Below Video -->
-                <div class="camera-card-stream-controls">
-                    <button class="btn ${isStreaming ? 'btn-danger' : 'btn-success'} btn-small" 
-                            title="${isStreaming ? 'Stop Stream' : 'Start Stream'}" 
-                            data-action="${isStreaming ? 'stop-stream' : 'start-stream'}" 
-                            data-camera-id="${camera.id}" 
-                            ${camera.status !== 'online' ? 'disabled' : ''}>
-                        <i class="fas ${isStreaming ? 'fa-stop' : 'fa-play'}"></i>
-                        ${isStreaming ? 'Stop' : 'Start'}
-                    </button>
-                    <button class="btn btn-info btn-small" title="Capture Frame" data-action="capture" data-camera-id="${camera.id}" ${!isStreaming ? 'disabled' : ''}>
-                        <i class="fas fa-camera"></i>
-                        Capture
-                    </button>
-                    <button class="btn btn-primary btn-small" title="Full Screen" data-action="fullscreen" data-camera-id="${camera.id}" ${camera.status !== 'online' ? 'disabled' : ''}>
-                        <i class="fas fa-expand"></i>
-                        Full Screen
-                    </button>
-                </div>
+                <!-- Stream controls removed for simplified auto-streaming experience -->
 
                 <div class="camera-card-actions">
                     <div class="action-dropdown">
@@ -468,12 +450,12 @@ class Cameras {
         const previewContainer = document.getElementById(`preview-container-${camera.id}`);
         if (!previewContainer) return;
 
-        // Create LiveVideoPlayer instance
+        // Create LiveVideoPlayer instance with auto-start
         const player = new LiveVideoPlayer({
             cameraId: camera.id,
             camera: camera,
-            autoStart: false,
-            showControls: false, // Disable hover controls, use external buttons
+            autoStart: true, // Always auto-start streaming
+            showControls: false, // No controls for simplified experience
             className: 'camera-card-player',
             onStatusChange: (status) => this.handlePlayerStatusChange(camera.id, status),
             onError: (error) => this.handlePlayerError(camera.id, error),

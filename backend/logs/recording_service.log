@@ -1,0 +1,65 @@
+2025-07-26 01:34:41,599 - __main__ - INFO - Loaded storage configuration from config/storage_settings.json
+2025-07-26 01:34:41,600 - __main__ - INFO - Retention: 30 days
+2025-07-26 01:34:41,600 - __main__ - INFO - Cleanup interval: 1 hours
+2025-07-26 01:34:41,600 - app.core.storage.storage_manager - INFO - Storage manager initialized with base path: recordings
+2025-07-26 01:34:41,600 - app.core.recording.recording_manager - INFO - Recording manager initialized with storage management
+2025-07-26 01:34:41,600 - __main__ - INFO - ============================================================
+2025-07-26 01:34:41,600 - __main__ - INFO - Starting 24/7 Recording Service
+2025-07-26 01:34:41,600 - __main__ - INFO - Started at: 2025-07-26T01:34:41.600210
+2025-07-26 01:34:41,600 - __main__ - INFO - ============================================================
+2025-07-26 01:34:41,600 - app.core.recording.recording_manager - INFO - Starting all camera recordings...
+2025-07-26 01:34:41,600 - app.core.storage.storage_manager - INFO - Storage manager started
+2025-07-26 01:34:41,600 - app.core.recording.recording_manager - INFO - Storage manager started
+2025-07-26 01:34:41,600 - app.core.recording.continuous_recorder - INFO - Created recording directory: recordings/camera_3
+2025-07-26 01:34:41,601 - app.core.recording.continuous_recorder - INFO - Initialized recording database for camera 3
+2025-07-26 01:34:41,601 - app.core.recording.continuous_recorder - INFO - Connecting to camera 3 at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_sub
+2025-07-26 01:34:41,601 - app.core.recording.continuous_recorder - INFO - Started continuous recording for camera 3 (Test Camera 1)
+2025-07-26 01:34:41,602 - app.core.recording.recording_manager - INFO - Started recording for camera 3: Test Camera 1
+2025-07-26 01:34:41,602 - app.core.recording.recording_manager - INFO - Started recording for 1 cameras with storage management
+2025-07-26 01:34:41,602 - __main__ - INFO - All recordings started successfully
+2025-07-26 01:34:41,602 - app.core.storage.storage_manager - INFO - Starting storage cleanup...
+2025-07-26 01:34:41,602 - app.core.storage.storage_manager - INFO - Cleanup complete: No recordings to clean up
+2025-07-26 01:34:41,603 - app.core.storage.storage_manager - INFO - Storage Health: 1 segments, 2.0 MB used, 93.4% disk free
+2025-07-26 01:34:49,129 - app.core.recording.continuous_recorder - INFO - Successfully connected to camera 3
+2025-07-26 01:34:49,141 - app.core.recording.continuous_recorder - INFO - Camera 3 frame dimensions: 640x360
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@6.753] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@6.753] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-26 01:34:49,149 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-26 01:34:49,149 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250726_013449_600.mp4
+2025-07-26 01:35:12,430 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:35:43,259 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:36:14,096 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:36:44,914 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:37:15,760 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:37:46,614 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:38:17,553 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:38:48,417 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:39:19,214 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:39:50,060 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:39:50,060 - __main__ - INFO - Storage summary: 1 segments, 2.0 MB used
+2025-07-26 01:40:20,930 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:40:51,791 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:41:21,822 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:41:52,662 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:42:23,531 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:42:54,335 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:43:25,166 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:43:56,050 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:44:26,945 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:44:49,167 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250726_013449_600.avi (600s, 19594576 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@591.884] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@591.884] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-26 01:44:49,167 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-26 01:44:49,167 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250726_014449_600.mp4
+2025-07-26 01:44:57,817 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:44:57,817 - __main__ - INFO - Storage summary: 2 segments, 20.7 MB used
+2025-07-26 01:45:28,742 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:45:59,695 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:46:30,614 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:47:01,554 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:47:32,441 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-26 01:48:03,336 - __main__ - INFO - Health check complete. Active recordings: 1

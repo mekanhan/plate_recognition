@@ -7,8 +7,8 @@ class LiveVideoPlayer {
     constructor(options = {}) {
         this.cameraId = options.cameraId;
         this.camera = options.camera;
-        this.autoStart = options.autoStart || false;
-        this.showControls = options.showControls !== false; // Default true
+        this.autoStart = options.autoStart !== false; // Default true - always auto-start
+        this.showControls = false; // Never show controls - keep it simple
         this.className = options.className || '';
         this.onStatusChange = options.onStatusChange || (() => {});
         this.onError = options.onError || (() => {});
@@ -39,6 +39,19 @@ class LiveVideoPlayer {
     }
 
     renderVideoContent() {
+        // If camera is offline or in error state, show offline message without attempting to load
+        if (this.camera?.status === 'offline' || this.camera?.status === 'error') {
+            return `
+                <div class="video-offline-wrapper">
+                    <div class="offline-placeholder">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Camera ${this.camera?.status === 'offline' ? 'Offline' : 'Error'}</span>
+                        <small>${this.camera?.name || 'Camera'} is not available</small>
+                    </div>
+                </div>
+            `;
+        }
+
         if (this.isStreaming) {
             return `
                 <div class="video-stream-wrapper">
@@ -47,11 +60,8 @@ class LiveVideoPlayer {
                          class="live-stream-video"
                          onload="window.liveVideoPlayers?.get('${this.containerId}')?.handleStreamLoad()"
                          onerror="window.liveVideoPlayers?.get('${this.containerId}')?.handleStreamError()">
-                    <div class="stream-overlay">
-                        <div class="live-indicator">
-                            <span class="live-dot"></span>
-                            LIVE
-                        </div>
+                    <!-- Simple overlay with just duration -->
+                    <div class="stream-overlay minimal">
                         <div class="stream-info">
                             <span class="stream-duration" id="duration-${this.containerId}">00:00</span>
                         </div>
@@ -60,28 +70,17 @@ class LiveVideoPlayer {
             `;
         }
 
-        // Show thumbnail when not streaming
+        // Show thumbnail when not streaming (only for online cameras)
         return `
             <div class="video-thumbnail-wrapper">
                 <img src="${this.apiBase}/stream/thumbnail/${this.cameraId}?t=${Date.now()}" 
-                     alt="Preview from ${this.camera?.name || 'Camera'}"
+                     alt=""
                      class="thumbnail-image"
                      onload="this.parentElement.classList.add('loaded'); this.parentElement.classList.remove('no-thumbnail')"
                      onerror="this.style.display='none'; this.parentElement.classList.add('no-thumbnail')">
                 <div class="thumbnail-placeholder">
                     <i class="fas fa-camera"></i>
-                    <span>No Preview Available</span>
-                    <small>Click to start streaming</small>
-                </div>
-                <div class="thumbnail-overlay">
-                    <div class="play-indicator">
-                        <i class="fas fa-play"></i>
-                    </div>
-                    <div class="thumbnail-info">
-                        <span class="capture-time">
-                            Updated: ${new Date().toLocaleTimeString()}
-                        </span>
-                    </div>
+                    <span>Camera Offline</span>
                 </div>
             </div>
         `;
@@ -166,9 +165,25 @@ class LiveVideoPlayer {
         // Attach event listeners
         this.attachEventListeners();
 
-        // Auto-start if requested
-        if (this.autoStart && this.camera?.status === 'online') {
-            setTimeout(() => this.startStream(), 500);
+        // Auto-start streaming (with intelligent filtering to prevent backend overload)
+        if (this.autoStart) {
+            // Don't auto-start for cameras that are known to be offline/error
+            if (this.camera?.status === 'offline' || this.camera?.status === 'error') {
+                console.log(`Skipping auto-start for camera ${this.cameraId} - status: ${this.camera?.status}`);
+                return this;
+            }
+            
+            // Add staggered delay to prevent all cameras from starting simultaneously
+            const delay = 500 + (Math.random() * 2000); // 0.5-2.5 second random delay
+            setTimeout(() => {
+                this.startStream().catch(error => {
+                    console.warn(`Initial stream start failed for camera ${this.cameraId}:`, error.message);
+                    // Only retry once for network issues, with longer delay
+                    if (error.message.includes('NetworkError') || error.message.includes('503')) {
+                        setTimeout(() => this.startStream(), 5000); // 5 second retry delay
+                    }
+                });
+            }, delay);
         }
 
         // Show controls on hover
@@ -181,7 +196,7 @@ class LiveVideoPlayer {
         const container = document.getElementById(this.containerId);
         if (!container) return;
 
-        // Control button handlers
+        // Control button handlers (if any controls are present)
         container.addEventListener('click', (e) => {
             const action = e.target.dataset.action || e.target.parentElement?.dataset.action;
             if (action) {
@@ -189,12 +204,6 @@ class LiveVideoPlayer {
                 this.handleControlAction(action);
             }
         });
-
-        // Play overlay click handler
-        const playIndicator = container.querySelector('.play-indicator');
-        if (playIndicator) {
-            playIndicator.addEventListener('click', () => this.startStream());
-        }
     }
 
     setupHoverEffects() {
@@ -229,8 +238,8 @@ class LiveVideoPlayer {
         }
 
         this.isLoading = true;
-        this.showLoading('Starting stream...');
-        this.onStatusChange('starting');
+        this.showLoading('Connecting to camera...');
+        this.onStatusChange('connecting');
 
         try {
             // Check if backend is available before attempting stream
@@ -265,8 +274,7 @@ class LiveVideoPlayer {
                     quality: 'medium',
                     max_fps: 30,
                     detection_enabled: false
-                }),
-                timeout: 15000 // 15 second timeout
+                })
             });
 
             if (!response.ok) {
@@ -401,12 +409,12 @@ class LiveVideoPlayer {
     }
 
     async openFullscreen() {
-        // Start streaming if not already active
+        // Ensure streaming is active before fullscreen
         if (!this.isStreaming) {
             try {
                 await this.startStream();
-                // Wait a moment for stream to initialize
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Wait for stream to stabilize
+                await new Promise(resolve => setTimeout(resolve, 2000));
             } catch (error) {
                 this.onError('Failed to start stream for fullscreen view');
                 return;
@@ -419,28 +427,31 @@ class LiveVideoPlayer {
             <div class="fullscreen-content">
                 <div class="fullscreen-header">
                     <h3>${this.camera?.name || 'Camera'} - Live Stream</h3>
-                    <button class="close-fullscreen">
+                    <button class="close-fullscreen" title="Close Fullscreen">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <div class="fullscreen-video">
                     <div class="fullscreen-loading" id="fullscreen-loading-${this.cameraId}">
                         <i class="fas fa-spinner fa-spin"></i>
-                        <span>Loading stream...</span>
+                        <span>Loading fullscreen stream...</span>
                     </div>
-                    <img src="${this.apiBase}/stream/video/${this.cameraId}?t=${Date.now()}" 
+                    <img src="${this.apiBase}/stream/video/${this.cameraId}?fullscreen=true&t=${Date.now()}" 
                          alt="Fullscreen view" 
                          class="fullscreen-stream"
-                         style="display: none;"
-                         onload="this.style.display='block'; document.getElementById('fullscreen-loading-${this.cameraId}')?.remove();"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                    <div class="fullscreen-error" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white;">
+                         id="fullscreen-img-${this.cameraId}"
+                         style="display: none;">
+                    <div class="fullscreen-error" id="fullscreen-error-${this.cameraId}" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px; color: #ffc107;"></i>
                         <h4>Stream Not Available</h4>
-                        <p>Unable to load video stream. The camera may be offline or the stream endpoint is not responding.</p>
-                        <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 16px;">
+                        <p>Unable to load video stream. Please check if the camera is online and streaming is active.</p>
+                        <button class="btn btn-primary fullscreen-retry-btn" style="margin-top: 16px;">
                             <i class="fas fa-refresh"></i>
                             Retry
+                        </button>
+                        <button class="btn btn-secondary" onclick="this.closest('.fullscreen-video-modal').remove()" style="margin-top: 8px;">
+                            <i class="fas fa-times"></i>
+                            Close
                         </button>
                     </div>
                 </div>
@@ -450,12 +461,50 @@ class LiveVideoPlayer {
         document.body.appendChild(modal);
         modal.style.display = 'flex';
 
-        // Event handlers
-        modal.querySelector('.close-fullscreen').addEventListener('click', () => modal.remove());
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
+        // Get image element for manual event handling
+        const img = modal.querySelector(`#fullscreen-img-${this.cameraId}`);
+        const loading = modal.querySelector(`#fullscreen-loading-${this.cameraId}`);
+        const error = modal.querySelector(`#fullscreen-error-${this.cameraId}`);
+        const retryBtn = modal.querySelector('.fullscreen-retry-btn');
+
+        // Image load handler
+        img.onload = () => {
+            loading.style.display = 'none';
+            error.style.display = 'none';
+            img.style.display = 'block';
+            console.log('Fullscreen stream loaded successfully');
+        };
+
+        // Image error handler
+        img.onerror = () => {
+            loading.style.display = 'none';
+            img.style.display = 'none';
+            error.style.display = 'flex';
+            console.error('Fullscreen stream failed to load');
+        };
+
+        // Retry functionality
+        retryBtn.addEventListener('click', () => {
+            loading.style.display = 'flex';
+            error.style.display = 'none';
+            img.style.display = 'none';
+            // Force reload with new timestamp
+            img.src = `${this.apiBase}/stream/video/${this.cameraId}?fullscreen=true&t=${Date.now()}`;
         });
 
+        // Close button handler
+        modal.querySelector('.close-fullscreen').addEventListener('click', () => {
+            modal.remove();
+        });
+
+        // Click outside to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+
+        // Escape key handler
         const escapeHandler = (e) => {
             if (e.key === 'Escape') {
                 modal.remove();
@@ -464,17 +513,30 @@ class LiveVideoPlayer {
         };
         document.addEventListener('keydown', escapeHandler);
 
-        // Add timeout for loading state
+        // Cleanup event listener when modal is removed
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'childList') {
+                    mutation.removedNodes.forEach((node) => {
+                        if (node === modal) {
+                            document.removeEventListener('keydown', escapeHandler);
+                            observer.disconnect();
+                        }
+                    });
+                }
+            });
+        });
+        observer.observe(document.body, { childList: true });
+
+        // Fallback timeout for loading state (increased to 15 seconds)
         setTimeout(() => {
-            const loadingElement = document.getElementById(`fullscreen-loading-${this.cameraId}`);
-            if (loadingElement) {
-                loadingElement.remove();
-                const errorElement = modal.querySelector('.fullscreen-error');
-                if (errorElement) {
-                    errorElement.style.display = 'flex';
+            if (loading.style.display !== 'none') {
+                loading.style.display = 'none';
+                if (img.style.display !== 'block') {
+                    error.style.display = 'flex';
                 }
             }
-        }, 10000); // 10 second timeout
+        }, 15000);
     }
 
     // Control Action Handler
@@ -589,7 +651,7 @@ class LiveVideoPlayer {
             } catch (error) {
                 console.error('Status check failed:', error);
             }
-        }, 10000); // Check every 10 seconds
+        }, 60000); // Check every 60 seconds (further reduced to prevent overload)
     }
 
     stopStatusMonitoring() {
@@ -646,7 +708,7 @@ class LiveVideoPlayer {
         try {
             const response = await fetch(`${this.apiBase}/health`, {
                 method: 'GET',
-                timeout: 5000 // Quick health check
+                timeout: 3000 // Reduced from 5000ms to 3000ms
             });
             return response.ok;
         } catch (error) {

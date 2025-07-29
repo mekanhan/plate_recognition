@@ -2,6 +2,7 @@
  * LiveVideoPlayer Component
  * Reusable video streaming component for camera feeds
  */
+import config from '../../config/app.config.js';
 
 class LiveVideoPlayer {
     constructor(options = {}) {
@@ -20,9 +21,12 @@ class LiveVideoPlayer {
         this.streamStartTime = null;
         this.durationTimer = null;
         this.statusCheckInterval = null;
+        this.healthCheckInterval = null;
+        this.lastStreamCheck = null;
+        this.streamFailureCount = 0;
         this.containerId = `live-player-${this.cameraId}-${Date.now()}`;
         
-        this.apiBase = 'http://localhost:8001';
+        this.apiBase = config.API_BASE_URL;
     }
 
     render() {
@@ -55,11 +59,18 @@ class LiveVideoPlayer {
         if (this.isStreaming) {
             return `
                 <div class="video-stream-wrapper">
-                    <img src="${this.apiBase}/stream/video/${this.cameraId}?t=${Date.now()}" 
-                         alt="Live stream from ${this.camera?.name || 'Camera'}"
+                    <img src="${this.apiBase}${config.API_ENDPOINTS.STREAM_MJPEG(this.cameraId)}" 
+                         alt=""
                          class="live-stream-video"
                          onload="window.liveVideoPlayers?.get('${this.containerId}')?.handleStreamLoad()"
-                         onerror="window.liveVideoPlayers?.get('${this.containerId}')?.handleStreamError()">
+                         onerror="window.liveVideoPlayers?.get('${this.containerId}')?.handleStreamError()"
+                         ondblclick="window.liveVideoPlayers?.get('${this.containerId}')?.openFullscreen()">
+                    <!-- Fullscreen overlay button -->
+                    <button class="fullscreen-overlay-btn" 
+                            onclick="window.liveVideoPlayers?.get('${this.containerId}')?.openFullscreen()"
+                            title="Fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
                     <!-- Simple overlay with just duration -->
                     <div class="stream-overlay minimal">
                         <div class="stream-info">
@@ -70,17 +81,20 @@ class LiveVideoPlayer {
             `;
         }
 
-        // Show thumbnail when not streaming (only for online cameras)
+        // Show placeholder when not streaming (no thumbnails for single-connection cameras)
         return `
-            <div class="video-thumbnail-wrapper">
-                <img src="${this.apiBase}/stream/thumbnail/${this.cameraId}?t=${Date.now()}" 
-                     alt=""
-                     class="thumbnail-image"
-                     onload="this.parentElement.classList.add('loaded'); this.parentElement.classList.remove('no-thumbnail')"
-                     onerror="this.style.display='none'; this.parentElement.classList.add('no-thumbnail')">
+            <div class="video-thumbnail-wrapper no-thumbnail">
+                <!-- No thumbnail loading for single-connection cameras -->
+                <!-- Fullscreen overlay button -->
+                <button class="fullscreen-overlay-btn" 
+                        onclick="window.liveVideoPlayers?.get('${this.containerId}')?.openFullscreen()"
+                        title="Start Stream">
+                    <i class="fas fa-play"></i>
+                </button>
                 <div class="thumbnail-placeholder">
                     <i class="fas fa-camera"></i>
-                    <span>Camera Offline</span>
+                    <span>Click to Stream</span>
+                    <small>${this.camera?.name || 'Camera'}</small>
                 </div>
             </div>
         `;
@@ -148,7 +162,7 @@ class LiveVideoPlayer {
             <div class="loading-overlay" style="display: none;">
                 <div class="loading-content">
                     <i class="fas fa-spinner fa-spin"></i>
-                    <span class="loading-text">Connecting...</span>
+                    <span class="loading-text"></span>
                 </div>
             </div>
         `;
@@ -165,13 +179,9 @@ class LiveVideoPlayer {
         // Attach event listeners
         this.attachEventListeners();
 
-        // Auto-start streaming (with intelligent filtering to prevent backend overload)
+        // Auto-start streaming (24/7 live streaming - no status barriers)
         if (this.autoStart) {
-            // Don't auto-start for cameras that are known to be offline/error
-            if (this.camera?.status === 'offline' || this.camera?.status === 'error') {
-                console.log(`Skipping auto-start for camera ${this.cameraId} - status: ${this.camera?.status}`);
-                return this;
-            }
+            console.log(`Starting 24/7 auto-stream for camera ${this.cameraId}`);
             
             // Add staggered delay to prevent all cameras from starting simultaneously
             const delay = 500 + (Math.random() * 2000); // 0.5-2.5 second random delay
@@ -387,13 +397,13 @@ class LiveVideoPlayer {
                 setTimeout(() => refreshBtn.classList.remove('fa-spin'), 1000);
             }
             
-            thumbnail.src = `${this.apiBase}/stream/thumbnail/${this.cameraId}?t=${Date.now()}`;
+            thumbnail.src = `${this.apiBase}${config.API_ENDPOINTS.STREAM_SNAPSHOT(this.cameraId)}?t=${Date.now()}`;
         }
     }
 
     async captureFrame() {
         try {
-            const captureUrl = `${this.apiBase}/stream/thumbnail/${this.cameraId}?t=${Date.now()}`;
+            const captureUrl = `${this.apiBase}${config.API_ENDPOINTS.STREAM_SNAPSHOT(this.cameraId)}?t=${Date.now()}`;
             
             const link = document.createElement('a');
             link.href = captureUrl;
@@ -421,8 +431,87 @@ class LiveVideoPlayer {
             }
         }
 
+        // Find the existing stream image element
+        const streamImg = document.querySelector(`#${this.containerId} .live-stream-video`);
+        if (!streamImg) {
+            this.onError('No active stream found to display in fullscreen');
+            return;
+        }
+
+        // Use native browser fullscreen API - instant, no loading needed
+        try {
+            if (streamImg.requestFullscreen) {
+                await streamImg.requestFullscreen();
+            } else if (streamImg.webkitRequestFullscreen) { // Safari
+                await streamImg.webkitRequestFullscreen();
+            } else if (streamImg.mozRequestFullScreen) { // Firefox
+                await streamImg.mozRequestFullScreen();
+            } else if (streamImg.msRequestFullscreen) { // IE11
+                await streamImg.msRequestFullscreen();
+            } else {
+                // Fallback to modal if native fullscreen not supported
+                this.openFullscreenModal();
+                return;
+            }
+            
+            // Add double-click exit handler for fullscreen
+            this.setupFullscreenExitHandler(streamImg);
+        } catch (error) {
+            console.error('Native fullscreen failed:', error);
+            // Fallback to modal
+            this.openFullscreenModal();
+        }
+    }
+
+    // Setup double-click exit handler for native fullscreen
+    setupFullscreenExitHandler(element) {
+        // Double-click handler for exiting fullscreen
+        const exitHandler = (e) => {
+            e.preventDefault();
+            this.exitFullscreen();
+        };
+
+        // Fullscreen change handler to manage event listeners
+        const fullscreenChangeHandler = () => {
+            if (document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement || 
+                document.msFullscreenElement) {
+                // Entered fullscreen - add double-click exit handler
+                element.addEventListener('dblclick', exitHandler);
+                element.style.cursor = 'zoom-out';
+            } else {
+                // Exited fullscreen - remove handler and restore cursor
+                element.removeEventListener('dblclick', exitHandler);
+                element.style.cursor = '';
+            }
+        };
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', fullscreenChangeHandler);
+        document.addEventListener('webkitfullscreenchange', fullscreenChangeHandler);
+        document.addEventListener('mozfullscreenchange', fullscreenChangeHandler);
+        document.addEventListener('msfullscreenchange', fullscreenChangeHandler);
+    }
+
+    // Exit fullscreen with cross-browser support
+    exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitCancelFullScreen) {
+            document.webkitCancelFullScreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+
+    // Fallback modal implementation for browsers that don't support native fullscreen
+    openFullscreenModal() {
         const modal = document.createElement('div');
         modal.className = 'fullscreen-video-modal';
+        
         modal.innerHTML = `
             <div class="fullscreen-content">
                 <div class="fullscreen-header">
@@ -432,65 +521,15 @@ class LiveVideoPlayer {
                     </button>
                 </div>
                 <div class="fullscreen-video">
-                    <div class="fullscreen-loading" id="fullscreen-loading-${this.cameraId}">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <span>Loading fullscreen stream...</span>
-                    </div>
-                    <img src="${this.apiBase}/stream/video/${this.cameraId}?fullscreen=true&t=${Date.now()}" 
+                    <img src="${this.apiBase}${config.API_ENDPOINTS.STREAM_MJPEG(this.cameraId)}?modal=${Date.now()}" 
                          alt="Fullscreen view" 
-                         class="fullscreen-stream"
-                         id="fullscreen-img-${this.cameraId}"
-                         style="display: none;">
-                    <div class="fullscreen-error" id="fullscreen-error-${this.cameraId}" style="display: none; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: white;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px; color: #ffc107;"></i>
-                        <h4>Stream Not Available</h4>
-                        <p>Unable to load video stream. Please check if the camera is online and streaming is active.</p>
-                        <button class="btn btn-primary fullscreen-retry-btn" style="margin-top: 16px;">
-                            <i class="fas fa-refresh"></i>
-                            Retry
-                        </button>
-                        <button class="btn btn-secondary" onclick="this.closest('.fullscreen-video-modal').remove()" style="margin-top: 8px;">
-                            <i class="fas fa-times"></i>
-                            Close
-                        </button>
-                    </div>
+                         class="fullscreen-stream">
                 </div>
             </div>
         `;
-
+        
         document.body.appendChild(modal);
         modal.style.display = 'flex';
-
-        // Get image element for manual event handling
-        const img = modal.querySelector(`#fullscreen-img-${this.cameraId}`);
-        const loading = modal.querySelector(`#fullscreen-loading-${this.cameraId}`);
-        const error = modal.querySelector(`#fullscreen-error-${this.cameraId}`);
-        const retryBtn = modal.querySelector('.fullscreen-retry-btn');
-
-        // Image load handler
-        img.onload = () => {
-            loading.style.display = 'none';
-            error.style.display = 'none';
-            img.style.display = 'block';
-            console.log('Fullscreen stream loaded successfully');
-        };
-
-        // Image error handler
-        img.onerror = () => {
-            loading.style.display = 'none';
-            img.style.display = 'none';
-            error.style.display = 'flex';
-            console.error('Fullscreen stream failed to load');
-        };
-
-        // Retry functionality
-        retryBtn.addEventListener('click', () => {
-            loading.style.display = 'flex';
-            error.style.display = 'none';
-            img.style.display = 'none';
-            // Force reload with new timestamp
-            img.src = `${this.apiBase}/stream/video/${this.cameraId}?fullscreen=true&t=${Date.now()}`;
-        });
 
         // Close button handler
         modal.querySelector('.close-fullscreen').addEventListener('click', () => {
@@ -527,16 +566,6 @@ class LiveVideoPlayer {
             });
         });
         observer.observe(document.body, { childList: true });
-
-        // Fallback timeout for loading state (increased to 15 seconds)
-        setTimeout(() => {
-            if (loading.style.display !== 'none') {
-                loading.style.display = 'none';
-                if (img.style.display !== 'block') {
-                    error.style.display = 'flex';
-                }
-            }
-        }, 15000);
     }
 
     // Control Action Handler
@@ -661,6 +690,49 @@ class LiveVideoPlayer {
         }
     }
 
+    startHealthMonitoring() {
+        if (this.healthCheckInterval) {
+            clearInterval(this.healthCheckInterval);
+        }
+
+        this.healthCheckInterval = setInterval(() => {
+            this.checkStreamHealth();
+        }, 5000); // Check every 5 seconds
+    }
+
+    stopHealthMonitoring() {
+        if (this.healthCheckInterval) {
+            clearInterval(this.healthCheckInterval);
+            this.healthCheckInterval = null;
+        }
+    }
+
+    async checkStreamHealth() {
+        if (!this.isStreaming) return;
+
+        const now = Date.now();
+        const timeSinceLastCheck = now - (this.lastStreamCheck || 0);
+
+        // If no stream activity for more than 15 seconds, try to refresh
+        if (timeSinceLastCheck > 15000) {
+            console.warn(`No stream activity for camera ${this.cameraId} for ${timeSinceLastCheck}ms, refreshing...`);
+            this.refreshStream();
+        }
+    }
+
+    refreshStream() {
+        console.log(`Refreshing stream for camera ${this.cameraId}`);
+        
+        const streamImg = document.querySelector(`#${this.containerId} .live-stream-video`);
+        if (streamImg) {
+            // Force reload by changing src
+            const currentSrc = streamImg.src;
+            const baseUrl = currentSrc.split('?')[0];
+            streamImg.src = `${baseUrl}?refresh=${Date.now()}`;
+            this.lastStreamCheck = Date.now();
+        }
+    }
+
     // Loading Overlay
     showLoading(text = 'Loading...') {
         const container = document.getElementById(this.containerId);
@@ -692,15 +764,49 @@ class LiveVideoPlayer {
         const container = document.getElementById(this.containerId);
         if (container) {
             container.classList.add('stream-active');
+            container.classList.remove('stream-error');
         }
+        this.lastStreamCheck = Date.now();
+        this.streamFailureCount = 0;
+        
+        // Start health monitoring when stream loads
+        this.startHealthMonitoring();
     }
 
     handleStreamError() {
         const container = document.getElementById(this.containerId);
         if (container) {
             container.classList.add('stream-error');
+            container.classList.remove('stream-active');
         }
-        this.onError('Stream connection lost');
+        
+        this.streamFailureCount++;
+        console.error(`Stream error for camera ${this.cameraId}, failure count: ${this.streamFailureCount}`);
+        
+        // Enhanced auto-recovery with exponential backoff
+        if (this.streamFailureCount <= 5) {
+            const delay = Math.min(1000 * Math.pow(2, this.streamFailureCount - 1), 10000); // Max 10 second delay
+            console.log(`Attempting to recover stream for camera ${this.cameraId} in ${delay}ms`);
+            
+            setTimeout(() => {
+                // Check if we should attempt recovery
+                if (this.isStreaming) {
+                    this.refreshStream();
+                } else {
+                    // Try to restart the stream completely
+                    console.log(`Attempting full stream restart for camera ${this.cameraId}`);
+                    this.startStream().catch(error => {
+                        console.error(`Stream restart failed for camera ${this.cameraId}:`, error);
+                    });
+                }
+            }, delay);
+        } else {
+            console.error(`Too many failures for camera ${this.cameraId}, stopping auto-recovery`);
+            this.onError('Stream connection lost - multiple failures detected. Please refresh the page.');
+            // Stop the stream to prevent further attempts
+            this.isStreaming = false;
+            this.stopHealthMonitoring();
+        }
     }
 
     // Backend Connection Check
@@ -759,6 +865,7 @@ class LiveVideoPlayer {
         // Clear timers
         this.stopDurationTimer();
         this.stopStatusMonitoring();
+        this.stopHealthMonitoring();
 
         // Remove from global registry
         if (window.liveVideoPlayers) {

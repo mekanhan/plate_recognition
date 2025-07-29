@@ -2,6 +2,8 @@
  * Settings Page Component
  * System configuration, user management, and preferences
  */
+import config from '../config/app.config.js';
+
 class SettingsPage {
     constructor() {
         this.currentSection = 'general';
@@ -955,7 +957,7 @@ class SettingsPage {
                         <h4>API Information</h4>
                         <div class="info-item">
                             <label>Base URL:</label>
-                            <code>http://localhost:8001/api/v1</code>
+                            <code>${config.API_BASE_URL}${config.API_ENDPOINTS.CAMERAS.slice(0, -1)}</code>
                         </div>
                         <div class="info-item">
                             <label>Documentation:</label>

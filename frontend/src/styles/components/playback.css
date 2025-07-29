@@ -1,0 +1,731 @@
+/* Playback Components Styles */
+
+/* Video Playback Player */
+.video-playback-player {
+    width: 100%;
+    background: var(--bg-dark);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    background: #000;
+}
+
+.playback-video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+.loading-indicator {
+    color: white;
+    text-align: center;
+    pointer-events: auto;
+}
+
+.loading-indicator i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.play-overlay {
+    pointer-events: auto;
+}
+
+.play-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.play-btn:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+/* Playback Controls */
+.playback-controls {
+    background: var(--bg-darker);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.controls-left,
+.controls-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.controls-center {
+    flex: 1;
+    margin: 0 1rem;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.volume-slider {
+    width: 80px;
+}
+
+.time-display {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    min-width: 100px;
+}
+
+.progress-container {
+    width: 100%;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    position: relative;
+}
+
+.progress-filled {
+    height: 100%;
+    background: var(--primary-color);
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+.progress-handle {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.progress-handle:hover {
+    transform: translateY(-50%) scale(1.2);
+}
+
+.speed-select {
+    background: var(--bg-darker);
+    border: 1px solid var(--border-color);
+    color: var(--text-light);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+/* Timeline Component */
+.timeline-container {
+    background: var(--bg-darker);
+    border-top: 1px solid var(--border-color);
+    padding: 1rem;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.timeline-date {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.timeline-info {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.timeline-track {
+    position: relative;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+}
+
+.timeline-segments {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.timeline-segment {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    background: var(--primary-color);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeline-segment:hover {
+    background: var(--primary-hover);
+    transform: scaleY(1.2);
+}
+
+.timeline-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent-color);
+    pointer-events: none;
+    transition: left 0.3s ease;
+}
+
+.timeline-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+/* Recordings Page Styles */
+.recordings-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.recordings-content {
+    flex: 1;
+    display: flex;
+    gap: 2rem;
+    overflow: hidden;
+}
+
+.filters-panel {
+    width: 300px;
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    height: fit-content;
+    border: 1px solid var(--border-color);
+}
+
+.filter-section {
+    margin-bottom: 2rem;
+}
+
+.filter-section h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.form-select,
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--bg-white);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.custom-date-range {
+    margin-top: 1rem;
+}
+
+.date-input-group,
+.duration-input-group {
+    margin-bottom: 1rem;
+}
+
+.date-input-group label,
+.duration-input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.duration-filters {
+    display: flex;
+    gap: 1rem;
+}
+
+.duration-input-group {
+    flex: 1;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.recordings-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Storage Summary */
+.storage-summary {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.storage-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Video Player Section */
+.video-player-section {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.video-player-container {
+    min-height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-video-message {
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.no-video-message i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.no-video-message h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Recordings List */
+.recordings-list-section {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h3 {
+    color: var(--text-primary);
+}
+
+.list-controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.recordings-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.recording-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--bg-white);
+}
+
+.recording-item:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-bg);
+}
+
+.recording-info {
+    flex: 1;
+}
+
+.recording-time {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.recording-time i {
+    margin-right: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.recording-filename {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+.recording-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin: 0 1rem;
+}
+
+.recording-stats .stat {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.recording-stats .stat i {
+    opacity: 0.7;
+}
+
+.recording-stats .status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status.exists {
+    background: var(--success-bg);
+    color: var(--success-color);
+}
+
+.status.missing {
+    background: var(--error-bg);
+    color: var(--error-color);
+}
+
+.recording-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.no-recordings-message {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.no-recordings-message i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.no-recordings-message h4 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Dashboard Storage Widgets */
+.storage-metrics-section {
+    margin: 2rem 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    color: var(--text-primary);
+    font-size: 1.5rem;
+}
+
+.section-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.recording-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.recording-status i {
+    font-size: 0.8rem;
+}
+
+.storage-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.storage-metric-card {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.2s ease;
+}
+
+.storage-metric-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.metric-icon {
+    font-size: 2rem;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--primary-bg);
+}
+
+.metric-content h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.metric-content p {
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.metric-detail {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Recent Recordings Preview */
+.recent-recordings-preview {
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.preview-header h3 {
+    color: var(--text-primary);
+}
+
+.preview-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.preview-link:hover {
+    text-decoration: underline;
+}
+
+.recordings-timeline {
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.recordings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.recording-item-mini {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.recording-time {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.recording-duration,
+.recording-size {
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+}
+
+.no-recordings,
+.timeline-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+}
+
+.no-recordings i,
+.timeline-error i {
+    font-size: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .recordings-content {
+        flex-direction: column;
+    }
+    
+    .filters-panel {
+        width: 100%;
+    }
+    
+    .storage-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .storage-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .recording-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .recording-stats {
+        margin: 0;
+        flex-wrap: wrap;
+    }
+    
+    .storage-metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}

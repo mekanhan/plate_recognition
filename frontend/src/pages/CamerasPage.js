@@ -5,6 +5,7 @@
 import SimpleCameraModal from '../components/cameras/SimpleCameraModal.js';
 import LiveVideoPlayer from '../components/streaming/LiveVideoPlayer.js';
 import streamingService from '../services/StreamingService.js';
+import config from '../config/app.config.js';
 
 class Cameras {
     constructor() {
@@ -84,6 +85,7 @@ class Cameras {
                         <option value="online">Online</option>
                         <option value="offline">Offline</option>
                         <option value="warning">Warning</option>
+                        <option value="error">Error</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -194,15 +196,11 @@ class Cameras {
 
     async fetchCameras() {
         try {
-            const response = await fetch('http://localhost:8001/api/v1/cameras/');
-            if (!response.ok) {
-                throw new Error('Failed to fetch cameras');
-            }
+            // Use StreamingService for consistent camera loading with fallback
+            const cameras = await streamingService.getCameras();
             
-            const data = await response.json();
-            
-            // Transform API response to match frontend expectations
-            return data.cameras.map(camera => ({
+            // Transform StreamingService response to match frontend expectations
+            return cameras.map(camera => ({
                 id: camera.id.toString(),
                 name: camera.name,
                 location: camera.location || 'unknown',
@@ -223,34 +221,34 @@ class Cameras {
         } catch (error) {
             console.error('Error fetching cameras:', error);
             
-            // Fallback to demo data if available
-            if (window.mockCameras && window.mockCameras.length > 0) {
-                console.log('Using demo camera data as fallback');
-                this.showToast('Using demo data - backend unavailable', 'info');
-                
-                // Transform mock data to match frontend expectations
-                return window.mockCameras.map(camera => ({
+            // StreamingService.getCameras() should never throw - it returns fallback data
+            // If we're here, something else failed. Try to get fallback data directly.
+            console.log('🚨 Unexpected error in camera loading - attempting direct fallback');
+            
+            // Try to get fallback data directly from StreamingService
+            try {
+                return streamingService.getFallbackCameraData().map(camera => ({
                     id: camera.id.toString(),
                     name: camera.name,
                     location: camera.location || 'unknown',
-                    ipAddress: camera.ipAddress,
-                    port: camera.port || 80,
-                    connectionType: camera.connectionType || 'http',
-                    streamPath: camera.streamPath || '/stream',
+                    ipAddress: camera.ip_address,
+                    port: camera.port,
+                    connectionType: camera.connection_type,
+                    streamPath: camera.stream_path,
                     status: camera.status || 'offline',
-                    manufacturer: camera.manufacturer || 'Unknown',
-                    model: camera.model || 'Unknown',
-                    resolution: camera.resolution || 'Unknown',
-                    fps: camera.fps || 'Unknown',
-                    lastSeen: camera.lastSeen || new Date(),
-                    uptime: camera.uptime || '0d 0h 0m',
-                    username: camera.username || 'admin',
-                    enabled: camera.enabled !== false // Default to true
+                    manufacturer: 'Unknown',
+                    model: 'Unknown', 
+                    resolution: 'Unknown',
+                    fps: 'Unknown',
+                    lastSeen: new Date(camera.updated_at),
+                    uptime: this.calculateUptime(new Date(camera.created_at)),
+                    username: camera.username,
+                    enabled: camera.enabled
                 }));
+            } catch (fallbackError) {
+                console.error('Even fallback failed:', fallbackError);
+                return [];
             }
-            
-            this.showToast('Failed to load cameras', 'error');
-            return [];
         }
     }
 
@@ -269,7 +267,7 @@ class Cameras {
         // Check streaming status for each camera
         for (const camera of this.cameras) {
             try {
-                const response = await fetch(`http://localhost:8001/api/v1/streams/status/${camera.id}`);
+                const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.STREAM_STATUS)(camera.id));
                 if (response.ok) {
                     const statusData = await response.json();
                     const isStreaming = statusData.status === 'active';
@@ -368,6 +366,34 @@ class Cameras {
                             <span>${this.capitalizeFirst(camera.status)}</span>
                             ${isStreaming ? '<span class="streaming-badge">STREAMING</span>' : ''}
                         </div>
+                        <div class="action-dropdown">
+                            <button class="btn btn-secondary btn-small dropdown-toggle" data-camera-id="${camera.id}">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right">
+                                <button class="dropdown-item" data-action="edit" data-camera-id="${camera.id}">
+                                    <i class="fas fa-cog"></i>
+                                    Configure
+                                </button>
+                                <button class="dropdown-item" data-action="test" data-camera-id="${camera.id}">
+                                    <i class="fas fa-plug"></i>
+                                    Test Connection
+                                </button>
+                                <button class="dropdown-item" data-action="details" data-camera-id="${camera.id}">
+                                    <i class="fas fa-info-circle"></i>
+                                    View Details
+                                </button>
+                                <button class="dropdown-item" data-action="reboot" data-camera-id="${camera.id}">
+                                    <i class="fas fa-redo"></i>
+                                    Reboot Camera
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item text-danger" data-action="delete" data-camera-id="${camera.id}">
+                                    <i class="fas fa-trash"></i>
+                                    Delete Camera
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -411,37 +437,6 @@ class Cameras {
                 </div>
                 
                 <!-- Stream controls removed for simplified auto-streaming experience -->
-
-                <div class="camera-card-actions">
-                    <div class="action-dropdown">
-                        <button class="btn btn-secondary btn-small dropdown-toggle" data-camera-id="${camera.id}">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <button class="dropdown-item" data-action="edit" data-camera-id="${camera.id}">
-                                <i class="fas fa-cog"></i>
-                                Configure
-                            </button>
-                            <button class="dropdown-item" data-action="test" data-camera-id="${camera.id}">
-                                <i class="fas fa-plug"></i>
-                                Test Connection
-                            </button>
-                            <button class="dropdown-item" data-action="details" data-camera-id="${camera.id}">
-                                <i class="fas fa-info-circle"></i>
-                                View Details
-                            </button>
-                            <button class="dropdown-item" data-action="reboot" data-camera-id="${camera.id}">
-                                <i class="fas fa-redo"></i>
-                                Reboot Camera
-                            </button>
-                            <div class="dropdown-divider"></div>
-                            <button class="dropdown-item text-danger" data-action="delete" data-camera-id="${camera.id}">
-                                <i class="fas fa-trash"></i>
-                                Delete Camera
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
         `;
     }
@@ -997,7 +992,7 @@ class Cameras {
         if (confirm(`Are you sure you want to delete "${camera.name}"?`)) {
             try {
                 // Convert string ID to integer for API call
-                const response = await fetch(`http://localhost:8000/api/v1/cameras/${parseInt(cameraId)}`, {
+                const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERA_BY_ID)(parseInt(cameraId)), {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1024,7 +1019,8 @@ class Cameras {
         const icons = {
             online: 'fa-circle',
             offline: 'fa-times-circle',
-            warning: 'fa-exclamation-triangle'
+            warning: 'fa-exclamation-triangle',
+            error: 'fa-exclamation-circle'
         };
         return icons[status] || 'fa-question-circle';
     }
@@ -1048,7 +1044,7 @@ class Cameras {
         let score = 100;
         
         // Status impact
-        if (camera.status === 'offline') {
+        if (camera.status === 'offline' || camera.status === 'error') {
             score -= 50;
         } else if (camera.status === 'warning') {
             score -= 20;

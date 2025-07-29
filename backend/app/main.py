@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .api.v1.router import api_router
 from .api.v1.endpoints.streaming import router as streaming_router, video_router, cleanup_all_streams
 from .database import init_database
+# from .services.camera_health import start_camera_health_monitor  # Temporarily disabled
+from .core.config import settings
 
 # Create FastAPI app
 app = FastAPI(
@@ -17,8 +19,10 @@ app = FastAPI(
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database on startup"""
+    """Initialize database and start background services on startup"""
     await init_database()
+    # Temporarily disable background health monitor to test API
+    # start_camera_health_monitor()
 
 
 @app.on_event("shutdown")
@@ -29,7 +33,7 @@ async def shutdown_event():
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure as needed for production
+    allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

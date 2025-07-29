@@ -10,6 +10,7 @@
 @import './components/modal.css';
 @import './components/simple-camera-modal.css';
 @import './components/streaming.css';
+@import './components/playback.css';
 
 /* Layout Styles */
 .main-content {
@@ -1284,6 +1285,7 @@
     padding: 1rem;
     border-bottom: 1px solid var(--border-color);
     background: var(--surface-color);
+    border-radius: 12px 12px 0 0;
 }
 
 .camera-title-row {
@@ -1291,6 +1293,12 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
+}
+
+.camera-title-row .action-dropdown {
+    margin-left: auto;
+    position: relative;
+    z-index: 10;
 }
 
 .camera-checkbox {
@@ -1335,6 +1343,11 @@
 .camera-card-status.warning {
     background: rgba(245, 158, 11, 0.1);
     color: #d97706;
+}
+
+.camera-card-status.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
 }
 
 .camera-card-body {
@@ -1487,6 +1500,8 @@
     gap: 0.5rem;
     align-items: center;
     flex-wrap: wrap;
+    /* Removed since we no longer have actions in this section */
+    display: none;
 }
 
 .action-dropdown {
@@ -1784,6 +1799,11 @@
 
 .row-status.warning {
     background: #d97706;
+    color: white;
+}
+
+.row-status.error {
+    background: #dc2626;
     color: white;
 }
 

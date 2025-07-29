@@ -4,6 +4,7 @@
  */
 import LiveVideoPlayer from '../components/streaming/LiveVideoPlayer.js';
 import streamingService from '../services/StreamingService.js';
+import playbackService from '../services/PlaybackService.js';
 
 class Dashboard {
     constructor() {
@@ -12,6 +13,12 @@ class Dashboard {
             detectionsToday: 1247,
             activeAlerts: 3,
             accuracyRate: 94.2
+        };
+        this.storageStats = {
+            totalRecordings: 0,
+            storageUsed: '0 B',
+            diskUsage: 0,
+            retentionDays: 30
         };
         this.liveFeeds = [];
         this.liveCameras = [];
@@ -126,6 +133,83 @@ class Dashboard {
                     </div>
                     <div class="metric-trend">
                         <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Storage & Recording Metrics -->
+            <div class="storage-metrics-section">
+                <div class="section-header">
+                    <h2>Recording & Storage</h2>
+                    <div class="section-actions">
+                        <button class="btn btn-secondary" id="view-recordings-btn">
+                            <i class="fas fa-film"></i>
+                            View Recordings
+                        </button>
+                        <span class="recording-status" id="recording-status">
+                            <i class="fas fa-circle text-red"></i>
+                            <span>Recording: Unknown</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="storage-metrics-grid">
+                    <div class="storage-metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-video text-blue"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="total-recordings">${this.storageStats.totalRecordings}</h3>
+                            <p>Total Recordings</p>
+                            <small class="metric-detail">Across all cameras</small>
+                        </div>
+                    </div>
+                    
+                    <div class="storage-metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-hdd text-green"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="storage-used">${this.storageStats.storageUsed}</h3>
+                            <p>Storage Used</p>
+                            <small class="metric-detail">Video files</small>
+                        </div>
+                    </div>
+                    
+                    <div class="storage-metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-chart-pie text-orange"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="disk-usage">${this.storageStats.diskUsage}%</h3>
+                            <p>Disk Usage</p>
+                            <small class="metric-detail">Overall system</small>
+                        </div>
+                    </div>
+                    
+                    <div class="storage-metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-calendar-alt text-purple"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3 id="retention-days">${this.storageStats.retentionDays}</h3>
+                            <p>Retention Days</p>
+                            <small class="metric-detail">Auto cleanup</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Recordings Preview -->
+                <div class="recent-recordings-preview">
+                    <div class="preview-header">
+                        <h3>Recent Recordings</h3>
+                        <a href="#" id="view-all-recordings" class="preview-link">View All</a>
+                    </div>
+                    <div class="recordings-timeline" id="recordings-timeline">
+                        <div class="timeline-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading recent recordings...</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -260,6 +344,9 @@ class Dashboard {
 
         // Global data refresh listener
         window.addEventListener('dataRefresh', () => this.loadData());
+        
+        // Storage and recording event listeners
+        this.attachStorageEventListeners();
     }
 
     handleAddCamera() {
@@ -661,10 +748,15 @@ class Dashboard {
             // Load live cameras with streaming integration
             await this.loadLiveCameras();
             
+            // Load storage and recording data
+            await this.loadStorageData();
+            
             // Update other sections
             this.updateMetrics();
             this.renderRecentDetections();
             this.renderSystemHealth();
+            this.updateStorageMetrics();
+            this.loadRecentRecordings();
             
             // Setup streaming service event listeners
             this.setupStreamingEventListeners();
@@ -804,6 +896,148 @@ class Dashboard {
             }
         });
     }
+
+    // Storage and Recording Methods
+    async loadStorageData() {
+        try {
+            // Get storage report
+            const storageReport = await playbackService.getStorageReport();
+            
+            if (storageReport && storageReport.system_stats) {
+                this.storageStats = {
+                    totalRecordings: storageReport.system_stats.total_segments || 0,
+                    storageUsed: storageReport.system_stats.total_size_formatted || '0 B',
+                    diskUsage: Math.round(storageReport.system_stats.disk_used_percent || 0),
+                    retentionDays: storageReport.retention_days || 30
+                };
+            }
+
+            // Check recording status
+            await this.checkRecordingStatus();
+
+        } catch (error) {
+            console.error('Failed to load storage data:', error);
+            // Use default values on error
+        }
+    }
+
+    async checkRecordingStatus() {
+        try {
+            const health = await playbackService.getHealth();
+            const recordingStatusEl = document.getElementById('recording-status');
+            
+            if (recordingStatusEl) {
+                const isRecording = health.status === 'healthy' && health.storage_status === 'healthy';
+                const statusIcon = recordingStatusEl.querySelector('i');
+                const statusText = recordingStatusEl.querySelector('span');
+                
+                if (isRecording) {
+                    statusIcon.className = 'fas fa-circle text-green';
+                    statusText.textContent = 'Recording: Active';
+                } else {
+                    statusIcon.className = 'fas fa-circle text-red';
+                    statusText.textContent = 'Recording: Inactive';
+                }
+            }
+        } catch (error) {
+            console.error('Failed to check recording status:', error);
+        }
+    }
+
+    updateStorageMetrics() {
+        // Update storage metric values
+        const totalRecordingsEl = document.getElementById('total-recordings');
+        const storageUsedEl = document.getElementById('storage-used');
+        const diskUsageEl = document.getElementById('disk-usage');
+        const retentionDaysEl = document.getElementById('retention-days');
+
+        if (totalRecordingsEl) totalRecordingsEl.textContent = this.storageStats.totalRecordings;
+        if (storageUsedEl) storageUsedEl.textContent = this.storageStats.storageUsed;
+        if (diskUsageEl) diskUsageEl.textContent = `${this.storageStats.diskUsage}%`;
+        if (retentionDaysEl) retentionDaysEl.textContent = this.storageStats.retentionDays;
+
+        // Update disk usage color based on percentage
+        if (diskUsageEl && diskUsageEl.parentElement) {
+            const card = diskUsageEl.closest('.storage-metric-card');
+            if (card) {
+                const icon = card.querySelector('.metric-icon i');
+                if (this.storageStats.diskUsage >= 90) {
+                    icon.className = 'fas fa-chart-pie text-red';
+                } else if (this.storageStats.diskUsage >= 80) {
+                    icon.className = 'fas fa-chart-pie text-orange';
+                } else {
+                    icon.className = 'fas fa-chart-pie text-green';
+                }
+            }
+        }
+    }
+
+    async loadRecentRecordings() {
+        const timelineContainer = document.getElementById('recordings-timeline');
+        if (!timelineContainer) return;
+
+        try {
+            // Get today's recordings for camera 3 (first available camera)
+            const dateRange = playbackService.getTodayRange();
+            const searchResults = await playbackService.searchRecordings(3, dateRange.start, dateRange.end);
+            
+            const recordings = searchResults.segments || [];
+            
+            if (recordings.length === 0) {
+                timelineContainer.innerHTML = `
+                    <div class="no-recordings">
+                        <i class="fas fa-film"></i>
+                        <span>No recordings today</span>
+                    </div>
+                `;
+                return;
+            }
+
+            // Show recent recordings (last 5)
+            const recentRecordings = recordings.slice(-5);
+            
+            timelineContainer.innerHTML = `
+                <div class="recordings-list">
+                    ${recentRecordings.map(recording => `
+                        <div class="recording-item-mini">
+                            <div class="recording-time">
+                                ${new Date(recording.start_time).toLocaleTimeString()}
+                            </div>
+                            <div class="recording-duration">
+                                ${playbackService.formatDuration(recording.duration_seconds)}
+                            </div>
+                            <div class="recording-size">
+                                ${playbackService.formatFileSize(recording.file_size)}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+        } catch (error) {
+            console.error('Failed to load recent recordings:', error);
+            timelineContainer.innerHTML = `
+                <div class="timeline-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Failed to load recordings</span>
+                </div>
+            `;
+        }
+    }
 }
+
+// Add storage-related event listeners to the attachEventListeners method
+Dashboard.prototype.attachStorageEventListeners = function() {
+    // View recordings button
+    document.getElementById('view-recordings-btn')?.addEventListener('click', () => {
+        window.location.hash = 'recordings';
+    });
+
+    // View all recordings link
+    document.getElementById('view-all-recordings')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.hash = 'recordings';
+    });
+};
 
 export default Dashboard;

@@ -50,3 +50,4 @@ node_modules
 ui-prototypes/prototype6/__pycache__/*
 **/__pycache__/
 **/*.pyc
+backend/recordings

@@ -1,7 +1,8 @@
 /**
  * StreamPage - Live video streaming with license plate detection
- * Integrates with backend streaming API at port 8001
+ * Integrates with backend streaming API
  */
+import config from '../config/app.config.js';
 
 class StreamPage {
     constructor() {
@@ -16,8 +17,8 @@ class StreamPage {
         this.lastFrameTime = 0;
         this.frameCount = 0;
         this.cameraId = 3; // Test Camera 1
-        this.apiBaseUrl = 'http://localhost:8001'; // Backend API URL
-        this.streamUrl = `${this.apiBaseUrl}/stream/video/${this.cameraId}`;
+        this.apiBaseUrl = config.API_BASE_URL;
+        this.streamUrl = `${this.apiBaseUrl}${config.API_ENDPOINTS.STREAM_VIDEO(this.cameraId)}`;
         
         this.recentConfidences = [];
     }
@@ -104,7 +105,7 @@ class StreamPage {
     setupWebSocket() {
         // Future implementation for Phase 2 - real-time detection data
         if (window.location.protocol === 'http:') {
-            const wsUrl = `ws://localhost:8001/ws/stream/${this.cameraId}`;
+            const wsUrl = config.buildWsUrl(config.WS_ENDPOINTS.STREAM)(this.cameraId);
             try {
                 this.streamWebSocket = new WebSocket(wsUrl);
                 this.streamWebSocket.onopen = () => this.onStreamConnected();

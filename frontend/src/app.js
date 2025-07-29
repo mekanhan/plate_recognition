@@ -6,6 +6,7 @@ import Sidebar from './components/layout/Sidebar.js';
 import Header from './components/layout/Header.js';
 import Dashboard from './pages/Dashboard.js';
 import Cameras from './pages/CamerasPage.js';
+import RecordingsPage from './pages/RecordingsPage.js';
 import DetectionsPage from './pages/DetectionsPage.js';
 import AnalyticsPage from './pages/AnalyticsPage.js';
 import AlertsPage from './pages/AlertsPage.js';
@@ -98,6 +99,7 @@ class LPRApplication {
                 <!-- Page Sections -->
                 <section id="dashboard" class="content-section active"></section>
                 <section id="cameras" class="content-section"></section>
+                <section id="recordings" class="content-section"></section>
                 <section id="detections" class="content-section"></section>
                 <section id="analytics" class="content-section"></section>
                 <section id="alerts" class="content-section"></section>
@@ -124,6 +126,7 @@ class LPRApplication {
         this.components.pages = {
             dashboard: new Dashboard(),
             cameras: new Cameras(),
+            recordings: new RecordingsPage(),
             detections: new DetectionsPage(),
             analytics: new AnalyticsPage(),
             alerts: new AlertsPage(),
@@ -457,7 +460,7 @@ class LPRApplication {
     }
 
     isValidPage(pageId) {
-        const validPages = ['dashboard', 'cameras', 'detections', 'analytics', 'alerts', 'reports', 'settings'];
+        const validPages = ['dashboard', 'cameras', 'recordings', 'detections', 'analytics', 'alerts', 'reports', 'settings'];
         return validPages.includes(pageId);
     }
 

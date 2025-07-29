@@ -3,11 +3,12 @@
  * API testing and diagnostics for cameras
  * Extracted from test_streaming.html functionality
  */
+import config from '../../config/app.config.js';
 
 class CameraApiTester {
     constructor(camera) {
         this.camera = camera;
-        this.apiBase = 'http://localhost:8001';
+        this.apiBase = config.API_BASE_URL;
         this.testResults = new Map();
         this.logEntries = [];
         this.isTestingInProgress = false;

@@ -43,6 +43,15 @@ class Camera(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     enabled = Column(Boolean, default=True)
+    
+    # Video settings
+    brand = Column(String, nullable=True)  # Camera brand (Hikvision, Dahua, etc.)
+    model = Column(String, nullable=True)  # Camera model
+    resolution_width = Column(Integer, default=1920)  # Video width
+    resolution_height = Column(Integer, default=1080)  # Video height
+    max_fps = Column(Integer, default=30)  # Maximum FPS
+    video_quality = Column(String, default="medium")  # low, medium, high
+    low_latency = Column(Boolean, default=True)  # Enable low latency mode
 
 
 async def init_database():

@@ -24,8 +24,9 @@ async def get_cameras(db: AsyncSession, skip: int = 0, limit: int = 100) -> List
 
 async def get_camera_count(db: AsyncSession) -> int:
     """Get total count of cameras"""
-    result = await db.execute(select(Camera))
-    return len(result.scalars().all())
+    from sqlalchemy import func
+    result = await db.execute(select(func.count(Camera.id)))
+    return result.scalar()
 
 
 async def get_camera_by_id(db: AsyncSession, camera_id: int) -> Optional[Camera]:

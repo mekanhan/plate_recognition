@@ -1,65 +1,741 @@
-2025-07-26 01:34:41,599 - __main__ - INFO - Loaded storage configuration from config/storage_settings.json
-2025-07-26 01:34:41,600 - __main__ - INFO - Retention: 30 days
-2025-07-26 01:34:41,600 - __main__ - INFO - Cleanup interval: 1 hours
-2025-07-26 01:34:41,600 - app.core.storage.storage_manager - INFO - Storage manager initialized with base path: recordings
-2025-07-26 01:34:41,600 - app.core.recording.recording_manager - INFO - Recording manager initialized with storage management
-2025-07-26 01:34:41,600 - __main__ - INFO - ============================================================
-2025-07-26 01:34:41,600 - __main__ - INFO - Starting 24/7 Recording Service
-2025-07-26 01:34:41,600 - __main__ - INFO - Started at: 2025-07-26T01:34:41.600210
-2025-07-26 01:34:41,600 - __main__ - INFO - ============================================================
-2025-07-26 01:34:41,600 - app.core.recording.recording_manager - INFO - Starting all camera recordings...
-2025-07-26 01:34:41,600 - app.core.storage.storage_manager - INFO - Storage manager started
-2025-07-26 01:34:41,600 - app.core.recording.recording_manager - INFO - Storage manager started
-2025-07-26 01:34:41,600 - app.core.recording.continuous_recorder - INFO - Created recording directory: recordings/camera_3
-2025-07-26 01:34:41,601 - app.core.recording.continuous_recorder - INFO - Initialized recording database for camera 3
-2025-07-26 01:34:41,601 - app.core.recording.continuous_recorder - INFO - Connecting to camera 3 at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_sub
-2025-07-26 01:34:41,601 - app.core.recording.continuous_recorder - INFO - Started continuous recording for camera 3 (Test Camera 1)
-2025-07-26 01:34:41,602 - app.core.recording.recording_manager - INFO - Started recording for camera 3: Test Camera 1
-2025-07-26 01:34:41,602 - app.core.recording.recording_manager - INFO - Started recording for 1 cameras with storage management
-2025-07-26 01:34:41,602 - __main__ - INFO - All recordings started successfully
-2025-07-26 01:34:41,602 - app.core.storage.storage_manager - INFO - Starting storage cleanup...
-2025-07-26 01:34:41,602 - app.core.storage.storage_manager - INFO - Cleanup complete: No recordings to clean up
-2025-07-26 01:34:41,603 - app.core.storage.storage_manager - INFO - Storage Health: 1 segments, 2.0 MB used, 93.4% disk free
-2025-07-26 01:34:49,129 - app.core.recording.continuous_recorder - INFO - Successfully connected to camera 3
-2025-07-26 01:34:49,141 - app.core.recording.continuous_recorder - INFO - Camera 3 frame dimensions: 640x360
+2025-07-29 01:04:53,762 - __main__ - INFO - Loaded storage configuration from config/storage_settings.json
+2025-07-29 01:04:53,762 - __main__ - INFO - Retention: 30 days
+2025-07-29 01:04:53,762 - __main__ - INFO - Cleanup interval: 1 hours
+2025-07-29 01:04:53,762 - app.core.storage.storage_manager - INFO - Storage manager initialized with base path: recordings
+2025-07-29 01:04:53,762 - app.core.recording.recording_manager - INFO - Recording manager initialized with storage management
+2025-07-29 01:04:53,762 - __main__ - INFO - ============================================================
+2025-07-29 01:04:53,762 - __main__ - INFO - Starting 24/7 Recording Service
+2025-07-29 01:04:53,762 - __main__ - INFO - Started at: 2025-07-29T01:04:53.762889
+2025-07-29 01:04:53,762 - __main__ - INFO - ============================================================
+2025-07-29 01:04:53,762 - app.core.recording.recording_manager - INFO - Starting all camera recordings...
+2025-07-29 01:04:53,762 - app.core.storage.storage_manager - INFO - Storage manager started
+2025-07-29 01:04:53,763 - app.core.recording.recording_manager - INFO - Storage manager started
+2025-07-29 01:04:53,763 - app.core.recording.continuous_recorder - INFO - Created recording directory: recordings/camera_3
+2025-07-29 01:04:53,764 - app.core.recording.continuous_recorder - INFO - Initialized recording database for camera 3
+2025-07-29 01:04:53,764 - app.core.recording.continuous_recorder - INFO - Connecting to camera 3 at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_sub
+2025-07-29 01:04:53,764 - app.core.recording.continuous_recorder - INFO - Started continuous recording for camera 3 (Test Camera 1)
+2025-07-29 01:04:53,764 - app.core.recording.recording_manager - INFO - Started recording for camera 3: Test Camera 1
+2025-07-29 01:04:53,765 - app.core.recording.recording_manager - INFO - Started recording for 1 cameras with storage management
+2025-07-29 01:04:53,765 - __main__ - INFO - All recordings started successfully
+2025-07-29 01:04:53,765 - app.core.storage.storage_manager - INFO - Starting storage cleanup...
+2025-07-29 01:04:53,765 - app.core.storage.storage_manager - INFO - Cleanup complete: No recordings to clean up
+2025-07-29 01:04:53,765 - app.core.storage.storage_manager - INFO - Storage Health: 148 segments, 2.8 GB used, 93.1% disk free
+2025-07-29 01:05:00,000 - app.core.recording.continuous_recorder - INFO - Successfully connected to camera 3
+2025-07-29 01:05:00,005 - app.core.recording.continuous_recorder - INFO - Camera 3 frame dimensions: 640x360
 OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
 OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
-[ERROR:0@6.753] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
-[ERROR:0@6.753] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
-2025-07-26 01:34:49,149 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
-2025-07-26 01:34:49,149 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250726_013449_600.mp4
-2025-07-26 01:35:12,430 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:35:43,259 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:36:14,096 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:36:44,914 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:37:15,760 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:37:46,614 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:38:17,553 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:38:48,417 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:39:19,214 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:39:50,060 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:39:50,060 - __main__ - INFO - Storage summary: 1 segments, 2.0 MB used
-2025-07-26 01:40:20,930 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:40:51,791 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:41:21,822 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:41:52,662 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:42:23,531 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:42:54,335 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:43:25,166 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:43:56,050 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:44:26,945 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:44:49,167 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250726_013449_600.avi (600s, 19594576 bytes)
+[ERROR:0@6.258] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@6.258] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 01:05:00,015 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 01:05:00,015 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_010500_600.mp4
+2025-07-29 01:05:23,796 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:05:53,824 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:06:23,840 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:06:53,872 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:07:23,892 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:07:53,923 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:08:23,924 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:08:53,930 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:09:23,960 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:09:53,988 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:09:53,988 - __main__ - INFO - Storage summary: 148 segments, 2.8 GB used
+2025-07-29 01:10:23,996 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:10:54,026 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:11:24,052 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:11:54,083 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:12:24,113 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:12:54,144 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:13:24,175 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:13:54,200 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:14:24,208 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:14:54,239 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:14:54,239 - __main__ - INFO - Storage summary: 148 segments, 2.8 GB used
+2025-07-29 01:15:00,056 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_010500_600.avi (600s, 25755346 bytes)
 OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
 OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
-[ERROR:0@591.884] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
-[ERROR:0@591.884] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
-2025-07-26 01:44:49,167 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
-2025-07-26 01:44:49,167 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250726_014449_600.mp4
-2025-07-26 01:44:57,817 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:44:57,817 - __main__ - INFO - Storage summary: 2 segments, 20.7 MB used
-2025-07-26 01:45:28,742 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:45:59,695 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:46:30,614 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:47:01,554 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:47:32,441 - __main__ - INFO - Health check complete. Active recordings: 1
-2025-07-26 01:48:03,336 - __main__ - INFO - Health check complete. Active recordings: 1
+[ERROR:0@606.305] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@606.305] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 01:15:00,056 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 01:15:00,057 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_011500_600.mp4
+2025-07-29 01:15:24,268 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:15:54,296 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:16:24,316 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:16:54,340 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:17:24,371 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:17:54,372 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:18:24,400 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:18:54,431 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:19:24,461 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:19:54,464 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:19:54,464 - __main__ - INFO - Storage summary: 149 segments, 2.8 GB used
+2025-07-29 01:20:24,488 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:20:54,515 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:21:24,524 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:21:54,537 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:22:24,563 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:22:54,592 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:23:24,612 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:23:54,643 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:24:24,672 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:24:54,702 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:24:54,703 - __main__ - INFO - Storage summary: 149 segments, 2.8 GB used
+2025-07-29 01:25:00,090 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_011500_600.avi (600s, 26820644 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@1206.339] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@1206.339] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 01:25:00,091 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 01:25:00,091 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_012500_600.mp4
+2025-07-29 01:25:24,732 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:25:54,763 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:26:24,792 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:26:54,794 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:27:24,812 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:27:54,840 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:28:24,848 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:28:54,860 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:29:24,877 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:29:54,895 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:29:54,895 - __main__ - INFO - Storage summary: 150 segments, 2.8 GB used
+2025-07-29 01:30:24,903 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:30:54,910 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:31:24,926 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:31:54,928 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:32:24,936 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:32:54,967 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:33:24,996 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:33:55,027 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:34:25,057 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:34:53,776 - app.core.storage.storage_manager - INFO - Storage Health: 150 segments, 2.8 GB used, 93.1% disk free
+2025-07-29 01:34:55,060 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:34:55,061 - __main__ - INFO - Storage summary: 150 segments, 2.8 GB used
+2025-07-29 01:35:00,154 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_012500_600.avi (600s, 26422564 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@1806.403] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@1806.403] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 01:35:00,154 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 01:35:00,154 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_013500_600.mp4
+2025-07-29 01:35:25,070 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:35:55,100 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:36:25,108 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:36:55,136 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:37:25,152 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:37:55,183 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:38:25,214 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:38:55,245 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:39:25,276 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:39:55,304 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:39:55,304 - __main__ - INFO - Storage summary: 151 segments, 2.8 GB used
+2025-07-29 01:40:25,327 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:40:55,358 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:41:25,379 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:41:55,406 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:42:25,436 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:42:55,464 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:43:25,493 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:43:55,524 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:44:25,549 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:44:55,580 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:44:55,580 - __main__ - INFO - Storage summary: 151 segments, 2.8 GB used
+2025-07-29 01:45:00,310 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_013500_600.avi (600s, 27140212 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@2406.559] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@2406.560] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 01:45:00,311 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 01:45:00,311 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_014500_600.mp4
+2025-07-29 01:45:25,608 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:45:55,634 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:46:25,657 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:46:55,688 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:47:25,715 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:47:55,746 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:48:25,760 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:48:55,780 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:49:25,811 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:49:55,840 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:49:55,840 - __main__ - INFO - Storage summary: 152 segments, 2.9 GB used
+2025-07-29 01:50:25,857 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:50:55,881 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:51:25,888 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:51:55,916 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:52:25,940 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:52:55,950 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:53:25,960 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:53:55,980 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:54:25,991 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:54:56,013 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:54:56,013 - __main__ - INFO - Storage summary: 152 segments, 2.9 GB used
+2025-07-29 01:55:00,334 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_014500_600.avi (600s, 26707218 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@3006.583] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@3006.583] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 01:55:00,335 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 01:55:00,335 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_015500_600.mp4
+2025-07-29 01:55:26,044 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:55:56,066 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:56:26,096 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:56:56,103 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:57:26,134 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:57:56,152 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:58:26,168 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:58:56,198 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:59:26,228 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:59:56,232 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 01:59:56,232 - __main__ - INFO - Storage summary: 153 segments, 2.9 GB used
+2025-07-29 02:00:26,252 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:00:56,270 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:01:26,301 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:01:56,332 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:02:26,335 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:02:56,366 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:03:26,397 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:03:56,428 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:04:26,444 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:04:53,793 - app.core.storage.storage_manager - INFO - Starting storage cleanup...
+2025-07-29 02:04:53,794 - app.core.storage.storage_manager - INFO - Cleanup complete: No recordings to clean up
+2025-07-29 02:04:53,794 - app.core.storage.storage_manager - INFO - Storage Health: 153 segments, 2.9 GB used, 93.1% disk free
+2025-07-29 02:04:56,448 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:04:56,449 - __main__ - INFO - Storage summary: 153 segments, 2.9 GB used
+2025-07-29 02:05:00,397 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_015500_600.avi (600s, 26053750 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@3606.647] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@3606.647] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 02:05:00,398 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 02:05:00,398 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_020500_600.mp4
+2025-07-29 02:05:26,476 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:05:56,505 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:06:26,536 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:06:56,539 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:07:26,570 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:07:56,600 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:08:26,628 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:08:56,656 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:09:26,684 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:09:56,694 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:09:56,695 - __main__ - INFO - Storage summary: 154 segments, 2.9 GB used
+2025-07-29 02:10:26,710 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:10:56,740 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:11:26,770 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:11:56,785 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:12:26,816 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:12:56,842 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:13:26,844 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:13:56,875 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:14:26,888 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:14:56,919 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:14:56,919 - __main__ - INFO - Storage summary: 154 segments, 2.9 GB used
+2025-07-29 02:15:00,413 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_020500_600.avi (600s, 27110714 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@4206.662] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@4206.662] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 02:15:00,413 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 02:15:00,413 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_021500_600.mp4
+2025-07-29 02:15:26,950 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:15:56,981 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:16:27,012 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:16:57,036 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:17:27,055 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:17:57,065 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:18:27,092 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:18:57,120 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:19:27,148 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:19:57,172 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:19:57,172 - __main__ - INFO - Storage summary: 155 segments, 2.9 GB used
+2025-07-29 02:20:27,200 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:20:57,228 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:21:27,256 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:21:57,284 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:22:27,304 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:22:57,305 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:23:27,336 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:23:57,366 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:24:27,396 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:24:57,412 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:24:57,412 - __main__ - INFO - Storage summary: 155 segments, 2.9 GB used
+2025-07-29 02:25:00,511 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_021500_600.avi (600s, 26526320 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@4806.759] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@4806.760] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 02:25:00,511 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 02:25:00,511 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_022500_600.mp4
+2025-07-29 02:25:27,443 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:25:57,474 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:26:27,505 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:26:57,532 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:27:27,560 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:27:57,588 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:28:27,618 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:28:57,648 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:29:27,678 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:29:57,708 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:29:57,708 - __main__ - INFO - Storage summary: 156 segments, 3.0 GB used
+2025-07-29 02:30:27,732 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:30:57,760 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:31:27,791 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:31:57,821 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:32:27,852 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:32:57,883 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:33:27,912 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:33:57,943 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:34:27,973 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:34:53,797 - app.core.storage.storage_manager - INFO - Storage Health: 156 segments, 3.0 GB used, 93.1% disk free
+2025-07-29 02:34:57,979 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:34:57,980 - __main__ - INFO - Storage summary: 156 segments, 3.0 GB used
+2025-07-29 02:35:00,522 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_022500_600.avi (600s, 26348926 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@5406.771] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@5406.771] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 02:35:00,523 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 02:35:00,523 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_023500_600.mp4
+2025-07-29 02:35:28,011 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:35:58,040 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:36:28,071 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:36:58,101 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:37:28,132 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:37:58,152 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:38:28,183 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:38:58,214 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:39:28,244 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:39:58,248 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:39:58,248 - __main__ - INFO - Storage summary: 157 segments, 3.0 GB used
+2025-07-29 02:40:28,268 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:40:58,296 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:41:28,311 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:41:58,340 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:42:28,368 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:42:58,399 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:43:28,430 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:43:58,461 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:44:28,491 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:44:58,497 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:44:58,497 - __main__ - INFO - Storage summary: 157 segments, 3.0 GB used
+2025-07-29 02:45:00,630 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_023500_600.avi (600s, 25878726 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@6006.879] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@6006.879] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 02:45:00,631 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 02:45:00,631 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_024500_600.mp4
+2025-07-29 02:45:28,528 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:45:58,559 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:46:28,588 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:46:58,618 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:47:28,648 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:47:58,666 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:48:28,696 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:48:58,723 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:49:28,744 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:49:58,775 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:49:58,775 - __main__ - INFO - Storage summary: 158 segments, 3.0 GB used
+2025-07-29 02:50:28,777 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:50:58,808 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:51:28,837 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:51:58,868 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:52:28,876 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:52:58,892 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:53:28,920 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:53:58,949 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:54:28,976 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:54:59,006 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:54:59,007 - __main__ - INFO - Storage summary: 158 segments, 3.0 GB used
+2025-07-29 02:55:00,738 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_024500_600.avi (600s, 26612826 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@6606.987] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@6606.987] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 02:55:00,738 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 02:55:00,738 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_025500_600.mp4
+2025-07-29 02:55:29,036 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:55:59,064 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:56:29,068 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:56:59,084 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:57:29,112 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:57:59,116 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:58:29,137 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:58:59,146 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:59:29,176 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:59:59,178 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 02:59:59,179 - __main__ - INFO - Storage summary: 159 segments, 3.0 GB used
+2025-07-29 03:00:29,205 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:00:59,236 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:01:29,267 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:01:59,284 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:02:29,314 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:02:59,343 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:03:29,344 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:03:59,369 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:04:29,400 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:04:53,819 - app.core.storage.storage_manager - INFO - Starting storage cleanup...
+2025-07-29 03:04:53,820 - app.core.storage.storage_manager - INFO - Cleanup complete: No recordings to clean up
+2025-07-29 03:04:53,820 - app.core.storage.storage_manager - INFO - Storage Health: 159 segments, 3.0 GB used, 93.1% disk free
+2025-07-29 03:04:59,407 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:04:59,407 - __main__ - INFO - Storage summary: 159 segments, 3.0 GB used
+2025-07-29 03:05:00,764 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_025500_600.avi (600s, 26639500 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@7207.013] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@7207.013] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 03:05:00,765 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 03:05:00,765 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_030500_600.mp4
+2025-07-29 03:05:29,422 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:05:59,453 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:06:29,484 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:06:59,491 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:07:29,512 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:07:59,540 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:08:29,552 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:08:59,583 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:09:29,613 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:09:59,644 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:09:59,644 - __main__ - INFO - Storage summary: 160 segments, 3.1 GB used
+2025-07-29 03:10:29,674 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:10:59,705 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:11:29,736 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:11:59,746 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:12:29,756 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:12:59,764 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:13:29,786 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:13:59,807 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:14:29,838 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:14:59,868 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:14:59,868 - __main__ - INFO - Storage summary: 160 segments, 3.1 GB used
+2025-07-29 03:15:00,831 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_030500_600.avi (600s, 26833108 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@7807.080] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@7807.080] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 03:15:00,832 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 03:15:00,832 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_031500_600.mp4
+2025-07-29 03:15:29,889 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:15:59,920 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:16:29,943 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:16:59,974 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:17:30,004 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:18:00,016 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:18:30,046 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:19:00,077 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:19:30,108 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:20:00,136 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:20:00,136 - __main__ - INFO - Storage summary: 161 segments, 3.1 GB used
+2025-07-29 03:20:30,164 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:21:00,191 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:21:30,221 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:22:00,228 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:22:30,240 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:23:00,256 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:23:30,284 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:24:00,312 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:24:30,340 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:25:00,368 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:25:00,368 - __main__ - INFO - Storage summary: 161 segments, 3.1 GB used
+2025-07-29 03:25:00,879 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_031500_600.avi (600s, 26378950 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@8407.128] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@8407.128] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 03:25:00,879 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 03:25:00,879 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_032500_600.mp4
+2025-07-29 03:25:30,399 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:26:00,410 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:26:30,440 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:27:00,446 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:27:30,465 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:28:00,488 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:28:30,490 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:29:00,520 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:29:30,529 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:30:00,532 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:30:00,532 - __main__ - INFO - Storage summary: 162 segments, 3.1 GB used
+2025-07-29 03:30:30,563 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:31:00,567 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:31:30,597 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:32:00,604 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:32:30,611 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:33:00,642 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:33:30,672 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:34:00,703 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:34:30,732 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:34:53,829 - app.core.storage.storage_manager - INFO - Storage Health: 162 segments, 3.1 GB used, 93.1% disk free
+2025-07-29 03:35:00,735 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:35:00,735 - __main__ - INFO - Storage summary: 162 segments, 3.1 GB used
+2025-07-29 03:35:00,907 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_032500_600.avi (600s, 25655950 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@9007.155] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@9007.155] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 03:35:00,907 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 03:35:00,907 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_033500_600.mp4
+2025-07-29 03:35:30,764 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:36:00,789 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:36:30,795 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:37:00,824 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:37:30,854 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:38:00,884 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:38:30,912 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:39:00,940 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:39:30,970 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:40:01,000 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:40:01,000 - __main__ - INFO - Storage summary: 163 segments, 3.1 GB used
+2025-07-29 03:40:31,011 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:41:01,042 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:41:31,073 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:42:01,078 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:42:31,109 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:43:01,140 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:43:31,170 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:44:01,200 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:44:31,216 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:45:00,931 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_033500_600.avi (600s, 26411372 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@9607.180] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@9607.180] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 03:45:00,931 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 03:45:00,931 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_034500_600.mp4
+2025-07-29 03:45:01,228 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:45:01,228 - __main__ - INFO - Storage summary: 164 segments, 3.2 GB used
+2025-07-29 03:45:31,256 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:46:01,286 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:46:31,317 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:47:01,348 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:47:31,376 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:48:01,397 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:48:31,428 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:49:01,459 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:49:31,490 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:50:01,501 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:50:01,502 - __main__ - INFO - Storage summary: 164 segments, 3.2 GB used
+2025-07-29 03:50:31,532 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:51:01,534 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:51:31,564 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:52:01,592 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:52:31,620 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:53:01,651 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:53:31,680 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:54:01,708 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:54:31,714 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:55:01,073 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_034500_600.avi (600s, 26375936 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@10207.322] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@10207.322] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 03:55:01,074 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 03:55:01,074 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_035501_600.mp4
+2025-07-29 03:55:01,720 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:55:01,720 - __main__ - INFO - Storage summary: 165 segments, 3.2 GB used
+2025-07-29 03:55:31,752 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:56:01,771 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:56:31,800 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:57:01,828 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:57:31,858 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:58:01,888 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:58:31,916 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:59:01,936 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 03:59:31,966 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:00:01,997 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:00:01,997 - __main__ - INFO - Storage summary: 165 segments, 3.2 GB used
+2025-07-29 04:00:32,028 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:01:02,033 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:01:32,043 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:02:02,074 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:02:32,076 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:03:02,082 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:03:32,092 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:04:02,120 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:04:32,148 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:04:53,827 - app.core.storage.storage_manager - INFO - Starting storage cleanup...
+2025-07-29 04:04:53,828 - app.core.storage.storage_manager - INFO - Cleanup complete: No recordings to clean up
+2025-07-29 04:04:53,830 - app.core.storage.storage_manager - INFO - Storage Health: 165 segments, 3.2 GB used, 93.0% disk free
+2025-07-29 04:05:01,092 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_035501_600.avi (600s, 26432284 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@10807.342] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@10807.342] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 04:05:01,093 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 04:05:01,093 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_040501_600.mp4
+2025-07-29 04:05:02,157 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:05:02,158 - __main__ - INFO - Storage summary: 166 segments, 3.2 GB used
+2025-07-29 04:05:32,176 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:06:02,201 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:06:32,228 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:07:02,259 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:07:32,289 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:08:02,294 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:08:32,300 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:09:02,330 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:09:32,361 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:10:02,372 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:10:02,372 - __main__ - INFO - Storage summary: 166 segments, 3.2 GB used
+2025-07-29 04:10:32,403 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:11:02,432 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:11:32,460 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:12:02,490 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:12:32,520 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:13:02,551 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:13:32,581 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:14:02,612 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:14:32,643 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:15:01,141 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_040501_600.avi (600s, 26277548 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@11407.390] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@11407.390] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 04:15:01,142 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 04:15:01,142 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_041501_600.mp4
+2025-07-29 04:15:02,667 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:15:02,667 - __main__ - INFO - Storage summary: 167 segments, 3.2 GB used
+2025-07-29 04:15:32,698 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:16:02,712 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:16:32,740 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:17:02,771 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:17:32,802 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:18:02,832 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:18:32,860 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:19:02,888 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:19:32,918 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:20:02,949 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:20:02,949 - __main__ - INFO - Storage summary: 167 segments, 3.2 GB used
+2025-07-29 04:20:32,980 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:21:03,397 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:21:33,427 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:22:03,457 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:22:33,488 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:23:03,519 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:23:33,548 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:24:03,576 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:24:33,605 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:25:01,225 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_041501_600.avi (600s, 26361760 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@12007.066] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@12007.066] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 04:25:01,226 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 04:25:01,226 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_042501_600.mp4
+2025-07-29 04:25:03,632 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:25:03,633 - __main__ - INFO - Storage summary: 168 segments, 3.3 GB used
+2025-07-29 04:25:33,662 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:26:03,679 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:26:33,708 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 04:27:03,736 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:47:35,595 - __main__ - INFO - Health check complete. Active recordings: 1
+[ WARN:1@12176.543] global cap_ffmpeg_impl.hpp:453 _opencv_ffmpeg_interrupt_callback Stream timeout triggered after 30002.667046 ms
+2025-07-29 09:47:52,538 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_042501_600.avi (19371s, 6158282 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@12176.550] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@12176.550] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 09:47:52,539 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 09:47:52,539 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_094752_600.mp4
+2025-07-29 09:48:05,603 - __main__ - INFO - Health check complete. Active recordings: 1
+[ WARN:1@12206.608] global cap_ffmpeg_impl.hpp:453 _opencv_ffmpeg_interrupt_callback Stream timeout triggered after 30064.963666 ms
+2025-07-29 09:48:35,614 - __main__ - INFO - Health check complete. Active recordings: 1
+[ WARN:1@12236.661] global cap_ffmpeg_impl.hpp:453 _opencv_ffmpeg_interrupt_callback Stream timeout triggered after 30052.839857 ms
+2025-07-29 09:48:52,650 - app.core.recording.continuous_recorder - WARNING - Lost connection to camera 3, reconnecting...
+2025-07-29 09:48:53,652 - app.core.recording.continuous_recorder - INFO - Connecting to camera 3 at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_sub
+2025-07-29 09:49:00,061 - app.core.recording.continuous_recorder - INFO - Successfully connected to camera 3
+2025-07-29 09:49:05,623 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:49:35,629 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:50:05,659 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:50:05,660 - __main__ - INFO - Storage summary: 169 segments, 3.3 GB used
+2025-07-29 09:50:35,666 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:51:05,697 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:51:35,728 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:52:05,759 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:52:35,764 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:53:05,782 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:53:35,797 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:54:05,808 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:54:35,837 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:54:56,089 - app.core.storage.storage_manager - INFO - Storage Health: 169 segments, 3.3 GB used, 93.0% disk free
+2025-07-29 09:55:05,845 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:55:05,846 - __main__ - INFO - Storage summary: 169 segments, 3.3 GB used
+2025-07-29 09:55:35,877 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:56:05,906 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:56:35,934 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:57:05,961 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:57:35,984 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:57:52,604 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_094752_600.avi (600s, 27792052 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@12776.615] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@12776.615] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 09:57:52,604 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 09:57:52,604 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_095752_600.mp4
+2025-07-29 09:58:06,014 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:58:36,041 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:59:06,070 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 09:59:36,099 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:00:06,129 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:00:06,130 - __main__ - INFO - Storage summary: 170 segments, 3.3 GB used
+2025-07-29 10:00:36,158 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:01:06,186 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:01:36,213 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:02:06,217 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:02:36,232 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:03:06,263 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:03:36,294 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:04:06,295 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:04:36,309 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:05:06,337 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:05:06,338 - __main__ - INFO - Storage summary: 170 segments, 3.3 GB used
+2025-07-29 10:05:36,361 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:06:06,389 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:06:36,420 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:07:06,450 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:07:36,479 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:07:52,620 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_095752_600.avi (600s, 30995778 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@13376.632] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@13376.632] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 10:07:52,621 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 10:07:52,621 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_100752_600.mp4
+2025-07-29 10:08:06,508 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:08:36,538 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:09:06,569 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:09:36,600 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:10:06,631 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:10:06,632 - __main__ - INFO - Storage summary: 171 segments, 3.3 GB used
+2025-07-29 10:10:36,661 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:11:06,689 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:11:36,709 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:12:06,740 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:12:36,771 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:13:06,802 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:13:36,833 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:14:06,855 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:14:36,865 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:15:06,895 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:15:06,896 - __main__ - INFO - Storage summary: 171 segments, 3.3 GB used
+2025-07-29 10:15:36,900 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:16:06,929 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:16:36,958 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:17:06,965 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:17:36,993 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:17:52,752 - app.core.recording.continuous_recorder - INFO - Finalized segment for camera 3: camera_3_20250729_100752_600.avi (600s, 40642468 bytes)
+OpenCV: FFMPEG: tag 0x34363248/'H264' is not supported with codec id 27 and format 'mp4 / MP4 (MPEG-4 Part 14)'
+OpenCV: FFMPEG: fallback to use tag 0x31637661/'avc1'
+[ERROR:0@13976.764] global cap_ffmpeg_impl.hpp:3207 open Could not find encoder for codec_id=27, error: Encoder not found
+[ERROR:0@13976.764] global cap_ffmpeg_impl.hpp:3285 open VIDEOIO/FFMPEG: Failed to initialize VideoWriter
+2025-07-29 10:17:52,753 - app.core.recording.continuous_recorder - INFO - Using codec XVID for recording
+2025-07-29 10:17:52,753 - app.core.recording.continuous_recorder - INFO - Started new segment for camera 3: camera_3_20250729_101752_600.mp4
+2025-07-29 10:18:06,995 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:18:37,026 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:19:07,054 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:19:37,069 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:20:07,097 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:20:07,098 - __main__ - INFO - Storage summary: 172 segments, 3.4 GB used
+2025-07-29 10:20:37,126 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:21:07,137 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:21:37,168 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:22:07,175 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:22:37,205 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:23:07,236 - __main__ - INFO - Health check complete. Active recordings: 1
+2025-07-29 10:23:37,255 - __main__ - INFO - Health check complete. Active recordings: 1

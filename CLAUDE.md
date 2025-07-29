@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Universal Decision Framework
+
+Before implementing ANY solution, Claude must ask these questions:
+
+1. **Simplicity Check**: Does this make the core functionality simpler or more complex?
+   - If more complex, reconsider approach
+   - Always prefer simple, direct solutions
+
+2. **Barrier Analysis**: Does this remove barriers or add them?
+   - Focus on removing obstacles to core functionality
+   - Avoid adding dependencies or complexity layers
+
+3. **Problem Alignment**: Am I solving the user's actual problem or a technical side-effect?
+   - Stay focused on the stated user requirement
+   - Don't get distracted by technical rabbit holes
+
+### Core System Principles
+- **24/7 live streaming in web UI** (no manual start/stop)
+- **Simple, straightforward architecture**
+- **Cameras auto-connect and auto-reconnect**
+- **Real-time status display** (not database status)
+- **Remove barriers, don't add them**
+
 ## Key Commands
 
 ### Development
@@ -10,6 +33,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 cd backend
 source venv/bin/activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+
+# Start 24/7 recording service (runs independently)
+cd backend
+source venv/bin/activate
+nohup python main_recording_service.py > logs/recording_service.log 2>&1 &
+
+# Start recording API service (REST API for recordings)
+cd backend
+source venv/bin/activate
+python recording_api_service.py
 
 # Start frontend server (from frontend directory)
 cd frontend
@@ -25,10 +58,12 @@ python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 cd train && bash train_yolo.sh
 ```
 
-### Frontend Access
+### Service Access
 - **Frontend URL**: http://localhost:8080/
 - **Backend API**: http://localhost:8001/
 - **API Documentation**: http://localhost:8001/docs
+- **24/7 Recording API**: http://localhost:8002/
+- **Recording API Documentation**: http://localhost:8002/docs
 
 ### Streaming System
 ```bash
@@ -45,6 +80,33 @@ curl -X POST http://localhost:8001/api/v1/streams/stop/3
 
 # Access video stream directly
 curl http://localhost:8001/stream/video/3
+```
+
+### 24/7 Recording System
+```bash
+# Check recording service health
+curl http://localhost:8002/health
+
+# Get recording status for all cameras
+curl http://localhost:8002/recordings/status
+
+# Get recording status for specific camera
+curl http://localhost:8002/recordings/status/3
+
+# Get recent video segments for a camera
+curl http://localhost:8002/recordings/3/segments
+
+# Get comprehensive storage report
+curl http://localhost:8002/storage/report
+
+# Check recording service logs
+tail -f backend/logs/recording_service.log
+
+# Monitor live recording activity
+watch -n 5 "curl -s http://localhost:8002/health | grep -E '(active_cameras|total_segments|total_size_formatted)'"
+
+# Verify recordings are being created
+ls -la backend/recordings/camera_3/$(date +%Y/%m/%d/%H)/
 ```
 
 ### Docker
@@ -109,6 +171,50 @@ app/
 - Async SQLAlchemy with aiosqlite driver
 - Main tables: detections, license_plates, system_config
 - Automatic database initialization on first run
+
+## 24/7 Recording System Architecture
+
+### Recording Components
+- **main_recording_service.py**: Continuous recording service (independent process)
+- **recording_api_service.py**: REST API for monitoring recordings (port 8002)
+- **ContinuousRecorder**: Per-camera recording with segment management
+- **StorageManager**: Automated cleanup and retention policies
+- **SQLite Index**: Fast video segment retrieval and metadata
+
+### Key Features
+- **Continuous Operation**: Runs independently from web UI on dedicated process
+- **Segment-based Storage**: 10-minute video segments for efficient storage/retrieval
+- **Automatic Reconnection**: Robust handling of camera disconnections
+- **Storage Management**: 30-day retention with automated cleanup
+- **Health Monitoring**: Automatic restart of failed recordings
+- **Directory Structure**: Organized by date/time (YYYY/MM/DD/HH)
+
+### Recording System Flow
+1. **Service Startup**: Load camera configurations and initialize storage
+2. **Camera Connection**: Establish RTSP connections with reconnection logic
+3. **Frame Capture**: Continuous frame capture with queue management
+4. **Segment Recording**: Create new video segments every 10 minutes
+5. **Database Indexing**: Store segment metadata in SQLite for fast access
+6. **Storage Cleanup**: Automated removal of recordings older than retention period
+7. **Health Checks**: Monitor recording status and restart failed cameras
+
+### Recording Storage Structure
+```
+recordings/
+└── camera_3/
+    ├── index.db                    # SQLite database with segment metadata
+    └── 2025/07/27/12/             # Year/Month/Day/Hour structure
+        ├── camera_3_20250727_120329_600.avi  # 10-minute segments
+        ├── camera_3_20250727_121329_600.avi
+        └── camera_3_20250727_122329_600.avi
+```
+
+### Recording API Endpoints
+- `GET /health` - Service health and recording status
+- `GET /recordings/status` - Status for all cameras
+- `GET /recordings/status/{camera_id}` - Specific camera status
+- `GET /recordings/{camera_id}/segments` - Available video segments
+- `GET /storage/report` - Comprehensive storage statistics
 
 ## Streaming Integration Architecture
 

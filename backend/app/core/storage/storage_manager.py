@@ -513,7 +513,7 @@ class StorageManager:
                 try:
                     camera_id = int(camera_dir.name.split('_')[1])
                     stats = await self.get_camera_storage_stats(camera_id)
-                    camera_stats[camera_id] = {
+                    camera_stats[str(camera_id)] = {
                         "total_size_bytes": stats.total_size_bytes,
                         "total_size_formatted": self._format_bytes(stats.total_size_bytes),
                         "total_segments": stats.total_segments,

@@ -2,11 +2,14 @@
  * Simple Camera Test Modal
  * Basic IP camera connection testing modal
  */
+import config from '../../config/app.config.js';
+
 class SimpleCameraModal {
     constructor() {
         this.isVisible = false;
         this.editMode = false;
         this.editingCameraId = null;
+        this.activeTab = 'network'; // Track active tab
         this.formData = {
             name: '',
             ip_address: '',
@@ -15,7 +18,15 @@ class SimpleCameraModal {
             stream_path: '/mjpeg',
             location: '',
             username: 'admin',
-            password: ''
+            password: '',
+            // Video settings
+            brand: '',
+            model: '',
+            resolution_width: 1920,
+            resolution_height: 1080,
+            max_fps: 30,
+            video_quality: 'medium',
+            low_latency: true
         };
         this.testResult = null;
     }
@@ -89,14 +100,28 @@ class SimpleCameraModal {
                     </button>
                 </div>
                 
+                <!-- Tab Navigation -->
+                <div class="modal-tabs">
+                    <button type="button" class="tab-btn ${this.activeTab === 'network' ? 'active' : ''}" data-tab="network">
+                        <i class="fas fa-network-wired"></i>
+                        Network
+                    </button>
+                    <button type="button" class="tab-btn ${this.activeTab === 'video' ? 'active' : ''}" data-tab="video">
+                        <i class="fas fa-video"></i>
+                        Video Settings
+                    </button>
+                </div>
+                
                 <div class="modal-content">
                     <form id="camera-test-form" class="camera-form">
-                        <div class="form-group">
-                            <label for="camera-name-input" class="required">Camera Name</label>
-                            <input type="text" id="camera-name-input" class="form-input" 
-                                   placeholder="e.g., Entrance Camera" 
-                                   value="${this.formData.name}" required>
-                        </div>
+                        <!-- Network Tab Content -->
+                        <div class="tab-content ${this.activeTab === 'network' ? 'active' : ''}" data-tab="network">
+                            <div class="form-group">
+                                <label for="camera-name-input" class="required">Camera Name</label>
+                                <input type="text" id="camera-name-input" class="form-input" 
+                                       placeholder="e.g., Entrance Camera" 
+                                       value="${this.formData.name}" required>
+                            </div>
                         
                         <div class="form-row">
                             <div class="form-group">
@@ -168,13 +193,99 @@ class SimpleCameraModal {
                             </div>
                         </div>
                         
-                        <div class="test-section">
-                            <button type="button" class="btn btn-secondary" id="test-connection-btn">
-                                <i class="fas fa-plug"></i>
-                                Test Connection
-                            </button>
-                            <div class="test-result" id="test-result">
-                                ${this.getTestResultHTML()}
+                            <div class="test-section">
+                                <button type="button" class="btn btn-secondary" id="test-connection-btn">
+                                    <i class="fas fa-plug"></i>
+                                    Test Connection
+                                </button>
+                                <div class="test-result" id="test-result">
+                                    ${this.getTestResultHTML()}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Video Settings Tab Content -->
+                        <div class="tab-content ${this.activeTab === 'video' ? 'active' : ''}" data-tab="video">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="camera-brand-input">Camera Brand</label>
+                                    <select id="camera-brand-input" class="form-select">
+                                        <option value="">Select Brand</option>
+                                        <option value="hikvision" ${this.formData.brand === 'hikvision' ? 'selected' : ''}>Hikvision</option>
+                                        <option value="dahua" ${this.formData.brand === 'dahua' ? 'selected' : ''}>Dahua</option>
+                                        <option value="axis" ${this.formData.brand === 'axis' ? 'selected' : ''}>Axis</option>
+                                        <option value="bosch" ${this.formData.brand === 'bosch' ? 'selected' : ''}>Bosch</option>
+                                        <option value="samsung" ${this.formData.brand === 'samsung' ? 'selected' : ''}>Samsung</option>
+                                        <option value="panasonic" ${this.formData.brand === 'panasonic' ? 'selected' : ''}>Panasonic</option>
+                                        <option value="sony" ${this.formData.brand === 'sony' ? 'selected' : ''}>Sony</option>
+                                        <option value="other" ${this.formData.brand === 'other' ? 'selected' : ''}>Other</option>
+                                    </select>
+                                    <small class="form-help">Camera brand affects optimal settings</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="camera-model-input">Camera Model</label>
+                                    <input type="text" id="camera-model-input" class="form-input" 
+                                           placeholder="e.g., DS-2CD2143G0-I" 
+                                           value="${this.formData.model}">
+                                    <small class="form-help">Optional: Camera model for specific optimizations</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="resolution-width-input">Resolution Width</label>
+                                    <select id="resolution-width-input" class="form-select">
+                                        <option value="640" ${this.formData.resolution_width === 640 ? 'selected' : ''}>640px</option>
+                                        <option value="1280" ${this.formData.resolution_width === 1280 ? 'selected' : ''}>1280px (720p)</option>
+                                        <option value="1920" ${this.formData.resolution_width === 1920 ? 'selected' : ''}>1920px (1080p)</option>
+                                        <option value="2560" ${this.formData.resolution_width === 2560 ? 'selected' : ''}>2560px (1440p)</option>
+                                        <option value="3840" ${this.formData.resolution_width === 3840 ? 'selected' : ''}>3840px (4K)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="resolution-height-input">Resolution Height</label>
+                                    <select id="resolution-height-input" class="form-select">
+                                        <option value="480" ${this.formData.resolution_height === 480 ? 'selected' : ''}>480px</option>
+                                        <option value="720" ${this.formData.resolution_height === 720 ? 'selected' : ''}>720px</option>
+                                        <option value="1080" ${this.formData.resolution_height === 1080 ? 'selected' : ''}>1080px</option>
+                                        <option value="1440" ${this.formData.resolution_height === 1440 ? 'selected' : ''}>1440px</option>
+                                        <option value="2160" ${this.formData.resolution_height === 2160 ? 'selected' : ''}>2160px (4K)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="max-fps-input">Maximum FPS</label>
+                                    <select id="max-fps-input" class="form-select">
+                                        <option value="15" ${this.formData.max_fps === 15 ? 'selected' : ''}>15 FPS</option>
+                                        <option value="20" ${this.formData.max_fps === 20 ? 'selected' : ''}>20 FPS</option>
+                                        <option value="25" ${this.formData.max_fps === 25 ? 'selected' : ''}>25 FPS</option>
+                                        <option value="30" ${this.formData.max_fps === 30 ? 'selected' : ''}>30 FPS</option>
+                                        <option value="60" ${this.formData.max_fps === 60 ? 'selected' : ''}>60 FPS</option>
+                                    </select>
+                                    <small class="form-help">Higher FPS = smoother video but more bandwidth</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="video-quality-input">Video Quality</label>
+                                    <select id="video-quality-input" class="form-select">
+                                        <option value="low" ${this.formData.video_quality === 'low' ? 'selected' : ''}>Low (faster, less bandwidth)</option>
+                                        <option value="medium" ${this.formData.video_quality === 'medium' ? 'selected' : ''}>Medium (balanced)</option>
+                                        <option value="high" ${this.formData.video_quality === 'high' ? 'selected' : ''}>High (best quality)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="low-latency-input" ${this.formData.low_latency ? 'checked' : ''}>
+                                    <span class="checkbox-checkmark"></span>
+                                    Enable Low Latency Mode
+                                </label>
+                                <small class="form-help">Reduces stream delay but may impact quality. Recommended for real-time monitoring.</small>
                             </div>
                         </div>
                     </form>
@@ -321,7 +432,7 @@ class SimpleCameraModal {
         testBtn.disabled = true;
         
         try {
-            const response = await fetch('http://localhost:8001/api/v1/cameras/test-connection', {
+            const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERA_TEST_CONNECTION), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -424,7 +535,7 @@ class SimpleCameraModal {
             
             if (this.editMode) {
                 // Update existing camera
-                response = await fetch(`http://localhost:8001/api/v1/cameras/${parseInt(this.editingCameraId)}`, {
+                response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERA_BY_ID)(parseInt(this.editingCameraId)), {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -433,7 +544,7 @@ class SimpleCameraModal {
                 });
             } else {
                 // Create new camera
-                response = await fetch('http://localhost:8001/api/v1/cameras/', {
+                response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERAS), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

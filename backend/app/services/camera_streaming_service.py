@@ -1,5 +1,6 @@
 """
 Camera Streaming Service for live video streaming from IP cameras
+Updated to use Frame Distribution Architecture for single connection sharing
 """
 import asyncio
 import cv2
@@ -10,6 +11,7 @@ from datetime import datetime
 from dataclasses import dataclass
 
 from app.database import Camera
+from app.services.frame_distribution_service import get_frame_distribution_manager, FrameDistributionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -19,109 +21,99 @@ class StreamConfig:
     """Configuration for camera streaming"""
     quality: str = "medium"  # low, medium, high
     max_fps: int = 30
-    buffer_size: int = 30
+    buffer_size: int = 5  # Balanced: not too high for latency, not too low for stability
     jpeg_quality: int = 80
-    frame_timeout: float = 5.0
+    frame_timeout: float = 3.0  # Balanced timeout for stability
+    low_latency: bool = True  # Enable low latency optimizations
+    max_reconnect_attempts: int = 3  # Number of reconnection attempts
+    reconnect_delay: float = 2.0  # Delay between reconnection attempts
 
 
 class CameraStreamingService:
-    """Service for streaming video from IP cameras"""
+    """
+    Service for streaming video from IP cameras using Frame Distribution Architecture
+    
+    This service now uses the frame distribution system to avoid connection conflicts
+    and ensures single RTSP connection per camera shared across all consumers.
+    """
     
     def __init__(self, camera: Camera, config: Optional[StreamConfig] = None):
         self.camera = camera
         self.config = config or StreamConfig()
-        self.capture: Optional[cv2.VideoCapture] = None
+        
+        # Frame distribution setup
+        self.distributor = None
+        self.consumer = None
+        self.consumer_name = f"web_streaming_{camera.id}"
+        
+        # Streaming state
         self.is_streaming = False
-        self.frame_queue = asyncio.Queue(maxsize=self.config.buffer_size)
         self._streaming_task: Optional[asyncio.Task] = None
-        self._frame_producer_task: Optional[asyncio.Task] = None
         
-    def _build_camera_url(self) -> str:
-        """Build the camera stream URL from camera configuration"""
-        connection_type = self.camera.connection_type.lower()
-        
-        if connection_type == "http":
-            protocol = "http"
-        elif connection_type == "https":
-            protocol = "https"
-        elif connection_type == "rtsp":
-            protocol = "rtsp"
-        elif connection_type == "rtsps":
-            protocol = "rtsps"
-        else:
-            # Default to http for unknown types
-            protocol = "http"
-        
-        # Build URL with authentication if provided
-        if self.camera.username and self.camera.password:
-            auth = f"{self.camera.username}:{self.camera.password}@"
-        else:
-            auth = ""
-        
-        # Construct the full URL
-        base_url = f"{protocol}://{auth}{self.camera.ip_address}:{self.camera.port}"
-        
-        if self.camera.stream_path:
-            # Remove leading slash if present in stream_path
-            stream_path = self.camera.stream_path.lstrip('/')
-            url = f"{base_url}/{stream_path}"
-        else:
-            # Default paths based on connection type
-            if connection_type in ["rtsp", "rtsps"]:
-                url = f"{base_url}/h264Preview_01_main"  # Default RTSP path
-            else:
-                url = f"{base_url}/mjpeg"  # Default HTTP MJPEG path
-        
-        logger.info(f"Camera URL constructed: {protocol}://{self.camera.ip_address}:{self.camera.port}/{stream_path if self.camera.stream_path else ('h264Preview_01_main' if connection_type in ['rtsp', 'rtsps'] else 'mjpeg')}")
-        return url
+    def _setup_frame_distribution(self) -> bool:
+        """Setup frame distribution for this camera"""
+        try:
+            # Get or create distributor for this camera
+            self.distributor = get_frame_distribution_manager().get_distributor(self.camera.id)
+            
+            if not self.distributor:
+                # Create new distributor
+                distribution_config = FrameDistributionConfig(
+                    recording_queue_size=30,
+                    detection_queue_size=10,
+                    latest_frame_timeout=5.0
+                )
+                self.distributor = get_frame_distribution_manager().create_distributor(
+                    self.camera, distribution_config
+                )
+                
+                # Start the distributor
+                if not self.distributor.start():
+                    logger.error(f"Failed to start frame distributor for camera {self.camera.id}")
+                    return False
+            
+            # Add this service as a consumer
+            self.consumer = self.distributor.add_consumer(
+                self.consumer_name, 
+                queue_size=self.config.buffer_size
+            )
+            
+            logger.info(f"Frame distribution setup complete for camera {self.camera.name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error setting up frame distribution for camera {self.camera.id}: {str(e)}")
+            return False
     
     async def connect_camera(self) -> bool:
         """
-        Establish connection to IP camera
+        Connect to camera via frame distribution service
         
         Returns:
             bool: True if connection successful, False otherwise
         """
         try:
-            camera_url = self._build_camera_url()
-            
-            # Create VideoCapture with timeout - much faster
-            loop = asyncio.get_event_loop()
-            
-            def create_capture_with_timeout():
-                cap = cv2.VideoCapture(camera_url)
-                # Set aggressive timeout properties for faster failure
-                cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 2000)  # 2 second timeout
-                cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 1000)   # 1 second read timeout
-                return cap
-            
-            self.capture = await loop.run_in_executor(
-                None, create_capture_with_timeout
-            )
-            
-            if not self.capture or not self.capture.isOpened():
-                logger.error(f"Failed to open camera stream: {camera_url}")
+            # Setup frame distribution (creates distributor if needed)
+            if not self._setup_frame_distribution():
                 return False
             
-            # Configure capture properties based on connection type
-            connection_type = self.camera.connection_type.lower()
+            # Verify distributor is running and connected
+            if not self.distributor.is_running:
+                logger.error(f"Frame distributor not running for camera {self.camera.name}")
+                return False
             
-            if connection_type in ["rtsp", "rtsps"]:
-                # RTSP-specific configuration
-                self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer delay for real-time
-                self.capture.set(cv2.CAP_PROP_FPS, self.config.max_fps)
-                # Additional RTSP optimizations
-                self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('H', '2', '6', '4'))
-            else:
-                # HTTP/MJPEG configuration
-                self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize buffer delay
-                self.capture.set(cv2.CAP_PROP_FPS, self.config.max_fps)
+            # Test that we can get frames from the distributor
+            test_frame = self.distributor.get_latest_frame()
+            if test_frame is None:
+                # Give it a moment to start producing frames
+                await asyncio.sleep(1.0)
+                test_frame = self.distributor.get_latest_frame()
+                
+                if test_frame is None:
+                    logger.warning(f"No frames available yet from camera {self.camera.name}")
+                    # Don't fail here - frames might come soon
             
-            # Quick connection test - don't read frame here (too slow)
-            # Frame reading will be tested when streaming starts
-            
-            logger.info(f"Successfully connected to camera {self.camera.name} at {camera_url}")
-            
+            logger.info(f"Successfully connected to camera {self.camera.name} via frame distribution")
             return True
             
         except Exception as e:
@@ -131,75 +123,93 @@ class CameraStreamingService:
     
     async def disconnect_camera(self):
         """Disconnect from camera and cleanup resources"""
-        if self.capture:
-            try:
-                loop = asyncio.get_event_loop()
-                await loop.run_in_executor(None, self.capture.release)
-            except Exception as e:
-                logger.error(f"Error releasing camera capture: {str(e)}")
-            finally:
-                self.capture = None
-        
-        logger.info(f"Disconnected from camera {self.camera.name}")
+        try:
+            # Remove this service as a consumer
+            if self.distributor and self.consumer:
+                self.distributor.remove_consumer(self.consumer_name)
+                self.consumer = None
+            
+            # Note: We don't stop the distributor here as other consumers 
+            # (recording, detection) may still be using it
+            
+            logger.info(f"Disconnected from camera {self.camera.name}")
+            
+        except Exception as e:
+            logger.error(f"Error disconnecting from camera {self.camera.name}: {str(e)}")
     
-    async def _frame_producer(self):
-        """Producer coroutine that captures frames and puts them in the queue"""
-        frame_count = 0
-        last_fps_time = datetime.now()
+    
+    def get_connection_health(self) -> dict:
+        """
+        Get connection health information from frame distribution
         
-        while self.is_streaming and self.capture:
-            try:
-                # Read frame in executor to avoid blocking
-                loop = asyncio.get_event_loop()
-                ret, frame = await asyncio.wait_for(
-                    loop.run_in_executor(None, self.capture.read),
-                    timeout=self.config.frame_timeout
-                )
-                
-                if not ret or frame is None:
-                    logger.warning("Failed to read frame from camera")
-                    await asyncio.sleep(0.1)  # Brief pause before retry
-                    continue
-                
-                # Encode frame to JPEG
-                jpeg_frame = await self._encode_frame(frame)
-                if jpeg_frame:
-                    # Try to put frame in queue without blocking
-                    try:
-                        self.frame_queue.put_nowait(jpeg_frame)
-                    except asyncio.QueueFull:
-                        # Queue is full, remove oldest frame and add new one
-                        try:
-                            self.frame_queue.get_nowait()
-                            self.frame_queue.put_nowait(jpeg_frame)
-                        except asyncio.QueueEmpty:
-                            pass
-                
-                frame_count += 1
-                
-                # Log FPS every 100 frames
-                if frame_count % 100 == 0:
-                    now = datetime.now()
-                    elapsed = (now - last_fps_time).total_seconds()
-                    fps = 100 / elapsed if elapsed > 0 else 0
-                    logger.debug(f"Camera {self.camera.name} FPS: {fps:.1f}")
-                    last_fps_time = now
-                
-                # Control frame rate
-                await asyncio.sleep(1.0 / self.config.max_fps)
-                
-            except asyncio.TimeoutError:
-                logger.warning(f"Frame read timeout for camera {self.camera.name}")
-                continue
-            except Exception as e:
-                logger.error(f"Error in frame producer for camera {self.camera.name}: {str(e)}")
-                break
+        Returns:
+            Dictionary with health status information
+        """
+        if not self.distributor:
+            return {
+                "is_streaming": self.is_streaming,
+                "healthy": False,
+                "error": "No frame distributor available"
+            }
         
-        logger.info(f"Frame producer stopped for camera {self.camera.name}")
+        distributor_stats = self.distributor.get_stats()
+        
+        return {
+            "is_streaming": self.is_streaming,
+            "is_connected": distributor_stats.get("is_connected", False),
+            "consecutive_failures": distributor_stats.get("consecutive_failures", 0),
+            "frames_captured": distributor_stats.get("frames_captured", 0),
+            "latest_frame_age": distributor_stats.get("latest_frame_age"),
+            "healthy": (
+                distributor_stats.get("is_connected", False) and
+                distributor_stats.get("consecutive_failures", 0) < 5 and
+                (distributor_stats.get("latest_frame_age") or 0) < 10
+            )
+        }
+    
+    async def diagnose_connectivity(self) -> dict:
+        """
+        Comprehensive connectivity diagnostics for the camera using frame distribution
+        
+        Returns:
+            Dictionary with detailed diagnostic information
+        """
+        try:
+            # Ensure frame distribution is available
+            if not self.distributor:
+                if not await self.connect_camera():
+                    return {
+                        "camera_id": self.camera.id,
+                        "camera_name": self.camera.name,
+                        "timestamp": datetime.now().isoformat(),
+                        "error": "Failed to setup frame distribution",
+                        "success": False
+                    }
+            
+            # Get comprehensive stats from distributor
+            stats = self.distributor.get_stats()
+            
+            return {
+                "camera_id": self.camera.id,
+                "camera_name": self.camera.name,
+                "timestamp": datetime.now().isoformat(),
+                "frame_distribution": stats,
+                "connection_health": self.get_connection_health(),
+                "success": stats.get("is_connected", False)
+            }
+            
+        except Exception as e:
+            return {
+                "camera_id": self.camera.id,
+                "camera_name": self.camera.name,
+                "timestamp": datetime.now().isoformat(),
+                "error": f"Diagnostics failed: {str(e)}",
+                "success": False
+            }
     
     async def _encode_frame(self, frame: np.ndarray) -> Optional[bytes]:
         """
-        Encode frame to JPEG bytes
+        Encode frame to JPEG bytes - minimal processing for performance
         
         Args:
             frame: OpenCV frame (numpy array)
@@ -208,19 +218,11 @@ class CameraStreamingService:
             JPEG encoded frame as bytes, or None if encoding failed
         """
         try:
-            # Resize frame based on quality setting
+            # Set JPEG quality based on config - no resizing for performance
             if self.config.quality == "low":
-                height, width = frame.shape[:2]
-                new_width = min(320, width)
-                new_height = int(height * (new_width / width))
-                frame = cv2.resize(frame, (new_width, new_height))
-                jpeg_quality = 60
+                jpeg_quality = 70
             elif self.config.quality == "medium":
-                height, width = frame.shape[:2]
-                new_width = min(640, width)
-                new_height = int(height * (new_width / width))
-                frame = cv2.resize(frame, (new_width, new_height))
-                jpeg_quality = 80
+                jpeg_quality = 85
             else:  # high quality
                 jpeg_quality = 95
             
@@ -240,7 +242,7 @@ class CameraStreamingService:
     
     async def start_streaming(self) -> AsyncGenerator[bytes, None]:
         """
-        Start video streaming and yield JPEG frames
+        Start video streaming and yield JPEG frames from frame distribution
         
         Yields:
             bytes: JPEG encoded video frames
@@ -249,35 +251,36 @@ class CameraStreamingService:
             logger.warning(f"Stream already active for camera {self.camera.name}")
             return
         
-        # Connect to camera if not already connected
-        if not self.capture:
-            if not await self.connect_camera():
-                raise RuntimeError(f"Failed to connect to camera {self.camera.name}")
+        # Connect to frame distribution service
+        if not await self.connect_camera():
+            raise RuntimeError(f"Failed to connect to camera {self.camera.name}")
         
         self.is_streaming = True
-        
-        # Start frame producer task
-        self._frame_producer_task = asyncio.create_task(self._frame_producer())
-        
         logger.info(f"Started streaming for camera {self.camera.name}")
         
         try:
             while self.is_streaming:
                 try:
-                    # Get frame from queue with timeout
-                    frame_bytes = await asyncio.wait_for(
-                        self.frame_queue.get(), 
-                        timeout=self.config.frame_timeout
-                    )
-                    yield frame_bytes
+                    # Get frame from distributor consumer queue
+                    frame = None
+                    if self.consumer:
+                        frame = self.consumer.get_frame(timeout=self.config.frame_timeout)
                     
-                except asyncio.TimeoutError:
-                    logger.warning(f"Frame timeout for camera {self.camera.name}")
-                    # Check if camera is still connected
-                    if not self.capture or not self.capture.isOpened():
-                        logger.error(f"Camera {self.camera.name} disconnected")
-                        break
-                    continue
+                    if frame is None:
+                        # Fallback to latest frame from distributor
+                        frame = self.distributor.get_latest_frame() if self.distributor else None
+                        
+                        if frame is None:
+                            logger.warning(f"No frame available for camera {self.camera.name}")
+                            await asyncio.sleep(0.1)  # Brief pause
+                            continue
+                    
+                    # Encode frame to JPEG
+                    frame_bytes = await self._encode_frame(frame)
+                    if frame_bytes:
+                        yield frame_bytes
+                    else:
+                        await asyncio.sleep(0.1)  # Brief pause on encoding failure
                     
                 except Exception as e:
                     logger.error(f"Error in streaming loop for camera {self.camera.name}: {str(e)}")
@@ -295,22 +298,7 @@ class CameraStreamingService:
         
         self.is_streaming = False
         
-        # Cancel frame producer task
-        if self._frame_producer_task and not self._frame_producer_task.done():
-            self._frame_producer_task.cancel()
-            try:
-                await self._frame_producer_task
-            except asyncio.CancelledError:
-                pass
-        
-        # Clear frame queue
-        while not self.frame_queue.empty():
-            try:
-                self.frame_queue.get_nowait()
-            except asyncio.QueueEmpty:
-                break
-        
-        # Disconnect camera
+        # Disconnect from frame distribution (removes consumer)
         await self.disconnect_camera()
         
         logger.info(f"Stream stopped for camera {self.camera.name}")
@@ -322,33 +310,52 @@ class CameraStreamingService:
         Returns:
             Current frame as JPEG bytes, or None if not available
         """
-        if not self.capture or not self.capture.isOpened():
-            if not await self.connect_camera():
-                return None
-        
         try:
-            loop = asyncio.get_event_loop()
-            ret, frame = await asyncio.wait_for(
-                loop.run_in_executor(None, self.capture.read),
-                timeout=self.config.frame_timeout
-            )
+            # Ensure frame distribution is setup
+            if not self.distributor:
+                if not await self.connect_camera():
+                    return None
             
-            if ret and frame is not None:
+            # Get latest frame from distributor
+            frame = self.distributor.get_latest_frame()
+            if frame is not None:
                 return await self._encode_frame(frame)
+            
+            logger.warning(f"No current frame available for camera {self.camera.name}")
+            return None
             
         except Exception as e:
             logger.error(f"Error getting current frame for camera {self.camera.name}: {str(e)}")
-        
-        return None
+            return None
     
     def get_stream_info(self) -> dict:
         """Get information about the current stream"""
+        consumer_info = {}
+        if self.consumer:
+            consumer_stats = self.consumer.get_stats()
+            consumer_info = {
+                "queue_size": consumer_stats.get("queue_size", 0),
+                "max_queue_size": consumer_stats.get("max_queue_size", 0),
+                "frames_received": consumer_stats.get("frames_received", 0),
+                "frames_dropped": consumer_stats.get("frames_dropped", 0),
+                "drop_rate": consumer_stats.get("drop_rate", 0.0)
+            }
+        
+        distributor_info = {}
+        if self.distributor:
+            distributor_stats = self.distributor.get_stats()
+            distributor_info = {
+                "is_connected": distributor_stats.get("is_connected", False),
+                "frames_captured": distributor_stats.get("frames_captured", 0),
+                "consecutive_failures": distributor_stats.get("consecutive_failures", 0)
+            }
+        
         return {
             "camera_id": self.camera.id,
             "camera_name": self.camera.name,
             "is_streaming": self.is_streaming,
-            "queue_size": self.frame_queue.qsize(),
-            "max_queue_size": self.frame_queue.maxsize,
+            "consumer": consumer_info,
+            "distributor": distributor_info,
             "config": {
                 "quality": self.config.quality,
                 "max_fps": self.config.max_fps,

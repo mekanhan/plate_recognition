@@ -9,6 +9,7 @@ class Sidebar {
         this.menuItems = [
             { id: 'dashboard', icon: 'fas fa-tachometer-alt', label: 'Dashboard', badge: null },
             { id: 'cameras', icon: 'fas fa-video', label: 'Cameras', badge: 'camera-count' },
+            { id: 'recordings', icon: 'fas fa-film', label: 'Recordings', badge: 'recording-count' },
             { id: 'detections', icon: 'fas fa-search', label: 'Detections', badge: 'detection-alerts' },
             { id: 'analytics', icon: 'fas fa-chart-bar', label: 'Analytics', badge: null },
             { id: 'alerts', icon: 'fas fa-bell', label: 'Alerts', badge: 'alert-count' },

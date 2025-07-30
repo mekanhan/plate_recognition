@@ -19,10 +19,20 @@ class Cameras {
         this.selectedCameras = new Set();
         this.currentView = 'grid'; // grid or list
         this.bulkMode = false;
-        this.streamStates = new Map(); // Track streaming state per camera
-        this.videoPlayers = new Map(); // Track video player instances
-        this.streamTimers = new Map(); // Track stream duration timers
-        this.statusPollingInterval = null; // Track status polling interval
+        
+        // Enhanced state management for streaming
+        this.streamStates = new Map();
+        this.videoPlayers = new Map();
+        this.streamTimers = new Map();
+        this.navigationCleanupHandlers = new Map();
+        this.statusPollingInterval = null;
+        
+        // Make instance available globally for onclick handlers
+        window.camerasPage = this;
+        
+        // Page visibility API for handling tab switching
+        this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
+        document.addEventListener('visibilitychange', this.handleVisibilityChange);
         
         console.log('SimpleCameraModal class:', SimpleCameraModal);
         this.simpleCameraModal = new SimpleCameraModal();
@@ -32,6 +42,16 @@ class Cameras {
     }
 
     init() {
+        // Clear any existing video players when reinitializing
+        this.videoPlayers.forEach(player => {
+            try {
+                player.destroy();
+            } catch (e) {
+                console.warn('Error destroying player:', e);
+            }
+        });
+        this.videoPlayers.clear();
+        
         this.render();
         this.attachEventListeners();
         this.loadCameras();
@@ -364,7 +384,6 @@ class Cameras {
                         <div class="camera-card-status ${statusClass}">
                             <i class="fas ${this.getStatusIcon(camera.status)}"></i>
                             <span>${this.capitalizeFirst(camera.status)}</span>
-                            ${isStreaming ? '<span class="streaming-badge">STREAMING</span>' : ''}
                         </div>
                         <div class="action-dropdown">
                             <button class="btn btn-secondary btn-small dropdown-toggle" data-camera-id="${camera.id}">
@@ -409,20 +428,6 @@ class Cameras {
                             <span class="info-label">Location:</span>
                             <span class="info-value">${this.capitalizeFirst(camera.location)}</span>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Health Score:</span>
-                            <span class="info-value health-score ${healthScore >= 90 ? 'excellent' : healthScore >= 75 ? 'good' : healthScore >= 50 ? 'fair' : 'poor'}">${healthScore}%</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Uptime:</span>
-                            <span class="info-value">${camera.uptime}</span>
-                        </div>
-                        ${isStreaming ? `
-                        <div class="info-row streaming">
-                            <span class="info-label">Stream Duration:</span>
-                            <span class="info-value stream-duration" id="stream-duration-${camera.id}">00:00</span>
-                        </div>
-                        ` : ''}
                         ${camera.status === 'offline' ? `
                         <div class="info-row error">
                             <span class="info-label">Last Seen:</span>
@@ -442,34 +447,112 @@ class Cameras {
     }
 
     initializeCameraPlayer(camera) {
-        const previewContainer = document.getElementById(`preview-container-${camera.id}`);
-        if (!previewContainer) return;
-
-        // Create LiveVideoPlayer instance with auto-start
+        const container = document.getElementById(`preview-container-${camera.id}`);
+        if (!container) return;
+        
+        // Clean up existing player first
+        this.cleanupCameraPlayer(camera.id);
+        
+        // Create new player instance
         const player = new LiveVideoPlayer({
             cameraId: camera.id,
             camera: camera,
-            autoStart: true, // Always auto-start streaming
-            showControls: false, // No controls for simplified experience
+            autoStart: false,
+            showControls: false,  // External controls used
             className: 'camera-card-player',
-            onStatusChange: (status) => this.handlePlayerStatusChange(camera.id, status),
-            onError: (error) => this.handlePlayerError(camera.id, error),
+            onStatusChange: (status) => this.handleStreamStatusChange(camera.id, status),
+            onError: (error) => this.handleStreamError(camera.id, error),
             onStreamStart: () => this.handleStreamStart(camera.id),
             onStreamStop: () => this.handleStreamStop(camera.id)
         });
-
-        // Render and initialize player
-        previewContainer.innerHTML = player.render();
-        player.init();
-
-        // Store player reference
+        
+        // Initialize the player with container
+        player.init(container);
+        
+        // Store reference
         this.videoPlayers.set(camera.id, player);
+        
+        // Set up navigation cleanup
+        this.setupNavigationCleanup(camera.id);
+    }
+
+    // Clean up individual camera player
+    cleanupCameraPlayer(cameraId) {
+        const player = this.videoPlayers.get(cameraId);
+        if (player) {
+            player.destroy();
+            this.videoPlayers.delete(cameraId);
+        }
+        
+        // Clean up timer
+        const timer = this.streamTimers.get(cameraId);
+        if (timer) {
+            clearInterval(timer);
+            this.streamTimers.delete(cameraId);
+        }
+        
+        // Clean up navigation handler
+        const cleanup = this.navigationCleanupHandlers.get(cameraId);
+        if (cleanup) {
+            cleanup();
+            this.navigationCleanupHandlers.delete(cameraId);
+        }
+    }
+    
+    // Set up navigation cleanup to prevent black screens
+    setupNavigationCleanup(cameraId) {
+        // Listen for page navigation
+        const beforeUnloadHandler = () => {
+            this.cleanupCameraPlayer(cameraId);
+        };
+        
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+        
+        // Store cleanup function
+        this.navigationCleanupHandlers.set(cameraId, () => {
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+        });
+    }
+    
+    // Handle page visibility changes (tab switching)
+    handleVisibilityChange() {
+        if (document.hidden) {
+            // Page is hidden - pause all streams
+            this.pauseAllStreams();
+        } else {
+            // Page is visible - resume streams
+            this.resumeActiveStreams();
+        }
+    }
+    
+    // Pause all active streams when page is hidden
+    pauseAllStreams() {
+        this.videoPlayers.forEach((player, cameraId) => {
+            if (player.isStreaming) {
+                // Store state before pausing
+                this.streamStates.set(cameraId, 'paused');
+                player.cleanup(); // Just cleanup connections, don't stop stream
+            }
+        });
+    }
+    
+    // Resume streams that were active
+    resumeActiveStreams() {
+        this.streamStates.forEach((state, cameraId) => {
+            if (state === 'paused') {
+                const player = this.videoPlayers.get(cameraId);
+                if (player) {
+                    // Re-render to restart image loading
+                    player.render();
+                    this.streamStates.set(cameraId, true);
+                }
+            }
+        });
     }
 
     // Player event handlers
-    handlePlayerStatusChange(cameraId, status) {
-        console.log(`Camera ${cameraId} status changed to: ${status}`);
-        this.updateCameraStatusIndicator(cameraId);
+    handleStreamStatusChange(cameraId, status) {
+        console.log(`Camera ${cameraId} stream status: ${status}`);
     }
 
     handlePlayerError(cameraId, error) {
@@ -527,14 +610,7 @@ class Cameras {
         const statusElement = document.querySelector(`[data-camera-id="${cameraId}"] .camera-card-status`);
         if (!statusElement) return;
 
-        const isStreaming = this.streamStates.get(cameraId) || false;
-        const existingBadge = statusElement.querySelector('.streaming-badge');
-        
-        if (isStreaming && !existingBadge) {
-            statusElement.insertAdjacentHTML('beforeend', '<span class="streaming-badge">STREAMING</span>');
-        } else if (!isStreaming && existingBadge) {
-            existingBadge.remove();
-        }
+        // Status indicator updated without streaming badge - cleaner interface
     }
 
     updateCameraInfo(cameraId) {
@@ -554,20 +630,6 @@ class Cameras {
                 <span class="info-label">Location:</span>
                 <span class="info-value">${this.capitalizeFirst(camera.location)}</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Health Score:</span>
-                <span class="info-value health-score ${healthScore >= 90 ? 'excellent' : healthScore >= 75 ? 'good' : healthScore >= 50 ? 'fair' : 'poor'}">${healthScore}%</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Uptime:</span>
-                <span class="info-value">${camera.uptime}</span>
-            </div>
-            ${isStreaming ? `
-            <div class="info-row streaming">
-                <span class="info-label">Stream Duration:</span>
-                <span class="info-value stream-duration" id="stream-duration-${camera.id}">00:00</span>
-            </div>
-            ` : ''}
             ${camera.status === 'offline' ? `
             <div class="info-row error">
                 <span class="info-label">Last Seen:</span>
@@ -891,16 +953,8 @@ class Cameras {
                                             ${this.capitalizeFirst(camera.status)}
                                         </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label>Health Score</label>
-                                        <div class="detail-value health-score ${this.calculateHealthScore(camera) >= 90 ? 'excellent' : this.calculateHealthScore(camera) >= 75 ? 'good' : this.calculateHealthScore(camera) >= 50 ? 'fair' : 'poor'}">${this.calculateHealthScore(camera)}%</div>
-                                    </div>
                                 </div>
                                 <div class="form-row">
-                                    <div class="form-group">
-                                        <label>Uptime</label>
-                                        <div class="detail-value">${camera.uptime}</div>
-                                    </div>
                                     <div class="form-group">
                                         <label>Last Seen</label>
                                         <div class="detail-value">${this.getRelativeTime(camera.lastSeen)}</div>
@@ -1312,27 +1366,31 @@ class Cameras {
         }
     }
 
-    // Cleanup method
+    // Enhanced cleanup on page destroy
     destroy() {
-        // Stop status polling
+        // Remove visibility change listener
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+        
+        // Stop all polling
         this.stopStatusPolling();
-
-        // Cleanup video players
-        this.videoPlayers.forEach(player => {
-            player.destroy();
+        
+        // Clean up all video players
+        this.videoPlayers.forEach((player, cameraId) => {
+            this.cleanupCameraPlayer(cameraId);
         });
-        this.videoPlayers.clear();
-
-        // Cleanup stream timers
-        this.streamTimers.forEach(timer => {
-            clearInterval(timer);
-        });
-        this.streamTimers.clear();
-
-        // Clear stream states
+        
+        // Clear all maps
         this.streamStates.clear();
-
-        console.log('CamerasPage cleaned up');
+        this.videoPlayers.clear();
+        this.streamTimers.clear();
+        this.navigationCleanupHandlers.clear();
+        
+        // Remove global reference
+        if (window.camerasPage === this) {
+            delete window.camerasPage;
+        }
+        
+        console.log('CamerasPage cleaned up with enhanced cleanup');
     }
 }
 

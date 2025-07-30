@@ -1,10 +1,6 @@
-/**
- * LiveVideoPlayer Component - Enhanced version with comprehensive state management
- * Reusable video streaming component for camera feeds with proper error handling
- */
-import config from '../../config/app.config.js';
+// LiveVideoPlayer.js - Fixed version with proper state management and cleanup
 
-class LiveVideoPlayer {
+export class LiveVideoPlayer {
     constructor(options) {
         this.cameraId = options.cameraId;
         this.camera = options.camera;
@@ -16,7 +12,7 @@ class LiveVideoPlayer {
         this.onStreamStart = options.onStreamStart || (() => {});
         this.onStreamStop = options.onStreamStop || (() => {});
         
-        // Enhanced state management
+        // State management
         this.isStreaming = false;
         this.streamStartTime = null;
         this.durationTimer = null;
@@ -27,10 +23,7 @@ class LiveVideoPlayer {
         this.maxReconnectAttempts = 3;
         this.isDestroyed = false;
         
-        // API configuration
-        this.apiBase = config.API_BASE_URL;
-        
-        // Bind methods to preserve context
+        // Bind methods
         this.handleImageLoad = this.handleImageLoad.bind(this);
         this.handleImageError = this.handleImageError.bind(this);
         this.cleanup = this.cleanup.bind(this);
@@ -91,9 +84,9 @@ class LiveVideoPlayer {
             return `
                 <div class="stream-container" style="width: 100%; height: 100%; position: relative; overflow: hidden;">
                     <img id="stream-${this.cameraId}" 
-                         src="${this.apiBase}/stream/mjpeg/${this.cameraId}?t=${Date.now()}" 
+                         src="/stream/video/${this.cameraId}?t=${Date.now()}" 
                          alt="Live stream"
-                         style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                         style="width: 100%; height: 100%; object-fit: contain; display: block;"
                          crossorigin="anonymous">
                     <div class="stream-loading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
                         <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: white;"></i>
@@ -105,15 +98,10 @@ class LiveVideoPlayer {
         // Thumbnail view
         return `
             <div class="thumbnail-container" style="width: 100%; height: 100%; position: relative;">
-                <img src="${this.apiBase}/stream/thumbnail/${this.cameraId}?t=${Date.now()}" 
+                <img src="/stream/thumbnail/${this.cameraId}?t=${Date.now()}" 
                      alt="Camera preview"
-                     style="width: 100%; height: 100%; object-fit: cover;"
-                     onerror="this.style.display='none'; this.parentNode.querySelector('.camera-placeholder').style.display='flex'">
-                <div class="camera-placeholder" style="display: none; width: 100%; height: 100%; background: #f5f5f5; flex-direction: column; align-items: center; justify-content: center; color: #666;">
-                    <i class="fas fa-camera" style="font-size: 48px; margin-bottom: 10px; color: #ccc;"></i>
-                    <span style="font-size: 14px;">Camera Preview</span>
-                    <small style="font-size: 12px; margin-top: 4px;">Not Available</small>
-                </div>
+                     style="width: 100%; height: 100%; object-fit: contain;"
+                     onerror="this.src='/images/camera-placeholder.jpg'">
                 <div class="play-overlay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
                     <button class="play-btn" style="width: 60px; height: 60px; border-radius: 50%; background: rgba(0,0,0,0.7); border: 2px solid white; color: white; cursor: pointer;">
                         <i class="fas fa-play" style="font-size: 20px; margin-left: 3px;"></i>
@@ -211,7 +199,7 @@ class LiveVideoPlayer {
         // Set up next frame load with slight delay to prevent overwhelming
         this.imageLoadTimeout = setTimeout(() => {
             if (this.isStreaming && this.videoElement && !this.isDestroyed) {
-                this.videoElement.src = `${this.apiBase}/stream/mjpeg/${this.cameraId}?t=${Date.now()}`;
+                this.videoElement.src = `/stream/video/${this.cameraId}?t=${Date.now()}`;
             }
         }, 100); // 10 FPS
     }
@@ -231,7 +219,7 @@ class LiveVideoPlayer {
         const retryDelay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 5000);
         setTimeout(() => {
             if (this.isStreaming && this.videoElement && !this.isDestroyed) {
-                this.videoElement.src = `${this.apiBase}/stream/mjpeg/${this.cameraId}?t=${Date.now()}`;
+                this.videoElement.src = `/stream/video/${this.cameraId}?t=${Date.now()}`;
             }
         }, retryDelay);
     }
@@ -245,7 +233,7 @@ class LiveVideoPlayer {
     
     async checkStreamStatus() {
         try {
-            const response = await fetch(`${this.apiBase}/api/v1/streams/status/${this.cameraId}`);
+            const response = await fetch(`/api/v1/streams/status/${this.cameraId}`);
             if (response.ok) {
                 const data = await response.json();
                 this.isStreaming = data.status === 'active';
@@ -260,16 +248,8 @@ class LiveVideoPlayer {
         if (this.isStreaming || this.isDestroyed) return;
         
         try {
-            const response = await fetch(`${this.apiBase}/api/v1/streams/start/${this.cameraId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    quality: 'medium',
-                    max_fps: 30,
-                    detection_enabled: false
-                })
+            const response = await fetch(`/api/v1/streams/start/${this.cameraId}`, {
+                method: 'POST'
             });
             
             if (!response.ok) {
@@ -296,7 +276,7 @@ class LiveVideoPlayer {
         this.cleanup();
         
         try {
-            const response = await fetch(`${this.apiBase}/api/v1/streams/stop/${this.cameraId}`, {
+            const response = await fetch(`/api/v1/streams/stop/${this.cameraId}`, {
                 method: 'POST'
             });
             
@@ -382,28 +362,10 @@ class LiveVideoPlayer {
         this.cleanup();
         this.stopDurationTimer();
         
-        // Remove from global registry
-        if (window.liveVideoPlayers) {
-            window.liveVideoPlayers.delete(this.containerId);
-        }
-        
         // Clear container
         if (this.container) {
             this.container.innerHTML = '';
             this.container = null;
         }
     }
-    
-    // Static factory method
-    static create(options) {
-        const player = new LiveVideoPlayer(options);
-        return player;
-    }
-    
-    // Static method to get player instance
-    static getInstance(containerId) {
-        return window.liveVideoPlayers?.get(containerId);
-    }
 }
-
-export default LiveVideoPlayer;

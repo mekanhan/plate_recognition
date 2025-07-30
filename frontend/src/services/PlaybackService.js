@@ -6,7 +6,8 @@ import config from '../config/app.config.js';
 
 class PlaybackService {
     constructor() {
-        this.baseUrl = config.buildApiUrl(config.API_ENDPOINTS.PLAYBACK);
+        // Use recording API port (8002) instead of main API port (8001)
+        this.baseUrl = config.RECORDING_API_URL;
     }
 
     /**
@@ -112,7 +113,7 @@ class PlaybackService {
                 params.append('max_duration', options.maxDuration);
             }
             
-            const response = await fetch(`${this.baseUrl}/cameras/${cameraId}/search?${params}`);
+            const response = await fetch(`${this.baseUrl}/recordings/${cameraId}/segments?${params}`);
             
             if (!response.ok) {
                 throw new Error(`Search request failed: ${response.status}`);

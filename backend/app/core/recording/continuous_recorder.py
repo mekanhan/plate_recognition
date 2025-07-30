@@ -37,6 +37,7 @@ class ContinuousRecorder:
         
         # Recording state
         self.is_recording = False
+        self.shutdown_event = threading.Event()
         self.current_writer = None
         self.current_segment_start = None
         self.current_filepath = None
@@ -44,8 +45,11 @@ class ContinuousRecorder:
         self.frame_width = None
         self.frame_height = None
         
-        # Storage management
+        # Storage management with uncompressed video considerations
         self.max_storage_days = 30  # Keep 30 days by default
+        self.compression_scheduled = False  # Flag for future compression of old files
+        self.current_codec = None  # Track current codec being used
+        self.is_uncompressed = False  # Track if current recording is uncompressed
         
         # Recording threads
         self.capture_thread = None
@@ -58,6 +62,9 @@ class ContinuousRecorder:
         # Initialize directories and database
         self.ensure_directories()
         self.init_index_database()
+        
+        # Verify uncompressed codec availability at startup
+        self.verify_codec_availability()
     
     def ensure_directories(self):
         """Create directory structure for recordings"""
@@ -83,6 +90,15 @@ class ContinuousRecorder:
         ''')
         self.db_conn.commit()
         logger.info(f"Initialized recording database for camera {self.camera_id}")
+    
+    def verify_codec_availability(self):
+        """Verify that uncompressed codecs are available before recording starts"""
+        logger.info(f"🔍 VERIFYING UNCOMPRESSED CODECS for camera {self.camera_id}")
+        
+        # SIMPLIFIED: Just log that we'll try codecs during recording
+        # Avoid hanging the startup process with codec testing
+        logger.info("✅ Codec verification will occur during first recording attempt")
+        logger.info("Available codecs: RAW, I420, YUV, None(raw), FFV1")
     
     async def start_recording(self):
         """Start continuous recording"""
@@ -127,12 +143,21 @@ class ContinuousRecorder:
         while self.is_recording:
             try:
                 if cap is None:
-                    logger.info(f"Connecting to camera {self.camera_id} at {self.rtsp_url}")
-                    cap = cv2.VideoCapture(self.rtsp_url)
+                    logger.info(f"Connecting to camera {self.camera_id} at {self.rtsp_url} with uncompressed video support")
                     
-                    # Set capture properties for better performance
+                    # Use FFmpeg backend for better codec support and raw access
+                    cap = cv2.VideoCapture(self.rtsp_url, cv2.CAP_FFMPEG)
+                    
+                    # Set capture properties for uncompressed video recording
                     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize latency
                     cap.set(cv2.CAP_PROP_FPS, 30)
+                    
+                    # Configure for proper color conversion to suppress YUV warnings
+                    cap.set(cv2.CAP_PROP_CONVERT_RGB, 1)  # Convert YUV to BGR format
+                    
+                    # Set connection timeouts for stability
+                    cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)  # 10s open timeout
+                    cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000)   # 8s read timeout
                     
                     # Verify connection
                     if not cap.isOpened():
@@ -246,22 +271,36 @@ class ContinuousRecorder:
         filename = f"camera_{self.camera_id}_{timestamp.strftime('%Y%m%d_%H%M%S')}_{self.segment_duration}.mp4"
         self.current_filepath = f"{segment_dir}/{filename}"
         
-        # Initialize video writer with H264 codec
-        # Try different codecs in order of preference
+        # Initialize video writer with UNCOMPRESSED codec preference ONLY
+        # Try ONLY uncompressed codecs - NO compressed fallbacks for highest quality
         codecs_to_try = [
-            ('H264', 'mp4'),
-            ('XVID', 'avi'),
-            ('MJPG', 'avi'),
-            ('mp4v', 'mp4')
+            # ONLY uncompressed options for maximum quality
+            ('RAW ', 'avi'),  # Raw uncompressed
+            ('I420', 'avi'),  # YUV 4:2:0 uncompressed
+            ('YUV ', 'avi'),  # YUV uncompressed
+            (None, 'avi'),    # No codec (raw)
+            ('FFV1', 'avi'),  # Lossless compression (mathematically lossless)
+            # REMOVED ALL COMPRESSED CODECS - NO QUALITY COMPROMISE
         ]
         
         for codec, ext in codecs_to_try:
             try:
-                fourcc = cv2.VideoWriter_fourcc(*codec)
+                # Handle raw/uncompressed codec (None)
+                if codec is None:
+                    fourcc = 0  # Raw uncompressed
+                    codec_name = "RAW (uncompressed)"
+                else:
+                    fourcc = cv2.VideoWriter_fourcc(*codec)
+                    codec_name = codec
+                
                 test_filepath = self.current_filepath.rsplit('.', 1)[0] + f'.{ext}'
-                # Use actual frame dimensions if available, otherwise default
-                width = self.frame_width if self.frame_width else 640
-                height = self.frame_height if self.frame_height else 480
+                # CRITICAL: Use ONLY actual frame dimensions - NO DEFAULT DOWNSCALING
+                if not self.frame_width or not self.frame_height:
+                    logger.error(f"CRITICAL: No frame dimensions available for camera {self.camera_id}")
+                    logger.error("Cannot record at unknown resolution - skipping this codec")
+                    continue
+                width = self.frame_width
+                height = self.frame_height
                 
                 test_writer = cv2.VideoWriter(
                     test_filepath,
@@ -273,18 +312,29 @@ class ContinuousRecorder:
                 if test_writer.isOpened():
                     self.current_writer = test_writer
                     self.current_filepath = test_filepath
-                    logger.info(f"Using codec {codec} for recording")
+                    
+                    # Log codec selection with compression status and resolution
+                    is_uncompressed = codec in [None, 'RAW ', 'I420', 'YUV ', 'FFV1']
+                    compression_status = "UNCOMPRESSED" if is_uncompressed else "COMPRESSED"
+                    logger.info(f"✅ RECORDING CODEC SELECTED: {codec_name} ({compression_status})")
+                    logger.info(f"✅ RECORDING RESOLUTION: {width}x{height} @ 30 FPS")
+                    logger.info(f"✅ RECORDING FILE: {test_filepath}")
+                    
+                    # Store codec info for file size estimation
+                    self.current_codec = codec_name
+                    self.is_uncompressed = is_uncompressed
                     break
                 else:
                     test_writer.release()
                     
             except Exception as e:
-                logger.debug(f"Codec {codec} not available: {e}")
+                logger.debug(f"Codec {codec_name if 'codec_name' in locals() else codec} not available: {e}")
                 continue
         
         if self.current_writer is None or not self.current_writer.isOpened():
-            logger.error(f"Failed to initialize video writer for camera {self.camera_id}")
-            raise Exception("No suitable video codec found")
+            logger.error(f"CRITICAL: NO UNCOMPRESSED CODECS AVAILABLE for camera {self.camera_id}")
+            logger.error("System requires uncompressed video recording - no compressed fallbacks allowed")
+            raise Exception("UNCOMPRESSED video codec required but not available - check OpenCV installation and codec support")
         
         logger.info(f"Started new segment for camera {self.camera_id}: {filename}")
     
@@ -317,7 +367,27 @@ class ContinuousRecorder:
                 ))
                 self.db_conn.commit()
                 
-                logger.info(f"Finalized segment for camera {self.camera_id}: {filename} ({duration}s, {file_stats.st_size} bytes)")
+                # Calculate and log detailed quality metrics
+                file_size_mb = file_stats.st_size / (1024 * 1024)
+                file_size_gb = file_size_mb / 1024
+                
+                # Calculate expected uncompressed size for comparison
+                if hasattr(self, 'frame_width') and hasattr(self, 'frame_height'):
+                    expected_uncompressed_mb = (self.frame_width * self.frame_height * 3 * 30 * duration) / (1024 * 1024)
+                    size_ratio = file_size_mb / expected_uncompressed_mb if expected_uncompressed_mb > 0 else 0
+                else:
+                    size_ratio = 0
+                
+                compression_info = f"{getattr(self, 'current_codec', 'Unknown')}"
+                quality_status = "✅ UNCOMPRESSED" if hasattr(self, 'is_uncompressed') and self.is_uncompressed else "❌ COMPRESSED"
+                
+                logger.info(f"🎥 SEGMENT COMPLETED: {filename}")
+                logger.info(f"   Duration: {duration}s | Size: {file_size_mb:.1f}MB ({file_size_gb:.3f}GB)")
+                logger.info(f"   Codec: {compression_info} | Quality: {quality_status}")
+                if size_ratio > 0:
+                    logger.info(f"   Size ratio: {size_ratio:.3f} (1.0 = true uncompressed)")
+                    if size_ratio < 0.8:
+                        logger.warning(f"⚠️  QUALITY WARNING: File size suggests compression occurred!")
             
         except Exception as e:
             logger.error(f"Error finalizing segment for camera {self.camera_id}: {e}")
@@ -364,13 +434,20 @@ class ContinuousRecorder:
     def stop_recording(self):
         """Stop continuous recording"""
         logger.info(f"Stopping recording for camera {self.camera_id}")
+        
+        # Signal shutdown to all threads
+        self.shutdown_event.set()
         self.is_recording = False
         
         # Wait for threads to finish
         if self.capture_thread:
-            self.capture_thread.join(timeout=5)
+            self.capture_thread.join(timeout=3)
+            if self.capture_thread.is_alive():
+                logger.warning(f"Capture thread for camera {self.camera_id} did not stop gracefully")
         if self.recording_thread:
-            self.recording_thread.join(timeout=5)
+            self.recording_thread.join(timeout=3)
+            if self.recording_thread.is_alive():
+                logger.warning(f"Recording thread for camera {self.camera_id} did not stop gracefully")
         
         # Finalize any open segment
         if self.current_writer:

@@ -82,14 +82,49 @@ async def update_camera(db: AsyncSession, camera_id: int, camera_update: CameraU
 
 
 async def delete_camera(db: AsyncSession, camera_id: int) -> bool:
-    """Delete a camera by ID"""
+    """Delete a camera by ID and clean up all related data"""
+    import shutil
+    import os
+    import logging
+    from pathlib import Path
+    
+    logger = logging.getLogger(__name__)
+    
     db_camera = await get_camera_by_id(db, camera_id)
     if not db_camera:
         return False
     
-    await db.delete(db_camera)
-    await db.commit()
-    return True
+    logger.info(f"Deleting camera {camera_id} ({db_camera.name}) and cleaning up all related data")
+    
+    try:
+        # 1. Stop any active frame distributors for this camera
+        try:
+            from app.services.frame_distribution_service import get_frame_distribution_manager
+            frame_manager = get_frame_distribution_manager()
+            if frame_manager.get_distributor(camera_id):
+                logger.info(f"Stopping frame distributor for camera {camera_id}")
+                frame_manager.remove_distributor(camera_id)
+        except Exception as e:
+            logger.warning(f"Could not stop frame distributor for camera {camera_id}: {e}")
+        
+        # 2. Clean up recording files and database
+        recordings_path = Path(f"recordings/camera_{camera_id}")
+        if recordings_path.exists():
+            logger.info(f"Removing recording directory: {recordings_path}")
+            shutil.rmtree(recordings_path, ignore_errors=True)
+        
+        # 3. Delete camera from main database
+        await db.delete(db_camera)
+        await db.commit()
+        
+        logger.info(f"Successfully deleted camera {camera_id} and cleaned up all related data")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error during camera {camera_id} deletion cleanup: {e}")
+        # Rollback database transaction if it failed
+        await db.rollback()
+        return False
 
 
 async def update_camera_status(db: AsyncSession, camera_id: int, status: str) -> Optional[Camera]:

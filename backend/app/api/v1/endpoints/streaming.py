@@ -4,6 +4,7 @@ Video streaming endpoints for real-time camera feeds using Frame Distribution Ar
 import cv2
 import logging
 import asyncio
+import numpy as np
 from typing import Dict, Any, Optional, AsyncGenerator
 from fastapi import APIRouter, HTTPException, Depends, Query
 from fastapi.responses import StreamingResponse, Response
@@ -222,13 +223,13 @@ async def stream_mjpeg_video(
                     detail="Too many active streams for this camera"
                 )
             
-            # Set JPEG quality based on request
+            # Set JPEG quality based on request (optimized for uncompressed sources)
             if quality == "low":
-                jpeg_quality = 70
+                jpeg_quality = 75  # Slightly higher for uncompressed sources
             elif quality == "medium":
-                jpeg_quality = 85
+                jpeg_quality = 90  # Higher quality to preserve uncompressed detail
             else:  # high quality
-                jpeg_quality = 95
+                jpeg_quality = 98  # Maximum quality for uncompressed sources
             
             while True:
                 # Get frame from consumer queue with fallback to latest frame
@@ -243,10 +244,27 @@ async def stream_mjpeg_video(
                         await asyncio.sleep(0.1)
                         continue
                 
-                # Encode frame to JPEG
+                # Validate and encode frame to JPEG with uncompressed frame handling
                 try:
-                    encode_params = [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality]
-                    ret, jpeg_buffer = cv2.imencode('.jpg', frame, encode_params)
+                    # Validate frame quality (especially important for uncompressed sources)
+                    if not _validate_frame_for_encoding(frame):
+                        logger.warning(f"Frame validation failed for camera {camera_id}, skipping frame")
+                        await asyncio.sleep(0.033)  # ~30fps delay
+                        continue
+                    
+                    # Handle different pixel formats from uncompressed sources
+                    processed_frame = _prepare_frame_for_jpeg_encoding(frame)
+                    
+                    # Scale frame to fixed card size (800x600)
+                    scaled_frame = _scale_frame_to_card(processed_frame, camera_id)
+                    
+                    # Encode with optimized parameters for uncompressed sources
+                    encode_params = [
+                        cv2.IMWRITE_JPEG_QUALITY, jpeg_quality,
+                        cv2.IMWRITE_JPEG_OPTIMIZE, 1,  # Optimize for size
+                        cv2.IMWRITE_JPEG_PROGRESSIVE, 1  # Progressive JPEG for better streaming
+                    ]
+                    ret, jpeg_buffer = cv2.imencode('.jpg', scaled_frame, encode_params)
                     
                     if ret:
                         # Yield MJPEG frame
@@ -274,6 +292,130 @@ async def stream_mjpeg_video(
             if consumer and distributor:
                 distributor.remove_consumer(consumer_name)
                 logger.info(f"MJPEG stream stopped for camera {camera_id}")
+    
+    # Return the streaming response
+    return StreamingResponse(
+        generate_mjpeg_frames(),
+        media_type="multipart/x-mixed-replace; boundary=frame",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "Connection": "keep-alive"
+        }
+    )
+
+
+def _validate_frame_for_encoding(frame) -> bool:
+    """Validate frame quality for JPEG encoding with uncompressed video considerations
+    
+    Args:
+        frame: OpenCV frame to validate
+        
+    Returns:
+        bool: True if frame is suitable for JPEG encoding
+    """
+    if frame is None:
+        return False
+        
+    # Check basic dimensions
+    if len(frame.shape) < 2 or frame.shape[0] < 50 or frame.shape[1] < 50:
+        return False
+    
+    # Check for completely black frames (common in codec corruption)
+    if frame.max() < 5:
+        return False
+    
+    # Check for reasonable pixel distribution (avoid corrupted frames)
+    if len(frame.shape) == 3:  # Color frame
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = frame
+    
+    # Count non-zero pixels
+    non_zero_pixels = cv2.countNonZero(gray)
+    total_pixels = gray.shape[0] * gray.shape[1]
+    
+    # Frame should have at least 5% non-zero pixels
+    if non_zero_pixels < (total_pixels * 0.05):
+        return False
+    
+    return True
+
+
+def _prepare_frame_for_jpeg_encoding(frame):
+    """Prepare frame for JPEG encoding, handling different pixel formats from uncompressed sources
+    
+    Args:
+        frame: OpenCV frame in various formats
+        
+    Returns:
+        OpenCV frame ready for JPEG encoding (BGR format)
+    """
+    if frame is None:
+        return None
+    
+    # Handle different pixel formats that may come from uncompressed sources
+    if len(frame.shape) == 2:
+        # Grayscale frame - convert to BGR for consistent JPEG encoding
+        return cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    elif len(frame.shape) == 3:
+        channels = frame.shape[2]
+        
+        if channels == 3:
+            # Could be BGR (OpenCV default) or RGB - assume BGR for now
+            # For uncompressed sources, we might need to detect and convert
+            return frame
+        elif channels == 4:
+            # RGBA or BGRA - convert to BGR
+            return cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+        else:
+            # Unknown format - try to use as-is
+            return frame
+    else:
+        # Unknown frame structure - try to use as-is
+        return frame
+
+
+def _scale_frame_to_card(frame, camera_id):
+    """Scale frame to fixed card size (800x600) with aspect ratio preservation
+    
+    Args:
+        frame: OpenCV frame to scale
+        camera_id: Camera ID for logging
+        
+    Returns:
+        Scaled frame in 800x600 card format
+    """
+    # Fixed card dimensions
+    CARD_WIDTH = 800
+    CARD_HEIGHT = 600
+    
+    if frame is None:
+        # Return black card if no frame
+        return np.zeros((CARD_HEIGHT, CARD_WIDTH, 3), dtype=np.uint8)
+    
+    # Get original dimensions
+    height, width = frame.shape[:2]
+    
+    # Calculate scaling to fit in card while maintaining aspect ratio
+    scale = min(CARD_WIDTH / width, CARD_HEIGHT / height)
+    new_width = int(width * scale)
+    new_height = int(height * scale)
+    
+    # Resize frame
+    frame_resized = cv2.resize(frame, (new_width, new_height))
+    
+    # Create black canvas of card size
+    card = np.zeros((CARD_HEIGHT, CARD_WIDTH, 3), dtype=np.uint8)
+    
+    # Center the resized frame in the card
+    y_offset = (CARD_HEIGHT - new_height) // 2
+    x_offset = (CARD_WIDTH - new_width) // 2
+    card[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = frame_resized
+    
+    return card
+
     
     return StreamingResponse(
         generate_mjpeg_frames(),
@@ -654,6 +796,65 @@ async def list_active_streams(
         "total": 0,
         "message": "On-demand streaming - no persistent connections maintained"
     }
+
+
+@router.get("/camera_info")
+async def get_camera_info(db: AsyncSession = Depends(get_database)):
+    """
+    Get all cameras with their native resolution information
+    
+    Returns:
+        Dictionary containing camera information including native resolutions
+    """
+    try:
+        # Get all cameras from database
+        from app.services.camera_crud import get_all_cameras
+        cameras = await get_all_cameras(db)
+        
+        camera_info = []
+        
+        for camera in cameras:
+            if not camera.enabled:
+                continue
+                
+            # Get frame distributor to check resolution
+            frame_manager = get_frame_distribution_manager()
+            distributor = frame_manager.get_distributor(camera.id)
+            
+            # Default values
+            width = height = fps = 0
+            status = "offline"
+            
+            if distributor and distributor.is_running:
+                stats = distributor.get_stats()
+                if stats.get("is_connected", False):
+                    # Try to get a frame to determine actual resolution
+                    frame = distributor.get_latest_frame()
+                    if frame is not None:
+                        height, width = frame.shape[:2]
+                        status = "online"
+                        fps = 30  # Default FPS assumption
+            
+            camera_info.append({
+                "id": camera.id,
+                "name": camera.name,
+                "native_resolution": f"{width}x{height}" if width > 0 else "Unknown",
+                "native_width": width,
+                "native_height": height,
+                "fps": fps,
+                "status": status,
+                "card_width": 800,  # Fixed card width
+                "card_height": 600  # Fixed card height
+            })
+        
+        return {"cameras": camera_info}
+        
+    except Exception as e:
+        logger.error(f"Error getting camera info: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get camera info: {str(e)}"
+        )
 
 
 @router.get("/diagnostics/{camera_id}")

@@ -90,6 +90,7 @@ class FrameDistributor:
         # Connection state
         self.capture: Optional[cv2.VideoCapture] = None
         self.is_running = False
+        self.shutdown_event = threading.Event()
         self.capture_thread: Optional[threading.Thread] = None
         
         # Frame distribution
@@ -177,31 +178,52 @@ class FrameDistributor:
         return url
     
     def _connect_camera(self) -> bool:
-        """Establish connection to camera"""
+        """Establish connection to camera with uncompressed video support"""
         try:
             camera_url = self._build_camera_url()
             self.connection_attempts += 1
             
-            logger.info(f"Connecting to camera {self.camera.name} at {camera_url}")
+            logger.info(f"Connecting to camera {self.camera.name} at {camera_url} with uncompressed video support")
             
-            # Create VideoCapture with optimized settings
-            self.capture = cv2.VideoCapture(camera_url)
+            # Create VideoCapture with FFmpeg backend for better codec support
+            self.capture = cv2.VideoCapture(camera_url, cv2.CAP_FFMPEG)
+            
+            # Set backend-specific properties for uncompressed video
+            self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)  # Minimize latency
+            
+            # Configure for proper color conversion to suppress YUV warnings
+            self.capture.set(cv2.CAP_PROP_CONVERT_RGB, 1)  # Enable BGR conversion from YUV
             
             # Set timeouts
-            self.capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)  # 5s connection timeout
-            self.capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)  # 5s read timeout
+            self.capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)  # 10s connection timeout for stability
+            self.capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000)  # 8s read timeout
             
-            # Optimize for low latency
-            self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            # Set format properties to ensure proper color conversion
+            try:
+                # Set format to ensure YUV is properly converted to BGR
+                self.capture.set(cv2.CAP_PROP_FORMAT, cv2.CAP_OPENCV_MJPEG)  # MJPEG format for compatibility
+                # Force color conversion for YUV streams
+                self.capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M','J','P','G'))
+            except Exception as format_error:
+                logger.debug(f"Could not set format properties for camera {self.camera.name}: {format_error}")
+                # Fallback - ensure color conversion is still enabled
+                self.capture.set(cv2.CAP_PROP_CONVERT_RGB, 1)
             
             if not self.capture or not self.capture.isOpened():
                 logger.error(f"Failed to open camera stream: {camera_url}")
                 return False
             
-            # Test frame capture
+            # Test frame capture with validation
             ret, frame = self.capture.read()
             if not ret or frame is None:
                 logger.error(f"Failed to read test frame from camera {self.camera.name}")
+                self.capture.release()
+                self.capture = None
+                return False
+            
+            # Validate frame quality (ensure it's not corrupted)
+            if not self._validate_frame_quality(frame):
+                logger.error(f"Test frame from camera {self.camera.name} failed quality validation")
                 self.capture.release()
                 self.capture = None
                 return False
@@ -210,8 +232,13 @@ class FrameDistributor:
             fps = self.capture.get(cv2.CAP_PROP_FPS)
             width = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH)
             height = self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            fourcc = self.capture.get(cv2.CAP_PROP_FOURCC)
             
-            logger.info(f"Camera {self.camera.name} connected: {width}x{height} @ {fps} FPS")
+            # Convert fourcc to readable format
+            fourcc_str = "".join([chr((int(fourcc) >> 8 * i) & 0xFF) for i in range(4)])
+            
+            logger.info(f"Camera {self.camera.name} connected: {int(width)}x{int(height)} @ {fps} FPS, codec: {fourcc_str}")
+            logger.info(f"Frame validation passed - frame shape: {frame.shape}, dtype: {frame.dtype}")
             
             self.last_connection_time = datetime.now()
             self.consecutive_failures = 0
@@ -225,6 +252,38 @@ class FrameDistributor:
                 self.capture = None
             return False
     
+    def _validate_frame_quality(self, frame) -> bool:
+        """Validate frame quality to detect corrupted/black frames
+        
+        Args:
+            frame: OpenCV frame to validate
+            
+        Returns:
+            bool: True if frame passes quality checks
+        """
+        if frame is None:
+            return False
+        
+        # Check frame dimensions
+        if len(frame.shape) < 2 or frame.shape[0] < 100 or frame.shape[1] < 100:
+            logger.warning(f"Frame too small: {frame.shape}")
+            return False
+        
+        # Check for completely black frames (codec corruption indicator)
+        if frame.max() < 10:  # Nearly black frame
+            logger.warning("Frame appears to be completely black (possible codec corruption)")
+            return False
+        
+        # Check for reasonable pixel value distribution
+        non_zero_pixels = cv2.countNonZero(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if len(frame.shape) == 3 else frame)
+        total_pixels = frame.shape[0] * frame.shape[1]
+        
+        if non_zero_pixels < (total_pixels * 0.1):  # Less than 10% non-zero pixels
+            logger.warning(f"Frame has too few non-zero pixels: {non_zero_pixels}/{total_pixels}")
+            return False
+        
+        return True
+    
     def _disconnect_camera(self):
         """Disconnect from camera and cleanup"""
         if self.capture:
@@ -237,12 +296,53 @@ class FrameDistributor:
         
         logger.info(f"Disconnected from camera {self.camera.name}")
     
+    def _read_frame_with_timeout(self, timeout: float = 10.0) -> tuple:
+        """
+        Read frame from capture with timeout to prevent infinite blocking
+        
+        Enhanced with shutdown signal checking and better error handling
+        
+        Args:
+            timeout: Maximum time to wait for frame in seconds
+            
+        Returns:
+            Tuple of (success, frame) - same as cv2.VideoCapture.read()
+        """
+        if not self.capture or not self.capture.isOpened():
+            return False, None
+        
+        # Check for shutdown signal before attempting read
+        if self.shutdown_event.is_set():
+            return False, None
+        
+        try:
+            # Set shorter timeout for more responsive shutdown
+            timeout_ms = int(min(timeout, 2.0) * 1000)  # Max 2 seconds per read
+            self.capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, timeout_ms)
+            
+            # Read frame - should respect the timeout
+            ret, frame = self.capture.read()
+            
+            # Check shutdown signal again after potentially blocking read
+            if self.shutdown_event.is_set():
+                return False, None
+            
+            return ret, frame
+            
+        except Exception as e:
+            logger.error(f"Exception in frame read for camera {self.camera.name}: {str(e)}")
+            return False, None
+    
     def _capture_loop(self):
         """Main capture loop that runs in separate thread"""
         logger.info(f"Starting capture loop for camera {self.camera.name}")
         
-        while self.is_running:
+        while self.is_running and not self.shutdown_event.is_set():
             try:
+                # Check for shutdown signal
+                if self.shutdown_event.is_set():
+                    break
+                
                 # Ensure camera is connected
                 if not self.capture or not self.capture.isOpened():
                     if not self._connect_camera():
@@ -250,24 +350,42 @@ class FrameDistributor:
                         delay = min(self.config.reconnect_delay * self.consecutive_failures, 30)
                         logger.warning(f"Failed to connect to camera {self.camera.name}, "
                                      f"retrying in {delay}s (attempt {self.consecutive_failures})")
-                        time.sleep(delay)
+                        
+                        # Interruptible sleep using event.wait()
+                        if self.shutdown_event.wait(timeout=delay):
+                            logger.info(f"Shutdown requested during camera reconnection for {self.camera.name}")
+                            break
                         continue
                 
-                # Read frame
-                ret, frame = self.capture.read()
+                # Read frame with timeout to prevent infinite blocking
+                ret, frame = self._read_frame_with_timeout(timeout=10.0)
                 
                 if not ret or frame is None:
                     self.consecutive_failures += 1
                     logger.warning(f"Failed to read frame from camera {self.camera.name} "
                                  f"(failure #{self.consecutive_failures})")
+                elif not self._validate_frame_quality(frame):
+                    # Frame read successfully but quality is poor (likely codec corruption)
+                    self.consecutive_failures += 1
+                    logger.warning(f"Frame quality validation failed for camera {self.camera.name} "
+                                 f"(failure #{self.consecutive_failures}) - possible codec corruption")
+                    ret, frame = False, None
                     
                     # If too many consecutive failures, attempt reconnection
-                    if self.consecutive_failures >= 5:
+                    if self.consecutive_failures >= 3:  # Reduced from 5 to 3 for faster recovery
                         logger.warning(f"Too many failures for camera {self.camera.name}, reconnecting")
                         self._disconnect_camera()
                         continue
                     
-                    time.sleep(0.1)  # Brief pause before retry
+                    # Check if this might be a timeout/dead connection
+                    if not self.capture or not self.capture.isOpened():
+                        logger.warning(f"Camera connection lost for {self.camera.name}, will reconnect")
+                        self._disconnect_camera()
+                        continue
+                    
+                    # Brief interruptible pause before retry
+                    if self.shutdown_event.wait(timeout=0.1):
+                        break
                     continue
                 
                 # Reset failure counter on successful frame
@@ -285,7 +403,10 @@ class FrameDistributor:
             except Exception as e:
                 logger.error(f"Error in capture loop for camera {self.camera.name}: {str(e)}")
                 self._disconnect_camera()
-                time.sleep(self.config.reconnect_delay)
+                # Interruptible sleep before reconnection attempt
+                if self.shutdown_event.wait(timeout=self.config.reconnect_delay):
+                    logger.info(f"Shutdown requested during error recovery for {self.camera.name}")
+                    break
         
         # Cleanup on exit
         self._disconnect_camera()
@@ -321,20 +442,22 @@ class FrameDistributor:
         """Stop the frame distribution service"""
         logger.info(f"Stopping frame distributor for camera {self.camera.name}")
         
+        # Signal shutdown to all threads
+        self.shutdown_event.set()
         self.is_running = False
         
         # Deactivate all consumers
         for consumer in self.consumers.values():
             consumer.is_active = False
         
+        # Force disconnect camera to break any blocking reads
+        self._disconnect_camera()
+        
         # Wait for capture thread to finish
         if self.capture_thread and self.capture_thread.is_alive():
-            self.capture_thread.join(timeout=5.0)
+            self.capture_thread.join(timeout=3.0)
             if self.capture_thread.is_alive():
-                logger.warning(f"Capture thread for camera {self.camera.name} did not stop gracefully")
-        
-        # Final cleanup
-        self._disconnect_camera()
+                logger.warning(f"Capture thread for camera {self.camera.name} did not stop gracefully, forcing termination")
         
         logger.info(f"Frame distributor stopped for camera {self.camera.name}")
     
@@ -421,6 +544,25 @@ class FrameDistributionManager:
         """Stop all frame distributors"""
         for distributor in self.distributors.values():
             distributor.stop()
+    
+    def shutdown_all(self):
+        """Forcefully shutdown all frame distributors and clean up resources"""
+        logger.info(f"Force shutting down {len(self.distributors)} frame distributors")
+        
+        # Signal shutdown to all distributors
+        for distributor in self.distributors.values():
+            distributor.shutdown_event.set()
+            distributor.is_running = False
+        
+        # Stop all distributors
+        distributors_to_remove = list(self.distributors.keys())
+        for camera_id in distributors_to_remove:
+            try:
+                self.remove_distributor(camera_id)
+            except Exception as e:
+                logger.error(f"Error shutting down distributor for camera {camera_id}: {e}")
+        
+        logger.info("All frame distributors shutdown completed")
     
     def get_system_stats(self) -> Dict[str, Any]:
         """Get statistics for all distributors"""

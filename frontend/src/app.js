@@ -187,6 +187,9 @@ class LPRApplication {
             return;
         }
 
+        // Clean up current page before navigating
+        this.cleanupCurrentPage();
+
         // Hide current page
         const currentSection = document.querySelector('.content-section.active');
         if (currentSection) {
@@ -249,6 +252,30 @@ class LPRApplication {
             console.error(`Failed to load page component: ${pageId}`, error);
             this.hideLoading();
             this.showError(`Failed to load ${pageId} page`);
+        }
+    }
+
+    cleanupCurrentPage() {
+        // Clean up current page components to prevent memory leaks and black screens
+        const currentPageComponent = this.components.pages[this.currentPage];
+        
+        if (currentPageComponent && typeof currentPageComponent.destroy === 'function') {
+            try {
+                currentPageComponent.destroy();
+                console.log(`${this.currentPage} page cleaned up successfully`);
+            } catch (error) {
+                console.warn(`Error cleaning up ${this.currentPage} page:`, error);
+            }
+        }
+        
+        // Re-initialize the page component after cleanup (for when user navigates back)
+        if (this.currentPage === 'cameras') {
+            try {
+                this.components.pages.cameras = new Cameras();
+                console.log('Cameras page component re-initialized');
+            } catch (error) {
+                console.warn('Error re-initializing cameras page:', error);
+            }
         }
     }
 

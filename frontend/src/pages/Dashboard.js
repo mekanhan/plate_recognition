@@ -1,9 +1,8 @@
 /**
  * Dashboard Page Component
- * Main dashboard with metrics, live feeds, and system overview
+ * Main dashboard with metrics, camera status, and system overview
  */
-import LiveVideoPlayer from '../components/streaming/LiveVideoPlayer.js';
-import streamingService from '../services/StreamingService.js';
+// Removed live streaming imports to eliminate conflicts with Cameras page
 import playbackService from '../services/PlaybackService.js';
 
 class Dashboard {
@@ -20,9 +19,7 @@ class Dashboard {
             diskUsage: 0,
             retentionDays: 30
         };
-        this.liveFeeds = [];
-        this.liveCameras = [];
-        this.videoPlayers = new Map();
+        // Removed live feed components to prevent streaming conflicts
         this.recentDetections = [];
         this.systemHealth = {
             status: 'healthy',
@@ -46,9 +43,9 @@ class Dashboard {
         if (!container) return;
 
         container.innerHTML = this.getTemplate();
-        this.renderLiveFeeds();
         this.renderRecentDetections();
         this.renderSystemHealth();
+        this.renderCameraStatusPlaceholder();
     }
 
     getTemplate() {
@@ -63,10 +60,6 @@ class Dashboard {
                 <button class="quick-action-btn" id="add-camera-quick">
                     <i class="fas fa-plus"></i>
                     <span>Add Camera</span>
-                </button>
-                <button class="quick-action-btn" id="view-live-feeds">
-                    <i class="fas fa-play"></i>
-                    <span>Live Feeds</span>
                 </button>
                 <button class="quick-action-btn" id="export-data">
                     <i class="fas fa-download"></i>
@@ -216,35 +209,24 @@ class Dashboard {
 
             <!-- Real-time Section -->
             <div class="dashboard-grid">
-                <!-- Live Camera Feeds -->
-                <div class="dashboard-card camera-feeds">
+                <!-- Camera Status Summary -->
+                <div class="camera-status-overview">
                     <div class="card-header">
-                        <h3>Live Camera Feeds</h3>
+                        <h3>Camera Status Overview</h3>
                         <div class="card-actions">
-                            <select id="camera-count-select" class="camera-count-select">
-                                <option value="1">1 Camera</option>
-                                <option value="2">2 Cameras</option>
-                                <option value="3">3 Cameras</option>
-                                <option value="4" selected>4 Cameras</option>
-                            </select>
-                            <button class="card-action" id="camera-layout-btn">
-                                <i class="fas fa-th"></i>
-                            </button>
-                            <button class="card-action" id="fullscreen-feeds">
-                                <i class="fas fa-expand"></i>
+                            <button class="card-action" id="view-cameras-btn">
+                                <i class="fas fa-video"></i>
+                                View Cameras
                             </button>
                         </div>
                     </div>
-                    <div class="camera-grid" id="live-camera-grid">
-                        <!-- Live feeds will be dynamically loaded -->
-                    </div>
-                    <div class="camera-pagination" id="camera-pagination">
-                        <!-- Pagination will be dynamically added if needed -->
+                    <div class="camera-status-grid" id="camera-status-grid">
+                        <!-- Camera status will be dynamically loaded -->
                     </div>
                 </div>
 
                 <!-- Recent Detections -->
-                <div class="dashboard-card recent-detections">
+                <div class="recent-detections">
                     <div class="card-header">
                         <h3>Recent Detections</h3>
                         <div class="card-actions">
@@ -260,7 +242,7 @@ class Dashboard {
                 </div>
 
                 <!-- System Health -->
-                <div class="dashboard-card system-health">
+                <div class="system-health">
                     <div class="card-header">
                         <h3>System Health</h3>
                         <div class="health-indicator ${this.systemHealth.status}">
@@ -278,7 +260,7 @@ class Dashboard {
                 </div>
 
                 <!-- Analytics Chart -->
-                <div class="dashboard-card analytics-chart">
+                <div class="analytics-chart">
                     <div class="card-header">
                         <h3>Detection Analytics</h3>
                         <select class="chart-filter" id="chart-time-filter">
@@ -314,7 +296,6 @@ class Dashboard {
     attachEventListeners() {
         // Quick action buttons
         document.getElementById('add-camera-quick')?.addEventListener('click', () => this.handleAddCamera());
-        document.getElementById('view-live-feeds')?.addEventListener('click', () => this.handleViewLiveFeeds());
         document.getElementById('export-data')?.addEventListener('click', () => this.handleExportData());
         document.getElementById('system-health')?.addEventListener('click', () => this.handleSystemHealth());
 
@@ -323,10 +304,8 @@ class Dashboard {
             card.addEventListener('click', (e) => this.handleMetricClick(e));
         });
 
-        // Camera feed controls
-        document.getElementById('camera-count-select')?.addEventListener('change', (e) => this.handleCameraCountChange(e));
-        document.getElementById('camera-layout-btn')?.addEventListener('click', () => this.toggleCameraLayout());
-        document.getElementById('fullscreen-feeds')?.addEventListener('click', () => this.toggleFullscreenFeeds());
+        // Camera status controls
+        document.getElementById('view-cameras-btn')?.addEventListener('click', () => this.navigateToCameras());
 
         // Detection controls
         document.getElementById('filter-detections')?.addEventListener('click', () => this.showDetectionFilters());
@@ -354,9 +333,9 @@ class Dashboard {
         window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'cameras', action: 'add' } }));
     }
 
-    handleViewLiveFeeds() {
-        // Show fullscreen live feeds
-        this.toggleFullscreenFeeds();
+    navigateToCameras() {
+        // Navigate to cameras page for live streaming
+        window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'cameras' } }));
     }
 
     handleExportData() {
@@ -383,308 +362,127 @@ class Dashboard {
         }
     }
 
-    handleCameraCountChange(e) {
-        const count = parseInt(e.target.value);
-        this.selectedCameraCount = count;
-        this.currentPage = 0; // Reset to first page
-        this.renderLiveFeeds();
-    }
+    // Removed camera count handling - streaming moved to Cameras page
 
-    attachFeedControlListeners() {
-        document.querySelectorAll('.feed-control-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => this.handleFeedControl(e));
-        });
-    }
+    // Removed feed control methods - streaming moved to Cameras page
 
-    async handleFeedControl(e) {
-        e.preventDefault();
-        const action = e.target.dataset.action || e.target.parentElement.dataset.action;
-        const cameraId = e.target.dataset.cameraId || e.target.parentElement.dataset.cameraId;
-        
-        if (!cameraId) return;
-        
-        const camera = this.liveCameras.find(c => c.id.toString() === cameraId);
-        if (!camera) return;
+    // Removed streaming control methods - moved to Cameras page
 
-        switch (action) {
-            case 'stream':
-                await this.toggleCameraStream(cameraId);
-                break;
-            case 'fullscreen':
-                this.openFullscreenFeed(cameraId);
-                break;
-            case 'refresh':
-                await this.refreshCameraFeed(cameraId);
-                break;
-        }
-    }
+    // Removed UI update methods - no longer needed without streaming
 
-    async toggleCameraStream(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (!player) return;
+    // Removed pagination methods - no longer needed
 
-        const isStreaming = streamingService.isStreamActive(cameraId);
-        
+    // Removed player event handlers - no longer needed
+
+    async loadCameraStatus() {
         try {
-            if (isStreaming) {
-                await player.stopStream();
-            } else {
-                await player.startStream();
+            // Simplified camera status loading without streaming
+            const response = await fetch('http://localhost:8001/api/v1/cameras/');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
             
-            // Update UI
-            this.updateFeedControlButton(cameraId);
-            this.updateCameraStatusIndicator(cameraId);
+            const data = await response.json();
             
-        } catch (error) {
-            console.error('Failed to toggle stream:', error);
-            this.showAlert(`Failed to ${isStreaming ? 'stop' : 'start'} stream for camera`, 'error');
-        }
-    }
-
-    openFullscreenFeed(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player && streamingService.isStreamActive(cameraId)) {
-            player.openFullscreen();
-        } else {
-            this.showAlert('Start streaming to view in fullscreen', 'info');
-        }
-    }
-
-    async refreshCameraFeed(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player) {
-            await player.refreshThumbnail();
-        }
-    }
-
-    updateFeedControlButton(cameraId) {
-        const btn = document.querySelector(`[data-action="stream"][data-camera-id="${cameraId}"]`);
-        if (!btn) return;
-
-        const isStreaming = streamingService.isStreamActive(cameraId);
-        const icon = btn.querySelector('i');
-        const text = btn.childNodes[btn.childNodes.length - 1];
-
-        if (icon) {
-            icon.className = `fas ${isStreaming ? 'fa-stop' : 'fa-play'}`;
-        }
-        if (text && text.textContent) {
-            text.textContent = isStreaming ? 'Stop' : 'Start';
-        }
-    }
-
-    updateCameraStatusIndicator(cameraId) {
-        const indicator = document.querySelector(`[data-camera-id="${cameraId}"] .camera-status-indicator`);
-        if (!indicator) return;
-
-        const isStreaming = streamingService.isStreamActive(cameraId);
-        const existingBadge = indicator.querySelector('.streaming-badge');
-        
-        if (isStreaming && !existingBadge) {
-            indicator.insertAdjacentHTML('beforeend', '<span class="streaming-badge">LIVE</span>');
-        } else if (!isStreaming && existingBadge) {
-            existingBadge.remove();
-        }
-    }
-
-    updateFeedPagination() {
-        const paginationContainer = document.getElementById('camera-pagination');
-        if (!paginationContainer) return;
-
-        const totalPages = Math.ceil(this.liveCameras.length / this.selectedCameraCount);
-        
-        if (totalPages <= 1) {
-            paginationContainer.innerHTML = '';
-            return;
-        }
-
-        const pagination = [];
-        
-        // Previous button
-        pagination.push(`
-            <button class="pagination-btn ${this.currentPage === 0 ? 'disabled' : ''}" 
-                    data-page="${this.currentPage - 1}" ${this.currentPage === 0 ? 'disabled' : ''}>
-                <i class="fas fa-chevron-left"></i>
-            </button>
-        `);
-
-        // Page numbers
-        for (let i = 0; i < totalPages; i++) {
-            pagination.push(`
-                <button class="pagination-btn ${i === this.currentPage ? 'active' : ''}" 
-                        data-page="${i}">
-                    ${i + 1}
-                </button>
-            `);
-        }
-
-        // Next button
-        pagination.push(`
-            <button class="pagination-btn ${this.currentPage === totalPages - 1 ? 'disabled' : ''}" 
-                    data-page="${this.currentPage + 1}" ${this.currentPage === totalPages - 1 ? 'disabled' : ''}>
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        `);
-
-        paginationContainer.innerHTML = pagination.join('');
-
-        // Attach pagination event listeners
-        paginationContainer.querySelectorAll('.pagination-btn:not(.disabled)').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const page = parseInt(e.target.dataset.page);
-                if (!isNaN(page) && page !== this.currentPage) {
-                    this.currentPage = page;
-                    this.renderLiveFeeds();
-                }
-            });
-        });
-    }
-
-    // Player event handlers
-    handlePlayerStatusChange(cameraId, status) {
-        console.log(`Camera ${cameraId} status changed to: ${status}`);
-        this.updateCameraStatusIndicator(cameraId);
-    }
-
-    handlePlayerError(cameraId, error) {
-        console.error(`Camera ${cameraId} error:`, error);
-        this.showAlert(`Camera error: ${error}`, 'error');
-    }
-
-    handleStreamStart(cameraId) {
-        console.log(`Stream started for camera ${cameraId}`);
-        this.updateFeedControlButton(cameraId);
-        this.updateCameraStatusIndicator(cameraId);
-    }
-
-    handleStreamStop(cameraId) {
-        console.log(`Stream stopped for camera ${cameraId}`);
-        this.updateFeedControlButton(cameraId);
-        this.updateCameraStatusIndicator(cameraId);
-    }
-
-    async loadLiveCameras() {
-        try {
-            const cameras = await streamingService.getCameras();
+            // Handle different response formats
+            let cameras = [];
+            if (Array.isArray(data)) {
+                cameras = data;
+            } else if (data.cameras && Array.isArray(data.cameras)) {
+                cameras = data.cameras;
+            } else if (data.data && Array.isArray(data.data)) {
+                cameras = data.data;
+            } else {
+                console.warn('Unexpected API response format:', data);
+                cameras = [];
+            }
             
-            // Filter for enabled cameras and transform data
-            this.liveCameras = cameras
-                .filter(camera => camera.enabled)
-                .map(camera => ({
-                    id: camera.id,
-                    name: camera.name,
-                    location: camera.location || 'unknown',
-                    status: camera.status || 'offline',
-                    ipAddress: camera.ip_address,
-                    port: camera.port,
-                    connectionType: camera.connection_type,
-                    streamPath: camera.stream_path,
-                    lastSeen: camera.updated_at ? new Date(camera.updated_at) : new Date(),
-                    enabled: camera.enabled,
-                    isStreaming: streamingService.isStreamActive(camera.id)
-                }));
-                
-            this.renderLiveFeeds();
+            this.renderCameraStatus(cameras.filter(camera => camera.enabled));
         } catch (error) {
-            console.error('Failed to load cameras:', error);
-            this.showAlert('Failed to load camera feeds', 'error');
-            this.renderNoFeedsMessage();
+            console.error('Failed to load camera status:', error);
+            this.renderCameraStatusError();
         }
     }
 
-    renderLiveFeeds() {
-        const container = document.getElementById('live-camera-grid');
+    renderCameraStatus(cameras) {
+        const container = document.getElementById('camera-status-grid');
         if (!container) return;
 
-        if (!this.liveCameras.length) {
-            this.renderNoFeedsMessage();
+        if (!cameras.length) {
+            this.renderNoCamerasMessage();
             return;
         }
 
-        // Apply camera count filter and pagination
-        const startIndex = this.currentPage * this.selectedCameraCount;
-        const displayCameras = this.liveCameras.slice(startIndex, startIndex + this.selectedCameraCount);
-
-        // Update grid layout class
-        container.className = `camera-grid layout-${Math.min(displayCameras.length, this.selectedCameraCount)}`;
-
-        container.innerHTML = displayCameras.map(camera => this.renderCameraFeedItem(camera)).join('');
-
-        // Initialize video players for each camera
-        displayCameras.forEach(camera => {
-            this.initializeCameraPlayer(camera);
-        });
-
-        // No external controls needed - streams auto-start
-
-        // Update pagination if needed
-        this.updateFeedPagination();
+        container.innerHTML = cameras.map(camera => this.renderCameraStatusItem(camera)).join('');
     }
 
-    renderCameraFeedItem(camera) {
-        const isStreaming = streamingService.isStreamActive(camera.id);
-        
+    renderCameraStatusItem(camera) {
         return `
-            <div class="camera-feed-item ${camera.status}" data-camera-id="${camera.id}">
-                <div class="camera-feed-header">
+            <div class="camera-status-item ${camera.status}" data-camera-id="${camera.id}">
+                <div class="camera-status-header">
                     <span class="camera-name">${camera.name}</span>
                     <div class="camera-status-indicator ${camera.status}">
                         <i class="fas ${this.getStatusIcon(camera.status)}"></i>
                         <span class="status-text">${this.capitalizeFirst(camera.status)}</span>
-                        ${isStreaming ? '<span class="streaming-badge">LIVE</span>' : ''}
                     </div>
                 </div>
                 
-                <div class="camera-feed-video" id="feed-video-${camera.id}">
-                    <!-- LiveVideoPlayer will be inserted here -->
+                <div class="camera-info">
+                    <div class="camera-detail">
+                        <span class="label">Location:</span>
+                        <span class="value">${camera.location || 'Unknown'}</span>
+                    </div>
+                    <div class="camera-detail">
+                        <span class="label">IP:</span>
+                        <span class="value">${camera.ip_address}:${camera.port}</span>
+                    </div>
                 </div>
-                
-                <!-- Controls removed for simplified auto-streaming experience -->
             </div>
         `;
     }
 
-    initializeCameraPlayer(camera) {
-        const videoContainer = document.getElementById(`feed-video-${camera.id}`);
-        if (!videoContainer) return;
+    // Removed player initialization - no longer needed
 
-        // Create LiveVideoPlayer instance with auto-start
-        const player = new LiveVideoPlayer({
-            cameraId: camera.id,
-            camera: camera,
-            autoStart: true, // Always auto-start streaming
-            showControls: false, // No controls for simplified experience
-            className: 'dashboard-feed-player',
-            onStatusChange: (status) => this.handlePlayerStatusChange(camera.id, status),
-            onError: (error) => this.handlePlayerError(camera.id, error),
-            onStreamStart: () => this.handleStreamStart(camera.id),
-            onStreamStop: () => this.handleStreamStop(camera.id)
-        });
-
-        // Render and initialize player
-        videoContainer.innerHTML = player.render();
-        player.init();
-
-        // Store player reference
-        this.videoPlayers.set(camera.id, player);
-    }
-
-    renderNoFeedsMessage() {
-        const container = document.getElementById('live-camera-grid');
+    renderNoCamerasMessage() {
+        const container = document.getElementById('camera-status-grid');
         if (!container) return;
 
         container.innerHTML = `
-            <div class="no-feeds-message">
-                <div class="no-feeds-content">
+            <div class="no-cameras-message">
+                <div class="no-cameras-content">
                     <i class="fas fa-video-slash"></i>
-                    <h3>No Camera Feeds Available</h3>
-                    <p>Add cameras to start monitoring live feeds</p>
+                    <h3>No Cameras Configured</h3>
+                    <p>Add cameras to monitor system status</p>
                     <button class="btn btn-primary" onclick="window.dispatchEvent(new CustomEvent('navigate', { detail: { page: 'cameras', action: 'add' } }))">
                         <i class="fas fa-plus"></i>
                         Add Camera
                     </button>
                 </div>
+            </div>
+        `;
+    }
+
+    renderCameraStatusError() {
+        const container = document.getElementById('camera-status-grid');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="camera-status-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Failed to load camera status</span>
+            </div>
+        `;
+    }
+
+    renderCameraStatusPlaceholder() {
+        const container = document.getElementById('camera-status-grid');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="camera-status-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading camera status...</span>
             </div>
         `;
     }
@@ -745,8 +543,8 @@ class Dashboard {
             // Load basic dashboard data
             await this.simulateDataLoad();
             
-            // Load live cameras with streaming integration
-            await this.loadLiveCameras();
+            // Load camera status overview
+            await this.loadCameraStatus();
             
             // Load storage and recording data
             await this.loadStorageData();
@@ -758,8 +556,7 @@ class Dashboard {
             this.updateStorageMetrics();
             this.loadRecentRecordings();
             
-            // Setup streaming service event listeners
-            this.setupStreamingEventListeners();
+            // Removed streaming service setup
             
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -767,43 +564,9 @@ class Dashboard {
         }
     }
 
-    setupStreamingEventListeners() {
-        // Listen for streaming service events
-        streamingService.on('streamStarted', (data) => {
-            this.handleStreamStart(data.cameraId);
-        });
+    // Removed streaming service event listeners
 
-        streamingService.on('streamStopped', (data) => {
-            this.handleStreamStop(data.cameraId);
-        });
-
-        streamingService.on('streamError', (data) => {
-            this.handlePlayerError(data.cameraId, data.error);
-        });
-
-        streamingService.on('statusUpdate', (data) => {
-            // Update camera statuses based on server data
-            this.updateCameraStatuses(data);
-        });
-    }
-
-    updateCameraStatuses(statusData) {
-        if (!statusData.activeStreams) return;
-
-        const activeStreamIds = new Set(statusData.activeStreams.map(s => s.cameraId));
-        
-        // Update local camera data
-        this.liveCameras.forEach(camera => {
-            const wasStreaming = camera.isStreaming;
-            camera.isStreaming = activeStreamIds.has(camera.id);
-            
-            // Update UI if status changed
-            if (wasStreaming !== camera.isStreaming) {
-                this.updateFeedControlButton(camera.id);
-                this.updateCameraStatusIndicator(camera.id);
-            }
-        });
-    }
+    // Removed camera status update method
 
     async simulateDataLoad() {
         return new Promise(resolve => setTimeout(resolve, 500));
@@ -876,25 +639,7 @@ class Dashboard {
     // Clean up when component is destroyed
     destroy() {
         this.stopAutoRefresh();
-        
-        // Cleanup video players
-        this.videoPlayers.forEach(player => {
-            player.destroy();
-        });
-        this.videoPlayers.clear();
-        
-        // Remove streaming service event listeners
-        streamingService.off('streamStarted');
-        streamingService.off('streamStopped');
-        streamingService.off('streamError');
-        streamingService.off('statusUpdate');
-        
-        // Stop any active streams
-        this.liveCameras.forEach(camera => {
-            if (camera.isStreaming) {
-                streamingService.stopStream(camera.id).catch(console.error);
-            }
-        });
+        // Removed video player cleanup - no longer needed
     }
 
     // Storage and Recording Methods
@@ -916,8 +661,15 @@ class Dashboard {
             await this.checkRecordingStatus();
 
         } catch (error) {
-            console.error('Failed to load storage data:', error);
-            // Use default values on error
+            console.warn('Recording service unavailable - using default values:', error.message);
+            // Use default values when recording service is stopped
+            this.storageStats = {
+                totalRecordings: 0,
+                storageUsed: 'Service offline',
+                diskUsage: 0,
+                retentionDays: 30
+            };
+            this.updateRecordingStatusOffline();
         }
     }
 
@@ -940,7 +692,21 @@ class Dashboard {
                 }
             }
         } catch (error) {
-            console.error('Failed to check recording status:', error);
+            console.warn('Recording service health check failed:', error.message);
+            this.updateRecordingStatusOffline();
+        }
+    }
+
+    updateRecordingStatusOffline() {
+        const recordingStatusEl = document.getElementById('recording-status');
+        if (recordingStatusEl) {
+            const statusIcon = recordingStatusEl.querySelector('i');
+            const statusText = recordingStatusEl.querySelector('span');
+            
+            if (statusIcon && statusText) {
+                statusIcon.className = 'fas fa-circle text-gray';
+                statusText.textContent = 'Recording: Service Offline';
+            }
         }
     }
 
@@ -1015,11 +781,11 @@ class Dashboard {
             `;
 
         } catch (error) {
-            console.error('Failed to load recent recordings:', error);
+            console.warn('Recording service unavailable for timeline:', error.message);
             timelineContainer.innerHTML = `
-                <div class="timeline-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Failed to load recordings</span>
+                <div class="timeline-offline">
+                    <i class="fas fa-server"></i>
+                    <span>Recording service offline</span>
                 </div>
             `;
         }

@@ -26,10 +26,14 @@ class StorageConfig:
         self.hot_storage_days = config.get('hot_storage_days', 7)
         self.warm_storage_days = config.get('warm_storage_days', 23)  # 30 - 7 = 23
         
-        # Storage limits
-        self.max_storage_gb_per_camera = config.get('max_storage_gb_per_camera', 500)
-        self.warning_threshold_percent = config.get('warning_threshold_percent', 80)
-        self.critical_threshold_percent = config.get('critical_threshold_percent', 90)
+        # Storage limits (increased for uncompressed video)
+        self.max_storage_gb_per_camera = config.get('max_storage_gb_per_camera', 1000)  # Increased for uncompressed
+        self.warning_threshold_percent = config.get('warning_threshold_percent', 75)  # Earlier warning
+        self.critical_threshold_percent = config.get('critical_threshold_percent', 85)  # Earlier critical alert
+        
+        # Uncompressed video considerations
+        self.uncompressed_size_multiplier = config.get('uncompressed_size_multiplier', 10)  # ~10x larger
+        self.enable_compression_scheduling = config.get('enable_compression_scheduling', True)
         
         # Cleanup intervals
         self.cleanup_interval_hours = config.get('cleanup_interval_hours', 1)
@@ -281,7 +285,7 @@ class StorageManager:
             logger.debug(f"Error cleaning up empty directories: {e}")
     
     async def monitor_storage_health(self):
-        """Monitor storage health and log warnings/alerts"""
+        """Monitor storage health and log warnings/alerts with uncompressed video awareness"""
         try:
             # Get system-wide storage stats
             total_stats = await self.get_total_storage_stats()
@@ -290,16 +294,29 @@ class StorageManager:
             disk_usage = shutil.disk_usage(self.base_path)
             disk_free_percent = (disk_usage.free / disk_usage.total) * 100
             
-            # Log storage health
+            # Calculate estimated uncompressed storage impact
+            avg_segment_mb = (total_stats.average_segment_size / (1024*1024)) if total_stats.average_segment_size > 0 else 0
+            estimated_uncompressed_mb = avg_segment_mb * self.config.uncompressed_size_multiplier if avg_segment_mb > 0 else 0
+            
+            # Log storage health with uncompressed video context
             logger.info(f"Storage Health: {total_stats.total_segments} segments, "
                        f"{self._format_bytes(total_stats.total_size_bytes)} used, "
-                       f"{disk_free_percent:.1f}% disk free")
+                       f"{disk_free_percent:.1f}% disk free"
+                       f" (avg segment: {avg_segment_mb:.1f}MB, uncompressed est: {estimated_uncompressed_mb:.1f}MB)")
             
-            # Check thresholds
+            # Check thresholds with uncompressed video considerations
             if disk_free_percent < (100 - self.config.critical_threshold_percent):
-                logger.error(f"CRITICAL: Disk space critically low! {disk_free_percent:.1f}% free")
+                logger.error(f"CRITICAL: Disk space critically low! {disk_free_percent:.1f}% free "
+                           f"(uncompressed video requires significantly more space)")
+                # Trigger emergency cleanup or compression if enabled
+                if self.config.enable_compression_scheduling:
+                    await self._emergency_compression_cleanup()
             elif disk_free_percent < (100 - self.config.warning_threshold_percent):
-                logger.warning(f"WARNING: Disk space low! {disk_free_percent:.1f}% free")
+                logger.warning(f"WARNING: Disk space low! {disk_free_percent:.1f}% free "
+                             f"(consider scheduling compression for older recordings)")
+                # Schedule compression for warm storage
+                if self.config.enable_compression_scheduling:
+                    await self._schedule_warm_storage_compression()
             
             # Check per-camera storage limits
             await self._check_camera_storage_limits()
@@ -307,8 +324,54 @@ class StorageManager:
         except Exception as e:
             logger.error(f"Error monitoring storage health: {e}", exc_info=True)
     
+    async def _emergency_compression_cleanup(self):
+        """Emergency cleanup with compression for critically low disk space"""
+        logger.warning("Initiating emergency compression cleanup due to critically low disk space")
+        
+        # This is a placeholder for future compression implementation
+        # For now, just log the intention
+        camera_dirs = [d for d in self.base_path.iterdir() if d.is_dir() and d.name.startswith('camera_')]
+        
+        for camera_dir in camera_dirs:
+            try:
+                camera_id = int(camera_dir.name.split('_')[1])
+                stats = await self.get_camera_storage_stats(camera_id)
+                
+                # Focus on warm storage (older but within retention)
+                warm_size_gb = stats.storage_tiers['warm']['size_bytes'] / (1024**3)
+                if warm_size_gb > 10:  # Only if substantial warm storage exists
+                    logger.info(f"Camera {camera_id} has {warm_size_gb:.1f}GB in warm storage - candidate for compression")
+                    # TODO: Implement actual compression here
+                    
+            except Exception as e:
+                logger.error(f"Error in emergency compression for camera {camera_dir}: {e}")
+    
+    async def _schedule_warm_storage_compression(self):
+        """Schedule compression for warm storage (older recordings within retention)"""
+        logger.info("Scheduling compression for warm storage to free disk space")
+        
+        # This is a placeholder for future compression scheduling
+        # For now, just identify candidates
+        camera_dirs = [d for d in self.base_path.iterdir() if d.is_dir() and d.name.startswith('camera_')]
+        
+        total_compressible_gb = 0
+        for camera_dir in camera_dirs:
+            try:
+                camera_id = int(camera_dir.name.split('_')[1])
+                stats = await self.get_camera_storage_stats(camera_id)
+                
+                warm_size_gb = stats.storage_tiers['warm']['size_bytes'] / (1024**3)
+                total_compressible_gb += warm_size_gb
+                
+            except Exception as e:
+                logger.error(f"Error checking compression candidates for {camera_dir}: {e}")
+        
+        if total_compressible_gb > 5:  # Worth compressing
+            logger.info(f"Found {total_compressible_gb:.1f}GB of warm storage suitable for compression")
+            # TODO: Implement compression scheduling here
+    
     async def _check_camera_storage_limits(self):
-        """Check storage limits for each camera"""
+        """Check storage limits for each camera with uncompressed video considerations"""
         camera_dirs = [d for d in self.base_path.iterdir() if d.is_dir() and d.name.startswith('camera_')]
         
         for camera_dir in camera_dirs:
@@ -319,9 +382,19 @@ class StorageManager:
                 size_gb = stats.total_size_bytes / (1024**3)
                 limit_gb = self.config.max_storage_gb_per_camera
                 
-                if size_gb > limit_gb:
-                    logger.warning(f"Camera {camera_id} storage exceeds limit: "
-                                 f"{size_gb:.1f}GB > {limit_gb}GB")
+                # Calculate storage velocity (GB per day)
+                if stats.total_segments > 0:
+                    avg_segment_gb = size_gb / stats.total_segments
+                    # Assume 144 segments per day (10-minute segments)
+                    daily_growth_gb = avg_segment_gb * 144
+                    
+                    if size_gb > limit_gb:
+                        logger.warning(f"Camera {camera_id} storage exceeds limit: "
+                                     f"{size_gb:.1f}GB > {limit_gb}GB (growing ~{daily_growth_gb:.1f}GB/day)")
+                    elif size_gb > (limit_gb * 0.8):  # 80% warning
+                        days_until_full = (limit_gb - size_gb) / daily_growth_gb if daily_growth_gb > 0 else float('inf')
+                        logger.info(f"Camera {camera_id} storage at {(size_gb/limit_gb)*100:.1f}% capacity "
+                                  f"(~{days_until_full:.1f} days until full)")
                 
             except Exception as e:
                 logger.error(f"Error checking storage limit for {camera_dir}: {e}")
@@ -548,7 +621,11 @@ class StorageManager:
                     "retention_days": self.config.retention_days,
                     "hot_storage_days": self.config.hot_storage_days,
                     "max_storage_gb_per_camera": self.config.max_storage_gb_per_camera,
-                    "cleanup_interval_hours": self.config.cleanup_interval_hours
+                    "cleanup_interval_hours": self.config.cleanup_interval_hours,
+                    "uncompressed_size_multiplier": self.config.uncompressed_size_multiplier,
+                    "enable_compression_scheduling": self.config.enable_compression_scheduling,
+                    "warning_threshold_percent": self.config.warning_threshold_percent,
+                    "critical_threshold_percent": self.config.critical_threshold_percent
                 },
                 "generated_at": datetime.now().isoformat()
             }

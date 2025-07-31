@@ -206,6 +206,10 @@ class CameraService extends APIService {
         return this.get(`${this.endpoint}/${cameraId}/snapshot`, { stream: streamId });
     }
 
+    async openInVLC(cameraId) {
+        return this.post(`${this.endpoint}/${cameraId}/open-vlc`);
+    }
+
     async startPreview(cameraId, streamId = 'main') {
         return this.post(`${this.endpoint}/${cameraId}/preview`, { stream: streamId });
     }
@@ -258,8 +262,14 @@ class DetectionService extends APIService {
         return this.delete(`${this.endpoint}/${id}`);
     }
 
-    async getRecentDetections(limit = 10) {
-        return this.get(`${this.endpoint}/recent`, { limit });
+    async getRecentDetections(limit = 10, camera_id = null) {
+        const params = { limit };
+        if (camera_id) params.camera_id = camera_id;
+        return this.get(`${this.endpoint}/recent`, params);
+    }
+
+    async searchDetections(filters = {}) {
+        return this.get(`${this.endpoint}/search`, filters);
     }
 
     async exportDetections(filters = {}, format = 'csv') {
@@ -288,6 +298,33 @@ class DetectionService extends APIService {
 }
 
 /**
+ * Analytics API Service
+ */
+class AnalyticsService extends APIService {
+    constructor() {
+        super();
+        this.endpoint = '/analytics';
+    }
+
+    async getOverview() {
+        return this.get(`${this.endpoint}/overview`);
+    }
+
+    async getHourlyTrend(hours = 24) {
+        return this.get(`${this.endpoint}/trend`, { hours });
+    }
+
+    async getCameraStats(cameraId = null) {
+        const params = cameraId ? { camera_id: cameraId } : {};
+        return this.get(`${this.endpoint}/cameras`, params);
+    }
+
+    async getPlateStats(timeframe = '24h') {
+        return this.get(`${this.endpoint}/plates`, { timeframe });
+    }
+}
+
+/**
  * System API Service
  */
 class SystemService extends APIService {
@@ -297,7 +334,8 @@ class SystemService extends APIService {
     }
 
     async getHealth() {
-        return this.get(`${this.endpoint}/health`);
+        // Health endpoint is at root level in our API
+        return this.get('/health');
     }
 
     async getStatus() {
@@ -349,6 +387,7 @@ class APIServiceFactory {
     constructor() {
         this.camera = new CameraService();
         this.detection = new DetectionService();
+        this.analytics = new AnalyticsService();
         this.system = new SystemService();
     }
 

@@ -9,8 +9,8 @@ const environment = window.APP_ENV || 'development';
 // Environment-specific configurations
 const configs = {
     development: {
-        API_BASE_URL: 'http://localhost:8001',
-        WS_BASE_URL: 'ws://localhost:8001',
+        API_BASE_URL: 'http://localhost:8000',
+        WS_BASE_URL: 'ws://localhost:8000',
         RECORDING_API_URL: 'http://localhost:8002'
     },
     production: {
@@ -40,22 +40,17 @@ const config = {
     
     // API Endpoints - relative paths that will be appended to API_BASE_URL
     API_ENDPOINTS: {
-        // Camera endpoints
-        CAMERAS: '/api/v1/cameras/',
-        CAMERA_BY_ID: (id) => `/api/v1/cameras/${id}`,
-        CAMERA_TEST_CONNECTION: '/api/v1/cameras/test-connection',
+        // Camera endpoints - Clean Architecture
+        CAMERAS: '/api/cameras',
+        CAMERA_BY_ID: (id) => `/api/cameras/${id}`,
+        CAMERA_SNAPSHOT: (id) => `/api/cameras/${id}/snapshot`,
+        CAMERA_HEALTH: (id) => `/api/cameras/${id}/health`,
         
-        // Streaming endpoints
-        STREAMS: '/api/v1/streams/',
-        STREAM_START: (id) => `/api/v1/streams/start/${id}`,
-        STREAM_STOP: (id) => `/api/v1/streams/stop/${id}`,
-        STREAM_STATUS: (id) => `/api/v1/streams/status/${id}`,
+        // Recording quality endpoints
+        CAMERA_RECORDING_QUALITY: (id) => `/api/cameras/${id}/recording/quality`,
         
-        // Video/Image endpoints (no /api/v1 prefix)
-        STREAM_VIDEO: (id) => `/stream/video/${id}`,          // Legacy endpoint
-        STREAM_MJPEG: (id) => `/stream/mjpeg/${id}`,          // New frame distribution endpoint
-        STREAM_SNAPSHOT: (id) => `/stream/snapshot/${id}`,    // New snapshot endpoint
-        STREAM_THUMBNAIL: (id) => `/stream/thumbnail/${id}`,  // Legacy thumbnail endpoint
+        // System health
+        SYSTEM_HEALTH: '/api/system/health',
         
         // Playback endpoints
         PLAYBACK: '/api/v1/playback/',
@@ -72,7 +67,6 @@ const config = {
     
     // WebSocket endpoints
     WS_ENDPOINTS: {
-        STREAM: (cameraId) => `/ws/stream/${cameraId}`,
         NOTIFICATIONS: '/ws/notifications'
     },
     
@@ -81,14 +75,12 @@ const config = {
         ENABLE_RECORDING: true,
         ENABLE_PLAYBACK: true,
         ENABLE_DETECTION: true,
-        ENABLE_ANALYTICS: true,
-        AUTO_START_STREAMS: true
+        ENABLE_ANALYTICS: true
     },
     
     // Timeouts and intervals (in milliseconds)
     TIMEOUTS: {
         API_REQUEST: 10000,        // 10 seconds
-        STREAM_INIT: 15000,        // 15 seconds
         STATUS_POLLING: 30000,     // 30 seconds
         HEALTH_CHECK: 60000,       // 1 minute
         THUMBNAIL_REFRESH: 5000    // 5 seconds

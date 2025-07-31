@@ -1,10 +1,8 @@
 /**
  * Cameras Page Component
- * Manages camera list, configuration, and monitoring
+ * Manages camera list, configuration, and snapshot monitoring
  */
 import SimpleCameraModal from '../components/cameras/SimpleCameraModal.js';
-import LiveVideoPlayer from '../components/streaming/LiveVideoPlayer.js';
-import streamingService from '../services/StreamingService.js';
 import config from '../config/app.config.js';
 
 class Cameras {
@@ -19,13 +17,6 @@ class Cameras {
         this.selectedCameras = new Set();
         this.currentView = 'grid'; // grid or list
         this.bulkMode = false;
-        
-        // Enhanced state management for streaming
-        this.streamStates = new Map();
-        this.videoPlayers = new Map();
-        this.streamTimers = new Map();
-        this.navigationCleanupHandlers = new Map();
-        this.statusPollingInterval = null;
         
         // Make instance available globally for onclick handlers
         window.camerasPage = this;
@@ -42,16 +33,6 @@ class Cameras {
     }
 
     init() {
-        // Clear any existing video players when reinitializing
-        this.videoPlayers.forEach(player => {
-            try {
-                player.destroy();
-            } catch (e) {
-                console.warn('Error destroying player:', e);
-            }
-        });
-        this.videoPlayers.clear();
-        
         this.render();
         this.attachEventListeners();
         this.loadCameras();
@@ -201,12 +182,6 @@ class Cameras {
             this.cameras = await this.fetchCameras();
             this.filteredCameras = [...this.cameras];
             
-            // Check streaming status for each camera to sync button states
-            await this.checkStreamingStatus();
-            
-            // Start periodic status polling
-            this.startStatusPolling();
-            
             this.renderCameraGrid();
         } catch (error) {
             console.error('Error loading cameras:', error);
@@ -216,10 +191,14 @@ class Cameras {
 
     async fetchCameras() {
         try {
-            // Use StreamingService for consistent camera loading with fallback
-            const cameras = await streamingService.getCameras();
+            // Load cameras directly from API
+            const response = await fetch('/api/cameras');
+            if (!response.ok) {
+                throw new Error('Failed to fetch cameras');
+            }
+            const cameras = await response.json();
             
-            // Transform StreamingService response to match frontend expectations
+            // Transform API response to match frontend expectations
             return cameras.map(camera => ({
                 id: camera.id.toString(),
                 name: camera.name,
@@ -240,35 +219,8 @@ class Cameras {
             }));
         } catch (error) {
             console.error('Error fetching cameras:', error);
-            
-            // StreamingService.getCameras() should never throw - it returns fallback data
-            // If we're here, something else failed. Try to get fallback data directly.
-            console.log('🚨 Unexpected error in camera loading - attempting direct fallback');
-            
-            // Try to get fallback data directly from StreamingService
-            try {
-                return streamingService.getFallbackCameraData().map(camera => ({
-                    id: camera.id.toString(),
-                    name: camera.name,
-                    location: camera.location || 'unknown',
-                    ipAddress: camera.ip_address,
-                    port: camera.port,
-                    connectionType: camera.connection_type,
-                    streamPath: camera.stream_path,
-                    status: camera.status || 'offline',
-                    manufacturer: 'Unknown',
-                    model: 'Unknown', 
-                    resolution: 'Unknown',
-                    fps: 'Unknown',
-                    lastSeen: new Date(camera.updated_at),
-                    uptime: this.calculateUptime(new Date(camera.created_at)),
-                    username: camera.username,
-                    enabled: camera.enabled
-                }));
-            } catch (fallbackError) {
-                console.error('Even fallback failed:', fallbackError);
-                return [];
-            }
+            // Return empty array if API fails
+            return [];
         }
     }
 
@@ -281,62 +233,11 @@ class Cameras {
         return `${days}d ${hours}h ${minutes}m`;
     }
 
-    async checkStreamingStatus() {
-        console.log('Checking streaming status for all cameras...');
-        
-        // Check streaming status for each camera
-        for (const camera of this.cameras) {
-            try {
-                const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.STREAM_STATUS)(camera.id));
-                if (response.ok) {
-                    const statusData = await response.json();
-                    const isStreaming = statusData.status === 'active';
-                    
-                    console.log(`Camera ${camera.id} (${camera.name}) streaming status: ${isStreaming}`);
-                    
-                    // Update local streaming state
-                    this.streamStates.set(camera.id, isStreaming);
-                    
-                    // If streaming, start the duration timer
-                    if (isStreaming) {
-                        this.startStreamTimer(camera.id);
-                    }
-                } else {
-                    console.warn(`Failed to get streaming status for camera ${camera.id}: ${response.status}`);
-                    this.streamStates.set(camera.id, false);
-                }
-            } catch (error) {
-                console.error(`Error checking streaming status for camera ${camera.id}:`, error);
-                this.streamStates.set(camera.id, false);
-            }
-        }
-    }
 
-    startStatusPolling() {
-        // Clear any existing polling interval
-        if (this.statusPollingInterval) {
-            clearInterval(this.statusPollingInterval);
-        }
-
-        // Poll streaming status every 30 seconds
-        this.statusPollingInterval = setInterval(async () => {
-            await this.checkStreamingStatus();
-            // Update UI without full re-render
-            this.updateAllCameraStates();
-        }, 30000);
-    }
-
-    stopStatusPolling() {
-        if (this.statusPollingInterval) {
-            clearInterval(this.statusPollingInterval);
-            this.statusPollingInterval = null;
-        }
-    }
 
     updateAllCameraStates() {
-        // Update all camera button states and info displays
+        // Update camera status indicators and information
         this.cameras.forEach(camera => {
-            this.updateStreamControlButtons(camera.id);
             this.updateCameraStatusIndicator(camera.id);
             this.updateCameraInfo(camera.id);
         });
@@ -371,7 +272,7 @@ class Cameras {
     renderCameraCard(camera) {
         const statusClass = camera.status;
         const healthScore = this.calculateHealthScore(camera);
-        const isStreaming = this.streamStates.get(camera.id) || false;
+        // Removed streaming state
         
         return `
             <div class="camera-card" data-camera-id="${camera.id}">
@@ -441,7 +342,7 @@ class Cameras {
                     </div>
                 </div>
                 
-                <!-- Stream controls removed for simplified auto-streaming experience -->
+                <!-- Snapshot-only interface, no streaming controls -->
             </div>
         `;
     }
@@ -451,159 +352,50 @@ class Cameras {
         if (!container) return;
         
         // Clean up existing player first
-        this.cleanupCameraPlayer(camera.id);
-        
-        // Create new player instance
-        const player = new LiveVideoPlayer({
-            cameraId: camera.id,
-            camera: camera,
-            autoStart: false,
-            showControls: false,  // External controls used
-            className: 'camera-card-player',
-            onStatusChange: (status) => this.handleStreamStatusChange(camera.id, status),
-            onError: (error) => this.handleStreamError(camera.id, error),
-            onStreamStart: () => this.handleStreamStart(camera.id),
-            onStreamStop: () => this.handleStreamStop(camera.id)
-        });
-        
-        // Initialize the player with container
-        player.init(container);
-        
-        // Store reference
-        this.videoPlayers.set(camera.id, player);
+        // Display snapshot instead of video player
+        container.innerHTML = `
+            <img src="/api/cameras/${camera.id}/snapshot" 
+                 alt="${camera.name} snapshot" 
+                 class="camera-snapshot"
+                 onerror="this.src='/images/camera-placeholder.jpg'"
+                 style="width: 100%; height: 100%; object-fit: cover;">
+        `;
         
         // Set up navigation cleanup
         this.setupNavigationCleanup(camera.id);
     }
 
-    // Clean up individual camera player
+    // Clean up camera snapshot refresh
     cleanupCameraPlayer(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player) {
-            player.destroy();
-            this.videoPlayers.delete(cameraId);
-        }
-        
-        // Clean up timer
-        const timer = this.streamTimers.get(cameraId);
-        if (timer) {
-            clearInterval(timer);
-            this.streamTimers.delete(cameraId);
-        }
-        
-        // Clean up navigation handler
-        const cleanup = this.navigationCleanupHandlers.get(cameraId);
-        if (cleanup) {
-            cleanup();
-            this.navigationCleanupHandlers.delete(cameraId);
-        }
+        // No cleanup needed for snapshot-only interface
     }
     
-    // Set up navigation cleanup to prevent black screens
+    // Set up snapshot refresh
     setupNavigationCleanup(cameraId) {
-        // Listen for page navigation
-        const beforeUnloadHandler = () => {
-            this.cleanupCameraPlayer(cameraId);
-        };
-        
-        window.addEventListener('beforeunload', beforeUnloadHandler);
-        
-        // Store cleanup function
-        this.navigationCleanupHandlers.set(cameraId, () => {
-            window.removeEventListener('beforeunload', beforeUnloadHandler);
-        });
+        // No navigation cleanup needed for snapshot-only interface
     }
     
     // Handle page visibility changes (tab switching)
     handleVisibilityChange() {
-        if (document.hidden) {
-            // Page is hidden - pause all streams
-            this.pauseAllStreams();
-        } else {
-            // Page is visible - resume streams
-            this.resumeActiveStreams();
+        // Page visibility handling - refresh snapshots when page becomes visible
+        if (!document.hidden) {
+            this.refreshSnapshots();
         }
     }
     
-    // Pause all active streams when page is hidden
-    pauseAllStreams() {
-        this.videoPlayers.forEach((player, cameraId) => {
-            if (player.isStreaming) {
-                // Store state before pausing
-                this.streamStates.set(cameraId, 'paused');
-                player.cleanup(); // Just cleanup connections, don't stop stream
-            }
-        });
-    }
-    
-    // Resume streams that were active
-    resumeActiveStreams() {
-        this.streamStates.forEach((state, cameraId) => {
-            if (state === 'paused') {
-                const player = this.videoPlayers.get(cameraId);
-                if (player) {
-                    // Re-render to restart image loading
-                    player.render();
-                    this.streamStates.set(cameraId, true);
-                }
-            }
+    // Refresh all camera snapshots
+    refreshSnapshots() {
+        document.querySelectorAll('.camera-snapshot').forEach(img => {
+            // Force reload snapshot by updating src with timestamp
+            const baseSrc = img.src.split('?')[0];
+            img.src = `${baseSrc}?t=${Date.now()}`;
         });
     }
 
-    // Player event handlers
-    handleStreamStatusChange(cameraId, status) {
-        console.log(`Camera ${cameraId} stream status: ${status}`);
-    }
-
-    handlePlayerError(cameraId, error) {
-        console.error(`Camera ${cameraId} error:`, error);
-        this.showToast(`Camera error: ${error}`, 'error');
-    }
-
-    handleStreamStart(cameraId) {
-        console.log(`Stream started for camera ${cameraId}`);
-        this.streamStates.set(cameraId, true);
-        this.updateCameraStatusIndicator(cameraId);
-        this.updateStreamControlButtons(cameraId);
-        this.updateCameraInfo(cameraId);
-        this.startStreamTimer(cameraId);
-    }
-
-    handleStreamStop(cameraId) {
-        console.log(`Stream stopped for camera ${cameraId}`);
-        this.streamStates.set(cameraId, false);
-        this.updateCameraStatusIndicator(cameraId);
-        this.updateStreamControlButtons(cameraId);
-        this.updateCameraInfo(cameraId);
-        this.stopStreamTimer(cameraId);
-    }
-
-    updateStreamControlButtons(cameraId) {
-        const isStreaming = this.streamStates.get(cameraId) || false;
-        const cameraCard = document.querySelector(`[data-camera-id="${cameraId}"]`);
-        if (!cameraCard) return;
-
-        // Update start/stop button
-        const startStopBtn = cameraCard.querySelector('[data-action*="stream"]');
-        if (startStopBtn) {
-            if (isStreaming) {
-                startStopBtn.className = 'btn btn-danger btn-small';
-                startStopBtn.title = 'Stop Stream';
-                startStopBtn.dataset.action = 'stop-stream';
-                startStopBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
-            } else {
-                startStopBtn.className = 'btn btn-success btn-small';
-                startStopBtn.title = 'Start Stream';
-                startStopBtn.dataset.action = 'start-stream';
-                startStopBtn.innerHTML = '<i class="fas fa-play"></i> Start';
-            }
-        }
-
-        // Update capture button state
-        const captureBtn = cameraCard.querySelector('[data-action="capture"]');
-        if (captureBtn) {
-            captureBtn.disabled = !isStreaming;
-        }
+    // Camera event handlers
+    handleSnapshotError(cameraId, error) {
+        console.error(`Camera ${cameraId} snapshot error:`, error);
+        this.showToast(`Camera snapshot error: ${error}`, 'error');
     }
 
     updateCameraStatusIndicator(cameraId) {
@@ -621,7 +413,6 @@ class Cameras {
         const infoSection = cameraCard?.querySelector('.camera-card-info');
         if (!infoSection) return;
 
-        const isStreaming = this.streamStates.get(cameraId) || false;
         const healthScore = this.calculateHealthScore(camera);
 
         // Rebuild the camera info section
@@ -643,32 +434,7 @@ class Cameras {
         `;
     }
 
-    startStreamTimer(cameraId) {
-        const startTime = Date.now();
-        
-        const timer = setInterval(() => {
-            const elapsed = Date.now() - startTime;
-            const minutes = Math.floor(elapsed / 60000);
-            const seconds = Math.floor((elapsed % 60000) / 1000);
-            const display = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            // Update the stream duration display in camera info
-            const durationElement = document.getElementById(`stream-duration-${cameraId}`);
-            if (durationElement) {
-                durationElement.textContent = display;
-            }
-        }, 1000);
-        
-        this.streamTimers.set(cameraId, timer);
-    }
-
-    stopStreamTimer(cameraId) {
-        const timer = this.streamTimers.get(cameraId);
-        if (timer) {
-            clearInterval(timer);
-            this.streamTimers.delete(cameraId);
-        }
-    }
+    // Removed stream timer methods - snapshot-only interface
 
     renderCameraRow(camera) {
         const statusIcon = this.getStatusIcon(camera.status);
@@ -793,12 +559,6 @@ class Cameras {
                 break;
             case 'live':
                 this.openCameraLiveView(cameraId);
-                break;
-            case 'start-stream':
-                this.handleStartStream(cameraId);
-                break;
-            case 'stop-stream':
-                this.handleStopStream(cameraId);
                 break;
             case 'capture':
                 this.handleCapture(cameraId);
@@ -1233,74 +993,76 @@ class Cameras {
     }
 
     openCameraLiveView(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player) {
-            // Start streaming if not already active
-            if (!this.streamStates.get(cameraId)) {
-                player.startStream();
-            } else {
-                // Open in fullscreen if already streaming
-                player.openFullscreen();
+        // Snapshot-only interface - show snapshot in modal
+        this.showSnapshotModal(cameraId);
+    }
+    
+    showSnapshotModal(cameraId) {
+        const camera = this.cameras.find(c => c.id === cameraId);
+        if (!camera) return;
+        
+        // Create snapshot modal (simple implementation)
+        const modal = document.createElement('div');
+        modal.className = 'snapshot-modal';
+        modal.innerHTML = `
+            <div class="snapshot-modal-content">
+                <div class="snapshot-modal-header">
+                    <h3>${camera.name} - Live Snapshot</h3>
+                    <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                </div>
+                <div class="snapshot-modal-body">
+                    <img src="/api/cameras/${cameraId}/snapshot?t=${Date.now()}" 
+                         alt="${camera.name} snapshot" 
+                         style="max-width: 100%; height: auto;">
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Auto-refresh snapshot every 5 seconds
+        const img = modal.querySelector('img');
+        const refreshInterval = setInterval(() => {
+            img.src = `/api/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+        }, 5000);
+        
+        // Clean up interval when modal is closed
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                clearInterval(refreshInterval);
+                modal.remove();
             }
-        } else {
-            this.showToast('Camera player not available', 'error');
-        }
+        });
     }
 
-    // New stream control handlers
-    async handleStartStream(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player) {
+    // Snapshot control handlers
+    async handleRefreshSnapshot(cameraId) {
+        const snapshotImg = document.querySelector(`[data-camera-id="${cameraId}"] .camera-snapshot`);
+        if (snapshotImg) {
             try {
-                await player.startStream();
-                // Update button state will be handled by handleStreamStart callback
+                snapshotImg.src = `/api/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+                this.showToast('Snapshot refreshed', 'success');
             } catch (error) {
-                this.showToast(`Failed to start stream: ${error.message}`, 'error');
+                this.showToast(`Failed to refresh snapshot: ${error.message}`, 'error');
             }
-        } else {
-            this.showToast('Camera player not available', 'error');
-        }
-    }
-
-    async handleStopStream(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player) {
-            try {
-                await player.stopStream();
-                // Update button state will be handled by handleStreamStop callback
-            } catch (error) {
-                this.showToast(`Failed to stop stream: ${error.message}`, 'error');
-            }
-        } else {
-            this.showToast('Camera player not available', 'error');
         }
     }
 
     async handleCapture(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player) {
-            try {
-                await player.captureFrame();
-                this.showToast('Frame captured successfully', 'success');
-            } catch (error) {
-                this.showToast(`Failed to capture frame: ${error.message}`, 'error');
+        try {
+            // Capture current snapshot
+            const response = await fetch(`/api/cameras/${cameraId}/snapshot`);
+            if (response.ok) {
+                this.showToast('Snapshot captured successfully', 'success');
+            } else {
+                throw new Error('Failed to capture snapshot');
             }
-        } else {
-            this.showToast('Camera player not available', 'error');
+        } catch (error) {
+            this.showToast(`Failed to capture snapshot: ${error.message}`, 'error');
         }
     }
 
     async handleFullscreen(cameraId) {
-        const player = this.videoPlayers.get(cameraId);
-        if (player) {
-            try {
-                await player.openFullscreen();
-            } catch (error) {
-                this.showToast(`Failed to open fullscreen: ${error.message}`, 'error');
-            }
-        } else {
-            this.showToast('Camera player not available', 'error');
-        }
+        this.openCameraLiveView(cameraId);
     }
 
     // Bulk actions
@@ -1374,16 +1136,10 @@ class Cameras {
         // Stop all polling
         this.stopStatusPolling();
         
-        // Clean up all video players
-        this.videoPlayers.forEach((player, cameraId) => {
-            this.cleanupCameraPlayer(cameraId);
+        // Clean up camera components
+        this.cameras.forEach(camera => {
+            this.cleanupCameraPlayer(camera.id);
         });
-        
-        // Clear all maps
-        this.streamStates.clear();
-        this.videoPlayers.clear();
-        this.streamTimers.clear();
-        this.navigationCleanupHandlers.clear();
         
         // Remove global reference
         if (window.camerasPage === this) {

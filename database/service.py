@@ -18,11 +18,21 @@ class DatabaseService:
         )
         self.logger = logging.getLogger("DatabaseService")
         
+    async def init_db(self):
+        """Initialize database and create tables"""
+        async with self.engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        self.logger.info("Database initialized and tables created")
+    
     async def create_tables(self):
         """Create all database tables"""
         async with self.engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         self.logger.info("Database tables created")
+    
+    def get_session(self):
+        """Get async database session"""
+        return self.async_session()
     
     async def save_detection(self, detection_data: Dict) -> str:
         """Save detection to database"""
@@ -108,6 +118,36 @@ class DatabaseService:
             )
             return result.scalar_one_or_none()
     
+    async def update_camera(self, camera_id: str, camera_data: Dict) -> bool:
+        """Update camera configuration"""
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(Camera).where(Camera.camera_id == camera_id)
+            )
+            camera = result.scalar_one_or_none()
+            if camera:
+                # Update camera fields
+                for key, value in camera_data.items():
+                    if hasattr(camera, key):
+                        setattr(camera, key, value)
+                camera.updated_at = datetime.utcnow()
+                await session.commit()
+                return True
+            return False
+    
+    async def delete_camera(self, camera_id: str) -> bool:
+        """Delete camera"""
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(Camera).where(Camera.camera_id == camera_id)
+            )
+            camera = result.scalar_one_or_none()
+            if camera:
+                await session.delete(camera)
+                await session.commit()
+                return True
+            return False
+    
     async def update_camera_status(self, camera_id: str, status: str):
         """Update camera status"""
         async with self.async_session() as session:
@@ -118,6 +158,18 @@ class DatabaseService:
             if camera:
                 camera.status = status
                 camera.updated_at = datetime.utcnow()
+                await session.commit()
+    
+    async def update_camera_test_result(self, camera_id: str, test_result: str):
+        """Update camera test result"""
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(Camera).where(Camera.camera_id == camera_id)
+            )
+            camera = result.scalar_one_or_none()
+            if camera:
+                camera.last_test_at = datetime.utcnow()
+                camera.last_test_result = test_result
                 await session.commit()
     
     async def save_video_recording(self, recording_data: Dict) -> str:

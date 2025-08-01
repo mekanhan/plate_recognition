@@ -1,39 +1,93 @@
 /**
  * Playback Service
  * Handles all video playback and recording-related API calls
+ * Updated to match implemented backend API (port 8002)
  */
 import config from '../config/app.config.js';
 
 class PlaybackService {
     constructor() {
-        // Use recording API port (8002) instead of main API port (8001)
-        this.baseUrl = config.RECORDING_API_URL;
+        // Use recording service port 8002
+        this.baseUrl = 'http://localhost:8002';
     }
 
     /**
-     * Get health status of playback system
+     * Get health status of recording system
      */
     async getHealth() {
         try {
             const response = await fetch(`${this.baseUrl}/health`);
             return await response.json();
         } catch (error) {
-            console.error('Playback health check failed:', error);
+            console.error('Recording service health check failed:', error);
             throw error;
         }
     }
 
     /**
-     * Get video timeline for a camera within a time range
+     * Get recording status for all cameras
      */
-    async getTimeline(cameraId, startTime, endTime) {
+    async getRecordingStatus() {
         try {
-            const params = new URLSearchParams({
-                start_time: startTime,
-                end_time: endTime
-            });
+            const response = await fetch(`${this.baseUrl}/recordings/status`);
+            if (!response.ok) {
+                throw new Error(`Recording status request failed: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get recording status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get recording status for specific camera
+     */
+    async getCameraRecordingStatus(cameraId) {
+        try {
+            const response = await fetch(`${this.baseUrl}/recordings/status/${cameraId}`);
+            if (!response.ok) {
+                throw new Error(`Camera recording status request failed: ${response.status}`);
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get camera recording status:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get calendar data for a camera and month
+     */
+    async getCalendarData(cameraId, year, month) {
+        try {
+            const response = await fetch(
+                `${this.baseUrl}/api/v1/recordings/cameras/${cameraId}/calendar?year=${year}&month=${month}`
+            );
             
-            const response = await fetch(`${this.baseUrl}/cameras/${cameraId}/timeline?${params}`);
+            if (!response.ok) {
+                throw new Error(`Calendar data request failed: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get calendar data:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get timeline segments for a specific date
+     */
+    async getTimelineSegments(cameraId, date, startHour = null, endHour = null) {
+        try {
+            const params = new URLSearchParams({ date });
+            if (startHour !== null) params.append('start_hour', startHour);
+            if (endHour !== null) params.append('end_hour', endHour);
+            
+            const response = await fetch(
+                `${this.baseUrl}/api/v1/recordings/cameras/${cameraId}/timeline?${params}`
+            );
             
             if (!response.ok) {
                 throw new Error(`Timeline request failed: ${response.status}`);
@@ -41,32 +95,7 @@ class PlaybackService {
             
             return await response.json();
         } catch (error) {
-            console.error('Failed to get timeline:', error);
-            throw error;
-        }
-    }
-
-    /**
-     * Get playback info for a specific timestamp
-     */
-    async getPlaybackInfo(cameraId, timestamp) {
-        try {
-            const params = new URLSearchParams({
-                timestamp: timestamp
-            });
-            
-            const response = await fetch(`${this.baseUrl}/cameras/${cameraId}/info?${params}`);
-            
-            if (!response.ok) {
-                if (response.status === 404) {
-                    return null; // No recording found for timestamp
-                }
-                throw new Error(`Playback info request failed: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Failed to get playback info:', error);
+            console.error('Failed to get timeline segments:', error);
             throw error;
         }
     }
@@ -74,46 +103,43 @@ class PlaybackService {
     /**
      * Get video stream URL for a segment
      */
-    getStreamUrl(segmentId) {
-        return `${this.baseUrl}/segments/${segmentId}/stream`;
+    getStreamUrl(segmentFilename) {
+        return `${this.baseUrl}/api/v1/recordings/stream/${segmentFilename}`;
     }
 
     /**
-     * Get segment information
+     * Get recording details for a specific date
      */
-    async getSegmentInfo(segmentId) {
+    async getRecordingDetails(cameraId, date) {
         try {
-            const response = await fetch(`${this.baseUrl}/segments/${segmentId}/info`);
+            const response = await fetch(
+                `${this.baseUrl}/api/v1/recordings/cameras/${cameraId}/details?date=${date}`
+            );
             
             if (!response.ok) {
-                throw new Error(`Segment info request failed: ${response.status}`);
+                throw new Error(`Recording details request failed: ${response.status}`);
             }
             
             return await response.json();
         } catch (error) {
-            console.error('Failed to get segment info:', error);
+            console.error('Failed to get recording details:', error);
             throw error;
         }
     }
 
     /**
-     * Search recordings with criteria
+     * Search recordings with filters
      */
-    async searchRecordings(cameraId, startDate, endDate, options = {}) {
+    async searchRecordings(cameraId, searchParams) {
         try {
-            const params = new URLSearchParams({
-                start_date: startDate,
-                end_date: endDate
-            });
-            
-            if (options.minDuration) {
-                params.append('min_duration', options.minDuration);
-            }
-            if (options.maxDuration) {
-                params.append('max_duration', options.maxDuration);
-            }
-            
-            const response = await fetch(`${this.baseUrl}/recordings/${cameraId}/segments?${params}`);
+            const response = await fetch(
+                `${this.baseUrl}/api/v1/recordings/cameras/${cameraId}/search`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(searchParams)
+                }
+            );
             
             if (!response.ok) {
                 throw new Error(`Search request failed: ${response.status}`);
@@ -127,11 +153,11 @@ class PlaybackService {
     }
 
     /**
-     * Get storage report
+     * Get comprehensive storage statistics
      */
     async getStorageReport() {
         try {
-            const response = await fetch(`${this.baseUrl}/storage/report`);
+            const response = await fetch(`${this.baseUrl}/api/v1/storage/report`);
             
             if (!response.ok) {
                 throw new Error(`Storage report request failed: ${response.status}`);
@@ -145,30 +171,15 @@ class PlaybackService {
     }
 
     /**
-     * Get storage stats for a specific camera
-     */
-    async getCameraStorageStats(cameraId) {
-        try {
-            const response = await fetch(`${this.baseUrl}/storage/cameras/${cameraId}/stats`);
-            
-            if (!response.ok) {
-                throw new Error(`Camera storage stats request failed: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('Failed to get camera storage stats:', error);
-            throw error;
-        }
-    }
-
-    /**
      * Trigger manual storage cleanup
      */
-    async triggerCleanup(cameraId = null) {
+    async triggerCleanup(targetSizeGb = null, deleteBeforeDate = null) {
         try {
-            const params = cameraId ? `?camera_id=${cameraId}` : '';
-            const response = await fetch(`${this.baseUrl}/storage/cleanup${params}`, {
+            const params = new URLSearchParams();
+            if (targetSizeGb !== null) params.append('target_size_gb', targetSizeGb);
+            if (deleteBeforeDate !== null) params.append('delete_before_date', deleteBeforeDate);
+            
+            const response = await fetch(`${this.baseUrl}/api/v1/storage/cleanup?${params}`, {
                 method: 'POST'
             });
             
@@ -184,7 +195,18 @@ class PlaybackService {
     }
 
     /**
-     * Format datetime for API calls
+     * Format datetime for API calls (YYYY-MM-DD format)
+     */
+    formatDate(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    /**
+     * Format datetime for API calls (ISO format)
      */
     formatDateTime(date) {
         return new Date(date).toISOString().slice(0, 19);
@@ -200,7 +222,8 @@ class PlaybackService {
         
         return {
             start: this.formatDateTime(startOfDay),
-            end: this.formatDateTime(endOfDay)
+            end: this.formatDateTime(endOfDay),
+            date: this.formatDate(today)
         };
     }
 
@@ -213,7 +236,9 @@ class PlaybackService {
         
         return {
             start: this.formatDateTime(start),
-            end: this.formatDateTime(end)
+            end: this.formatDateTime(end),
+            startDate: this.formatDate(start),
+            endDate: this.formatDate(end)
         };
     }
 
@@ -221,6 +246,8 @@ class PlaybackService {
      * Format file size for display
      */
     formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        
         const units = ['B', 'KB', 'MB', 'GB', 'TB'];
         let size = bytes;
         let unitIndex = 0;
@@ -230,21 +257,79 @@ class PlaybackService {
             unitIndex++;
         }
         
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
+        return `${size.toFixed(unitIndex === 0 ? 0 : 2)} ${units[unitIndex]}`;
     }
 
     /**
      * Format duration in seconds to human readable
      */
     formatDuration(seconds) {
+        if (!seconds || seconds === 0) return '0:00';
+        
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
+        const secs = Math.floor(seconds % 60);
         
         if (hours > 0) {
             return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
         return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    /**
+     * Get time range for a specific date
+     */
+    getDateRange(date) {
+        const d = new Date(date);
+        const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000 - 1);
+        
+        return {
+            start: this.formatDateTime(startOfDay),
+            end: this.formatDateTime(endOfDay),
+            date: this.formatDate(d)
+        };
+    }
+
+    /**
+     * Parse segment filename to extract metadata
+     */
+    parseSegmentFilename(filename) {
+        // camera_entrance_cam_20250801_010000_600.avi
+        const match = filename.match(/camera_([^_]+)_(\d{8})_(\d{6})_(\d+)\.(\w+)/);
+        if (match) {
+            const [, cameraId, dateStr, timeStr, duration, ext] = match;
+            const year = dateStr.substr(0, 4);
+            const month = dateStr.substr(4, 2);
+            const day = dateStr.substr(6, 2);
+            const hour = timeStr.substr(0, 2);
+            const minute = timeStr.substr(2, 2);
+            const second = timeStr.substr(4, 2);
+            
+            return {
+                cameraId,
+                date: `${year}-${month}-${day}`,
+                time: `${hour}:${minute}:${second}`,
+                duration: parseInt(duration),
+                extension: ext
+            };
+        }
+        return null;
+    }
+
+    /**
+     * Convert timeline segments for easier consumption
+     */
+    processTimelineSegments(segments) {
+        return segments.map(segment => ({
+            ...segment,
+            metadata: this.parseSegmentFilename(segment.filename),
+            streamUrl: this.getStreamUrl(segment.filename),
+            formattedDuration: this.formatDuration(segment.duration_seconds),
+            formattedSize: this.formatFileSize(segment.file_size),
+            startTimeMs: new Date(segment.start_time).getTime(),
+            endTimeMs: new Date(segment.end_time).getTime()
+        }));
     }
 }
 

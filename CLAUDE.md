@@ -27,26 +27,31 @@ Before implementing ANY solution, Claude must ask these questions:
 
 ## Key Commands
 
-### Development
+### Quick Start (NEW - Recommended)
 ```bash
-# Start backend server (from backend directory)
-cd backend
-source venv/bin/activate
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+# Start ALL services with one command
+python3 start_lpr.py
 
-# Start 24/7 recording service (runs independently)
-cd backend
-source venv/bin/activate
-nohup python main_recording_service.py > logs/recording_service.log 2>&1 &
+# Or use the restart script
+python3 restart_services.py
 
-# Start recording API service (REST API for recordings)
-cd backend
-source venv/bin/activate
-python recording_api_service.py
+# Stop all services
+python3 stop_all_services.py
 
-# Start frontend server (from frontend directory)
-cd frontend
-python3 -m http.server 8080
+# Check service health
+python3 check_services.py
+```
+
+### Manual Start (if needed)
+```bash
+# Start backend API server (Main API on port 8001)
+python3 -m api.main
+
+# Start 24/7 recording service (port 8002)
+python3 start_recording_service.py
+
+# Start frontend server (port 8080)
+cd frontend && python3 -m http.server 8080
 
 # Run tests
 pytest tests/ -v --tb=short
@@ -55,58 +60,44 @@ pytest tests/ -v --tb=short
 python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 
 # Train YOLO model
-cd train && bash train_yolo.sh
+cd ai_pipeline/train && bash train_yolo.sh
 ```
 
 ### Service Access
 - **Frontend URL**: http://localhost:8080/
-- **Backend API**: http://localhost:8001/
-- **API Documentation**: http://localhost:8001/docs
-- **24/7 Recording API**: http://localhost:8002/
+- **Main API**: http://localhost:8001/
+- **Main API Documentation**: http://localhost:8001/docs
+- **Recording API**: http://localhost:8002/
 - **Recording API Documentation**: http://localhost:8002/docs
 
-### Streaming System
+### Snapshot System (No Browser Streaming)
 ```bash
-# Check streaming status for camera
-curl http://localhost:8001/api/v1/streams/status/3
+# Get camera snapshot (JPEG)
+curl http://localhost:8001/api/cameras/entrance_cam/snapshot
 
-# Start stream (via API)
-curl -X POST http://localhost:8001/api/v1/streams/start/3 \
-  -H "Content-Type: application/json" \
-  -d '{"quality": "medium", "max_fps": 30, "detection_enabled": false}'
+# Get camera snapshot with quality setting
+curl "http://localhost:8001/api/cameras/entrance_cam/snapshot?quality=high"
 
-# Stop stream (via API)
-curl -X POST http://localhost:8001/api/v1/streams/stop/3
+# Get camera health status
+curl http://localhost:8001/api/cameras/entrance_cam/health
 
-# Access video stream directly
-curl http://localhost:8001/stream/video/3
+# List all cameras
+curl http://localhost:8001/api/cameras/
 ```
 
-### 24/7 Recording System
+### System Health
 ```bash
+# Check overall system health
+curl http://localhost:8001/api/system/health
+
+# Get camera detection status
+curl http://localhost:8001/api/cameras/entrance_cam/detections
+
+# Check license plate processing
+curl http://localhost:8001/api/detections/
+
 # Check recording service health
 curl http://localhost:8002/health
-
-# Get recording status for all cameras
-curl http://localhost:8002/recordings/status
-
-# Get recording status for specific camera
-curl http://localhost:8002/recordings/status/3
-
-# Get recent video segments for a camera
-curl http://localhost:8002/recordings/3/segments
-
-# Get comprehensive storage report
-curl http://localhost:8002/storage/report
-
-# Check recording service logs
-tail -f backend/logs/recording_service.log
-
-# Monitor live recording activity
-watch -n 5 "curl -s http://localhost:8002/health | grep -E '(active_cameras|total_segments|total_size_formatted)'"
-
-# Verify recordings are being created
-ls -la backend/recordings/camera_3/$(date +%Y/%m/%d/%H)/
 ```
 
 ### Docker
@@ -136,85 +127,109 @@ python scripts/lpr_live.py csi
 ## Architecture Overview
 
 ### Core Framework
-- **FastAPI** monolithic application with modular services
-- **SQLite** database with async support (aiosqlite)
+- **FastAPI** dual-service architecture: Main API (8001) + Recording Service (8002)
+- **SQLite** database with async support (aiosqlite) and dynamic schema updates
 - **YOLO** models for license plate detection (YOLOv11/v8)
 - **EasyOCR** for license plate text recognition
 - **OpenCV** for image processing and camera handling
-- **WebSocket** connections for real-time streaming
+- **Dynamic Camera Management** with real-time database synchronization
 
 ### Key Directory Structure
 ```
-app/
-├── main.py              # FastAPI application entry point
-├── database.py          # SQLAlchemy async database setup
-├── models.py            # Pydantic models and SQLAlchemy schemas
-├── dependencies/        # FastAPI dependency injection
-├── factories/           # Service factory patterns
-├── interfaces/          # Abstract base classes
-├── repositories/        # Data access layer
-├── routers/             # FastAPI route handlers
-├── services/            # Business logic services
-└── utils/               # Utility functions and helpers
+plate_recognition/
+├── api/
+│   └── main.py              # Main API service (port 8001)
+├── recording_service/
+│   ├── main.py              # Recording API service (port 8002)
+│   └── services/            # Recording components
+├── database/
+│   ├── models.py            # SQLAlchemy models with Camera schema
+│   └── service.py           # Database operations
+├── frontend/
+│   ├── index.html           # Main dashboard
+│   ├── cameras.html         # Camera management
+│   ├── recordings.html      # Recording playback
+│   └── src/                 # Component architecture
+├── ai_pipeline/             # YOLO detection pipeline
+├── logs/                    # Service log files
+├── recordings/              # Video storage
+├── data/                    # SQLite database
+└── *.py                     # Service management scripts
 ```
 
 ### Service Layer Architecture
-- **DetectionService**: YOLO model inference and plate detection
-- **CameraService**: Camera input management and streaming
-- **StorageService**: Database operations and file management
-- **EnhancerService**: Image processing and enhancement
-- **BackgroundStreamManager**: Real-time video processing
-- **PlateProcessor**: License plate recognition pipeline
+
+#### Main API Service (Port 8001)
+- **CameraManager**: Dynamic camera loading from database
+- **LicensePlateDetector**: YOLO model inference and plate detection
+- **ProcessingPipeline**: Detection workflow coordination
+- **DatabaseService**: Async database operations with CRUD for cameras
+- **Camera CRUD API**: REST endpoints for camera management
+- **Snapshot Service**: Camera image serving (not video streaming)
+
+#### Recording Service (Port 8002)
+- **RecordingManager**: 24/7 continuous recording coordination
+- **CameraRecorder**: Individual camera recording with 10-minute segments
+- **PlaybackService**: Video timeline and streaming API
+- **StorageManager**: Automated cleanup and retention policies
+- **Recording API**: Complete REST API for playback functionality
 
 ### Database Schema
 - SQLite database at `data/license_plates.db`
 - Async SQLAlchemy with aiosqlite driver
-- Main tables: detections, license_plates, system_config
-- Automatic database initialization on first run
+- **Enhanced Camera Table**: Includes all connection details (IP, port, credentials, stream paths)
+- **Dynamic Schema Updates**: `update_database_schema.py` adds missing columns
+- Main tables: cameras, detections, video_recordings, daily_summaries
+- **Service Integration**: Cameras configured via UI are automatically used by all services
 
-## 24/7 Recording System Architecture
+## 24/7 Recording System Architecture ✅ IMPLEMENTED
 
 ### Recording Components
-- **main_recording_service.py**: Continuous recording service (independent process)
-- **recording_api_service.py**: REST API for monitoring recordings (port 8002)
-- **ContinuousRecorder**: Per-camera recording with segment management
-- **StorageManager**: Automated cleanup and retention policies
-- **SQLite Index**: Fast video segment retrieval and metadata
+- **start_recording_service.py**: Service startup script for port 8002
+- **recording_service/main.py**: FastAPI application with complete playback API
+- **RecordingManager**: Manages 24/7 recording for all active cameras
+- **CameraRecorder**: Per-camera recording with 10-minute segments
+- **PlaybackService**: Complete video playback and timeline API
+- **StorageManager**: Automated cleanup and storage monitoring (10GB limit)
 
-### Key Features
-- **Continuous Operation**: Runs independently from web UI on dedicated process
-- **Segment-based Storage**: 10-minute video segments for efficient storage/retrieval
-- **Automatic Reconnection**: Robust handling of camera disconnections
-- **Storage Management**: 30-day retention with automated cleanup
-- **Health Monitoring**: Automatic restart of failed recordings
-- **Directory Structure**: Organized by date/time (YYYY/MM/DD/HH)
+### Key Features ✅ IMPLEMENTED
+- **Continuous Operation**: Runs independently on port 8002 with database integration
+- **Segment-based Storage**: 10-minute video segments (600 seconds) in organized directories
+- **Automatic Reconnection**: Robust RTSP connection handling with exponential backoff
+- **Storage Management**: Automated cleanup at 90% usage with configurable retention
+- **Health Monitoring**: Real-time status monitoring and error recovery
+- **Directory Structure**: `recordings/camera_id/YYYY/MM/DD/HH/` organization
+- **Complete Playback API**: Calendar data, timeline segments, HTTP 206 video streaming
 
-### Recording System Flow
-1. **Service Startup**: Load camera configurations and initialize storage
-2. **Camera Connection**: Establish RTSP connections with reconnection logic
-3. **Frame Capture**: Continuous frame capture with queue management
-4. **Segment Recording**: Create new video segments every 10 minutes
-5. **Database Indexing**: Store segment metadata in SQLite for fast access
-6. **Storage Cleanup**: Automated removal of recordings older than retention period
-7. **Health Checks**: Monitor recording status and restart failed cameras
+### Recording System Implementation Status
+✅ **Database Models**: VideoRecording, DailySummary, StorageStats with indexes
+✅ **Recording Service**: Full FastAPI service with startup/shutdown lifecycle
+✅ **Camera Management**: Dynamic loading from database with JSON config parsing
+✅ **Storage Management**: Size monitoring, cleanup, and comprehensive reporting
+✅ **Playback API**: All endpoints from documentation implemented
+✅ **Health Monitoring**: Service status, camera status, and error tracking
 
 ### Recording Storage Structure
 ```
 recordings/
-└── camera_3/
-    ├── index.db                    # SQLite database with segment metadata
-    └── 2025/07/27/12/             # Year/Month/Day/Hour structure
-        ├── camera_3_20250727_120329_600.avi  # 10-minute segments
-        ├── camera_3_20250727_121329_600.avi
-        └── camera_3_20250727_122329_600.avi
+└── camera_entrance_cam/
+    └── 2025/08/01/01/             # Year/Month/Day/Hour structure
+        ├── camera_entrance_cam_20250801_010000_600.avi  # 10-minute segments
+        ├── camera_entrance_cam_20250801_011000_600.avi
+        └── camera_entrance_cam_20250801_012000_600.avi
 ```
 
-### Recording API Endpoints
+### Recording API Endpoints ✅ WORKING
 - `GET /health` - Service health and recording status
-- `GET /recordings/status` - Status for all cameras
+- `GET /recordings/status` - Status for all cameras  
 - `GET /recordings/status/{camera_id}` - Specific camera status
-- `GET /recordings/{camera_id}/segments` - Available video segments
-- `GET /storage/report` - Comprehensive storage statistics
+- `GET /api/v1/recordings/cameras/{camera_id}/calendar` - Calendar data for month
+- `GET /api/v1/recordings/cameras/{camera_id}/timeline` - Timeline segments for date
+- `GET /api/v1/recordings/stream/{segment_filename}` - Video streaming with HTTP 206
+- `GET /api/v1/recordings/cameras/{camera_id}/details` - Recording statistics
+- `POST /api/v1/recordings/cameras/{camera_id}/search` - Search recordings
+- `GET /api/v1/storage/report` - Comprehensive storage statistics
+- `POST /api/v1/storage/cleanup` - Manual storage cleanup
 
 ## Streaming Integration Architecture
 
@@ -277,11 +292,14 @@ curl http://localhost:8001/api/v1/cameras/
 - GPU acceleration with CUDA when available
 - Model caching to avoid reloading
 
-### Camera Integration
-- Supports USB, IP, and CSI cameras
-- Android device integration via DroidCam
-- Real-time streaming with WebSocket connections
-- Camera configuration stored in `config/camera_config.json`
+### Camera Integration ✅ DYNAMIC SYSTEM
+- **Web-based Configuration**: Full camera CRUD through web UI
+- **Connection Testing**: Test camera connections before saving
+- **Database-driven**: All services load cameras from database dynamically
+- **Real-time Sync**: Camera changes automatically propagate to recording service
+- **Support**: RTSP, HTTP, HTTPS camera protocols
+- **Auto-reconnection**: Robust handling of camera disconnections
+- **No Hardcoding**: Complete removal of hardcoded camera configurations
 
 ### Testing Framework
 - Pytest for unit and integration tests
@@ -290,10 +308,11 @@ curl http://localhost:8001/api/v1/cameras/
 - End-to-end testing with real camera feeds
 
 ### File Storage
-- License plate images: `data/license_plates/`
-- Enhanced images: `data/enhanced_plates/`
-- Video recordings: `data/videos/`
-- Configuration backups: `config/backups/`
+- **Detection Images**: `detections/frames/` and `detections/plates/`
+- **Video Recordings**: `recordings/camera_id/YYYY/MM/DD/HH/` (organized by date/hour)
+- **Service Logs**: `logs/` with timestamped service logs
+- **Database**: `data/license_plates.db` with automatic schema updates
+- **Static Assets**: `static/` for web interface resources
 
 ## Dependencies
 
@@ -330,3 +349,70 @@ curl http://localhost:8001/api/v1/cameras/
 - Minimal resource usage patterns
 - Local file storage for speed
 - Efficient model loading and caching
+
+## Service Management System ✅ COMPLETE
+
+### Comprehensive Service Scripts
+A complete set of Python scripts for managing all system services with process management, health monitoring, and graceful shutdown capabilities.
+
+#### Primary Scripts
+- **`start_lpr.py`**: Simplest way to start everything (recommended)
+- **`start_all_services.py`**: Full-featured startup with monitoring and Ctrl+C handling
+- **`stop_all_services.py`**: Graceful shutdown using lsof (no external dependencies)
+- **`check_services.py`**: Health monitoring with continuous mode option
+- **`restart_services.py`**: Complete restart sequence with verification
+
+#### Management Features
+- **Auto venv Detection**: Scripts automatically use `.venv/bin/python3` when available
+- **Process Management**: Proper signal handling (SIGTERM → SIGKILL)
+- **Health Monitoring**: Real-time service validation with response time measurement
+- **Comprehensive Logging**: Timestamped logs for all services in `logs/` directory
+- **Port Conflict Resolution**: Automatic detection and cleanup of port conflicts
+- **Database Migration**: Automatic schema updates for camera table
+
+#### Service Orchestration
+```bash
+# Complete system startup
+python3 start_lpr.py
+# → Checks database schema
+# → Starts Main API (8001)
+# → Starts Recording Service (8002) 
+# → Starts Frontend (8080)
+# → Shows access URLs
+
+# Health monitoring
+python3 check_services.py -m 30
+# → Checks all endpoints every 30 seconds
+# → Measures response times
+# → Validates API responses
+```
+
+#### Architecture Benefits
+- **No Manual venv Activation**: Scripts handle virtual environment automatically
+- **Robust Error Handling**: Comprehensive error recovery and user feedback
+- **Service Dependencies**: Proper startup order and dependency management  
+- **Resource Cleanup**: Automatic cleanup of processes and resources
+- **Production Ready**: Suitable for deployment with proper logging and monitoring
+
+### Integration with Development Workflow
+The service management system integrates seamlessly with the existing development commands while providing enhanced functionality:
+
+**Before**: Manual terminal management
+```bash
+# Terminal 1
+cd backend && source venv/bin/activate && uvicorn app.main:app --reload --port 8001
+
+# Terminal 2  
+cd backend && source venv/bin/activate && python main_recording_service.py
+
+# Terminal 3
+cd frontend && python3 -m http.server 8080
+```
+
+**Now**: One-command startup
+```bash
+python3 start_lpr.py
+# All services started, monitored, and accessible
+```
+
+This represents a significant improvement in developer experience and system reliability.

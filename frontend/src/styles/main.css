@@ -741,9 +741,21 @@
     font-size: 0.875rem;
 }
 
-.btn-small {
+.btn-small,
+.btn-sm {
     padding: 0.5rem 1rem;
     font-size: 0.75rem;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
 }
 
 .btn-secondary {

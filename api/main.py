@@ -2,18 +2,20 @@
 FastAPI Backend
 IMPORTANT: This serves data and snapshots, NOT video streams!
 """
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Body
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 import cv2
 import io
 import os
 import time
+import uuid
 from datetime import datetime, timedelta
 import asyncio
 import logging
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
 
 # Import our services
@@ -21,11 +23,151 @@ from ai_pipeline.camera_manager import CameraManager, CameraConfig
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 from database.service import DatabaseService
 
+# Pydantic models for API requests
+class CameraCreate(BaseModel):
+    name: str
+    ip_address: str
+    port: int = 80
+    connection_type: str = "http"
+    stream_path: str = "/mjpeg"
+    location: Optional[str] = None
+    username: Optional[str] = "admin"
+    password: Optional[str] = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    resolution_width: int = 1920
+    resolution_height: int = 1080
+    max_fps: int = 30
+    video_quality: str = "medium"
+    low_latency: bool = True
+
+class CameraUpdate(BaseModel):
+    name: Optional[str] = None
+    ip_address: Optional[str] = None
+    port: Optional[int] = None
+    connection_type: Optional[str] = None
+    stream_path: Optional[str] = None
+    location: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    resolution_width: Optional[int] = None
+    resolution_height: Optional[int] = None
+    max_fps: Optional[int] = None
+    video_quality: Optional[str] = None
+    low_latency: Optional[bool] = None
+    status: Optional[str] = None
+
+class CameraTestRequest(BaseModel):
+    ip_address: str
+    port: int = 80
+    connection_type: str = "http"
+    stream_path: str = "/mjpeg"
+    username: Optional[str] = "admin"
+    password: Optional[str] = None
+    timeout: int = 10
+
 # Global instances
 camera_manager = None
 detector = None
 pipeline = None
 db = None
+
+# Recording service notification functions
+async def notify_recording_service_camera_added(camera_id: str):
+    """Notify recording service that a camera was added"""
+    try:
+        import urllib.request
+        import urllib.parse
+        import urllib.error
+        
+        # Use urllib in a thread to avoid blocking
+        def make_request():
+            try:
+                req = urllib.request.Request(f"http://localhost:8002/recordings/cameras/{camera_id}/start", method='POST')
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    return response.status
+            except Exception:
+                return None
+        
+        # Run in thread to avoid blocking
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(make_request)
+            status = future.result(timeout=10)
+            
+        if status == 200:
+            logger.info(f"Successfully notified recording service to start recording for camera {camera_id}")
+        else:
+            logger.warning(f"Failed to notify recording service for camera {camera_id}")
+    except Exception as e:
+        logger.warning(f"Could not notify recording service for camera {camera_id}: {e}")
+
+async def notify_recording_service_camera_updated(camera_id: str):
+    """Notify recording service that a camera was updated"""
+    try:
+        import urllib.request
+        import urllib.parse
+        import urllib.error
+        
+        def make_requests():
+            try:
+                # Stop recording
+                req = urllib.request.Request(f"http://localhost:8002/recordings/cameras/{camera_id}/stop", method='POST')
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    pass  # Don't fail if camera wasn't recording
+            except Exception:
+                pass
+            
+            try:
+                # Start recording with new config
+                req = urllib.request.Request(f"http://localhost:8002/recordings/cameras/{camera_id}/start", method='POST')
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    return response.status
+            except Exception:
+                return None
+        
+        # Run in thread to avoid blocking
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(make_requests)
+            status = future.result(timeout=15)
+            
+        if status == 200:
+            logger.info(f"Successfully notified recording service to update camera {camera_id}")
+        else:
+            logger.warning(f"Failed to notify recording service for camera update {camera_id}")
+    except Exception as e:
+        logger.warning(f"Could not notify recording service for camera update {camera_id}: {e}")
+
+async def notify_recording_service_camera_deleted(camera_id: str):
+    """Notify recording service that a camera was deleted"""
+    try:
+        import urllib.request
+        import urllib.parse
+        import urllib.error
+        
+        def make_request():
+            try:
+                req = urllib.request.Request(f"http://localhost:8002/recordings/cameras/{camera_id}/stop", method='POST')
+                with urllib.request.urlopen(req, timeout=5) as response:
+                    return response.status
+            except Exception:
+                return None
+        
+        # Run in thread to avoid blocking
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(make_request)
+            status = future.result(timeout=10)
+            
+        if status == 200:
+            logger.info(f"Successfully notified recording service to stop recording for camera {camera_id}")
+        else:
+            logger.warning(f"Failed to notify recording service for camera deletion {camera_id}")
+    except Exception as e:
+        logger.warning(f"Could not notify recording service for camera deletion {camera_id}: {e}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -203,6 +345,168 @@ async def get_cameras():
         })
     
     return result
+
+@app.post("/api/cameras")
+async def create_camera(camera_data: CameraCreate):
+    """Create a new camera"""
+    try:
+        # Generate unique camera ID
+        camera_id = f"camera_{uuid.uuid4().hex[:8]}"
+        
+        # Create camera data dictionary
+        camera_dict = camera_data.dict()
+        camera_dict['camera_id'] = camera_id
+        
+        # Save to database
+        db_camera_id = await db.add_camera(camera_dict)
+        
+        # Get the created camera
+        created_camera = await db.get_camera(camera_id)
+        
+        if not created_camera:
+            raise HTTPException(500, "Failed to create camera")
+        
+        # Notify recording service to start recording for new camera
+        await notify_recording_service_camera_added(camera_id)
+        
+        return {
+            "id": created_camera.camera_id,
+            "name": created_camera.name,
+            "ip_address": created_camera.ip_address,
+            "port": created_camera.port,
+            "connection_type": created_camera.connection_type,
+            "stream_path": created_camera.stream_path,
+            "location": created_camera.location,
+            "status": created_camera.status,
+            "created_at": created_camera.created_at.isoformat()
+        }
+    except Exception as e:
+        logging.error(f"Failed to create camera: {e}")
+        raise HTTPException(500, f"Failed to create camera: {str(e)}")
+
+@app.put("/api/cameras/{camera_id}")
+async def update_camera(camera_id: str, camera_data: CameraUpdate):
+    """Update an existing camera"""
+    try:
+        # Check if camera exists
+        existing_camera = await db.get_camera(camera_id)
+        if not existing_camera:
+            raise HTTPException(404, "Camera not found")
+        
+        # Update camera data (exclude None values)
+        update_dict = {k: v for k, v in camera_data.dict().items() if v is not None}
+        
+        if not update_dict:
+            raise HTTPException(400, "No data provided for update")
+        
+        # Update in database
+        success = await db.update_camera(camera_id, update_dict)
+        
+        if not success:
+            raise HTTPException(500, "Failed to update camera")
+        
+        # Get updated camera
+        updated_camera = await db.get_camera(camera_id)
+        
+        # Notify recording service to reload camera configuration
+        await notify_recording_service_camera_updated(camera_id)
+        
+        return {
+            "id": updated_camera.camera_id,
+            "name": updated_camera.name,
+            "ip_address": updated_camera.ip_address,
+            "port": updated_camera.port,
+            "connection_type": updated_camera.connection_type,
+            "stream_path": updated_camera.stream_path,
+            "location": updated_camera.location,
+            "status": updated_camera.status,
+            "updated_at": updated_camera.updated_at.isoformat()
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Failed to update camera {camera_id}: {e}")
+        raise HTTPException(500, f"Failed to update camera: {str(e)}")
+
+@app.delete("/api/cameras/{camera_id}")
+async def delete_camera(camera_id: str):
+    """Delete a camera"""
+    try:
+        # Check if camera exists
+        existing_camera = await db.get_camera(camera_id)
+        if not existing_camera:
+            raise HTTPException(404, "Camera not found")
+        
+        # Delete from database
+        success = await db.delete_camera(camera_id)
+        
+        if not success:
+            raise HTTPException(500, "Failed to delete camera")
+        
+        # Notify recording service to stop recording for deleted camera
+        await notify_recording_service_camera_deleted(camera_id)
+        
+        return {"message": f"Camera {camera_id} deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Failed to delete camera {camera_id}: {e}")
+        raise HTTPException(500, f"Failed to delete camera: {str(e)}")
+
+@app.post("/api/cameras/test")
+async def test_camera_connection(test_data: CameraTestRequest):
+    """Test camera connection without saving"""
+    try:
+        # Build connection URL based on connection type
+        if test_data.connection_type.lower() == 'rtsp':
+            if test_data.username and test_data.password:
+                url = f"rtsp://{test_data.username}:{test_data.password}@{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+            else:
+                url = f"rtsp://{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+        else:  # http/https
+            if test_data.username and test_data.password:
+                url = f"{test_data.connection_type}://{test_data.username}:{test_data.password}@{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+            else:
+                url = f"{test_data.connection_type}://{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+        
+        # Test connection using OpenCV
+        cap = cv2.VideoCapture(url)
+        
+        if not cap.isOpened():
+            return {
+                "success": False,
+                "message": "Failed to connect to camera",
+                "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                "error": "Connection refused or invalid URL"
+            }
+        
+        # Try to read a frame
+        ret, frame = cap.read()
+        cap.release()
+        
+        if ret and frame is not None:
+            height, width, channels = frame.shape
+            return {
+                "success": True,
+                "message": "Camera connection successful",
+                "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                "resolution": f"{width}x{height}",
+                "channels": channels
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Connected but failed to read frame",
+                "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                "error": "No video data available"
+            }
+    except Exception as e:
+        logging.error(f"Camera test failed: {e}")
+        return {
+            "success": False,
+            "message": "Camera test failed",
+            "error": str(e)
+        }
 
 @app.get("/api/cameras/{camera_id}/snapshot")
 async def get_camera_snapshot(
@@ -597,4 +901,4 @@ def create_offline_image():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

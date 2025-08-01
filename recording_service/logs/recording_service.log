@@ -1,0 +1,223 @@
+2025-08-01 01:09:09,412 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 01:09:09,469 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 01:09:09,469 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 01:09:09,469 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 01:09:09,469 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 01:09:09,469 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 01:09:09,470 - recording_service.services.recording_manager - ERROR - Failed to load camera configs: Textual SQL expression 'SELECT camera_id, name, i...' should be explicitly declared as text('SELECT camera_id, name, i...')
+2025-08-01 01:09:09,470 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 01:09:09,470 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 01:12:54,866 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 01:12:54,879 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 01:12:54,879 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 01:12:54,879 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 01:12:54,879 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 01:12:54,879 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 01:12:54,880 - recording_service.services.recording_manager - ERROR - Failed to load camera configs: 'str' object has no attribute 'get'
+2025-08-01 01:12:54,880 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 01:12:54,880 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 01:13:04,600 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 01:13:04,600 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 01:13:04,600 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 01:13:16,898 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 01:13:16,910 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 01:13:16,910 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 01:13:16,910 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 01:13:16,910 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 01:13:16,911 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 01:13:16,912 - recording_service.services.recording_manager - INFO - Camera recorder initialized: Entrance Camera (entrance_cam)
+2025-08-01 01:13:16,912 - recording_service.services.recording_manager - INFO - Starting recording for Entrance Camera
+2025-08-01 01:13:16,912 - recording_service.services.recording_manager - INFO - Started recording for 1 cameras
+2025-08-01 01:13:16,912 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 01:13:16,912 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:14:17,011 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:26:39,279 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 01:26:39,306 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 01:26:39,306 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 01:26:39,306 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 01:26:39,306 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 01:26:39,306 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 01:26:39,310 - recording_service.services.recording_manager - INFO - Camera recorder initialized: Entrance Camera (entrance_cam)
+2025-08-01 01:26:39,310 - recording_service.services.recording_manager - INFO - Starting recording for Entrance Camera
+2025-08-01 01:26:39,310 - recording_service.services.recording_manager - INFO - Started recording for 1 cameras
+2025-08-01 01:26:39,310 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 01:26:39,310 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:27:39,452 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:27:44,453 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:28:44,546 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:28:52,047 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:29:52,102 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:30:00,117 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 01:30:00,118 - recording_service.services.recording_manager - INFO - Recording stopped for Entrance Camera
+2025-08-01 01:30:00,118 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 01:30:00,118 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 01:50:17,540 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 01:50:17,562 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 01:50:17,562 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 01:50:17,562 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 01:50:17,562 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 01:50:17,562 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 01:50:17,563 - recording_service.services.recording_manager - INFO - Camera recorder initialized: Entrance Camera (entrance_cam)
+2025-08-01 01:50:17,563 - recording_service.services.recording_manager - INFO - Starting recording for Entrance Camera
+2025-08-01 01:50:17,563 - recording_service.services.recording_manager - INFO - Started recording for 1 cameras
+2025-08-01 01:50:17,563 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 01:50:17,563 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:51:17,654 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:51:22,657 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:52:22,752 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:52:30,252 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:53:30,344 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:53:41,594 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:54:41,665 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:54:58,539 - recording_service.services.recording_manager - INFO - Connecting to Entrance Camera at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 01:55:58,650 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Camera
+2025-08-01 01:55:58,755 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 01:55:58,756 - recording_service.services.recording_manager - INFO - Recording stopped for Entrance Camera
+2025-08-01 01:55:58,756 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 01:55:58,756 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 02:04:09,624 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 02:04:09,637 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 02:04:09,637 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 02:04:09,638 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 02:04:09,638 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 02:04:09,638 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 02:04:09,639 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 02:04:09,639 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 02:15:02,662 - recording_service.services.playback_service - ERROR - Error getting calendar data: List argument must consist only of tuples or dictionaries
+2025-08-01 02:15:02,665 - recording_service.services.playback_service - ERROR - Error getting timeline segments: List argument must consist only of tuples or dictionaries
+2025-08-01 02:15:02,671 - recording_service.services.playback_service - ERROR - Error getting timeline segments: List argument must consist only of tuples or dictionaries
+2025-08-01 02:16:27,727 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 02:16:27,727 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 02:16:27,727 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 02:16:30,837 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 02:16:30,849 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 02:16:30,849 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 02:16:30,849 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 02:16:30,849 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 02:16:30,849 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 02:16:30,850 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 02:16:30,850 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 03:24:31,431 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 03:24:31,432 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 03:24:31,432 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 04:59:35,956 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 04:59:35,979 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 04:59:35,979 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 04:59:35,979 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 04:59:35,979 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 04:59:35,979 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 04:59:35,986 - recording_service.services.recording_manager - ERROR - Failed to load camera configs from database: (sqlite3.OperationalError) no such column: cameras.port
+[SQL: SELECT cameras.id, cameras.camera_id, cameras.name, cameras.ip_address, cameras.port, cameras.connection_type, cameras.stream_path, cameras.location, cameras.username, cameras.password, cameras.brand, cameras.model, cameras.resolution_width, cameras.resolution_height, cameras.max_fps, cameras.video_quality, cameras.low_latency, cameras.status, cameras.last_test_at, cameras.last_test_result, cameras.config, cameras.created_at, cameras.updated_at 
+FROM cameras]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-01 04:59:35,986 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 04:59:35,986 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 05:02:02,800 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 05:02:02,800 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 05:02:02,800 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 05:02:13,386 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 05:02:13,397 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 05:02:13,398 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 05:02:13,398 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 05:02:13,398 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 05:02:13,398 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 05:02:13,404 - recording_service.services.recording_manager - ERROR - Failed to load camera configs from database: (sqlite3.OperationalError) no such column: cameras.port
+[SQL: SELECT cameras.id, cameras.camera_id, cameras.name, cameras.ip_address, cameras.port, cameras.connection_type, cameras.stream_path, cameras.location, cameras.username, cameras.password, cameras.brand, cameras.model, cameras.resolution_width, cameras.resolution_height, cameras.max_fps, cameras.video_quality, cameras.low_latency, cameras.status, cameras.last_test_at, cameras.last_test_result, cameras.config, cameras.created_at, cameras.updated_at 
+FROM cameras]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-01 05:02:13,404 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 05:02:13,404 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 05:02:31,774 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 05:02:31,774 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 05:02:31,774 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 05:09:42,126 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 05:09:42,138 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 05:09:42,138 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 05:09:42,138 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 05:09:42,138 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 05:09:42,138 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 05:09:42,145 - recording_service.services.recording_manager - ERROR - Failed to load camera configs from database: (sqlite3.OperationalError) no such column: cameras.port
+[SQL: SELECT cameras.id, cameras.camera_id, cameras.name, cameras.ip_address, cameras.port, cameras.connection_type, cameras.stream_path, cameras.location, cameras.username, cameras.password, cameras.brand, cameras.model, cameras.resolution_width, cameras.resolution_height, cameras.max_fps, cameras.video_quality, cameras.low_latency, cameras.status, cameras.last_test_at, cameras.last_test_result, cameras.config, cameras.created_at, cameras.updated_at 
+FROM cameras]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-01 05:09:42,145 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 05:09:42,145 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 05:10:07,626 - recording_service.services.playback_service - ERROR - Error getting calendar data: List argument must consist only of tuples or dictionaries
+2025-08-01 05:10:07,628 - recording_service.services.playback_service - ERROR - Error getting timeline segments: List argument must consist only of tuples or dictionaries
+2025-08-01 05:10:07,631 - recording_service.services.playback_service - ERROR - Error getting timeline segments: List argument must consist only of tuples or dictionaries
+2025-08-01 05:11:03,764 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 05:11:03,764 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 05:11:03,764 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 05:11:27,434 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 05:11:27,448 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 05:11:27,448 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 05:11:27,448 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 05:11:27,448 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 05:11:27,448 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 05:11:27,455 - recording_service.services.recording_manager - ERROR - Failed to load camera configs from database: (sqlite3.OperationalError) no such column: cameras.port
+[SQL: SELECT cameras.id, cameras.camera_id, cameras.name, cameras.ip_address, cameras.port, cameras.connection_type, cameras.stream_path, cameras.location, cameras.username, cameras.password, cameras.brand, cameras.model, cameras.resolution_width, cameras.resolution_height, cameras.max_fps, cameras.video_quality, cameras.low_latency, cameras.status, cameras.last_test_at, cameras.last_test_result, cameras.config, cameras.created_at, cameras.updated_at 
+FROM cameras]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-01 05:11:27,455 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 05:11:27,455 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 05:13:24,172 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 05:13:24,172 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 05:13:24,172 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 05:13:35,600 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 05:13:35,612 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 05:13:35,612 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 05:13:35,612 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 05:13:35,612 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 05:13:35,612 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 05:13:35,618 - recording_service.services.recording_manager - ERROR - Failed to load camera configs from database: (sqlite3.OperationalError) no such column: cameras.port
+[SQL: SELECT cameras.id, cameras.camera_id, cameras.name, cameras.ip_address, cameras.port, cameras.connection_type, cameras.stream_path, cameras.location, cameras.username, cameras.password, cameras.brand, cameras.model, cameras.resolution_width, cameras.resolution_height, cameras.max_fps, cameras.video_quality, cameras.low_latency, cameras.status, cameras.last_test_at, cameras.last_test_result, cameras.config, cameras.created_at, cameras.updated_at 
+FROM cameras]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-01 05:13:35,619 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 05:13:35,619 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 05:14:27,219 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 05:14:27,220 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 05:14:27,220 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 05:14:38,651 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 05:14:38,664 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 05:14:38,664 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 05:14:38,665 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 05:14:38,665 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 05:14:38,665 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 05:14:38,671 - recording_service.services.recording_manager - INFO - Loaded 0 active camera configurations from database
+2025-08-01 05:14:38,671 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 05:14:38,671 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 05:22:31,262 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-01 05:22:31,262 - recording_service.services.recording_manager - INFO - Recording manager stopped
+2025-08-01 05:22:31,262 - recording_service.main - INFO - Recording Service stopped
+2025-08-01 05:22:53,981 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-01 05:22:53,993 - DatabaseService - INFO - Database initialized and tables created
+2025-08-01 05:22:53,993 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-01 05:22:53,993 - recording_service.services.recording_manager - INFO - Recording Manager initialized
+2025-08-01 05:22:53,993 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-01 05:22:53,993 - recording_service.services.recording_manager - INFO - Starting recording manager...
+2025-08-01 05:22:54,000 - recording_service.services.recording_manager - INFO - Loaded 0 active camera configurations from database
+2025-08-01 05:22:54,000 - recording_service.services.recording_manager - INFO - Started recording for 0 cameras
+2025-08-01 05:22:54,000 - recording_service.main - INFO - Recording Service started successfully
+2025-08-01 05:23:09,784 - recording_service.services.playback_service - ERROR - Error getting calendar data: List argument must consist only of tuples or dictionaries
+2025-08-01 05:23:09,786 - recording_service.services.playback_service - ERROR - Error getting timeline segments: List argument must consist only of tuples or dictionaries
+2025-08-01 05:23:09,788 - recording_service.services.playback_service - ERROR - Error getting timeline segments: List argument must consist only of tuples or dictionaries
+2025-08-01 05:25:04,915 - recording_service.services.recording_manager - INFO - Camera recorder initialized: Entrance Gate (camera_7ec315f0)
+2025-08-01 05:25:04,915 - recording_service.services.recording_manager - INFO - Starting recording for Entrance Gate
+2025-08-01 05:25:04,915 - recording_service.services.recording_manager - INFO - Added camera Entrance Gate (camera_7ec315f0) to recording
+2025-08-01 05:25:04,915 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:26:05,982 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate
+2025-08-01 05:26:10,982 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:27:12,086 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate
+2025-08-01 05:27:19,586 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:28:20,684 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate
+2025-08-01 05:28:32,457 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:29:33,051 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate
+2025-08-01 05:29:50,446 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:30:51,504 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate
+2025-08-01 05:31:17,303 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:32:18,041 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate
+2025-08-01 05:32:56,764 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:33:57,810 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate
+2025-08-01 05:34:55,832 - recording_service.services.recording_manager - INFO - Connecting to Entrance Gate at rtsp://admin:Mekus_1987@10.0.0.181:554/h264Preview_01_main
+2025-08-01 05:35:56,980 - recording_service.services.recording_manager - ERROR - Failed to read test frame from Entrance Gate

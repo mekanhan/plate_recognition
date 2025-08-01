@@ -9,8 +9,8 @@ const environment = window.APP_ENV || 'development';
 // Environment-specific configurations
 const configs = {
     development: {
-        API_BASE_URL: 'http://localhost:8000',
-        WS_BASE_URL: 'ws://localhost:8000',
+        API_BASE_URL: 'http://localhost:8001',
+        WS_BASE_URL: 'ws://localhost:8001',
         RECORDING_API_URL: 'http://localhost:8002'
     },
     production: {

@@ -40,6 +40,7 @@ passlib[bcrypt]>=1.7.4
 # HTTP Client for sync
 aiohttp>=3.8.0
 httpx>=0.24.0
+aiofiles>=24.1.0
 
 # Network interface detection (for device ID generation)
 netifaces>=0.11.0

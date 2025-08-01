@@ -1,20 +1,40 @@
 /**
  * Recordings Page Component
- * Main interface for viewing and managing recorded video segments
+ * Complete rewrite following documentation requirements
+ * Integrates RecordingCalendar, TimelineControl, and enhanced VideoPlaybackPlayer
  */
 import VideoPlaybackPlayer from '../components/playback/VideoPlaybackPlayer.js';
+import RecordingCalendar from '../components/playback/RecordingCalendar.js';
+import TimelineControl from '../components/playback/TimelineControl.js';
 import playbackService from '../services/PlaybackService.js';
 
 class RecordingsPage {
     constructor() {
+        // Camera state
         this.cameras = [];
         this.selectedCamera = null;
+        
+        // Date/time state
         this.selectedDate = new Date();
-        this.currentTimeRange = null;
-        this.recordings = [];
+        this.timeRange = { start: null, end: null };
+        
+        // Recording data
+        this.segments = [];
+        this.currentSegment = null;
+        
+        // UI state
+        this.isLoading = false;
+        this.error = null;
+        
+        // Components
         this.videoPlayer = null;
+        this.calendar = null;
+        this.timeline = null;
+        
+        // Storage data
         this.storageStats = null;
         
+        // Filter state
         this.filters = {
             camera: 'all',
             dateRange: 'today',
@@ -45,7 +65,10 @@ class RecordingsPage {
         return `
             <div class="recordings-page">
                 <div class="page-header">
-                    <h1 class="page-title">Recordings</h1>
+                    <h1 class="page-title">
+                        <i class="fas fa-video"></i>
+                        Recordings
+                    </h1>
                     <div class="header-actions">
                         <button class="btn btn-secondary" id="refresh-btn">
                             <i class="fas fa-sync-alt"></i>
@@ -58,121 +81,121 @@ class RecordingsPage {
                     </div>
                 </div>
                 
-                <div class="recordings-content">
-                    <!-- Filters Panel -->
-                    <div class="filters-panel">
-                        <div class="filter-section">
+                <div class="recordings-layout">
+                    <!-- Left Sidebar -->
+                    <div class="recordings-sidebar">
+                        <!-- Camera Selection -->
+                        <div class="sidebar-section">
                             <h3>Camera</h3>
-                            <select id="camera-filter" class="form-select">
-                                <option value="all">All Cameras</option>
-                            </select>
-                        </div>
-                        
-                        <div class="filter-section">
-                            <h3>Date Range</h3>
-                            <select id="date-range-filter" class="form-select">
-                                <option value="today">Today</option>
-                                <option value="yesterday">Yesterday</option>
-                                <option value="last7days">Last 7 Days</option>
-                                <option value="last30days">Last 30 Days</option>
-                                <option value="custom">Custom Range</option>
-                            </select>
-                            
-                            <div id="custom-date-range" class="custom-date-range" style="display: none;">
-                                <div class="date-input-group">
-                                    <label>From:</label>
-                                    <input type="datetime-local" id="start-date" class="form-input">
-                                </div>
-                                <div class="date-input-group">
-                                    <label>To:</label>
-                                    <input type="datetime-local" id="end-date" class="form-input">
-                                </div>
+                            <div id="camera-list-container" class="camera-list">
+                                <!-- Camera list will be rendered here -->
                             </div>
                         </div>
                         
-                        <div class="filter-section">
-                            <h3>Duration</h3>
-                            <div class="duration-filters">
-                                <div class="duration-input-group">
-                                    <label>Min (seconds):</label>
-                                    <input type="number" id="min-duration" class="form-input" placeholder="0">
-                                </div>
-                                <div class="duration-input-group">
-                                    <label>Max (seconds):</label>
-                                    <input type="number" id="max-duration" class="form-input" placeholder="Any">
-                                </div>
+                        <!-- Calendar -->
+                        <div class="sidebar-section">
+                            <h3>Calendar</h3>
+                            <div id="recording-calendar" class="recording-calendar-container">
+                                <!-- Calendar will be rendered here -->
                             </div>
                         </div>
                         
-                        <div class="filter-actions">
-                            <button class="btn btn-primary" id="apply-filters">
-                                <i class="fas fa-search"></i>
-                                Search
-                            </button>
-                            <button class="btn btn-secondary" id="clear-filters">
-                                <i class="fas fa-times"></i>
-                                Clear
-                            </button>
+                        <!-- Storage Summary -->
+                        <div class="sidebar-section">
+                            <h3>Storage</h3>
+                            <div class="storage-summary">
+                                <div class="storage-stats">
+                                    <div class="stat-item">
+                                        <div class="stat-label">Used</div>
+                                        <div class="stat-value" id="storage-used">-</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">Available</div>
+                                        <div class="stat-value" id="storage-available">-</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-label">Usage</div>
+                                        <div class="stat-value" id="storage-percentage">-</div>
+                                    </div>
+                                </div>
+                                <div class="storage-actions">
+                                    <button class="btn btn-sm btn-secondary" id="cleanup-btn">
+                                        <i class="fas fa-broom"></i>
+                                        Cleanup
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Main Content -->
                     <div class="recordings-main">
-                        <!-- Storage Summary -->
-                        <div class="storage-summary">
-                            <div class="storage-stats">
-                                <div class="stat-item">
-                                    <div class="stat-value" id="total-recordings">-</div>
-                                    <div class="stat-label">Total Recordings</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value" id="total-storage">-</div>
-                                    <div class="stat-label">Storage Used</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value" id="retention-days">-</div>
-                                    <div class="stat-label">Retention Days</div>
-                                </div>
-                                <div class="stat-item">
-                                    <div class="stat-value" id="disk-usage">-</div>
-                                    <div class="stat-label">Disk Usage</div>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <!-- Video Player -->
                         <div class="video-player-section">
                             <div id="video-player-container" class="video-player-container">
                                 <div class="no-video-message">
-                                    <i class="fas fa-video"></i>
-                                    <h3>Select a time range to view recordings</h3>
-                                    <p>Use the filters on the left to search for specific recordings</p>
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <h3>Select a Date to View Recordings</h3>
+                                    <p>Use the calendar to choose a date with available recordings</p>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Recordings List -->
-                        <div class="recordings-list-section">
+                        <!-- Timeline Control -->
+                        <div class="timeline-section">
+                            <div id="timeline-control" class="timeline-control-container">
+                                <!-- Timeline will be rendered here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Recording Details -->
+                        <div class="recording-details-section">
                             <div class="section-header">
-                                <h3>Recordings</h3>
-                                <div class="list-controls">
-                                    <select id="sort-by" class="form-select">
-                                        <option value="newest">Newest First</option>
-                                        <option value="oldest">Oldest First</option>
-                                        <option value="duration">By Duration</option>
-                                        <option value="size">By Size</option>
-                                    </select>
+                                <h3>Recording Details</h3>
+                                <div class="details-actions">
+                                    <button class="btn btn-sm btn-secondary" id="show-segments-btn">
+                                        <i class="fas fa-list"></i>
+                                        Segments
+                                    </button>
+                                    <button class="btn btn-sm btn-secondary" id="show-stats-btn">
+                                        <i class="fas fa-chart-bar"></i>
+                                        Statistics
+                                    </button>
                                 </div>
                             </div>
                             
-                            <div class="recordings-list" id="recordings-list">
-                                <div class="no-recordings-message">
-                                    <i class="fas fa-film"></i>
-                                    <h4>No recordings found</h4>
-                                    <p>Try adjusting your search filters</p>
+                            <div class="recording-info">
+                                <div class="info-row">
+                                    <span class="info-label">Date:</span>
+                                    <span class="info-value" id="selected-date">No date selected</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Coverage:</span>
+                                    <span class="info-value" id="coverage-percentage">-</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Duration:</span>
+                                    <span class="info-value" id="total-duration">-</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Size:</span>
+                                    <span class="info-value" id="total-size">-</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Segments:</span>
+                                    <span class="info-value" id="segment-count">-</span>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" style="display: none;">
+                    <div class="loading-content">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <h3>Loading Recordings...</h3>
+                        <p>Please wait while we load the recording data</p>
                     </div>
                 </div>
             </div>
@@ -180,92 +203,242 @@ class RecordingsPage {
     }
     
     initializePlayer() {
+        // Initialize video player
         const playerContainer = document.getElementById('video-player-container');
         if (playerContainer) {
             this.videoPlayer = new VideoPlaybackPlayer(playerContainer, {
                 cameraId: null,
                 controls: true,
-                timeline: true,
+                timeline: false, // We use separate timeline control
                 autoplay: false
+            });
+        }
+        
+        // Initialize calendar
+        const calendarContainer = document.getElementById('recording-calendar');
+        if (calendarContainer) {
+            this.calendar = new RecordingCalendar(calendarContainer, {
+                onDateSelect: (date, recordingData) => this.handleDateSelect(date, recordingData),
+                onMonthChange: (year, month, calendarData) => this.handleMonthChange(year, month, calendarData),
+                highlightToday: true
+            });
+        }
+        
+        // Initialize timeline control
+        const timelineContainer = document.getElementById('timeline-control');
+        if (timelineContainer) {
+            this.timeline = new TimelineControl(timelineContainer, {
+                onSeek: (seconds) => this.handleTimelineSeek(seconds),
+                onSegmentClick: (segment) => this.handleSegmentClick(segment),
+                onSegmentHover: (segment, action) => this.handleSegmentHover(segment, action),
+                showHourMarkers: true,
+                allowSeek: true
             });
         }
     }
     
     attachEventListeners() {
-        // Refresh button
+        // Header actions
         document.getElementById('refresh-btn')?.addEventListener('click', () => this.refreshData());
-        
-        // Export button
         document.getElementById('export-btn')?.addEventListener('click', () => this.showExportDialog());
         
-        // Filter controls
-        document.getElementById('camera-filter')?.addEventListener('change', (e) => {
-            this.filters.camera = e.target.value;
-        });
+        // Storage actions
+        document.getElementById('cleanup-btn')?.addEventListener('click', () => this.triggerStorageCleanup());
         
-        document.getElementById('date-range-filter')?.addEventListener('change', (e) => {
-            this.filters.dateRange = e.target.value;
-            this.toggleCustomDateRange();
-        });
-        
-        // Filter actions
-        document.getElementById('apply-filters')?.addEventListener('click', () => this.applyFilters());
-        document.getElementById('clear-filters')?.addEventListener('click', () => this.clearFilters());
-        
-        // Sort control
-        document.getElementById('sort-by')?.addEventListener('change', (e) => {
-            this.sortRecordings(e.target.value);
-        });
+        // Recording details actions
+        document.getElementById('show-segments-btn')?.addEventListener('click', () => this.showSegmentsList());
+        document.getElementById('show-stats-btn')?.addEventListener('click', () => this.showRecordingStats());
     }
     
     async loadInitialData() {
+        this.showLoading(true);
+        
         try {
-            // Load cameras first
+            // Load cameras from main API
             await this.loadCameras();
             
             // Load storage statistics
             await this.loadStorageStats();
             
-            // Load today's recordings for the first camera
+            // Load today's data for the first camera
             if (this.cameras.length > 0) {
                 this.selectedCamera = this.cameras[0].id;
-                document.getElementById('camera-filter').value = this.selectedCamera;
-                await this.applyFilters();
+                
+                // Load calendar for current month
+                await this.loadCalendarForCurrentMonth();
+                
+                // Set today as selected date and load recordings
+                this.selectedDate = new Date();
+                await this.loadRecordingsForDate(this.selectedDate);
+            } else {
+                this.showNoCamerasMessage();
             }
             
         } catch (error) {
             console.error('Failed to load initial data:', error);
             this.showError('Failed to load recordings data');
+        } finally {
+            this.showLoading(false);
         }
     }
-    
+
     async loadCameras() {
         try {
-            // For now, we'll use a mock camera list
-            // In a real implementation, this would come from the cameras API
-            this.cameras = [
-                { id: 3, name: 'Test Camera 1', status: 'online' }
-            ];
-            
-            // Populate camera filter
-            const cameraFilter = document.getElementById('camera-filter');
-            if (cameraFilter) {
-                // Clear existing options except "All Cameras"
-                while (cameraFilter.children.length > 1) {
-                    cameraFilter.removeChild(cameraFilter.lastChild);
-                }
-                
-                // Add camera options
-                this.cameras.forEach(camera => {
-                    const option = document.createElement('option');
-                    option.value = camera.id;
-                    option.textContent = `Camera ${camera.id} - ${camera.name}`;
-                    cameraFilter.appendChild(option);
-                });
+            // Load cameras from main API (port 8000)
+            const response = await fetch('http://localhost:8000/api/cameras');
+            if (!response.ok) {
+                throw new Error(`Failed to load cameras: ${response.status}`);
             }
+            
+            const cameras = await response.json();
+            this.cameras = cameras.filter(camera => camera.status === 'online');
+            
+            // Render camera list
+            this.renderCameraList();
             
         } catch (error) {
             console.error('Failed to load cameras:', error);
+            // Fallback to test data
+            this.cameras = [
+                { id: 'entrance_cam', name: 'Entrance Camera', status: 'online' }
+            ];
+            this.renderCameraList();
+        }
+    }
+
+    renderCameraList() {
+        const cameraListContainer = document.getElementById('camera-list-container');
+        if (!cameraListContainer) return;
+        
+        if (this.cameras.length === 0) {
+            cameraListContainer.innerHTML = `
+                <div class="no-cameras-message">
+                    <i class="fas fa-video-slash"></i>
+                    <p>No cameras available</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const camerasHtml = this.cameras.map(camera => `
+            <div class="camera-item ${camera.id === this.selectedCamera ? 'selected' : ''}" 
+                 data-camera-id="${camera.id}">
+                <div class="camera-info">
+                    <div class="camera-name">${camera.name}</div>
+                    <div class="camera-status ${camera.status}">
+                        <i class="fas fa-circle"></i>
+                        ${camera.status}
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        cameraListContainer.innerHTML = camerasHtml;
+        
+        // Attach click listeners
+        cameraListContainer.querySelectorAll('.camera-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const cameraId = e.currentTarget.dataset.cameraId;
+                this.selectCamera(cameraId);
+            });
+        });
+    }
+
+    // Event Handlers
+    async handleDateSelect(date, recordingData) {
+        this.selectedDate = new Date(date);
+        await this.loadRecordingsForDate(this.selectedDate);
+        this.updateSelectedDateDisplay();
+    }
+
+    handleMonthChange(year, month, calendarData) {
+        // Month changed in calendar - could update storage stats for month
+        console.log(`Month changed to ${year}-${month}`, calendarData);
+    }
+
+    handleTimelineSeek(seconds) {
+        // Convert seconds to timestamp and seek video player
+        if (this.videoPlayer && this.selectedDate) {
+            const dayStart = new Date(this.selectedDate);
+            dayStart.setHours(0, 0, 0, 0);
+            const targetTime = new Date(dayStart.getTime() + (seconds * 1000));
+            
+            this.videoPlayer.seekToTime(targetTime.toISOString());
+        }
+    }
+
+    async handleSegmentClick(segment) {
+        if (this.videoPlayer) {
+            await this.videoPlayer.loadSegment(segment);
+            this.currentSegment = segment;
+            this.updateRecordingDetails();
+        }
+    }
+
+    handleSegmentHover(segment, action) {
+        // Show segment tooltip or preview on hover
+        if (action === 'enter') {
+            // Could show segment preview or details
+            console.log('Segment hover:', segment.filename);
+        }
+    }
+
+    async selectCamera(cameraId) {
+        if (this.selectedCamera === cameraId) return;
+        
+        this.selectedCamera = cameraId;
+        
+        // Update camera list selection
+        document.querySelectorAll('.camera-item').forEach(item => {
+            item.classList.toggle('selected', item.dataset.cameraId === cameraId);
+        });
+        
+        // Reload calendar and recordings for new camera
+        await this.loadCalendarForCurrentMonth();
+        await this.loadRecordingsForDate(this.selectedDate);
+    }
+
+    async loadCalendarForCurrentMonth() {
+        if (!this.calendar || !this.selectedCamera) return;
+        
+        const now = new Date();
+        await this.calendar.loadMonth(
+            this.selectedCamera, 
+            now.getFullYear(), 
+            now.getMonth() + 1
+        );
+    }
+
+    async loadRecordingsForDate(date) {
+        if (!this.selectedCamera || !date) return;
+        
+        this.showLoading(true);
+        
+        try {
+            // Load recordings for selected date using video player
+            if (this.videoPlayer) {
+                await this.videoPlayer.loadRecordingsForDate(this.selectedCamera, date);
+                
+                // Get timeline data and update timeline control
+                const dateStr = playbackService.formatDate(date);
+                const timelineData = await playbackService.getTimelineSegments(this.selectedCamera, dateStr);
+                
+                this.segments = timelineData.segments || [];
+                
+                // Update timeline control
+                if (this.timeline) {
+                    this.timeline.loadSegments(this.segments);
+                }
+                
+                // Update recording details
+                this.updateRecordingDetails(timelineData);
+            }
+            
+        } catch (error) {
+            console.error('Failed to load recordings for date:', error);
+            this.showError('Failed to load recordings');
+        } finally {
+            this.showLoading(false);
         }
     }
     
@@ -285,266 +458,129 @@ class RecordingsPage {
     updateStorageDisplay() {
         if (!this.storageStats) return;
         
-        const stats = this.storageStats.system_stats;
+        const usedEl = document.getElementById('storage-used');
+        if (usedEl) usedEl.textContent = playbackService.formatFileSize(this.storageStats.total_used_bytes || 0);
         
-        document.getElementById('total-recordings').textContent = stats.total_segments || 0;
-        document.getElementById('total-storage').textContent = stats.total_size_formatted || '0 B';
-        document.getElementById('retention-days').textContent = `${this.storageStats.retention_days || 30} days`;
-        document.getElementById('disk-usage').textContent = `${stats.disk_used_percent || 0}%`;
+        const availableEl = document.getElementById('storage-available');
+        if (availableEl) availableEl.textContent = playbackService.formatFileSize(this.storageStats.available_bytes || 0);
+        
+        const percentageEl = document.getElementById('storage-percentage');
+        if (percentageEl) percentageEl.textContent = `${Math.round(this.storageStats.percentage_used || 0)}%`;
     }
-    
-    toggleCustomDateRange() {
-        const customRange = document.getElementById('custom-date-range');
-        const isCustom = this.filters.dateRange === 'custom';
-        
-        if (customRange) {
-            customRange.style.display = isCustom ? 'block' : 'none';
+
+    updateSelectedDateDisplay() {
+        const selectedDateEl = document.getElementById('selected-date');
+        if (selectedDateEl) {
+            selectedDateEl.textContent = this.selectedDate.toLocaleDateString();
         }
     }
-    
-    async applyFilters() {
-        try {
-            // Determine date range
-            const dateRange = this.getDateRange();
-            if (!dateRange) {
-                this.showError('Please select a valid date range');
-                return;
-            }
+
+    updateRecordingDetails(timelineData = null) {
+        if (timelineData) {
+            const coverageEl = document.getElementById('coverage-percentage');
+            if (coverageEl) coverageEl.textContent = `${Math.round(timelineData.coverage_percentage || 0)}%`;
             
-            // Determine camera ID
-            const cameraId = this.filters.camera === 'all' ? 
-                (this.cameras.length > 0 ? this.cameras[0].id : null) : 
-                parseInt(this.filters.camera);
+            const durationEl = document.getElementById('total-duration');
+            if (durationEl) durationEl.textContent = playbackService.formatDuration(timelineData.total_duration || 0);
             
-            if (!cameraId) {
-                this.showError('Please select a camera');
-                return;
-            }
+            const sizeEl = document.getElementById('total-size');
+            if (sizeEl) sizeEl.textContent = playbackService.formatFileSize(timelineData.total_size || 0);
             
-            // Search options
-            const searchOptions = {};
-            if (this.filters.minDuration) {
-                searchOptions.minDuration = parseInt(this.filters.minDuration);
-            }
-            if (this.filters.maxDuration) {
-                searchOptions.maxDuration = parseInt(this.filters.maxDuration);
-            }
-            
-            // Load recordings
-            const searchResults = await playbackService.searchRecordings(
-                cameraId,
-                dateRange.start,
-                dateRange.end,
-                searchOptions
-            );
-            
-            this.recordings = searchResults.segments || [];
-            
-            // Update UI
-            this.renderRecordingsList();
-            
-            // Load timeline in video player
-            if (this.videoPlayer && this.recordings.length > 0) {
-                await this.videoPlayer.loadTimeRange(cameraId, dateRange.start, dateRange.end);
-            }
-            
-        } catch (error) {
-            console.error('Failed to apply filters:', error);
-            this.showError('Failed to search recordings');
+            const countEl = document.getElementById('segment-count');
+            if (countEl) countEl.textContent = (timelineData.segments?.length || 0).toString();
         }
     }
-    
-    getDateRange() {
-        const now = new Date();
-        
-        switch (this.filters.dateRange) {
-            case 'today':
-                return playbackService.getTodayRange();
-                
-            case 'yesterday':
-                const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-                const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-                const endOfYesterday = new Date(startOfYesterday.getTime() + 24 * 60 * 60 * 1000 - 1);
-                return {
-                    start: playbackService.formatDateTime(startOfYesterday),
-                    end: playbackService.formatDateTime(endOfYesterday)
-                };
-                
-            case 'last7days':
-                return playbackService.getLastNDaysRange(7);
-                
-            case 'last30days':
-                return playbackService.getLastNDaysRange(30);
-                
-            case 'custom':
-                const startDate = document.getElementById('start-date')?.value;
-                const endDate = document.getElementById('end-date')?.value;
-                
-                if (!startDate || !endDate) {
-                    return null;
-                }
-                
-                return {
-                    start: playbackService.formatDateTime(new Date(startDate)),
-                    end: playbackService.formatDateTime(new Date(endDate))
-                };
-                
-            default:
-                return playbackService.getTodayRange();
+
+    // UI State Management
+    showLoading(show) {
+        const loadingOverlay = document.querySelector('.loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = show ? 'flex' : 'none';
         }
     }
-    
-    renderRecordingsList() {
-        const listContainer = document.getElementById('recordings-list');
-        if (!listContainer) return;
-        
-        if (this.recordings.length === 0) {
-            listContainer.innerHTML = `
-                <div class="no-recordings-message">
-                    <i class="fas fa-film"></i>
-                    <h4>No recordings found</h4>
-                    <p>Try adjusting your search filters</p>
+
+    showError(message) {
+        console.error('RecordingsPage error:', message);
+        // Could implement toast notifications here
+        alert(`Error: ${message}`);
+    }
+
+    showNoCamerasMessage() {
+        const mainContent = document.querySelector('.recordings-main');
+        if (mainContent) {
+            mainContent.innerHTML = `
+                <div class="no-cameras-content">
+                    <i class="fas fa-video-slash"></i>
+                    <h3>No Cameras Available</h3>
+                    <p>No cameras are currently online or configured for recording.</p>
                 </div>
             `;
-            return;
-        }
-        
-        const recordingsHtml = this.recordings.map(recording => this.getRecordingItemTemplate(recording)).join('');
-        listContainer.innerHTML = recordingsHtml;
-        
-        // Attach click listeners
-        listContainer.querySelectorAll('.recording-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const recordingId = e.currentTarget.dataset.recordingId;
-                const recording = this.recordings.find(r => r.id.toString() === recordingId);
-                if (recording) {
-                    this.playRecording(recording);
-                }
-            });
-        });
-    }
-    
-    getRecordingItemTemplate(recording) {
-        const startTime = new Date(recording.start_time);
-        const duration = playbackService.formatDuration(recording.duration_seconds);
-        const fileSize = playbackService.formatFileSize(recording.file_size);
-        
-        return `
-            <div class="recording-item" data-recording-id="${recording.id}">
-                <div class="recording-info">
-                    <div class="recording-time">
-                        <i class="fas fa-clock"></i>
-                        ${startTime.toLocaleString()}
-                    </div>
-                    <div class="recording-filename">${recording.filename}</div>
-                </div>
-                <div class="recording-stats">
-                    <span class="stat">
-                        <i class="fas fa-stopwatch"></i>
-                        ${duration}
-                    </span>
-                    <span class="stat">
-                        <i class="fas fa-hdd"></i>
-                        ${fileSize}
-                    </span>
-                    <span class="status ${recording.exists ? 'exists' : 'missing'}">
-                        <i class="fas ${recording.exists ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-                        ${recording.exists ? 'Available' : 'Missing'}
-                    </span>
-                </div>
-                <div class="recording-actions">
-                    <button class="btn btn-sm btn-primary play-btn" title="Play">
-                        <i class="fas fa-play"></i>
-                    </button>
-                    <button class="btn btn-sm btn-secondary download-btn" title="Download">
-                        <i class="fas fa-download"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-    
-    async playRecording(recording) {
-        if (!this.videoPlayer || !recording.exists) return;
-        
-        try {
-            // Load the specific segment
-            await this.videoPlayer.loadSegment(recording);
-            
-            // Scroll to video player
-            document.getElementById('video-player-container')?.scrollIntoView({ 
-                behavior: 'smooth' 
-            });
-            
-        } catch (error) {
-            console.error('Failed to play recording:', error);
-            this.showError('Failed to play recording');
         }
     }
-    
-    sortRecordings(sortBy) {
-        if (!this.recordings.length) return;
-        
-        switch (sortBy) {
-            case 'newest':
-                this.recordings.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-                break;
-            case 'oldest':
-                this.recordings.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
-                break;
-            case 'duration':
-                this.recordings.sort((a, b) => b.duration_seconds - a.duration_seconds);
-                break;
-            case 'size':
-                this.recordings.sort((a, b) => b.file_size - a.file_size);
-                break;
-        }
-        
-        this.renderRecordingsList();
-    }
-    
-    clearFilters() {
-        this.filters = {
-            camera: 'all',
-            dateRange: 'today',
-            customStart: '',
-            customEnd: '',
-            minDuration: '',
-            maxDuration: ''
-        };
-        
-        // Reset form elements
-        document.getElementById('camera-filter').value = 'all';
-        document.getElementById('date-range-filter').value = 'today';
-        document.getElementById('min-duration').value = '';
-        document.getElementById('max-duration').value = '';
-        document.getElementById('start-date').value = '';
-        document.getElementById('end-date').value = '';
-        
-        this.toggleCustomDateRange();
-    }
-    
+
+    // Action Methods
     async refreshData() {
         await this.loadStorageStats();
-        await this.applyFilters();
+        
+        if (this.selectedCamera && this.selectedDate) {
+            await this.loadRecordingsForDate(this.selectedDate);
+        }
+        
+        if (this.calendar && this.selectedCamera) {
+            await this.loadCalendarForCurrentMonth();
+        }
     }
-    
+
+    async triggerStorageCleanup() {
+        if (!this.storageStats) return;
+        
+        const confirmed = confirm('Are you sure you want to trigger storage cleanup? This will remove old recordings to free up space.');
+        if (!confirmed) return;
+        
+        try {
+            this.showLoading(true);
+            const result = await playbackService.triggerCleanup();
+            
+            alert(`Cleanup completed: ${result.deleted_count} segments removed, ${playbackService.formatFileSize(result.deleted_size)} freed`);
+            
+            // Refresh data after cleanup
+            await this.refreshData();
+            
+        } catch (error) {
+            console.error('Failed to trigger cleanup:', error);
+            this.showError('Failed to trigger storage cleanup');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
     showExportDialog() {
-        // TODO: Implement export dialog
-        console.log('Export dialog not implemented yet');
+        // TODO: Implement export functionality
+        alert('Export functionality not yet implemented');
     }
-    
-    showError(message) {
-        console.error('Recordings page error:', message);
-        // TODO: Implement proper error display
+
+    showSegmentsList() {
+        // TODO: Show detailed segments list in modal or panel
+        console.log('Show segments list:', this.segments);
     }
-    
+
+    showRecordingStats() {
+        // TODO: Show detailed recording statistics
+        console.log('Show recording stats for:', this.selectedDate);
+    }
+
     // Cleanup
     destroy() {
         if (this.videoPlayer) {
             this.videoPlayer.destroy();
         }
-    }
+        if (this.calendar) {
+            this.calendar.destroy();
+        }
+        if (this.timeline) {
+            this.timeline.destroy();
+        }
+}
 }
 
 export default RecordingsPage;

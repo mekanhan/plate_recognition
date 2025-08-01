@@ -693,14 +693,742 @@
     font-size: 2rem;
 }
 
+/* New Recordings Page Layout */
+.recordings-layout {
+    display: flex;
+    height: calc(100vh - 200px);
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.recordings-sidebar {
+    width: 320px;
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.recordings-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+}
+
+.sidebar-section h3 {
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Camera List */
+.camera-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.camera-item {
+    padding: 1rem;
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.camera-item:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-bg);
+}
+
+.camera-item.selected {
+    border-color: var(--primary-color);
+    background: var(--primary-bg);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.camera-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.camera-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.camera-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    text-transform: capitalize;
+}
+
+.camera-status.online {
+    color: var(--success-color);
+}
+
+.camera-status.offline {
+    color: var(--error-color);
+}
+
+.camera-status i {
+    font-size: 0.6rem;
+}
+
+.no-cameras-message {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--text-secondary);
+}
+
+.no-cameras-message i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+/* Recording Calendar Component */
+.recording-calendar {
+    background: var(--bg-white);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--bg-light);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.calendar-header .btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.month-year-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.month-name {
+    font-size: 1rem;
+}
+
+.year-name {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.calendar-body {
+    padding: 1rem;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 0.5rem;
+}
+
+.weekday {
+    text-align: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0.5rem 0.25rem;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+}
+
+.calendar-day {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.25rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    background: var(--bg-white);
+    border: 1px solid transparent;
+    font-size: 0.85rem;
+}
+
+.calendar-day:hover {
+    background: var(--primary-bg);
+    border-color: var(--primary-color);
+}
+
+.calendar-day.today {
+    background: var(--accent-color);
+    color: white;
+}
+
+.calendar-day.selected {
+    background: var(--primary-color);
+    color: white;
+    font-weight: 600;
+}
+
+.calendar-day.other-month {
+    color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.calendar-day.has-recordings {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: var(--success-color);
+}
+
+.calendar-day.partial-recordings {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--warning-color);
+}
+
+.day-number {
+    font-weight: 500;
+    margin-bottom: 0.125rem;
+}
+
+.recording-indicator {
+    width: 100%;
+    font-size: 0.65rem;
+}
+
+.coverage-bar {
+    width: 100%;
+    height: 2px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-bottom: 0.125rem;
+}
+
+.coverage-fill {
+    height: 100%;
+    background: var(--success-color);
+}
+
+.calendar-day.partial-recordings .coverage-fill {
+    background: var(--warning-color);
+}
+
+.coverage-text {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.calendar-legend {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.75rem;
+    background: var(--bg-light);
+    border-top: 1px solid var(--border-color);
+    font-size: 0.7rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: var(--text-secondary);
+}
+
+.legend-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-indicator.has-recordings {
+    background: rgba(34, 197, 94, 0.2);
+    border: 1px solid var(--success-color);
+}
+
+.legend-indicator.partial-recordings {
+    background: rgba(245, 158, 11, 0.2);
+    border: 1px solid var(--warning-color);
+}
+
+.legend-indicator.no-recordings {
+    background: var(--bg-white);
+    border: 1px solid var(--border-color);
+}
+
+.legend-indicator.selected-day {
+    background: var(--primary-color);
+    border: 1px solid var(--primary-color);
+}
+
+/* Timeline Control Component */
+.timeline-control {
+    background: var(--bg-light);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.timeline-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+}
+
+.current-time {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.timeline-separator {
+    color: var(--text-secondary);
+}
+
+.selected-segment-info {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.timeline-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.timeline-body {
+    padding: 1rem;
+}
+
+.timeline-track {
+    position: relative;
+    width: 100%;
+    height: 60px;
+    background: var(--bg-darker);
+    border-radius: 4px;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.time-markers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.time-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.marker-line {
+    width: 1px;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.hour-marker .marker-line {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.marker-label {
+    position: absolute;
+    bottom: -20px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+.segments-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.timeline-segment {
+    position: absolute;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    top: 8px;
+    bottom: 8px;
+}
+
+.timeline-segment:hover {
+    transform: scaleY(1.1);
+    z-index: 2;
+}
+
+.timeline-segment.selected {
+    transform: scaleY(1.2);
+    box-shadow: 0 0 0 2px var(--accent-color);
+    z-index: 3;
+}
+
+.recording-segment {
+    background: var(--success-color);
+}
+
+.continuous-segment {
+    background: var(--success-color);
+}
+
+.motion-segment {
+    background: var(--warning-color);
+}
+
+.alarm-segment {
+    background: var(--error-color);
+}
+
+.gap-segment {
+    background: var(--text-muted);
+    opacity: 0.3;
+}
+
+.segment-content {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.6rem;
+    color: white;
+    text-align: center;
+    pointer-events: none;
+}
+
+.timeline-segment:hover .segment-content {
+    display: block;
+}
+
+.timeline-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--accent-color);
+    pointer-events: none;
+    z-index: 4;
+    border-radius: 1px;
+}
+
+.timeline-hover-indicator {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.5);
+    pointer-events: none;
+    z-index: 1;
+    display: none;
+}
+
+.timeline-legend {
+    display: flex;
+    justify-content: space-around;
+    padding: 0.75rem;
+    background: var(--bg-white);
+    border-top: 1px solid var(--border-color);
+    font-size: 0.75rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.timeline-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.timeline-legend .legend-color {
+    width: 16px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+.no-segments-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Storage Summary in Sidebar */
+.storage-summary {
+    background: var(--bg-white);
+    border-radius: 6px;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+}
+
+.storage-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.storage-actions {
+    display: flex;
+    justify-content: center;
+}
+
+/* Recording Details Section */
+.recording-details-section {
+    background: var(--bg-light);
+    border-radius: 8px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+}
+
+.details-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.recording-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.info-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: 'Courier New', monospace;
+}
+
+/* Loading and Error States */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-content {
+    background: var(--bg-white);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 300px;
+}
+
+.loading-content i {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+}
+
+.loading-content h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.loading-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.no-cameras-content {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+
+.no-cameras-content i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.no-cameras-content h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Video Player Overlays */
+.error-overlay,
+.no-recordings-overlay,
+.gap-overlay,
+.end-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.error-content,
+.no-recordings-content,
+.gap-content,
+.end-content {
+    text-align: center;
+    color: white;
+    max-width: 300px;
+    padding: 2rem;
+}
+
+.error-content i,
+.no-recordings-content i,
+.gap-content i,
+.end-content i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.error-content h3,
+.no-recordings-content h3,
+.gap-content h3,
+.end-content h3 {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.error-content p,
+.no-recordings-content p,
+.gap-content p,
+.end-content p {
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+.retry-btn,
+.restart-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.retry-btn:hover,
+.restart-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
-    .recordings-content {
+    .recordings-layout {
         flex-direction: column;
+        height: auto;
     }
     
-    .filters-panel {
+    .recordings-sidebar {
         width: 100%;
+        max-height: 400px;
+        flex-direction: row;
+        overflow-x: auto;
+    }
+    
+    .sidebar-section {
+        flex: 1;
+        min-width: 250px;
     }
     
     .storage-metrics-grid {
@@ -709,6 +1437,35 @@
 }
 
 @media (max-width: 768px) {
+    .recordings-sidebar {
+        flex-direction: column;
+        max-height: none;
+    }
+    
+    .sidebar-section {
+        min-width: auto;
+    }
+    
+    .calendar-days {
+        gap: 2px;
+    }
+    
+    .calendar-day {
+        font-size: 0.75rem;
+        padding: 0.125rem;
+    }
+    
+    .timeline-legend {
+        font-size: 0.65rem;
+        gap: 0.5rem;
+    }
+    
+    .timeline-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
     .storage-stats {
         grid-template-columns: repeat(2, 1fr);
         gap: 1rem;

@@ -1,693 +1,449 @@
-# Deployment Guide
+# LPR System Deployment Guide
 
-## Prerequisites
-- All components developed and tested locally
-- Ubuntu 20.04+ or similar Linux server
-- Docker and Docker Compose installed
-- NVIDIA drivers for GPU (if using GPU)
+## 🚀 Quick Deployment
 
-## Overview
-Deploy the complete LPR system for production use with proper monitoring, backups, and security.
+### Simple Production Setup
 
-## System Architecture for Deployment
+The easiest way to deploy the LPR system for production:
 
+```bash
+# On your production server
+git clone <repository-url> lpr-system
+cd lpr-system
+
+# Set up virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Update database schema
+python3 update_database_schema.py
+
+# Start all services
+python3 start_lpr.py
+```
+
+Access the system at:
+- **Frontend**: http://your-server:8080/
+- **Main API**: http://your-server:8001/docs
+- **Recording API**: http://your-server:8002/docs
+
+## 📋 System Architecture
+
+### Current Production Architecture
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Load Balancer │     │   Web Server    │     │   Database      │
-│   (Nginx)       │────▶│   (FastAPI)     │────▶│   (PostgreSQL)  │
+│   Frontend      │     │   Main API      │     │   Recording     │
+│   (Port 8080)   │────▶│   (Port 8001)   │────▶│   (Port 8002)   │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
          │                       │                        │
-         │              ┌─────────────────┐              │
-         │              │ Processing Node │              │
-         └─────────────▶│ (AI + Cameras)  │──────────────┘
-                        └─────────────────┘
+         │                       ▼                        ▼
+         │              ┌─────────────────┐     ┌─────────────────┐
+         └─────────────▶│  SQLite DB      │     │  Video Storage  │
+                        │  (Cameras &     │     │  (Recordings)   │
+                        │   Detections)   │     │                 │
+                        └─────────────────┘     └─────────────────┘
 ```
 
-## Docker Deployment
+### Service Components
+- **Main API Service**: FastAPI application handling camera management and detection
+- **Recording Service**: Independent 24/7 recording with playback API
+- **Frontend Server**: Static file server for web interface
+- **SQLite Database**: Persistent storage for cameras, detections, and metadata
+- **File Storage**: Video recordings organized by date/time
 
-### 1. Docker Compose Configuration
+## 🔧 Service Management
 
+### Production Service Management
+
+#### Start All Services
+```bash
+# Recommended for production
+python3 start_lpr.py
+
+# Alternative with monitoring
+python3 start_all_services.py
+```
+
+#### Monitor Services
+```bash
+# Check service health
+python3 check_services.py
+
+# Continuous monitoring
+python3 check_services.py -m 60  # Check every 60 seconds
+```
+
+#### Stop Services
+```bash
+python3 stop_all_services.py
+```
+
+#### Restart Services
+```bash
+python3 restart_services.py
+```
+
+### Service Logs
+All services create timestamped logs in the `logs/` directory:
+```bash
+# Monitor logs
+tail -f logs/main_api_*.log
+tail -f logs/recording_service_*.log
+tail -f logs/frontend_*.log
+
+# Check for errors
+grep -i error logs/*.log
+```
+
+## 🐳 Docker Deployment (Alternative)
+
+### Docker Compose Setup
+
+Create `docker-compose.yml`:
 ```yaml
-# docker-compose.yml
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: lpr_postgres
+  lpr-system:
+    build: .
+    container_name: lpr_system
+    ports:
+      - "8080:8080"   # Frontend
+      - "8001:8001"   # Main API
+      - "8002:8002"   # Recording API
+    volumes:
+      - ./data:/app/data           # Database
+      - ./recordings:/app/recordings  # Video storage
+      - ./logs:/app/logs           # Log files
     environment:
-      POSTGRES_USER: ${DB_USER:-lpr_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password}
-      POSTGRES_DB: ${DB_NAME:-lpr_db}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init_db.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
+      - PYTHONUNBUFFERED=1
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-lpr_user}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Redis for Queuing
-  redis:
-    image: redis:7-alpine
-    container_name: lpr_redis
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Main Application
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: lpr_app
-    environment:
-      DATABASE_URL: postgresql+asyncpg://${DB_USER:-lpr_user}:${DB_PASSWORD:-secure_password}@postgres:5432/${DB_NAME:-lpr_db}
-      REDIS_URL: redis://redis:6379
-      PYTHONUNBUFFERED: 1
-    volumes:
-      - ./detections:/app/detections
-      - ./recordings:/app/recordings
-      - ./config:/app/config
-      - ./models:/app/models
-    ports:
-      - "8000:8000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    container_name: lpr_nginx
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend/build:/usr/share/nginx/html:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - app
-    restart: unless-stopped
-
-  # Monitoring - Prometheus
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: lpr_prometheus
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-    ports:
-      - "9090:9090"
-    restart: unless-stopped
-
-  # Monitoring - Grafana
-  grafana:
-    image: grafana/grafana:latest
-    container_name: lpr_grafana
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
-      GF_USERS_ALLOW_SIGN_UP: false
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    ports:
-      - "3000:3000"
-    depends_on:
-      - prometheus
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
-  redis_data:
-  prometheus_data:
-  grafana_data:
 ```
 
-### 2. Application Dockerfile
-
+### Dockerfile
 ```dockerfile
-# Dockerfile
-FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+FROM python:3.11-slim
 
-# Install Python and system dependencies
+WORKDIR /app
+
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    python3.10 \
-    python3-pip \
     ffmpeg \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
     libgomp1 \
-    libglib2.0-0 \
-    libglfw3-dev \
-    libgles2-mesa-dev \
-    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
-
-# Copy requirements first for better caching
+# Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
-
-# Install additional AI models
-RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p detections recordings logs
+RUN mkdir -p data recordings logs detections/frames detections/plates static
 
-# Expose port
-EXPOSE 8000
+# Update database schema
+RUN python3 update_database_schema.py
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8000/health || exit 1
+# Expose ports
+EXPOSE 8080 8001 8002
 
-# Run application
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+# Start all services
+CMD ["python3", "start_all_services.py"]
 ```
 
-### 3. Nginx Configuration
+### Deploy with Docker
+```bash
+# Build and start
+docker-compose up --build -d
 
+# Check logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+## 🔒 Security Configuration
+
+### Basic Security Setup
+
+#### 1. Firewall Configuration
+```bash
+# Allow only necessary ports
+sudo ufw enable
+sudo ufw allow 22        # SSH
+sudo ufw allow 8080      # Frontend
+sudo ufw allow 8001      # Main API
+sudo ufw allow 8002      # Recording API
+```
+
+#### 2. SSL/TLS Setup with Nginx
 ```nginx
-# nginx.conf
-events {
-    worker_connections 1024;
+# /etc/nginx/sites-available/lpr-system
+server {
+    listen 80;
+    server_name your-domain.com;
+    return 301 https://$server_name$request_uri;
 }
 
-http {
-    include /etc/nginx/mime.types;
-    default_type application/octet-stream;
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
 
-    # Logging
-    access_log /var/log/nginx/access.log;
-    error_log /var/log/nginx/error.log;
+    ssl_certificate /path/to/cert.pem;
+    ssl_certificate_key /path/to/key.pem;
 
-    # Gzip compression
-    gzip on;
-    gzip_vary on;
-    gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
-
-    # SSL Configuration
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-    ssl_prefer_server_ciphers on;
-
-    # Rate limiting
-    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
-    limit_req_zone $binary_remote_addr zone=snapshots:10m rate=1r/s;
-
-    # Upstream servers
-    upstream app {
-        server app:8000;
+    # Frontend
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 
-    # Redirect HTTP to HTTPS
-    server {
-        listen 80;
-        server_name _;
-        return 301 https://$host$request_uri;
+    # Main API
+    location /api/ {
+        proxy_pass http://localhost:8001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 
-    # Main HTTPS server
-    server {
-        listen 443 ssl http2;
-        server_name _;
-
-        ssl_certificate /etc/nginx/ssl/cert.pem;
-        ssl_certificate_key /etc/nginx/ssl/key.pem;
-
-        # Security headers
-        add_header X-Frame-Options "SAMEORIGIN" always;
-        add_header X-Content-Type-Options "nosniff" always;
-        add_header X-XSS-Protection "1; mode=block" always;
-        add_header Referrer-Policy "no-referrer-when-downgrade" always;
-        add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
-
-        # Frontend
-        location / {
-            root /usr/share/nginx/html;
-            try_files $uri $uri/ /index.html;
-        }
-
-        # API endpoints
-        location /api {
-            limit_req zone=api burst=20 nodelay;
-            
-            proxy_pass http://app;
-            proxy_set_header Host $http_host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            
-            # WebSocket support
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection "upgrade";
-        }
-
-        # Camera snapshots (rate limited)
-        location /api/cameras {
-            limit_req zone=snapshots burst=5 nodelay;
-            proxy_pass http://app;
-        }
-
-        # Video clips
-        location /api/video {
-            proxy_pass http://app;
-            proxy_buffering off;
-            
-            # Large files support
-            client_max_body_size 0;
-            proxy_max_temp_file_size 0;
-        }
-
-        # Static files
-        location /images {
-            alias /app/detections;
-            expires 1h;
-            add_header Cache-Control "public, immutable";
-        }
+    # Recording API
+    location /recordings/ {
+        proxy_pass http://localhost:8002;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 }
 ```
 
-## Production Environment Setup
-
-### 1. Environment Variables
-
+#### 3. Environment Variables
+Create `.env` file for sensitive configuration:
 ```bash
-# .env.production
-# Database
-DB_USER=lpr_user
-DB_PASSWORD=your_secure_password_here
-DB_NAME=lpr_production
-DB_HOST=postgres
-DB_PORT=5432
+# Database encryption key (generate with: openssl rand -hex 32)
+DATABASE_ENCRYPTION_KEY=your-32-character-hex-key
 
-# Redis
-REDIS_URL=redis://redis:6379
+# API Security
+API_SECRET_KEY=your-secret-key-here
 
-# Security
-SECRET_KEY=your_secret_key_here
-API_KEY=your_api_key_here
-
-# Camera defaults
+# Camera default credentials (optional)
 DEFAULT_CAMERA_USERNAME=admin
-DEFAULT_CAMERA_PASSWORD=camera_password
-
-# Storage
-DETECTION_STORAGE_PATH=/app/detections
-RECORDING_STORAGE_PATH=/app/recordings
-MAX_STORAGE_GB=500
-
-# AI Models
-MODEL_CACHE_DIR=/app/models
-YOLO_MODEL=yolov8m.pt
-OCR_LANGUAGES=en
-
-# Monitoring
-ENABLE_METRICS=true
-METRICS_PORT=9090
-
-# Grafana
-GRAFANA_PASSWORD=secure_admin_password
+DEFAULT_CAMERA_PASSWORD=secure-password
 ```
 
-### 2. System Requirements
+## 📊 Monitoring and Maintenance
 
-```yaml
-# Minimum Requirements
-minimum:
-  cpu: 4 cores
-  ram: 8 GB
-  gpu: NVIDIA GTX 1060 (6GB)
-  storage: 100 GB SSD
-  network: 100 Mbps
-
-# Recommended Requirements  
-recommended:
-  cpu: 8+ cores
-  ram: 16-32 GB
-  gpu: NVIDIA RTX 3060 or better
-  storage: 1 TB NVMe SSD
-  network: 1 Gbps
-
-# Per Camera Requirements
-per_camera:
-  cpu: 0.5-1 core
-  ram: 1-2 GB
-  bandwidth: 8-15 Mbps
-  storage: 10-50 GB/day
-```
-
-### 3. Pre-deployment Checklist
-
+### Health Monitoring
 ```bash
+# Create monitoring script
+cat > monitor_lpr.sh << 'EOF'
 #!/bin/bash
-# deployment/pre-deploy-check.sh
+LOG_FILE="/var/log/lpr_monitor.log"
 
-echo "🔍 Pre-deployment Check"
-
-# Check Docker
-if ! command -v docker &> /dev/null; then
-    echo "❌ Docker not installed"
-    exit 1
-fi
-echo "✅ Docker installed"
-
-# Check Docker Compose
-if ! command -v docker-compose &> /dev/null; then
-    echo "❌ Docker Compose not installed"
-    exit 1
-fi
-echo "✅ Docker Compose installed"
-
-# Check NVIDIA Docker (if GPU)
-if nvidia-smi &> /dev/null; then
-    if ! docker run --rm --gpus all nvidia/cuda:11.8.0-base-ubuntu22.04 nvidia-smi &> /dev/null; then
-        echo "❌ NVIDIA Docker runtime not configured"
-        exit 1
+while true; do
+    if ! python3 check_services.py > /dev/null 2>&1; then
+        echo "$(date): LPR services unhealthy, restarting..." >> $LOG_FILE
+        python3 restart_services.py >> $LOG_FILE 2>&1
     fi
-    echo "✅ NVIDIA Docker runtime configured"
-fi
-
-# Check required ports
-for port in 80 443 8000 5432 6379; do
-    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null ; then
-        echo "❌ Port $port already in use"
-        exit 1
-    fi
+    sleep 300  # Check every 5 minutes
 done
-echo "✅ Required ports available"
+EOF
 
-# Check disk space
-available=$(df -BG /var/lib/docker | awk 'NR==2 {print $4}' | sed 's/G//')
-if [ $available -lt 50 ]; then
-    echo "❌ Insufficient disk space (need 50GB, have ${available}GB)"
-    exit 1
-fi
-echo "✅ Sufficient disk space"
-
-# Check environment file
-if [ ! -f .env.production ]; then
-    echo "❌ .env.production file missing"
-    exit 1
-fi
-echo "✅ Environment file present"
-
-echo "✨ System ready for deployment!"
+chmod +x monitor_lpr.sh
 ```
 
-## Deployment Steps
-
-### 1. Initial Deployment
-
+### Systemd Service (Linux)
 ```bash
-# Clone repository
-git clone https://github.com/yourorg/lpr-system.git
-cd lpr-system
+# Create systemd service
+sudo tee /etc/systemd/system/lpr-system.service << 'EOF'
+[Unit]
+Description=License Plate Recognition System
+After=network.target
 
-# Copy production environment
-cp .env.example .env.production
-# Edit .env.production with your values
+[Service]
+Type=simple
+User=your-username
+WorkingDirectory=/path/to/lpr-system
+ExecStart=/path/to/lpr-system/.venv/bin/python3 start_all_services.py
+Restart=always
+RestartSec=10
 
-# Create SSL certificates
-mkdir -p ssl
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout ssl/key.pem -out ssl/cert.pem
+[Install]
+WantedBy=multi-user.target
+EOF
 
-# Build and start services
-docker-compose up -d --build
-
-# Check service health
-docker-compose ps
-docker-compose logs -f app
-
-# Initialize database
-docker-compose exec app python scripts/init_db.py
-
-# Create admin user
-docker-compose exec app python scripts/create_admin.py
+# Enable and start service
+sudo systemctl enable lpr-system
+sudo systemctl start lpr-system
+sudo systemctl status lpr-system
 ```
 
-### 2. Camera Configuration
-
-```python
-# scripts/configure_cameras.py
-import asyncio
-from database.service import DatabaseService
-from camera_manager import CameraConfig
-
-async def add_production_cameras():
-    db = DatabaseService("postgresql+asyncpg://...")
-    
-    cameras = [
-        {
-            "camera_id": "entrance_main",
-            "name": "Main Entrance",
-            "ip_address": "10.0.0.181",
-            "username": "admin",
-            "password": "secure_password",
-            "location": "Building A - Main Entrance",
-            "stream_path": "/Streaming/Channels/101"
-        },
-        # Add more cameras
-    ]
-    
-    for cam_data in cameras:
-        config = CameraConfig(**cam_data)
-        await db.add_camera(config)
-        print(f"Added camera: {config.name}")
-
-if __name__ == "__main__":
-    asyncio.run(add_production_cameras())
-```
-
-## Monitoring Setup
-
-### 1. Prometheus Configuration
-
-```yaml
-# prometheus.yml
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'lpr-app'
-    static_configs:
-      - targets: ['app:9090']
-    
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
-      
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres-exporter:9187']
-```
-
-### 2. Grafana Dashboard
-
-```json
-{
-  "dashboard": {
-    "title": "LPR System Monitoring",
-    "panels": [
-      {
-        "title": "Detection Rate",
-        "targets": [
-          {
-            "expr": "rate(lpr_detections_total[5m])"
-          }
-        ]
-      },
-      {
-        "title": "Camera Health",
-        "targets": [
-          {
-            "expr": "lpr_camera_health_status"
-          }
-        ]
-      },
-      {
-        "title": "AI Processing Time",
-        "targets": [
-          {
-            "expr": "histogram_quantile(0.95, lpr_ai_processing_duration_seconds_bucket)"
-          }
-        ]
-      }
-    ]
-  }
+### Log Rotation
+```bash
+# Create logrotate configuration
+sudo tee /etc/logrotate.d/lpr-system << 'EOF'
+/path/to/lpr-system/logs/*.log {
+    daily
+    rotate 30
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 644 your-username your-username
 }
+EOF
 ```
 
-## Backup Strategy
+## 💾 Backup Strategy
 
-### 1. Automated Backups
-
+### Database Backup
 ```bash
+# Create backup script
+cat > backup_lpr.sh << 'EOF'
 #!/bin/bash
-# scripts/backup.sh
-
-BACKUP_DIR="/backups/lpr"
+BACKUP_DIR="/backup/lpr-system"
 DATE=$(date +%Y%m%d_%H%M%S)
 
+# Create backup directory
+mkdir -p $BACKUP_DIR
+
 # Backup database
-docker-compose exec -T postgres pg_dump -U lpr_user lpr_db | \
-  gzip > "$BACKUP_DIR/db_backup_$DATE.sql.gz"
+cp data/license_plates.db $BACKUP_DIR/license_plates_$DATE.db
 
-# Backup detection images (last 7 days)
-find /app/detections -mtime -7 -type f | \
-  tar -czf "$BACKUP_DIR/detections_$DATE.tar.gz" -T -
+# Backup important configurations
+tar -czf $BACKUP_DIR/config_$DATE.tar.gz \
+    *.py \
+    requirements.txt \
+    .env \
+    frontend/
 
-# Backup configuration
-tar -czf "$BACKUP_DIR/config_$DATE.tar.gz" /app/config
+# Clean old backups (keep 30 days)
+find $BACKUP_DIR -name "*.db" -mtime +30 -delete
+find $BACKUP_DIR -name "*.tar.gz" -mtime +30 -delete
 
-# Keep only last 30 days of backups
-find "$BACKUP_DIR" -mtime +30 -delete
+echo "Backup completed: $DATE"
+EOF
 
-# Upload to S3 (optional)
-aws s3 sync "$BACKUP_DIR" s3://your-backup-bucket/lpr/
+chmod +x backup_lpr.sh
 ```
 
-### 2. Backup Cron Job
-
-```cron
-# /etc/cron.d/lpr-backup
-0 2 * * * root /opt/lpr/scripts/backup.sh >> /var/log/lpr-backup.log 2>&1
-```
-
-## Security Hardening
-
-### 1. Firewall Rules
-
+### Automated Backups with Cron
 ```bash
-# UFW firewall configuration
-ufw default deny incoming
-ufw default allow outgoing
+# Add to crontab
+crontab -e
 
-# Allow SSH (restrict source IP)
-ufw allow from 192.168.1.0/24 to any port 22
-
-# Allow HTTP/HTTPS
-ufw allow 80/tcp
-ufw allow 443/tcp
-
-# Allow camera network only
-ufw allow from 10.0.0.0/24 to any port 8000
-
-# Enable firewall
-ufw enable
+# Add this line for daily backups at 2 AM
+0 2 * * * /path/to/lpr-system/backup_lpr.sh >> /var/log/lpr_backup.log 2>&1
 ```
 
-### 2. SSL/TLS with Let's Encrypt
-
-```bash
-# Install certbot
-apt-get install certbot
-
-# Get certificate
-certbot certonly --standalone -d yourdomain.com
-
-# Auto-renewal
-echo "0 0 * * 0 root certbot renew --quiet" > /etc/cron.d/certbot-renew
-```
-
-## Troubleshooting Deployment
+## 🚨 Troubleshooting
 
 ### Common Issues
 
+#### Services Won't Start
 ```bash
-# Check all services
-docker-compose ps
+# Check port conflicts
+sudo lsof -i :8001 -i :8002 -i :8080
 
-# View logs
-docker-compose logs -f app
-docker-compose logs -f postgres
+# Check Python environment
+which python3
+.venv/bin/python3 --version
 
-# Restart service
-docker-compose restart app
+# Update database schema
+python3 update_database_schema.py
+```
 
-# Check resource usage
-docker stats
+#### High CPU/Memory Usage
+```bash
+# Monitor resources
+htop
+python3 check_services.py
 
-# Enter container for debugging
-docker-compose exec app bash
+# Check logs for errors
+grep -i "error\|warning" logs/*.log | tail -20
+```
 
-# Test camera connection
-docker-compose exec app python -c "
-import cv2
-cap = cv2.VideoCapture('rtsp://...')
-print('Connected:', cap.isOpened())
+#### Recording Issues
+```bash
+# Check storage space
+df -h recordings/
+
+# Check recording service
+curl http://localhost:8002/health
+
+# Manual cleanup if needed
+python3 -c "
+from recording_service.services.storage_manager import StorageManager
+sm = StorageManager('recordings')
+sm.cleanup_old_recordings()
 "
 ```
 
-## Performance Tuning
+## 📈 Performance Optimization
 
-### 1. PostgreSQL Optimization
+### For High-Traffic Deployments
 
-```sql
--- postgresql.conf optimizations
-shared_buffers = 256MB
-effective_cache_size = 1GB
-work_mem = 16MB
-maintenance_work_mem = 128MB
-max_connections = 200
+#### 1. Database Optimization
+```python
+# Add to your configuration
+DATABASE_CONNECTION_POOL_SIZE = 20
+DATABASE_MAX_OVERFLOW = 30
 ```
 
-### 2. Application Optimization
+#### 2. Video Storage Optimization
+```bash
+# Mount dedicated storage for recordings
+sudo mkdir /mnt/recordings
+sudo mount /dev/sdb1 /mnt/recordings
+sudo chown your-username:your-username /mnt/recordings
 
-```python
-# Optimize frame processing
-PROCESSING_CONFIG = {
-    "frame_skip": 3,  # Process every 3rd frame
-    "max_queue_size": 100,
-    "batch_size": 10,
-    "worker_threads": 4
+# Update recording path in config
+ln -sf /mnt/recordings recordings
+```
+
+#### 3. Load Balancing (Multiple Instances)
+```nginx
+upstream lpr_backend {
+    server localhost:8001;
+    server localhost:8011;  # Additional instance
+    server localhost:8021;  # Additional instance
+}
+
+server {
+    location /api/ {
+        proxy_pass http://lpr_backend;
+    }
 }
 ```
 
-## Next Steps
+## 🎯 Production Checklist
 
-Continue to: **[08 - Troubleshooting & FAQ](./08-troubleshooting-faq.md)**
+### Pre-Deployment
+- [ ] Test all services locally
+- [ ] Configure environment variables
+- [ ] Set up SSL certificates
+- [ ] Configure firewall rules
+- [ ] Create backup strategy
 
----
+### Post-Deployment
+- [ ] Verify all services are running
+- [ ] Test camera connections
+- [ ] Verify recording functionality
+- [ ] Set up monitoring
+- [ ] Schedule backups
+- [ ] Document access credentials
 
-*AI Agent Note: This deployment uses Docker for consistency and scalability. The architecture separates concerns properly - cameras connect to processing nodes, not the web server.*
+### Ongoing Maintenance
+- [ ] Monitor service health daily
+- [ ] Review logs weekly
+- [ ] Update system monthly
+- [ ] Test backups quarterly
+- [ ] Security audit annually
+
+The LPR system is now production-ready with comprehensive service management, monitoring, and maintenance capabilities.

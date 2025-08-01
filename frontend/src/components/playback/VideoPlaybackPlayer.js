@@ -214,15 +214,14 @@ class VideoPlaybackPlayer {
         this.showLoading(true);
         
         try {
-            // Get timeline data
-            const timelineData = await playbackService.getTimeline(
-                cameraId,
-                startTime,
-                endTime
-            );
+            // Convert time range to date format for API
+            const date = playbackService.formatDate(new Date(startTime));
             
-            this.segments = timelineData.segments || [];
-            this.timeRange = { startTime, endTime };
+            // Get timeline segments for the date
+            const timelineData = await playbackService.getTimelineSegments(cameraId, date);
+            
+            this.segments = playbackService.processTimelineSegments(timelineData.segments || []);
+            this.timeRange = { startTime, endTime, cameraId, date };
             
             // Update timeline display
             this.updateTimelineDisplay();
@@ -230,10 +229,58 @@ class VideoPlaybackPlayer {
             // Load first segment if available
             if (this.segments.length > 0) {
                 await this.loadSegment(this.segments[0]);
+            } else {
+                this.showNoRecordings();
             }
             
         } catch (error) {
             console.error('Failed to load time range:', error);
+            this.showError('Failed to load recordings');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    /**
+     * Load recordings for a specific date
+     */
+    async loadRecordingsForDate(cameraId, date) {
+        if (!cameraId || !date) {
+            throw new Error('Camera ID and date are required');
+        }
+        
+        this.showLoading(true);
+        
+        try {
+            const dateStr = typeof date === 'string' ? date : playbackService.formatDate(date);
+            
+            // Get timeline segments for the date
+            const timelineData = await playbackService.getTimelineSegments(cameraId, dateStr);
+            
+            this.segments = playbackService.processTimelineSegments(timelineData.segments || []);
+            this.timeRange = { 
+                cameraId, 
+                date: dateStr,
+                totalDuration: timelineData.total_duration || 0,
+                totalSize: timelineData.total_size || 0,
+                coveragePercentage: timelineData.coverage_percentage || 0
+            };
+            
+            // Update timeline display
+            this.updateTimelineDisplay();
+            
+            // Load first segment if available and autoplay is enabled
+            if (this.segments.length > 0) {
+                await this.loadSegment(this.segments[0]);
+                if (this.options.autoplay) {
+                    this.play();
+                }
+            } else {
+                this.showNoRecordings();
+            }
+            
+        } catch (error) {
+            console.error('Failed to load recordings for date:', error);
             this.showError('Failed to load recordings');
         } finally {
             this.showLoading(false);
@@ -384,8 +431,51 @@ class VideoPlaybackPlayer {
     }
     
     onEnded() {
-        // Try to load next segment
+        // Try to load next segment for continuous playback
         this.loadNextSegment();
+    }
+
+    /**
+     * Load next segment in sequence
+     */
+    async loadNextSegment() {
+        if (!this.currentSegment || !this.segments.length) return;
+        
+        const currentIndex = this.segments.findIndex(s => s.filename === this.currentSegment.filename);
+        if (currentIndex < this.segments.length - 1) {
+            const nextSegment = this.segments[currentIndex + 1];
+            
+            // Check for gap before next segment
+            if (nextSegment.has_gap_before) {
+                this.showGapIndicator(nextSegment.gap_duration);
+                // Wait a moment to show gap indicator
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            await this.loadSegment(nextSegment);
+            if (this.isPlaying) {
+                this.play();
+            }
+        } else {
+            // End of recordings
+            this.showEndOfRecordings();
+        }
+    }
+
+    /**
+     * Load previous segment in sequence
+     */
+    async loadPreviousSegment() {
+        if (!this.currentSegment || !this.segments.length) return;
+        
+        const currentIndex = this.segments.findIndex(s => s.filename === this.currentSegment.filename);
+        if (currentIndex > 0) {
+            const prevSegment = this.segments[currentIndex - 1];
+            await this.loadSegment(prevSegment);
+            if (this.isPlaying) {
+                this.play();
+            }
+        }
     }
     
     onVideoError(error) {
@@ -494,7 +584,220 @@ class VideoPlaybackPlayer {
     
     showError(message) {
         console.error('Playback error:', message);
-        // Could show error overlay here
+        
+        // Show error overlay
+        const videoContainer = this.container.querySelector('.video-container');
+        if (videoContainer) {
+            const existingError = videoContainer.querySelector('.error-overlay');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            const errorOverlay = document.createElement('div');
+            errorOverlay.className = 'error-overlay';
+            errorOverlay.innerHTML = `
+                <div class="error-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Playback Error</h3>
+                    <p>${message}</p>
+                    <button class="btn btn-primary retry-btn">Retry</button>
+                </div>
+            `;
+            
+            errorOverlay.querySelector('.retry-btn').addEventListener('click', () => {
+                errorOverlay.remove();
+                if (this.currentSegment) {
+                    this.loadSegment(this.currentSegment);
+                }
+            });
+            
+            videoContainer.appendChild(errorOverlay);
+        }
+    }
+
+    showNoRecordings() {
+        const videoContainer = this.container.querySelector('.video-container');
+        if (videoContainer) {
+            const noRecordingsOverlay = document.createElement('div');
+            noRecordingsOverlay.className = 'no-recordings-overlay';
+            noRecordingsOverlay.innerHTML = `
+                <div class="no-recordings-content">
+                    <i class="fas fa-video-slash"></i>
+                    <h3>No Recordings Available</h3>
+                    <p>No video recordings found for the selected time period.</p>
+                </div>
+            `;
+            
+            videoContainer.appendChild(noRecordingsOverlay);
+        }
+    }
+
+    showGapIndicator(gapDuration) {
+        const videoContainer = this.container.querySelector('.video-container');
+        if (videoContainer) {
+            const gapOverlay = document.createElement('div');
+            gapOverlay.className = 'gap-overlay';
+            gapOverlay.innerHTML = `
+                <div class="gap-content">
+                    <i class="fas fa-pause-circle"></i>
+                    <h3>Recording Gap</h3>
+                    <p>No recording for ${playbackService.formatDuration(gapDuration)}</p>
+                </div>
+            `;
+            
+            videoContainer.appendChild(gapOverlay);
+            
+            // Auto-remove after 2 seconds
+            setTimeout(() => {
+                gapOverlay.remove();
+            }, 2000);
+        }
+    }
+
+    showEndOfRecordings() {
+        const videoContainer = this.container.querySelector('.video-container');
+        if (videoContainer) {
+            const endOverlay = document.createElement('div');
+            endOverlay.className = 'end-overlay';
+            endOverlay.innerHTML = `
+                <div class="end-content">
+                    <i class="fas fa-stop-circle"></i>
+                    <h3>End of Recordings</h3>
+                    <p>You have reached the end of available recordings.</p>
+                    <button class="btn btn-primary restart-btn">Restart</button>
+                </div>
+            `;
+            
+            endOverlay.querySelector('.restart-btn').addEventListener('click', () => {
+                endOverlay.remove();
+                if (this.segments.length > 0) {
+                    this.loadSegment(this.segments[0]);
+                }
+            });
+            
+            videoContainer.appendChild(endOverlay);
+        }
+    }
+
+    /**
+     * Toggle fullscreen mode
+     */
+    toggleFullscreen() {
+        const videoContainer = this.container.querySelector('.video-container');
+        
+        if (!document.fullscreenElement) {
+            if (videoContainer.requestFullscreen) {
+                videoContainer.requestFullscreen();
+            } else if (videoContainer.webkitRequestFullscreen) {
+                videoContainer.webkitRequestFullscreen();
+            } else if (videoContainer.msRequestFullscreen) {
+                videoContainer.msRequestFullscreen();
+            }
+            
+            // Update fullscreen button
+            const fullscreenBtn = this.controls?.querySelector('.fullscreen-btn i');
+            if (fullscreenBtn) {
+                fullscreenBtn.className = 'fas fa-compress';
+            }
+            
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            
+            // Update fullscreen button
+            const fullscreenBtn = this.controls?.querySelector('.fullscreen-btn i');
+            if (fullscreenBtn) {
+                fullscreenBtn.className = 'fas fa-expand';
+            }
+        }
+    }
+
+    /**
+     * Seek to progress bar position
+     */
+    seekToProgress(e) {
+        if (!this.duration) return;
+        
+        const progressContainer = e.currentTarget;
+        const rect = progressContainer.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+        
+        const seekTime = percentage * this.duration;
+        this.video.currentTime = seekTime;
+    }
+
+    /**
+     * Seek to timeline position
+     */
+    seekToTimelinePosition(e) {
+        if (!this.segments.length || !this.timeRange) return;
+        
+        const timelineTrack = e.currentTarget;
+        const rect = timelineTrack.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const percentage = Math.max(0, Math.min(1, clickX / rect.width));
+        
+        // Calculate target timestamp within the day
+        const dayStart = new Date(this.timeRange.date + 'T00:00:00.000Z');
+        const targetTime = new Date(dayStart.getTime() + (percentage * 24 * 60 * 60 * 1000));
+        
+        // Find segment containing this time and seek to it
+        this.seekToTime(targetTime.toISOString());
+    }
+
+    /**
+     * Update timeline cursor position
+     */
+    updateTimelineCursor() {
+        if (!this.timeline || !this.currentSegment) return;
+        
+        const cursor = this.timeline.querySelector('.timeline-cursor');
+        if (!cursor) return;
+        
+        // Calculate current position within the day
+        const segmentStart = new Date(this.currentSegment.start_time);
+        const currentVideoTime = segmentStart.getTime() + (this.currentTime * 1000);
+        
+        const dayStart = new Date(this.timeRange.date + 'T00:00:00.000Z');
+        const dayProgress = (currentVideoTime - dayStart.getTime()) / (24 * 60 * 60 * 1000);
+        
+        cursor.style.left = `${Math.max(0, Math.min(100, dayProgress * 100))}%`;
+    }
+
+    /**
+     * Set minimal controls for fullscreen
+     */
+    setMinimalControls(minimal) {
+        const controls = this.container.querySelector('.playback-controls');
+        if (controls) {
+            if (minimal) {
+                controls.classList.add('minimal');
+            } else {
+                controls.classList.remove('minimal');
+            }
+        }
+    }
+
+    /**
+     * Get current playback state
+     */
+    getPlaybackState() {
+        return {
+            currentSegment: this.currentSegment,
+            currentTime: this.currentTime,
+            duration: this.duration,
+            isPlaying: this.isPlaying,
+            playbackRate: this.playbackRate,
+            volume: this.volume,
+            segmentCount: this.segments.length,
+            timeRange: this.timeRange
+        };
     }
     
     // Cleanup

@@ -1,38 +1,67 @@
-# docker-compose.yml example
-version: '3'
+version: '3.8'
 
 services:
+  # Main LPR Application
   lpr-app:
-    build: .
+    build: 
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: lpr_app
     volumes:
-      - ./.env:/app/.env
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./config:/app/config
+      - ../data:/app/data
+      - ../detections:/app/detections
+      - ../recordings:/app/recordings
+      - ../config:/app/config
+      - ../logs:/app/logs
+      - ../static:/app/static
     ports:
-      - "8002:8002"
+      - "8000:8000"
     environment:
-      - DEPLOYMENT_MODE=hybrid
-      - SYNC_MODE=batch
-      - PROCESSING_MODE=continuous
-      - CAMERA_SOURCE=mock           # Use mock camera for development
-      - SYNC_INTERVAL=300            # seconds between syncs
-      - CLOUD_API_URL=http://api.example.com/v1
-      - REGISTRATION_TOKEN=dev_token
-      - DEVICE_ID=LPR-DEV01          # Optional: Custom device ID
+      - LPR_DATABASE_URL=sqlite+aiosqlite:///data/license_plates.db
+      - LPR_LOG_LEVEL=INFO
+      - LPR_API_HOST=0.0.0.0
+      - LPR_API_PORT=8000
     restart: unless-stopped
     depends_on:
       - lpr-backup
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Automated backup service
   lpr-backup:
-    image: alpine
+    image: alpine:latest
+    container_name: lpr_backup
     volumes:
-      - ./data:/data
+      - ../data:/data
     command: |
-      sh -c 'while true; do
+      sh -c 'mkdir -p /data/backups && while true; do
         timestamp=$$(date +%Y%m%d_%H%M%S)
-        cp /data/license_plates.db /data/backups/license_plates_$$timestamp.db
-        find /data/backups -name "license_plates_*.db" -mtime +7 -delete
+        echo "Creating backup: license_plates_$$timestamp.db"
+        cp /data/license_plates.db /data/backups/license_plates_$$timestamp.db 2>/dev/null || echo "No database to backup yet"
+        echo "Cleaning old backups (>7 days)"
+        find /data/backups -name "license_plates_*.db" -mtime +7 -delete 2>/dev/null || true
+        echo "Backup complete, sleeping for 24 hours"
         sleep 86400
       done'
     restart: unless-stopped
+
+  # Frontend web server (nginx)
+  lpr-frontend:
+    image: nginx:alpine
+    container_name: lpr_frontend
+    volumes:
+      - ../frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - lpr-app
+    restart: unless-stopped
+
+volumes:
+  lpr_data:
+  lpr_detections:
+  lpr_recordings:

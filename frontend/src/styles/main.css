@@ -3403,9 +3403,9 @@ input:checked + .slider:before {
 /* Toast Styles */
 .toast-container {
     position: fixed;
-    top: 20px;
+    top: calc(var(--header-height) + 20px); /* Position below header */
     right: 20px;
-    z-index: 10000;
+    z-index: var(--z-popover); /* Use standard z-index */
     display: flex;
     flex-direction: column;
     gap: 0.5rem;

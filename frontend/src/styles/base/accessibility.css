@@ -500,7 +500,7 @@ td {
 /* Improved notification accessibility */
 .notification {
     position: fixed;
-    top: var(--spacing-lg);
+    top: calc(var(--header-height) + var(--spacing-lg)); /* Position below header */
     right: var(--spacing-lg);
     max-width: 400px;
     padding: var(--spacing-md);

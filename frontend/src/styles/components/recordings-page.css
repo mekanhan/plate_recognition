@@ -564,7 +564,7 @@
 /* Status Messages */
 .status-message {
     position: fixed;
-    top: 20px;
+    top: calc(var(--header-height) + 20px); /* Position below header */
     right: 20px;
     padding: 12px 20px;
     border-radius: 8px;
@@ -573,7 +573,7 @@
     gap: 0.5rem;
     font-size: 0.875rem;
     animation: slideIn 0.3s ease-out;
-    z-index: 1000;
+    z-index: var(--z-popover); /* Use proper z-index */
     box-shadow: var(--shadow);
 }
 
@@ -722,6 +722,14 @@
     
     .video-header {
         padding: 12px;
+    }
+    
+    /* Mobile notification adjustments */
+    .status-message {
+        top: calc(var(--header-height) + 10px);
+        right: 10px;
+        left: 10px;
+        max-width: none;
     }
 }
 

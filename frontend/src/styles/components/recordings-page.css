@@ -36,7 +36,13 @@
 .sidebar-header h2 {
     font-size: 1.25rem;
     font-weight: 600;
-    margin-bottom: 1rem;
+    margin: 0;
+}
+
+/* Controls section below header */
+.sidebar-controls {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
 }
 
 /* Service Status */
@@ -357,80 +363,102 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    padding: 16px; /* Reduced padding to fit viewport */
+    gap: 16px; /* Reduced gap for better fit */
+    background-color: var(--dark-bg);
+    min-height: 0; /* Allow flex shrinking */
 }
 
-/* Video Player */
+/* Video wrapper for additional controls */
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1920px;
+    margin: 0 auto; /* Remove vertical margin */
+    flex: 1; /* Allow it to take available space */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Allow flex shrinking */
+}
+
+/* Main video container */
 .video-container {
     background-color: #000;
     position: relative;
-    flex: 1;
+    width: 100%;
+    aspect-ratio: 16 / 9;
     display: flex;
     align-items: center;
     justify-content: center;
+    overflow: hidden;
+    border-radius: 12px; /* Enhanced border radius */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); /* Darker shadow for dark theme */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+    flex: 1; /* Take available space */
+    min-height: 300px; /* Minimum height for usability */
+    max-height: 70vh; /* Prevent excessive height */
 }
 
+/* Video element with better object-fit options */
 #videoPlayer {
     width: 100%;
     height: 100%;
-    max-height: 100%;
-    object-fit: contain;
+    object-fit: contain; /* Or use 'cover' for full coverage */
 }
 
-.video-loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--text-secondary);
-    text-align: center;
+/* Alternative object-fit options */
+#videoPlayer.fit-cover {
+    object-fit: cover; /* Fills container, may crop */
 }
 
-.video-loading i {
-    font-size: 3rem;
-    animation: spin 1s linear infinite;
+#videoPlayer.fit-fill {
+    object-fit: fill; /* Stretches to fill */
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.video-error {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: var(--text-secondary);
-}
-
-.video-error i {
-    font-size: 3rem;
-    color: var(--danger-color);
-    margin-bottom: 1rem;
-    display: block;
-}
-
-.video-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--text-secondary);
-}
-
-.video-placeholder i {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.3;
+#videoPlayer.fit-scale-down {
+    object-fit: scale-down; /* Shrinks if needed */
 }
 
 /* Controls Bar */
 .controls-bar {
     background-color: var(--card-bg);
     border-top: 1px solid var(--border-color);
+    padding: 16px; /* Reduced padding */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Subtle elevation */
+    flex-shrink: 0; /* Don't shrink controls */
+}
+
+/* Video Header Section */
+.video-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 20px;
+    margin-bottom: 20px;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.video-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.video-meta {
+    display: flex;
+    gap: 20px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.video-actions {
+    display: flex;
+    gap: 0.5rem;
 }
 
 .timeline-scrubber {
@@ -600,6 +628,65 @@
     margin-bottom: 8px;
 }
 
+/* Enhanced Video States */
+.video-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--text-secondary);
+    background-color: rgba(15, 23, 42, 0.8);
+    padding: 2rem;
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+}
+
+.video-loading i {
+    font-size: 3rem;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.video-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-secondary);
+    background: radial-gradient(circle at center, 
+                              rgba(37, 99, 235, 0.1) 0%, 
+                              transparent 70%);
+}
+
+.video-placeholder i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+.video-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: var(--danger-color);
+    background-color: rgba(239, 68, 68, 0.1);
+    padding: 2rem;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.video-error i {
+    font-size: 3rem;
+    color: var(--danger-color);
+    margin-bottom: 1rem;
+    display: block;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .page-container {
@@ -611,5 +698,41 @@
         height: 40vh;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
+    }
+    
+    /* Better mobile spacing */
+    .recordings-content {
+        padding: 8px;
+        gap: 12px;
+    }
+    
+    .video-wrapper {
+        margin: 0;
+    }
+    
+    .video-container {
+        border-radius: 8px;
+        min-height: 200px;
+        max-height: 60vh;
+    }
+    
+    .controls-bar {
+        padding: 12px;
+    }
+    
+    .video-header {
+        padding: 12px;
+    }
+}
+
+/* Large screens */
+@media (min-width: 1920px) {
+    .video-wrapper {
+        max-width: 1600px;
+    }
+    
+    .recordings-content {
+        padding: 24px;
+        gap: 20px;
     }
 }

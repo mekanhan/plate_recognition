@@ -53,3 +53,5 @@ ui-prototypes/prototype6/__pycache__/*
 recordings/
 recordings/camera_camera_946701d3/*
 recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/*
+**/*.mp4
+**/*.avi

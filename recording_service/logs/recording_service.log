@@ -4486,3 +4486,920 @@ WHERE video_recordings.filename = ?]
 2025-08-04 16:29:03,846 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
 2025-08-04 16:29:03,872 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
 2025-08-04 16:29:03,872 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 65536-130961620/130961621 (status: 206)
+2025-08-04 22:24:29,015 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-04 22:24:29,037 - DatabaseService - INFO - Database initialized and tables created
+2025-08-04 22:24:29,037 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-04 22:24:29,037 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager initialized
+2025-08-04 22:24:29,037 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-04 22:24:29,041 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg camera recorder initialized: Reolink Main Entrance (camera_946701d3)
+2025-08-04 22:24:29,041 - recording_service.services.ffmpeg_recording_manager - INFO - Starting FFmpeg recording for Reolink Main Entrance
+2025-08-04 22:24:29,049 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording started for Reolink Main Entrance (PID: 343814)
+2025-08-04 22:24:29,049 - recording_service.services.ffmpeg_recording_manager - INFO - Started recording for Reolink Main Entrance
+2025-08-04 22:24:29,049 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager started with 1 active recorders
+2025-08-04 22:24:29,049 - recording_service.main - INFO - Recording Service started successfully
+2025-08-04 22:24:29,051 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 42
+2025-08-04 22:24:56,852 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 1
+2025-08-04 22:25:02,117 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:25:02,117 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 22:25:02,381 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:25:02,381 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 22:25:02,391 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:25:02,391 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-04 22:25:04,244 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:25:04,245 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 22:25:04,588 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:25:04,588 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 22:25:04,601 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:25:04,601 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-04 22:25:05,214 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-04', 'end_date': '2025-08-04'}
+2025-08-04 22:25:05,215 - recording_service.services.playback_service - INFO - Found 8 matching segments
+2025-08-04 22:25:05,734 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:25:05,734 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 0-31857382/31857383 (status: 206)
+2025-08-04 22:25:06,072 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:25:06,072 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 31752192-31857382/31857383 (status: 206)
+2025-08-04 22:25:06,078 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:25:06,079 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 65536-31857382/31857383 (status: 206)
+2025-08-04 22:25:07,612 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:25:07,612 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 1376256-31857382/31857383 (status: 206)
+2025-08-04 22:25:07,735 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:25:07,735 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 294912-130961620/130961621 (status: 206)
+2025-08-04 22:29:55,659 - recording_service.services.ffmpeg_recording_manager - ERROR - Error monitoring FFmpeg process for Reolink Main Entrance: Separator is not found, and chunk exceed the limit
+2025-08-04 22:38:11,611 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:38:11,611 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 0-31857382/31857383 (status: 206)
+2025-08-04 22:38:11,896 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:38:11,896 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 31752192-31857382/31857383 (status: 206)
+2025-08-04 22:38:11,901 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:38:11,901 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 65536-31857382/31857383 (status: 206)
+2025-08-04 22:38:13,007 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:13,007 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 0-235182889/235182890 (status: 206)
+2025-08-04 22:38:13,347 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:13,347 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 234881024-235182889/235182890 (status: 206)
+2025-08-04 22:38:13,356 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:13,356 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 32768-235182889/235182890 (status: 206)
+2025-08-04 22:38:13,630 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:13,630 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 1048576-235182889/235182890 (status: 206)
+2025-08-04 22:38:15,047 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:15,047 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 1114112-235182889/235182890 (status: 206)
+2025-08-04 22:38:22,435 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:22,435 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 29032448-235182889/235182890 (status: 206)
+2025-08-04 22:38:22,678 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:22,678 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 32571392-235182889/235182890 (status: 206)
+2025-08-04 22:38:22,838 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:22,839 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 32669696-235182889/235182890 (status: 206)
+2025-08-04 22:38:23,152 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:23,152 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 43712512-235182889/235182890 (status: 206)
+2025-08-04 22:38:23,274 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:23,274 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 45154304-235182889/235182890 (status: 206)
+2025-08-04 22:38:23,416 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:23,416 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 45318144-235182889/235182890 (status: 206)
+2025-08-04 22:38:23,613 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:23,613 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 48234496-235182889/235182890 (status: 206)
+2025-08-04 22:38:23,801 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:23,802 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 50003968-235182889/235182890 (status: 206)
+2025-08-04 22:38:24,058 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:24,058 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 57507840-235182889/235182890 (status: 206)
+2025-08-04 22:38:24,258 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:24,259 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 58916864-235182889/235182890 (status: 206)
+2025-08-04 22:38:24,276 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:24,277 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 59310080-235182889/235182890 (status: 206)
+2025-08-04 22:38:24,612 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:24,612 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 59768832-235182889/235182890 (status: 206)
+2025-08-04 22:38:24,860 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:24,860 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 67338240-235182889/235182890 (status: 206)
+2025-08-04 22:38:24,935 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:24,935 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 62357504-235182889/235182890 (status: 206)
+2025-08-04 22:38:24,966 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:24,966 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 53018624-235182889/235182890 (status: 206)
+2025-08-04 22:38:25,103 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:25,103 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 9961472-235182889/235182890 (status: 206)
+2025-08-04 22:38:25,226 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:25,226 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 0-235182889/235182890 (status: 206)
+2025-08-04 22:38:25,551 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:25,551 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 1179648-235182889/235182890 (status: 206)
+2025-08-04 22:38:27,137 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:38:27,137 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 0-31857382/31857383 (status: 206)
+2025-08-04 22:38:27,140 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:38:27,140 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 31752192-31857382/31857383 (status: 206)
+2025-08-04 22:38:27,149 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/19/camera_camera_946701d3_20250804_194818.mp4 (size: 31857383 bytes)
+2025-08-04 22:38:27,149 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_194818.mp4: bytes 32768-31857382/31857383 (status: 206)
+2025-08-04 22:38:28,674 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:28,675 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 234881024-235182889/235182890 (status: 206)
+2025-08-04 22:38:28,702 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:28,703 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 884736-235182889/235182890 (status: 206)
+2025-08-04 22:38:29,720 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:29,720 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 14843904-235182889/235182890 (status: 206)
+2025-08-04 22:38:30,088 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:30,089 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 15892480-235182889/235182890 (status: 206)
+2025-08-04 22:38:30,533 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:30,533 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 22249472-235182889/235182890 (status: 206)
+2025-08-04 22:38:34,149 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:38:34,149 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 22380544-235182889/235182890 (status: 206)
+2025-08-04 22:38:56,151 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:38:56,151 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 22:38:56,489 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:38:56,490 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 22:38:56,502 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 22:38:56,502 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 65536-130961620/130961621 (status: 206)
+2025-08-04 22:39:18,287 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:39:18,288 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 0-235182889/235182890 (status: 206)
+2025-08-04 22:39:18,630 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:39:18,630 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 234881024-235182889/235182890 (status: 206)
+2025-08-04 22:39:18,639 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:39:18,639 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 32768-235182889/235182890 (status: 206)
+2025-08-04 22:40:12,187 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:12,188 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 1474560-235182889/235182890 (status: 206)
+2025-08-04 22:40:14,867 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:14,868 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 9961472-235182889/235182890 (status: 206)
+2025-08-04 22:40:16,128 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:16,128 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 21233664-235182889/235182890 (status: 206)
+2025-08-04 22:40:17,344 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:17,344 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 14843904-235182889/235182890 (status: 206)
+2025-08-04 22:40:17,583 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:17,583 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 14155776-235182889/235182890 (status: 206)
+2025-08-04 22:40:17,750 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:17,750 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 9961472-235182889/235182890 (status: 206)
+2025-08-04 22:40:18,870 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:18,870 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 14483456-235182889/235182890 (status: 206)
+2025-08-04 22:40:19,309 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:19,309 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 17367040-235182889/235182890 (status: 206)
+2025-08-04 22:40:19,672 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:19,672 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 17989632-235182889/235182890 (status: 206)
+2025-08-04 22:40:20,846 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:20,846 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 18153472-235182889/235182890 (status: 206)
+2025-08-04 22:40:21,194 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:21,194 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 18481152-235182889/235182890 (status: 206)
+2025-08-04 22:40:21,696 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:21,696 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 20873216-235182889/235182890 (status: 206)
+2025-08-04 22:40:38,681 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 22:40:38,681 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 29065216-235182889/235182890 (status: 206)
+2025-08-04 23:36:23,006 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:36:23,006 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 23:36:23,152 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-04', 'end_date': '2025-08-04'}
+2025-08-04 23:36:23,153 - recording_service.services.playback_service - INFO - Found 9 matching segments
+2025-08-04 23:36:23,270 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:36:23,270 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 23:36:23,282 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:36:23,282 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-04 23:36:26,030 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_223447.mp4 (size: 202899504 bytes)
+2025-08-04 23:36:26,030 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_223447.mp4: bytes 0-202899503/202899504 (status: 206)
+2025-08-04 23:36:27,427 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 23:36:27,427 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 0-235182889/235182890 (status: 206)
+2025-08-04 23:36:27,712 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 23:36:27,713 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 234881024-235182889/235182890 (status: 206)
+2025-08-04 23:36:27,721 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-04 23:36:27,721 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 32768-235182889/235182890 (status: 206)
+2025-08-04 23:36:37,610 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:36:37,610 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 23:36:37,957 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:36:37,957 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 23:36:37,966 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:36:37,966 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-04 23:36:53,224 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-04 23:36:53,224 - recording_service.services.ffmpeg_recording_manager - INFO - Stopping all FFmpeg recorders...
+2025-08-04 23:36:53,224 - recording_service.services.ffmpeg_recording_manager - INFO - Stopped recording for camera_946701d3
+2025-08-04 23:36:53,224 - recording_service.services.ffmpeg_recording_manager - INFO - All FFmpeg recorders stopped
+2025-08-04 23:36:53,224 - recording_service.main - INFO - Recording Service stopped
+2025-08-04 23:37:01,996 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-04 23:37:02,012 - DatabaseService - INFO - Database initialized and tables created
+2025-08-04 23:37:02,012 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-04 23:37:02,013 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager initialized
+2025-08-04 23:37:02,013 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-04 23:37:02,016 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg camera recorder initialized: Reolink Main Entrance (camera_946701d3)
+2025-08-04 23:37:02,017 - recording_service.services.ffmpeg_recording_manager - INFO - Starting FFmpeg recording for Reolink Main Entrance
+2025-08-04 23:37:02,024 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording started for Reolink Main Entrance (PID: 344905)
+2025-08-04 23:37:02,024 - recording_service.services.ffmpeg_recording_manager - INFO - Started recording for Reolink Main Entrance
+2025-08-04 23:37:02,024 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager started with 1 active recorders
+2025-08-04 23:37:02,024 - recording_service.main - INFO - Recording Service started successfully
+2025-08-04 23:37:02,025 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 44
+2025-08-04 23:37:29,412 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 1
+2025-08-04 23:42:29,944 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:42:29,945 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 23:42:30,125 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-04', 'end_date': '2025-08-04'}
+2025-08-04 23:42:30,126 - recording_service.services.playback_service - INFO - Found 10 matching segments
+2025-08-04 23:42:30,218 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:42:30,218 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 23:42:30,231 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:42:30,231 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-04 23:43:03,357 - recording_service.services.ffmpeg_recording_manager - ERROR - Error monitoring FFmpeg process for Reolink Main Entrance: Separator is not found, and chunk exceed the limit
+2025-08-04 23:44:22,674 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:44:22,674 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 23:44:22,837 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-04', 'end_date': '2025-08-04'}
+2025-08-04 23:44:22,839 - recording_service.services.playback_service - INFO - Found 10 matching segments
+2025-08-04 23:44:22,951 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:44:22,951 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 23:44:22,963 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:44:22,964 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 65536-130961620/130961621 (status: 206)
+2025-08-04 23:46:37,162 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-04', 'end_date': '2025-08-04'}
+2025-08-04 23:46:37,163 - recording_service.services.playback_service - INFO - Found 10 matching segments
+2025-08-04 23:46:37,321 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:46:37,322 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-04 23:46:37,613 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:46:37,613 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-04 23:46:37,644 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:46:37,645 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-04 23:46:44,014 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-04 23:46:44,014 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 294912-130961620/130961621 (status: 206)
+2025-08-04 23:46:44,449 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-04', 'end_date': '2025-08-04'}
+2025-08-04 23:46:44,450 - recording_service.services.playback_service - INFO - Found 10 matching segments
+2025-08-04 23:49:12,883 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-04 23:49:12,883 - recording_service.services.ffmpeg_recording_manager - INFO - Stopping all FFmpeg recorders...
+2025-08-04 23:49:12,883 - recording_service.services.ffmpeg_recording_manager - INFO - Stopped recording for camera_946701d3
+2025-08-04 23:49:12,883 - recording_service.services.ffmpeg_recording_manager - INFO - All FFmpeg recorders stopped
+2025-08-04 23:49:12,883 - recording_service.main - INFO - Recording Service stopped
+2025-08-05 00:04:55,180 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-05 00:04:55,203 - DatabaseService - INFO - Database initialized and tables created
+2025-08-05 00:04:55,203 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-05 00:04:55,203 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager initialized
+2025-08-05 00:04:55,203 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-05 00:04:55,207 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg camera recorder initialized: Reolink Main Entrance (camera_946701d3)
+2025-08-05 00:04:55,209 - recording_service.services.ffmpeg_recording_manager - INFO - Starting FFmpeg recording for Reolink Main Entrance
+2025-08-05 00:04:55,216 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording started for Reolink Main Entrance (PID: 351273)
+2025-08-05 00:04:55,216 - recording_service.services.ffmpeg_recording_manager - INFO - Started recording for Reolink Main Entrance
+2025-08-05 00:04:55,216 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager started with 1 active recorders
+2025-08-05 00:04:55,216 - recording_service.main - INFO - Recording Service started successfully
+2025-08-05 00:04:55,222 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 46
+2025-08-05 00:05:22,590 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 1
+2025-08-05 00:10:26,260 - recording_service.services.ffmpeg_recording_manager - ERROR - Error monitoring FFmpeg process for Reolink Main Entrance: Separator is not found, and chunk exceed the limit
+2025-08-05 00:26:11,975 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:26:11,976 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:26:42,659 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:26:42,660 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:27:12,014 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:27:12,014 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:27:42,707 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:27:42,707 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:28:12,078 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:28:12,078 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:28:42,792 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:28:42,793 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:29:12,145 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:29:12,146 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:29:42,833 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:29:42,834 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:30:12,209 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:30:12,209 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:30:42,894 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:30:42,895 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:31:12,279 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:31:12,279 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:31:42,971 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:31:42,971 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:32:12,337 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:32:12,338 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:32:43,101 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:32:43,102 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:33:12,410 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:33:12,411 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:33:43,105 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:33:43,106 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:34:12,467 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:34:12,467 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:34:43,170 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:34:43,171 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:35:12,530 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:35:12,530 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:35:43,230 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:35:43,231 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:36:12,574 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:36:12,575 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:36:43,249 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:36:43,249 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:37:12,587 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:37:12,587 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:37:43,340 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:37:43,341 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:38:12,646 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:38:12,646 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:38:43,387 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:38:43,387 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:39:12,783 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:39:12,783 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:39:43,475 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:39:43,475 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:40:12,829 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:40:12,829 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:40:43,533 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:40:43,533 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:41:12,919 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:41:12,920 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:41:43,570 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:41:43,571 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:42:15,501 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:42:15,501 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:42:44,833 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:42:44,834 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:43:14,366 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:43:14,367 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:43:45,056 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:43:45,057 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:44:14,384 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:44:14,385 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:44:45,143 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:44:45,143 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:45:14,445 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:45:14,446 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:45:42,578 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:45:42,578 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:46:11,948 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:46:11,948 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:46:42,657 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:46:42,658 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:47:11,998 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:47:11,998 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:47:42,705 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:47:42,705 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:48:12,052 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:48:12,053 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:48:42,748 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:48:42,749 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:49:12,107 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:49:12,108 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:49:42,796 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:49:42,797 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:50:12,166 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:50:12,167 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:50:42,847 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:50:42,848 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:51:12,241 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:51:12,242 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:51:42,919 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:51:42,919 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:52:12,271 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:52:12,271 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:52:42,965 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:52:42,966 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:53:12,666 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:53:12,666 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:53:42,339 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:53:42,339 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:54:12,686 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:54:12,687 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:54:42,368 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:54:42,368 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:55:12,807 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:55:12,808 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:55:42,448 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:55:42,449 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:56:12,834 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:56:12,835 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:56:42,539 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:56:42,539 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:57:12,888 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:57:12,889 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:57:42,558 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:57:42,559 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:58:12,934 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:58:12,934 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:58:42,610 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:58:42,610 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:59:12,979 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:59:12,980 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:59:28,411 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 00:59:28,411 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 00:59:28,598 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:59:28,598 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 00:59:28,691 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 00:59:28,691 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 00:59:28,724 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 00:59:28,725 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 00:59:58,983 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 00:59:58,984 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:00:29,407 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:00:29,408 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:00:58,745 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:00:58,745 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:01:29,016 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:01:29,017 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:01:59,107 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:01:59,108 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:02:29,472 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:02:29,472 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:02:58,858 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:02:58,858 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:03:29,121 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:03:29,122 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:03:59,233 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:03:59,234 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:04:29,580 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:04:29,580 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:04:58,909 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:04:58,909 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:05:29,318 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:05:29,319 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:05:59,356 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:05:59,357 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:06:29,605 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:06:29,606 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:06:59,107 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:06:59,108 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:07:29,420 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:07:29,420 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:07:59,379 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:07:59,380 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:08:28,463 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:08:28,463 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:08:57,905 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:08:57,906 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:09:28,291 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:09:28,292 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:09:58,276 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:09:58,277 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:10:28,625 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:10:28,625 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:10:57,922 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:10:57,923 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:11:28,333 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:11:28,334 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:11:58,421 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:11:58,422 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:12:28,781 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:12:28,782 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:12:58,086 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:12:58,086 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:13:28,446 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:13:28,447 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:13:58,528 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:13:58,529 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:14:28,901 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:14:28,901 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:14:58,211 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:14:58,211 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:15:28,566 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:15:28,566 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:15:58,582 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:15:58,583 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:16:28,946 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:16:28,947 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:16:58,260 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:16:58,260 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:17:28,650 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:17:28,650 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:17:58,680 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:17:58,681 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:18:29,086 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:18:29,087 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:18:58,391 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:18:58,392 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:19:28,719 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:19:28,719 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:19:58,842 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:19:58,843 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:20:29,213 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:20:29,214 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:20:58,443 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:20:58,444 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:21:28,998 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:21:28,999 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:21:58,994 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:21:58,994 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:22:29,236 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:22:29,236 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:22:58,643 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:22:58,643 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:23:29,046 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:23:29,046 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:24:01,769 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:01,769 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 01:24:01,940 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:24:01,940 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:24:02,057 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:02,058 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 01:24:02,070 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:02,070 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 01:24:02,557 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:02,557 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 01:24:02,904 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:02,904 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 01:24:02,916 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:02,916 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 01:24:03,174 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:03,174 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 01:24:06,423 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:06,423 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 01:24:06,767 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:06,767 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 01:24:06,778 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:24:06,778 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 393216-424597923/424597924 (status: 206)
+2025-08-05 01:24:06,924 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:24:06,925 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:50:32,404 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:50:32,404 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 01:50:32,595 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 01:50:32,596 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 01:50:32,670 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:50:32,670 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 01:50:32,684 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 01:50:32,684 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:10:54,449 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:10:54,450 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:10:54,570 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:10:54,570 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:10:54,853 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:10:54,853 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:10:54,863 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:10:54,864 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:11:51,698 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:11:51,699 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:11:52,040 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:11:52,040 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:11:52,050 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:11:52,050 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:11:52,305 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:11:52,305 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 02:11:52,066 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:11:52,066 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2359296-424597923/424597924 (status: 206)
+2025-08-05 02:11:55,402 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:11:55,402 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 35422208-424597923/424597924 (status: 206)
+2025-08-05 02:11:57,905 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:11:57,905 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 02:11:58,244 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:11:58,244 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 02:11:58,256 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:11:58,256 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 65536-130961620/130961621 (status: 206)
+2025-08-05 02:12:01,353 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:01,353 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 0-245700406/245700407 (status: 206)
+2025-08-05 02:12:01,696 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:01,696 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 245399552-245700406/245700407 (status: 206)
+2025-08-05 02:12:01,707 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:01,707 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 32768-245700406/245700407 (status: 206)
+2025-08-05 02:12:02,579 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_234719.mp4 (size: 59768880 bytes)
+2025-08-05 02:12:02,579 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_234719.mp4: bytes 0-59768879/59768880 (status: 206)
+2025-08-05 02:12:07,482 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:07,482 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 139231232-245700406/245700407 (status: 206)
+2025-08-05 02:12:07,770 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:07,770 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 145326080-245700406/245700407 (status: 206)
+2025-08-05 02:12:08,626 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:08,626 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 145391616-245700406/245700407 (status: 206)
+2025-08-05 02:12:10,763 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:10,764 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 212205568-245700406/245700407 (status: 206)
+2025-08-05 02:12:14,800 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:14,800 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 225509376-245700406/245700407 (status: 206)
+2025-08-05 02:12:16,246 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:16,246 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 232095744-245700406/245700407 (status: 206)
+2025-08-05 02:12:17,401 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_223447.mp4 (size: 204996656 bytes)
+2025-08-05 02:12:17,401 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_223447.mp4: bytes 0-204996655/204996656 (status: 206)
+2025-08-05 02:12:19,667 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-05 02:12:19,668 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 0-235182889/235182890 (status: 206)
+2025-08-05 02:12:20,011 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-05 02:12:20,011 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 234881024-235182889/235182890 (status: 206)
+2025-08-05 02:12:20,021 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-05 02:12:20,021 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 32768-235182889/235182890 (status: 206)
+2025-08-05 02:12:21,601 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_223447.mp4 (size: 204996656 bytes)
+2025-08-05 02:12:21,601 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_223447.mp4: bytes 32768-204996655/204996656 (status: 206)
+2025-08-05 02:12:23,237 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:23,238 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 0-245700406/245700407 (status: 206)
+2025-08-05 02:12:21,089 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:21,089 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 245399552-245700406/245700407 (status: 206)
+2025-08-05 02:12:21,098 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:21,098 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 32768-245700406/245700407 (status: 206)
+2025-08-05 02:12:26,466 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 02:12:26,466 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 1441792-245700406/245700407 (status: 206)
+2025-08-05 02:16:21,878 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:16:21,879 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:16:22,017 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:16:22,017 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:16:22,301 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:16:22,301 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:16:22,312 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:16:22,312 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 65536-424597923/424597924 (status: 206)
+2025-08-05 02:16:22,361 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:16:22,361 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 1900544-424597923/424597924 (status: 206)
+2025-08-05 02:16:22,699 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:16:22,699 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 02:18:04,590 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:18:04,590 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:18:04,768 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:18:04,768 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:18:04,855 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:18:04,855 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:18:04,866 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:18:04,866 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:18:04,936 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:18:04,936 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 02:22:27,458 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:22:27,459 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:22:27,579 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:22:27,579 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:22:27,844 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:22:27,844 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:22:27,858 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:22:27,858 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:22:27,916 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:22:27,916 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2031616-424597923/424597924 (status: 206)
+2025-08-05 02:22:37,467 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:22:37,467 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:22:41,389 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:22:41,389 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 02:22:41,672 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:22:41,673 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 02:22:41,683 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:22:41,683 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-05 02:23:40,001 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:23:40,001 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:23:40,161 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:23:40,161 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:23:40,289 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:23:40,289 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:23:40,302 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:23:40,302 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:23:40,365 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:23:40,365 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 02:23:44,511 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:23:44,511 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 02:23:44,791 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:23:44,791 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 02:23:44,805 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:23:44,805 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 65536-130961620/130961621 (status: 206)
+2025-08-05 02:35:47,794 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:35:47,794 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:35:47,919 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:35:47,919 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:35:48,205 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:35:48,205 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:35:48,215 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:35:48,215 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:35:51,433 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:35:51,433 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 557056-424597923/424597924 (status: 206)
+2025-08-05 02:37:25,329 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:37:25,329 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:37:25,464 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:37:25,465 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:37:25,746 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:37:25,746 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:37:25,757 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:37:25,757 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:37:25,811 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:37:25,811 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2031616-424597923/424597924 (status: 206)
+2025-08-05 02:41:47,870 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:41:47,870 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:41:48,050 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:41:48,051 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:41:48,152 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:41:48,152 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:41:48,164 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:41:48,164 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:41:48,226 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:41:48,227 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 1933312-424597923/424597924 (status: 206)
+2025-08-05 02:41:58,739 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:41:58,740 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:42:44,965 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:42:44,965 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:42:45,361 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:42:45,361 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:42:45,377 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:42:45,378 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 196608-424597923/424597924 (status: 206)
+2025-08-05 02:42:45,479 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:42:45,480 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:42:45,632 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:42:45,632 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2064384-424597923/424597924 (status: 206)
+2025-08-05 02:42:49,393 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_001516.mp4 (size: 327155760 bytes)
+2025-08-05 02:42:49,393 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_001516.mp4: bytes 0-327155759/327155760 (status: 206)
+2025-08-05 02:42:50,430 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:42:50,430 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:42:51,775 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:42:51,775 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 02:42:51,779 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:42:51,779 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 02:42:51,801 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 02:42:51,801 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-05 02:42:53,902 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-05 02:42:53,902 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 0-235182889/235182890 (status: 206)
+2025-08-05 02:42:54,184 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-05 02:42:54,184 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 234881024-235182889/235182890 (status: 206)
+2025-08-05 02:42:54,196 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/22/camera_camera_946701d3_20250804_222431.mp4 (size: 235182890 bytes)
+2025-08-05 02:42:54,196 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_222431.mp4: bytes 32768-235182889/235182890 (status: 206)
+2025-08-05 02:43:03,188 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:43:03,188 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:43:03,610 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:43:03,610 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:43:03,623 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:43:03,624 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 65536-424597923/424597924 (status: 206)
+2025-08-05 02:43:03,726 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:43:03,726 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:43:03,980 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:43:03,980 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 294912-424597923/424597924 (status: 206)
+2025-08-05 02:43:04,248 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:43:04,248 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2260992-424597923/424597924 (status: 206)
+2025-08-05 02:44:27,716 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 02:44:27,717 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 02:44:27,852 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:44:27,852 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 02:44:28,136 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:44:28,136 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 02:44:28,147 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:44:28,147 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 02:44:28,210 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:44:28,210 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 02:44:33,306 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 02:44:33,306 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2359296-424597923/424597924 (status: 206)
+2025-08-05 03:06:08,969 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:08,969 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:06:08,989 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:06:08,990 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:06:09,252 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:09,252 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:06:09,264 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:09,264 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 03:06:09,346 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:09,346 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 03:06:15,002 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:15,002 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2293760-424597923/424597924 (status: 206)
+2025-08-05 03:06:24,122 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_001516.mp4 (size: 327155760 bytes)
+2025-08-05 03:06:24,122 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_001516.mp4: bytes 0-327155759/327155760 (status: 206)
+2025-08-05 03:06:25,622 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:25,622 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424345600-424597923/424597924 (status: 206)
+2025-08-05 03:06:29,097 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:06:29,097 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 03:06:29,101 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:06:29,101 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 03:06:29,113 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:06:29,113 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-05 03:06:31,374 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:31,374 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:06:31,661 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:31,661 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:06:31,672 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:31,673 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 65536-424597923/424597924 (status: 206)
+2025-08-05 03:06:31,709 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:06:31,710 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 1245184-424597923/424597924 (status: 206)
+2025-08-05 03:07:36,176 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-05 03:07:36,196 - DatabaseService - INFO - Database initialized and tables created
+2025-08-05 03:07:36,196 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-05 03:07:36,197 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager initialized
+2025-08-05 03:07:36,197 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-05 03:07:36,202 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg camera recorder initialized: Reolink Main Entrance (camera_946701d3)
+2025-08-05 03:07:36,202 - recording_service.services.ffmpeg_recording_manager - INFO - Starting FFmpeg recording for Reolink Main Entrance
+2025-08-05 03:07:36,214 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording started for Reolink Main Entrance (PID: 399008)
+2025-08-05 03:07:36,214 - recording_service.services.ffmpeg_recording_manager - INFO - Started recording for Reolink Main Entrance
+2025-08-05 03:07:36,214 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager started with 1 active recorders
+2025-08-05 03:07:36,214 - recording_service.main - INFO - Recording Service started successfully
+2025-08-05 03:07:36,216 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 48
+2025-08-05 03:07:36,225 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-05 03:07:36,225 - recording_service.services.ffmpeg_recording_manager - INFO - Stopping all FFmpeg recorders...
+2025-08-05 03:07:36,225 - recording_service.services.ffmpeg_recording_manager - INFO - Stopping FFmpeg recording for Reolink Main Entrance
+2025-08-05 03:07:36,226 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg process stopped gracefully for Reolink Main Entrance
+2025-08-05 03:07:36,227 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording stopped for Reolink Main Entrance
+2025-08-05 03:07:36,228 - recording_service.services.ffmpeg_recording_manager - INFO - Stopped recording for camera_946701d3
+2025-08-05 03:07:36,228 - recording_service.services.ffmpeg_recording_manager - INFO - All FFmpeg recorders stopped
+2025-08-05 03:07:36,228 - recording_service.main - INFO - Recording Service stopped
+2025-08-05 03:07:36,228 - recording_service.services.ffmpeg_recording_manager - ERROR - Error monitoring FFmpeg process for Reolink Main Entrance: 'NoneType' object has no attribute 'wait'
+2025-08-05 03:07:48,744 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:07:48,744 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:07:48,750 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:07:48,751 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:07:49,018 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:07:49,018 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:07:49,030 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:07:49,030 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 03:07:49,107 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:07:49,107 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 1933312-424597923/424597924 (status: 206)
+2025-08-05 03:08:12,364 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:08:12,364 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 03:08:12,646 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:08:12,647 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 03:08:12,660 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:08:12,660 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-05 03:08:49,087 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 03:08:49,087 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 0-245700406/245700407 (status: 206)
+2025-08-05 03:08:49,430 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 03:08:49,430 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 245399552-245700406/245700407 (status: 206)
+2025-08-05 03:08:49,441 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/23/camera_camera_946701d3_20250804_233704.mp4 (size: 245700407 bytes)
+2025-08-05 03:08:49,441 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_233704.mp4: bytes 32768-245700406/245700407 (status: 206)
+2025-08-05 03:08:52,347 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:08:52,347 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:08:52,693 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:08:52,693 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:08:52,726 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:08:52,726 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 425984-424597923/424597924 (status: 206)
+2025-08-05 03:08:52,983 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:08:52,983 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 1245184-424597923/424597924 (status: 206)
+2025-08-05 03:09:05,322 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:09:05,322 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:09:23,511 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:09:23,511 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 03:09:23,855 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:09:23,856 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 03:09:23,868 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:09:23,869 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-05 03:10:06,039 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:10:06,040 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:10:35,367 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:10:35,368 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:10:52,754 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:10:52,754 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:10:53,039 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:10:53,039 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 03:10:53,087 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:10:53,087 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 03:10:53,099 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:10:53,099 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-05 03:10:55,053 - recording_service.services.playback_service - INFO - No recordings for camera_946701d3 on 2025-08-01
+2025-08-05 03:10:55,802 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/02/07/camera_camera_946701d3_20250802_074425_600.mp4 (size: 23671251 bytes)
+2025-08-05 03:10:55,802 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250802_074425_600.mp4: bytes 0-23671250/23671251 (status: 206)
+2025-08-05 03:10:55,806 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/02/07/camera_camera_946701d3_20250802_074425_600.mp4 (size: 23671251 bytes)
+2025-08-05 03:10:55,806 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250802_074425_600.mp4: bytes 23625728-23671250/23671251 (status: 206)
+2025-08-05 03:10:57,927 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/2025/08/03/00/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4 (size: 39047329 bytes)
+2025-08-05 03:10:57,927 - recording_service.services.playback_service - INFO - Streaming camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4: bytes 0-39047328/39047329 (status: 206)
+2025-08-05 03:10:58,262 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/2025/08/03/00/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4 (size: 39047329 bytes)
+2025-08-05 03:10:58,262 - recording_service.services.playback_service - INFO - Streaming camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4: bytes 38993920-39047328/39047329 (status: 206)
+2025-08-05 03:10:58,268 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/2025/08/03/00/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4 (size: 39047329 bytes)
+2025-08-05 03:10:58,268 - recording_service.services.playback_service - INFO - Streaming camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4: bytes 32768-39047328/39047329 (status: 206)
+2025-08-05 03:13:27,577 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/03/18/camera_camera_946701d3_20250803_180447.mp4 (size: 127115488 bytes)
+2025-08-05 03:13:27,577 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250803_180447.mp4: bytes 0-127115487/127115488 (status: 206)
+2025-08-05 03:13:27,859 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/03/18/camera_camera_946701d3_20250803_180447.mp4 (size: 127115488 bytes)
+2025-08-05 03:13:27,860 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250803_180447.mp4: bytes 126812160-127115487/127115488 (status: 206)
+2025-08-05 03:13:27,871 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/03/18/camera_camera_946701d3_20250803_180447.mp4 (size: 127115488 bytes)
+2025-08-05 03:13:27,871 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250803_180447.mp4: bytes 32768-127115487/127115488 (status: 206)
+2025-08-05 03:13:32,229 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:13:32,229 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:13:32,563 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:13:32,563 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:13:32,574 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:13:32,575 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 03:13:32,850 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:13:32,851 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 03:13:48,909 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:13:48,910 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:15:45,732 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_001516.mp4 (size: 327155760 bytes)
+2025-08-05 03:15:45,732 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_001516.mp4: bytes 0-327155759/327155760 (status: 206)
+2025-08-05 03:15:56,406 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:15:56,407 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:15:56,628 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:15:56,629 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:15:56,747 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:15:56,747 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:15:56,757 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:15:56,757 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 196608-424597923/424597924 (status: 206)
+2025-08-05 03:15:57,027 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:15:57,027 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2031616-424597923/424597924 (status: 206)
+2025-08-05 03:16:42,848 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:16:42,848 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 0-130961620/130961621 (status: 206)
+2025-08-05 03:16:43,186 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:16:43,186 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 130646016-130961620/130961621 (status: 206)
+2025-08-05 03:16:43,197 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/04/09/camera_camera_946701d3_20250804_100000.mp4 (size: 130961621 bytes)
+2025-08-05 03:16:43,197 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250804_100000.mp4: bytes 32768-130961620/130961621 (status: 206)
+2025-08-05 03:16:43,467 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/2025/08/03/00/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4 (size: 39047329 bytes)
+2025-08-05 03:16:43,467 - recording_service.services.playback_service - INFO - Streaming camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4: bytes 0-39047328/39047329 (status: 206)
+2025-08-05 03:16:41,356 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/2025/08/03/00/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4 (size: 39047329 bytes)
+2025-08-05 03:16:41,356 - recording_service.services.playback_service - INFO - Streaming camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4: bytes 38993920-39047328/39047329 (status: 206)
+2025-08-05 03:16:41,360 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/2025/08/03/00/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4 (size: 39047329 bytes)
+2025-08-05 03:16:41,360 - recording_service.services.playback_service - INFO - Streaming camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4: bytes 32768-39047328/39047329 (status: 206)
+2025-08-05 03:17:20,810 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-05 03:17:20,834 - DatabaseService - INFO - Database initialized and tables created
+2025-08-05 03:17:20,834 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-05 03:17:20,834 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager initialized
+2025-08-05 03:17:20,834 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-05 03:17:20,838 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg camera recorder initialized: Reolink Main Entrance (camera_946701d3)
+2025-08-05 03:17:20,838 - recording_service.services.ffmpeg_recording_manager - INFO - Starting FFmpeg recording for Reolink Main Entrance
+2025-08-05 03:17:20,846 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording started for Reolink Main Entrance (PID: 402635)
+2025-08-05 03:17:20,846 - recording_service.services.ffmpeg_recording_manager - INFO - Started recording for Reolink Main Entrance
+2025-08-05 03:17:20,846 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager started with 1 active recorders
+2025-08-05 03:17:20,846 - recording_service.main - INFO - Recording Service started successfully
+2025-08-05 03:17:20,848 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 41
+2025-08-05 03:17:20,855 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-05 03:17:20,855 - recording_service.services.ffmpeg_recording_manager - INFO - Stopping all FFmpeg recorders...
+2025-08-05 03:17:20,855 - recording_service.services.ffmpeg_recording_manager - INFO - Stopping FFmpeg recording for Reolink Main Entrance
+2025-08-05 03:17:20,856 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg process stopped gracefully for Reolink Main Entrance
+2025-08-05 03:17:20,857 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording stopped for Reolink Main Entrance
+2025-08-05 03:17:20,857 - recording_service.services.ffmpeg_recording_manager - INFO - Stopped recording for camera_946701d3
+2025-08-05 03:17:20,857 - recording_service.services.ffmpeg_recording_manager - INFO - All FFmpeg recorders stopped
+2025-08-05 03:17:20,857 - recording_service.main - INFO - Recording Service stopped
+2025-08-05 03:17:20,857 - recording_service.services.ffmpeg_recording_manager - ERROR - Error monitoring FFmpeg process for Reolink Main Entrance: 'NoneType' object has no attribute 'wait'
+2025-08-05 03:17:45,263 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:17:45,263 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:17:45,421 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:17:45,421 - recording_service.services.playback_service - INFO - Found 2 matching segments
+2025-08-05 03:17:45,526 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:17:45,526 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:17:45,536 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:17:45,536 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 03:17:45,611 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:17:45,611 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2031616-424597923/424597924 (status: 206)
+2025-08-05 03:21:41,268 - recording_service.main - INFO - Shutting down Recording Service...
+2025-08-05 03:21:41,268 - recording_service.services.ffmpeg_recording_manager - INFO - Stopping all FFmpeg recorders...
+2025-08-05 03:21:41,268 - recording_service.services.ffmpeg_recording_manager - INFO - Stopped recording for camera_946701d3
+2025-08-05 03:21:41,268 - recording_service.services.ffmpeg_recording_manager - INFO - All FFmpeg recorders stopped
+2025-08-05 03:21:41,268 - recording_service.main - INFO - Recording Service stopped
+2025-08-05 03:21:52,899 - recording_service.main - INFO - Starting 24/7 Recording Service...
+2025-08-05 03:21:52,914 - DatabaseService - INFO - Database initialized and tables created
+2025-08-05 03:21:52,914 - recording_service.services.storage_manager - INFO - Storage Manager initialized: recordings, limit: 10GB
+2025-08-05 03:21:52,915 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager initialized
+2025-08-05 03:21:52,915 - recording_service.services.playback_service - INFO - Playback Service initialized
+2025-08-05 03:21:52,919 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg camera recorder initialized: Reolink Main Entrance (camera_946701d3)
+2025-08-05 03:21:52,920 - recording_service.services.ffmpeg_recording_manager - INFO - Starting FFmpeg recording for Reolink Main Entrance
+2025-08-05 03:21:52,927 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg recording started for Reolink Main Entrance (PID: 404300)
+2025-08-05 03:21:52,927 - recording_service.services.ffmpeg_recording_manager - INFO - Started recording for Reolink Main Entrance
+2025-08-05 03:21:52,928 - recording_service.services.ffmpeg_recording_manager - INFO - FFmpeg Recording Manager started with 1 active recorders
+2025-08-05 03:21:52,928 - recording_service.main - INFO - Recording Service started successfully
+2025-08-05 03:21:52,929 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 41
+2025-08-05 03:22:20,577 - recording_service.services.ffmpeg_recording_manager - INFO - New segments created for Reolink Main Entrance: 1
+2025-08-05 03:22:23,888 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:22:23,888 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 0-424597923/424597924 (status: 206)
+2025-08-05 03:22:24,171 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:22:24,171 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 424312832-424597923/424597924 (status: 206)
+2025-08-05 03:22:24,182 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:22:24,182 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 32768-424597923/424597924 (status: 206)
+2025-08-05 03:22:24,238 - recording_service.services.playback_service - INFO - Streaming file: recordings/camera_camera_946701d3/2025/08/05/00/camera_camera_946701d3_20250805_000458.mp4 (size: 424597924 bytes)
+2025-08-05 03:22:24,238 - recording_service.services.playback_service - INFO - Streaming camera_camera_946701d3_20250805_000458.mp4: bytes 2129920-424597923/424597924 (status: 206)
+2025-08-05 03:22:52,336 - recording_service.services.playback_service - INFO - Searching segments for camera camera_946701d3 with params: {'start_date': '2025-08-05', 'end_date': '2025-08-05'}
+2025-08-05 03:22:52,337 - recording_service.services.playback_service - INFO - Found 3 matching segments

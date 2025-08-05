@@ -5,8 +5,8 @@
 /* Core Video Player Container - Fixed Card Size */
 .live-video-container {
     position: relative;
-    width: 800px;
-    height: 600px;
+    width: 400px;
+    height: 300px;
     background: #000;
     border-radius: 6px;
     overflow: hidden;
@@ -505,8 +505,8 @@
 
 .camera-feed-video {
     position: relative;
-    width: 800px;
-    height: 600px;
+    width: 600px;
+    height: 400px;
     background: #000;
     margin: 0 auto;
     display: block;
@@ -559,8 +559,8 @@
 /* Camera Card Preview Enhancement - Fixed Size */
 .camera-card-preview {
     position: relative;
-    width: 800px;
-    height: 600px;
+    width: 400px;
+    height: 300px;
     background: #000;
     border-radius: 6px;
     overflow: hidden;

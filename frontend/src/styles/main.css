@@ -3,10 +3,16 @@
 /* Base Styles */
 @import './base/variables.css';
 @import './base/reset.css';
+@import './base/transitions.css';
+@import './base/accessibility.css';
 
 /* Component Styles */
 @import './components/sidebar.css';
 @import './components/header.css';
+@import './components/buttons.css';
+@import './components/forms.css';
+@import './components/status-indicators.css';
+@import './components/cards.css';
 @import './components/modal.css';
 @import './components/simple-camera-modal.css';
 @import './components/streaming.css';
@@ -17,9 +23,10 @@
 .app-layout {
     display: grid;
     grid-template-columns: var(--sidebar-width) 1fr;
-    min-height: 100vh;
+    height: 100vh;
     background: var(--bg-primary);
     transition: grid-template-columns var(--layout-transition);
+    overflow: hidden;
 }
 
 .app-layout[data-nav-expanded="true"] {
@@ -34,10 +41,11 @@
 
 .main-content {
     grid-column: 2;
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
+    overflow-y: auto;
     background: var(--bg-primary);
 }
 
@@ -50,21 +58,27 @@
     flex: 1;
     padding: var(--spacing-lg);
     display: none;
+    overflow-y: auto;
+    min-height: 0;
 }
 
 .content-section.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Special handling for recordings page */
 .content-section#recordings.active {
     padding: 0;
-    height: calc(100vh - var(--header-height));
+    min-height: calc(100vh - var(--header-height));
+    max-height: calc(100vh - var(--header-height));
+    overflow-y: auto;
 }
 
 /* Page Header */
 .page-header {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    flex-shrink: 0;
 }
 
 .page-title {
@@ -84,8 +98,9 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .quick-action-btn {
@@ -801,42 +816,7 @@
     gap: 0.75rem;
 }
 
-.btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    font-size: 0.875rem;
-}
-
-.btn-small,
-.btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.75rem;
-}
-
-.btn-primary {
-    background: var(--primary-color);
-    color: white;
-    border: 1px solid var(--primary-color);
-}
-
-.btn-primary:hover {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
-}
-
-.btn-secondary {
-    background: var(--bg-tertiary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-color);
-}
-
-.btn-secondary:hover {
-    background: var(--border-color);
-}
+/* Button styles moved to components/buttons.css */
 
 /* Chart Container */
 .chart-container {

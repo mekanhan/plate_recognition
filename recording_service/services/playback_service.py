@@ -24,50 +24,67 @@ class PlaybackService:
         logger.info("Playback Service initialized")
     
     async def get_calendar_data(self, camera_id: str, year: int, month: int) -> Dict:
-        """Get recording availability for calendar display"""
+        """Get recording availability for calendar display - File-based approach"""
         try:
-            async with self.db_service.get_session() as session:
-                # Query daily summaries for the month
-                query = """
-                    SELECT 
-                        date,
-                        total_duration_seconds,
-                        total_size_bytes,
-                        coverage_percentage
-                    FROM daily_summaries
-                    WHERE camera_id = ? 
-                    AND strftime('%Y', date) = ?
-                    AND strftime('%m', date) = ?
-                """
+            # Scan filesystem for recordings instead of using database
+            camera_path = self.recordings_path / f"camera_{camera_id}"
+            if not camera_path.exists():
+                logger.warning(f"No recordings directory for camera {camera_id}")
+                return {"days": {}, "total_size": 0, "total_duration": 0}
+            
+            # Build month path
+            month_path = camera_path / str(year) / str(month).zfill(2)
+            if not month_path.exists():
+                logger.info(f"No recordings for {camera_id} in {year}-{month:02d}")
+                return {"days": {}, "total_size": 0, "total_duration": 0}
+            
+            days = {}
+            total_size = 0
+            total_duration = 0
+            
+            # Scan all days in the month
+            for day_path in month_path.glob("*"):
+                if not day_path.is_dir():
+                    continue
+                    
+                day_number = int(day_path.name)
+                day_size = 0
+                day_duration = 0
+                segment_count = 0
                 
-                result = await session.execute(
-                    text(query), 
-                    (camera_id, str(year), str(month).zfill(2))
-                )
-                rows = result.fetchall()
+                # Scan all hours in the day
+                for hour_path in day_path.glob("*"):
+                    if not hour_path.is_dir():
+                        continue
+                    
+                    # Count video files in this hour
+                    # Look for both .avi and .mp4 files
+                video_files = list(hour_path.glob("*.avi")) + list(hour_path.glob("*.mp4"))
+                for video_file in video_files:
+                        if video_file.is_file():
+                            segment_count += 1
+                            day_size += video_file.stat().st_size
+                            # Each segment is 10 minutes (600 seconds)
+                            day_duration += 600
                 
-                days = {}
-                total_size = 0
-                total_duration = 0
-                
-                for row in rows:
-                    day = int(row[0].split('-')[2])
-                    days[str(day)] = {
+                if segment_count > 0:
+                    days[day_number] = {
                         "has_recordings": True,
-                        "total_duration": row[1],
-                        "total_size": row[2],
-                        "recording_percentage": row[3]
+                        "segment_count": segment_count,
+                        "total_size": day_size,
+                        "duration_seconds": day_duration,
+                        "coverage_percentage": min(100.0, (day_duration / 86400.0) * 100.0)
                     }
-                    total_size += row[2]
-                    total_duration += row[1]
-                
-                return {
-                    "year": year,
-                    "month": month,
-                    "days": days,
-                    "total_size": total_size,
-                    "total_duration": total_duration
-                }
+                    total_size += day_size
+                    total_duration += day_duration
+            
+            return {
+                "year": year,
+                "month": month,
+                "days": days,
+                "total_size": total_size,
+                "total_duration": total_duration
+            }
                 
         except Exception as e:
             logger.error(f"Error getting calendar data: {e}")
@@ -80,78 +97,119 @@ class PlaybackService:
         start_hour: Optional[int] = None,
         end_hour: Optional[int] = None
     ) -> Dict:
-        """Get detailed segment list for timeline"""
+        """Get detailed segment list for timeline - File-based approach"""
         try:
-            async with self.db_service.get_session() as session:
-                # Build query with optional hour filtering
-                query = """
-                    SELECT 
-                        filename,
-                        start_time,
-                        end_time,
-                        duration_seconds,
-                        file_size_bytes,
-                        file_path
-                    FROM video_recordings
-                    WHERE camera_id = ?
-                    AND date(start_time) = ?
-                """
-                params = [camera_id, date_str]
-                
-                if start_hour is not None:
-                    query += " AND cast(strftime('%H', start_time) as integer) >= ?"
-                    params.append(start_hour)
-                
-                if end_hour is not None:
-                    query += " AND cast(strftime('%H', start_time) as integer) <= ?"
-                    params.append(end_hour)
+            # Parse date string (YYYY-MM-DD)
+            year, month, day = date_str.split('-')
+            
+            # Build path to recordings for this date
+            date_path = self.recordings_path / f"camera_{camera_id}" / year / month / day
+            if not date_path.exists():
+                logger.info(f"No recordings for {camera_id} on {date_str}")
+                return {
+                    "segments": [],
+                    "total_duration": 0,
+                    "total_size": 0,
+                    "coverage_percentage": 0.0,
+                    "date": date_str
+                }
+            
+            segments = []
+            total_size = 0
+            total_duration = 0
+            
+            # Parse filename pattern to extract metadata and sort chronologically
+            video_files_info = []
+            for hour_path in date_path.glob("*"):
+                if not hour_path.is_dir():
+                    continue
                     
-                query += " ORDER BY start_time"
+                hour = int(hour_path.name)
+                # Apply hour filtering if specified
+                if start_hour is not None and hour < start_hour:
+                    continue
+                if end_hour is not None and hour > end_hour:
+                    continue
                 
-                result = await session.execute(text(query), params)
-                rows = result.fetchall()
+                # Look for both .avi and .mp4 files
+                hour_video_files = list(hour_path.glob("*.avi")) + list(hour_path.glob("*.mp4"))
+                for video_file in hour_video_files:
+                    if video_file.is_file():
+                        # Parse filename: supports both old (with duration) and new (without duration) formats
+                        # Old: camera_camera_946701d3_20250802_022919_600.avi
+                        # New: camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a_20250803_001742.mp4
+                        try:
+                            parts = video_file.stem.split('_')
+                            
+                            # Check if this is new format (without duration) or old format (with duration)
+                            if len(parts) >= 3:
+                                if len(parts) >= 4 and parts[-1].isdigit() and len(parts[-1]) == 3:
+                                    # Old format with duration suffix
+                                    date_part = parts[-3]  # 20250802
+                                    time_part = parts[-2]  # 022919
+                                    duration = int(parts[-1])  # 600
+                                else:
+                                    # New format without duration suffix
+                                    date_part = parts[-2]  # 20250803
+                                    time_part = parts[-1]  # 001742
+                                    duration = 600  # Default 10-minute segment duration
+                                
+                                # Parse start time
+                                start_time = datetime.strptime(f"{date_part}_{time_part}", "%Y%m%d_%H%M%S")
+                                end_time = start_time + timedelta(seconds=duration)
+                                
+                                video_files_info.append({
+                                    "file": video_file,
+                                    "start_time": start_time,
+                                    "end_time": end_time,
+                                    "duration": duration
+                                })
+                        except Exception as e:
+                            logger.warning(f"Could not parse filename {video_file.name}: {e}")
+            
+            # Sort by start time
+            video_files_info.sort(key=lambda x: x["start_time"])
+            
+            # Build segments
+            prev_end_time = None
+            for video_info in video_files_info:
+                file_size = video_info["file"].stat().st_size
                 
-                segments = []
-                prev_end_time = None
+                # Check for gaps between segments
+                has_gap_before = False
+                gap_duration = 0
+                if prev_end_time and video_info["start_time"] > prev_end_time:
+                    gap_duration = (video_info["start_time"] - prev_end_time).total_seconds()
+                    has_gap_before = gap_duration > 30  # Gap > 30 seconds
                 
-                for row in rows:
-                    segment = {
-                        "filename": row[0],
-                        "start_time": row[1],
-                        "end_time": row[2],
-                        "duration_seconds": row[3],
-                        "file_size": row[4],
-                        "file_path": row[5],
+                segment = {
+                        "filename": video_info["file"].name,
+                        "start_time": video_info["start_time"].isoformat(),
+                        "end_time": video_info["end_time"].isoformat(),
+                        "duration_seconds": video_info["duration"],
+                        "file_size": file_size,
+                        "file_path": str(video_info["file"]),
                         "type": "continuous",
-                        "has_gap_before": False,
-                        "gap_duration": 0
+                        "has_gap_before": has_gap_before,
+                        "gap_duration": gap_duration
                     }
                     
-                    # Check for gaps
-                    if prev_end_time:
-                        gap = (datetime.fromisoformat(row[1]) - 
-                               datetime.fromisoformat(prev_end_time)).total_seconds()
-                        if gap > 60:  # More than 1 minute gap
-                            segment["has_gap_before"] = True
-                            segment["gap_duration"] = int(gap)
-                    
-                    segments.append(segment)
-                    prev_end_time = row[2]
-                
-                # Calculate totals
-                total_duration = sum(s["duration_seconds"] for s in segments)
-                total_size = sum(s["file_size"] for s in segments)
-                coverage = (total_duration / 86400) * 100 if segments else 0
-                
-                return {
-                    "camera_id": camera_id,
-                    "date": date_str,
-                    "segments": segments,
-                    "total_segments": len(segments),
-                    "total_duration": total_duration,
-                    "total_size": total_size,
-                    "coverage_percentage": round(coverage, 1)
-                }
+                segments.append(segment)
+                total_size += file_size
+                total_duration += video_info["duration"]
+                prev_end_time = video_info["end_time"]
+            
+            # Calculate coverage percentage (total duration vs 24 hours)
+            coverage_percentage = min(100.0, (total_duration / 86400.0) * 100.0) if total_duration > 0 else 0.0
+            
+            return {
+                "segments": segments,
+                "total_duration": total_duration,
+                "total_size": total_size,
+                "coverage_percentage": coverage_percentage,
+                "date": date_str,
+                "segment_count": len(segments)
+            }
                 
         except Exception as e:
             logger.error(f"Error getting timeline segments: {e}")
@@ -337,79 +395,259 @@ class PlaybackService:
             raise HTTPException(status_code=500, detail="Failed to get recording details")
     
     async def search_segments(self, camera_id: str, search_params: dict) -> Dict:
-        """Search recordings with filters"""
+        """Search recordings with filters - File-based approach"""
         try:
+            logger.info(f"Searching segments for camera {camera_id} with params: {search_params}")
+            
+            # Get filter parameters
             start_date = search_params.get('start_date')
-            end_date = search_params.get('end_date')
+            end_date = search_params.get('end_date') 
             start_time = search_params.get('start_time')
             end_time = search_params.get('end_time')
-            min_duration = search_params.get('min_duration')
-            max_duration = search_params.get('max_duration')
+            min_duration = search_params.get('min_duration', 0)
+            max_duration = search_params.get('max_duration', 99999)
             
-            async with self.db_service.get_session() as session:
-                # Build search query
-                query = """
-                    SELECT 
-                        filename,
-                        date(start_time) as date,
-                        start_time,
-                        end_time,
-                        duration_seconds,
-                        file_size_bytes
-                    FROM video_recordings
-                    WHERE camera_id = ?
-                """
-                params = [camera_id]
-                
-                if start_date:
-                    query += " AND date(start_time) >= ?"
-                    params.append(start_date)
-                
-                if end_date:
-                    query += " AND date(start_time) <= ?"
-                    params.append(end_date)
-                
-                if start_time and end_time:
-                    query += " AND (time(start_time) >= ? OR time(start_time) <= ?)"
-                    params.extend([start_time, end_time])
-                
-                if min_duration:
-                    query += " AND duration_seconds >= ?"
-                    params.append(min_duration)
-                
-                if max_duration:
-                    query += " AND duration_seconds <= ?"
-                    params.append(max_duration)
-                
-                query += " ORDER BY start_time"
-                
-                result = await session.execute(text(query), params)
-                rows = result.fetchall()
-                
-                segments = []
-                total_duration = 0
-                total_size = 0
-                
-                for row in rows:
-                    segment = {
-                        "filename": row[0],
-                        "date": row[1],
-                        "start_time": row[2],
-                        "end_time": row[3],
-                        "duration_seconds": row[4],
-                        "file_size": row[5]
-                    }
-                    segments.append(segment)
-                    total_duration += row[4]
-                    total_size += row[5]
-                
+            # Parse dates if provided
+            start_dt = None
+            end_dt = None
+            if start_date:
+                start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+            if end_date:
+                end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+            
+            # Scan filesystem for matching segments
+            camera_path = self.recordings_path / f"camera_{camera_id}"
+            if not camera_path.exists():
+                logger.warning(f"No recordings directory for camera {camera_id}")
                 return {
-                    "total_results": len(segments),
-                    "total_duration": total_duration,
-                    "total_size": total_size,
-                    "segments": segments
+                    "total_results": 0,
+                    "total_duration": 0,
+                    "total_size": 0,
+                    "segments": []
                 }
+            
+            segments = []
+            total_duration = 0
+            total_size = 0
+            
+            # Walk through the directory structure
+            for year_dir in camera_path.iterdir():
+                if not year_dir.is_dir():
+                    continue
+                    
+                for month_dir in year_dir.iterdir():
+                    if not month_dir.is_dir():
+                        continue
+                        
+                    for day_dir in month_dir.iterdir():
+                        if not day_dir.is_dir():
+                            continue
+                            
+                        # Check if this date is within our search range
+                        try:
+                            file_date = datetime.strptime(f"{year_dir.name}-{month_dir.name}-{day_dir.name}", '%Y-%m-%d')
+                            if start_dt and file_date < start_dt:
+                                continue
+                            if end_dt and file_date > end_dt:
+                                continue
+                        except ValueError:
+                            continue
+                            
+                        for hour_dir in day_dir.iterdir():
+                            if not hour_dir.is_dir():
+                                continue
+                                
+                            # Look for both .avi and .mp4 files
+                            video_files = list(hour_dir.glob("*.avi")) + list(hour_dir.glob("*.mp4"))
+                            for video_file in video_files:
+                                if not video_file.is_file():
+                                    continue
+                                    
+                                try:
+                                    # Parse filename: supports both old and new formats
+                                    parts = video_file.stem.split('_')
+                                    if len(parts) >= 3:
+                                        if len(parts) >= 4 and parts[-1].isdigit() and len(parts[-1]) == 3:
+                                            # Old format with duration suffix
+                                            date_part = parts[-3]  # 20250802
+                                            time_part = parts[-2]  # 022919
+                                            duration = int(parts[-1])  # 600
+                                        else:
+                                            # New format without duration suffix
+                                            date_part = parts[-2]  # 20250803
+                                            time_part = parts[-1]  # 001742
+                                            duration = 600  # Default 10-minute segment duration
+                                        
+                                        # Check duration filter
+                                        if duration < min_duration or duration > max_duration:
+                                            continue
+                                        
+                                        # Parse start time
+                                        start_datetime = datetime.strptime(f"{date_part}_{time_part}", '%Y%m%d_%H%M%S')
+                                        end_datetime = start_datetime + timedelta(seconds=duration)
+                                        
+                                        # Check time filter
+                                        if start_time:
+                                            start_time_obj = datetime.strptime(start_time, '%H:%M:%S').time()
+                                            if start_datetime.time() < start_time_obj:
+                                                continue
+                                        
+                                        if end_time:
+                                            end_time_obj = datetime.strptime(end_time, '%H:%M:%S').time()
+                                            if start_datetime.time() > end_time_obj:
+                                                continue
+                                        
+                                        file_size = video_file.stat().st_size
+                                        
+                                        segment = {
+                                            "filename": video_file.name,
+                                            "date": start_datetime.strftime('%Y-%m-%d'),
+                                            "start_time": start_datetime.isoformat(),
+                                            "end_time": end_datetime.isoformat(),
+                                            "duration_seconds": duration,
+                                            "file_size": file_size,
+                                            "camera_id": camera_id
+                                        }
+                                        
+                                        segments.append(segment)
+                                        total_duration += duration
+                                        total_size += file_size
+                                        
+                                except (ValueError, IndexError) as e:
+                                    logger.warning(f"Failed to parse filename {video_file.name}: {e}")
+                                    continue
+            
+            # Sort by start time
+            segments.sort(key=lambda x: x['start_time'])
+            
+            logger.info(f"Found {len(segments)} matching segments")
+            
+            return {
+                "total_results": len(segments),
+                "total_duration": total_duration,
+                "total_size": total_size,
+                "segments": segments
+            }
                 
         except Exception as e:
             logger.error(f"Error searching segments: {e}")
             raise HTTPException(status_code=500, detail="Failed to search segments")
+    
+    async def stream_segment_file_based(
+        self, 
+        segment_filename: str, 
+        range_header: Optional[str] = None
+    ) -> StreamingResponse:
+        """Stream video segment using file-system approach (bypasses database)"""
+        
+        try:
+            # Extract camera_id from filename pattern
+            # Format: camera_camera_946701d3_20250802_025038_600.avi
+            if not segment_filename.startswith("camera_"):
+                raise HTTPException(404, "Invalid segment filename format")
+            
+            # Find the file by scanning all camera directories
+            file_path = None
+            for camera_dir in self.recordings_path.iterdir():
+                if camera_dir.is_dir() and camera_dir.name.startswith("camera_"):
+                    # Search through the directory tree
+                    for year_dir in camera_dir.iterdir():
+                        if year_dir.is_dir():
+                            for month_dir in year_dir.iterdir():
+                                if month_dir.is_dir():
+                                    for day_dir in month_dir.iterdir():
+                                        if day_dir.is_dir():
+                                            for hour_dir in day_dir.iterdir():
+                                                if hour_dir.is_dir():
+                                                    potential_file = hour_dir / segment_filename
+                                                    if potential_file.exists():
+                                                        file_path = potential_file
+                                                        break
+                                                if file_path:
+                                                    break
+                                            if file_path:
+                                                break
+                                        if file_path:
+                                            break
+                                if file_path:
+                                    break
+                        if file_path:
+                            break
+            
+            if not file_path or not file_path.exists():
+                logger.warning(f"Video file not found: {segment_filename}")
+                raise HTTPException(404, "Video file not found")
+            
+            file_size = file_path.stat().st_size
+            logger.info(f"Streaming file: {file_path} (size: {file_size} bytes)")
+            
+            # Handle range requests for video seeking
+            start = 0
+            end = file_size - 1
+            status_code = 200
+            
+            if range_header:
+                # Parse Range header (e.g., "bytes=0-1023")
+                try:
+                    range_match = range_header.replace('bytes=', '').split('-')
+                    if len(range_match) == 2:
+                        if range_match[0]:
+                            start = int(range_match[0])
+                        if range_match[1]:
+                            end = int(range_match[1])
+                        status_code = 206  # Partial Content
+                except (ValueError, IndexError):
+                    # Invalid range, serve full file
+                    pass
+            
+            # Ensure valid range
+            start = max(0, start)
+            end = min(file_size - 1, end)
+            content_length = end - start + 1
+            
+            def file_generator():
+                """Generator to stream file chunks"""
+                try:
+                    with open(file_path, 'rb') as video_file:
+                        video_file.seek(start)
+                        remaining = content_length
+                        
+                        while remaining > 0:
+                            chunk_size = min(8192, remaining)  # 8KB chunks
+                            chunk = video_file.read(chunk_size)
+                            if not chunk:
+                                break
+                            remaining -= len(chunk)
+                            yield chunk
+                            
+                except Exception as e:
+                    logger.error(f"Error streaming file: {e}")
+                    yield b""  # End stream on error
+            
+            # Prepare headers with correct content type and CORS
+            content_type = 'video/mp4' if file_path.suffix.lower() == '.mp4' else 'video/avi'
+            headers = {
+                'Content-Length': str(content_length),
+                'Accept-Ranges': 'bytes',
+                'Content-Type': content_type,
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+                'Access-Control-Allow-Headers': 'Range, Content-Type'
+            }
+            
+            if status_code == 206:
+                headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
+            
+            logger.info(f"Streaming {segment_filename}: bytes {start}-{end}/{file_size} (status: {status_code})")
+            
+            return StreamingResponse(
+                file_generator(),
+                status_code=status_code,
+                headers=headers
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error streaming video segment: {e}")
+            raise HTTPException(status_code=500, detail="Failed to stream video")

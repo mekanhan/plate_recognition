@@ -5,6 +5,10 @@ Test database operations - create tables, add/retrieve data
 import asyncio
 import os
 from datetime import datetime, timedelta
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from database.service import DatabaseService
 from database.models import Base
 
@@ -12,11 +16,11 @@ print("🗄️  Testing Database Operations...\n")
 
 async def test_database():
     # Create data directory if it doesn't exist
-    os.makedirs("data", exist_ok=True)
+    os.makedirs("../data", exist_ok=True)
     
     # Initialize database service
     print("Initializing database service...")
-    db = DatabaseService("sqlite+aiosqlite:///data/test_license_plates.db")
+    db = DatabaseService("sqlite+aiosqlite:///../data/test_license_plates.db")
     
     try:
         # Test 1: Create tables
@@ -140,7 +144,7 @@ async def test_database():
 
 # Additional test: Check if database file was created
 def check_database_file():
-    db_path = "data/test_license_plates.db"
+    db_path = "../data/test_license_plates.db"
     if os.path.exists(db_path):
         size = os.path.getsize(db_path)
         print(f"\n✅ Database file created: {db_path}")
@@ -163,4 +167,4 @@ if __name__ == "__main__":
     check_database_file()
     
     print("\nDatabase test complete!")
-    print("You can inspect the test database at: data/test_license_plates.db")
+    print("You can inspect the test database at: ../data/test_license_plates.db")

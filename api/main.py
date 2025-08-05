@@ -18,10 +18,14 @@ import logging
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
 
+# Configure logging
+logger = logging.getLogger(__name__)
+
 # Import our services
 from ai_pipeline.camera_manager import CameraManager, CameraConfig
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 from database.service import DatabaseService
+from utils.camera_utils import generate_camera_id, validate_camera_id, CameraValidation, CameraDisplayUtils
 
 # Pydantic models for API requests
 class CameraCreate(BaseModel):
@@ -67,6 +71,7 @@ class CameraTestRequest(BaseModel):
     username: Optional[str] = "admin"
     password: Optional[str] = None
     timeout: int = 10
+    brand: Optional[str] = None
 
 # Global instances
 camera_manager = None
@@ -232,48 +237,50 @@ app.mount("/images", StaticFiles(directory="detections"), name="images")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 async def load_cameras():
-    """Load camera configurations"""
-    # For now, load from a simple configuration
-    # In production, this would come from database or config file
-    cameras = [
-        CameraConfig(
-            camera_id="entrance_cam",
-            name="Entrance Camera",
-            ip_address="10.0.0.181",
-            username="admin",
-            password="Mekus_1987",
-            port=554,
-            stream_path="/h264Preview_01_main",
-            location="Main Entrance"
-        )
-        # Add more cameras as needed
-    ]
-    
-    for config in cameras:
-        # Add to camera manager
-        camera_manager.add_camera(config)
+    """Load camera configurations from database"""
+    try:
+        # Get all active cameras from database
+        cameras = await db.get_all_cameras()
         
-        # Check if camera already exists in database
-        existing_camera = await db.get_camera(config.camera_id)
-        if not existing_camera:
-            # Save to database only if it doesn't exist
-            await db.add_camera({
-                'camera_id': config.camera_id,
-                'name': config.name,
-                'ip_address': config.ip_address,
-                'location': config.location,
-                'status': 'active',
-                'config': {
-                    'username': config.username,
-                    'port': config.port,
-                    'stream_path': config.stream_path
-                }
-            })
-            logging.info(f"Added new camera to database: {config.name}")
-        else:
-            logging.info(f"Camera already exists in database: {config.name}")
+        for camera in cameras:
+            if camera.status == 'active':
+                # Create CameraConfig from database data
+                config = CameraConfig(
+                    camera_id=camera.camera_id,
+                    name=camera.name,
+                    ip_address=camera.ip_address,
+                    username=camera.username or "admin",
+                    password=camera.password or "",
+                    port=camera.port or 554,
+                    stream_path=camera.stream_path or "/stream",
+                    location=camera.location or "Unknown"
+                )
+                
+                # Add to camera manager
+                camera_manager.add_camera(config)
+                logging.info(f"Loaded camera from database: {camera.name} ({camera.camera_id})")
         
-        logging.info(f"Loaded camera: {config.name}")
+        logging.info(f"Loaded {len([c for c in cameras if c.status == 'active'])} active cameras from database")
+        
+    except Exception as e:
+        logging.error(f"Failed to load cameras from database: {e}")
+        logging.info("No cameras loaded - system will rely on database CRUD operations")
+
+async def reload_cameras():
+    """Reload cameras from database and sync with camera manager"""
+    try:
+        # Clear existing cameras from manager
+        camera_manager.cameras.clear()
+        
+        # Reload from database
+        await load_cameras()
+        
+        logging.info("Successfully reloaded cameras from database")
+        return True
+        
+    except Exception as e:
+        logging.error(f"Failed to reload cameras: {e}")
+        return False
 
 async def processing_loop():
     """Main processing loop - runs continuously"""
@@ -283,6 +290,9 @@ async def processing_loop():
         try:
             for camera_id, camera in camera_manager.get_all_cameras().items():
                 if camera.is_healthy():
+                    # Update camera status to active when healthy
+                    await db.update_camera_status(camera_id, "active")
+                    
                     frame = camera.get_frame()
                     if frame is not None:
                         # Process for detections
@@ -304,7 +314,7 @@ async def processing_loop():
                             }
                             await db.save_detection(detection_data)
                 else:
-                    # Update camera status
+                    # Update camera status to offline when unhealthy
                     await db.update_camera_status(camera_id, "offline")
             
             await asyncio.sleep(0.1)  # Process at 10 FPS
@@ -327,21 +337,62 @@ async def health():
 
 @app.get("/api/cameras")
 async def get_cameras():
-    """Get all cameras with current status"""
+    """Get all cameras with real-time connection status"""
     cameras = await db.get_all_cameras()
     
     result = []
     for c in cameras:
+        # Determine real connection status
         camera_stream = camera_manager.get_camera(c.camera_id)
-        is_healthy = camera_stream.is_healthy() if camera_stream else False
+        connection_status = "offline"
+        
+        if camera_stream:
+            # Check if camera is actively streaming
+            if camera_stream.is_healthy():
+                connection_status = "online"
+            elif camera_stream.is_running:
+                connection_status = "connecting"
+        elif c.status == 'active':
+            # Camera is in database but not in manager - needs connection test
+            connection_status = "unknown"
+        
+        # Create display-friendly summary
+        camera_data = {
+            "camera_id": c.camera_id,
+            "name": c.name,
+            "location": c.location,
+            "ip_address": c.ip_address,
+            "status": connection_status
+        }
+        display_info = CameraDisplayUtils.create_camera_summary(camera_data)
         
         result.append({
             "id": c.camera_id,
+            "camera_id": c.camera_id,
             "name": c.name,
+            "display_name": display_info['display_name'],
+            "short_id": display_info['short_id'],
             "location": c.location or "",
-            "status": "online" if is_healthy else "offline",
+            "status": connection_status,
             "ip_address": c.ip_address,
-            "last_detection": await db.get_last_detection_time(c.camera_id)
+            "port": c.port,
+            "connection_type": c.connection_type,
+            "stream_path": c.stream_path,
+            "username": c.username,
+            "password": c.password,
+            "enabled": c.status == 'active',
+            "brand": c.brand,
+            "model": c.model,
+            "resolution_width": c.resolution_width,
+            "resolution_height": c.resolution_height,
+            "max_fps": c.max_fps,
+            "video_quality": c.video_quality,
+            "low_latency": c.low_latency,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+            "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+            "last_detection": await db.get_last_detection_time(c.camera_id),
+            "last_test_result": c.last_test_result,
+            "last_test_at": c.last_test_at.isoformat() if c.last_test_at else None
         })
     
     return result
@@ -350,15 +401,35 @@ async def get_cameras():
 async def create_camera(camera_data: CameraCreate):
     """Create a new camera"""
     try:
-        # Generate unique camera ID
-        camera_id = f"camera_{uuid.uuid4().hex[:8]}"
+        # Generate unique camera ID using utility function
+        camera_id = generate_camera_id()
         
         # Create camera data dictionary
         camera_dict = camera_data.dict()
         camera_dict['camera_id'] = camera_id
         
+        # Test connection before saving
+        test_data = CameraTestRequest(
+            ip_address=camera_data.ip_address,
+            port=camera_data.port,
+            connection_type=camera_data.connection_type,
+            stream_path=camera_data.stream_path,
+            username=camera_data.username,
+            password=camera_data.password,
+            timeout=10
+        )
+        
+        connection_test = await _test_camera_connection_internal(test_data)
+        
+        # Set initial status based on test result
+        camera_dict['status'] = 'active' if connection_test.get('success') else 'inactive'
+        
         # Save to database
         db_camera_id = await db.add_camera(camera_dict)
+        
+        # Save test result
+        test_result = 'success' if connection_test.get('success') else 'failed'
+        await db.update_camera_test_result(camera_id, test_result)
         
         # Get the created camera
         created_camera = await db.get_camera(camera_id)
@@ -366,19 +437,34 @@ async def create_camera(camera_data: CameraCreate):
         if not created_camera:
             raise HTTPException(500, "Failed to create camera")
         
+        # Reload camera manager to include new camera
+        await reload_cameras()
+        
         # Notify recording service to start recording for new camera
         await notify_recording_service_camera_added(camera_id)
         
         return {
             "id": created_camera.camera_id,
+            "camera_id": created_camera.camera_id,
             "name": created_camera.name,
             "ip_address": created_camera.ip_address,
             "port": created_camera.port,
             "connection_type": created_camera.connection_type,
             "stream_path": created_camera.stream_path,
             "location": created_camera.location,
+            "username": created_camera.username,
+            "password": created_camera.password,
             "status": created_camera.status,
-            "created_at": created_camera.created_at.isoformat()
+            "enabled": created_camera.status == 'active',
+            "brand": created_camera.brand,
+            "model": created_camera.model,
+            "resolution_width": created_camera.resolution_width,
+            "resolution_height": created_camera.resolution_height,
+            "max_fps": created_camera.max_fps,
+            "video_quality": created_camera.video_quality,
+            "low_latency": created_camera.low_latency,
+            "created_at": created_camera.created_at.isoformat(),
+            "updated_at": created_camera.updated_at.isoformat() if created_camera.updated_at else None
         }
     except Exception as e:
         logging.error(f"Failed to create camera: {e}")
@@ -407,6 +493,9 @@ async def update_camera(camera_id: str, camera_data: CameraUpdate):
         
         # Get updated camera
         updated_camera = await db.get_camera(camera_id)
+        
+        # Reload camera manager to reflect changes
+        await reload_cameras()
         
         # Notify recording service to reload camera configuration
         await notify_recording_service_camera_updated(camera_id)
@@ -443,6 +532,9 @@ async def delete_camera(camera_id: str):
         if not success:
             raise HTTPException(500, "Failed to delete camera")
         
+        # Reload camera manager to remove deleted camera
+        await reload_cameras()
+        
         # Notify recording service to stop recording for deleted camera
         await notify_recording_service_camera_deleted(camera_id)
         
@@ -453,60 +545,203 @@ async def delete_camera(camera_id: str):
         logging.error(f"Failed to delete camera {camera_id}: {e}")
         raise HTTPException(500, f"Failed to delete camera: {str(e)}")
 
-@app.post("/api/cameras/test")
-async def test_camera_connection(test_data: CameraTestRequest):
-    """Test camera connection without saving"""
+async def _test_camera_connection_internal(test_data: CameraTestRequest):
+    """Internal camera connection test function with timeout"""
+    import socket
+    
+    def test_camera_sync():
+        """Synchronous camera test function"""
+        try:
+            # Build connection URL based on connection type
+            if test_data.connection_type.lower() == 'rtsp':
+                if test_data.username and test_data.password:
+                    url = f"rtsp://{test_data.username}:{test_data.password}@{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+                else:
+                    url = f"rtsp://{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+            else:  # http/https
+                if test_data.username and test_data.password:
+                    url = f"{test_data.connection_type}://{test_data.username}:{test_data.password}@{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+                else:
+                    url = f"{test_data.connection_type}://{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
+            
+            # First, test basic network connectivity with socket timeout
+            try:
+                sock = socket.create_connection((test_data.ip_address, test_data.port), timeout=test_data.timeout or 5)
+                sock.close()
+            except (socket.timeout, socket.error) as e:
+                return {
+                    "success": False,
+                    "message": "Network connection failed",
+                    "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                    "error": f"Cannot reach {test_data.ip_address}:{test_data.port} - {str(e)}"
+                }
+            
+            # If network is reachable, test camera with OpenCV
+            # Apply test-specific timeout settings only for connection testing
+            import os
+            test_timeout = test_data.timeout or 5
+            os.environ['OPENCV_FFMPEG_READ_ATTEMPTS'] = '1'  # Only for testing
+            os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = f'rtsp_transport;udp|rw_timeout;{test_timeout * 1000000}|stimeout;{test_timeout * 1000000}'
+            
+            cap = cv2.VideoCapture(url)
+            
+            # Set multiple timeout properties for OpenCV (in milliseconds)
+            timeout_ms = (test_data.timeout or 5) * 1000
+            cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, timeout_ms)
+            cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, timeout_ms)
+            
+            # Additional timeout settings
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            cap.set(cv2.CAP_PROP_FPS, 5)  # Lower FPS for faster connection test
+            
+            if not cap.isOpened():
+                cap.release()
+                # Check if it's likely an authentication issue
+                if test_data.username and test_data.password:
+                    return {
+                        "success": False,
+                        "message": "Authentication failed or camera stream unavailable",
+                        "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                        "error": "Check username/password or camera stream path"
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "message": "Failed to connect to camera stream",
+                        "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                        "error": "Camera stream connection refused"
+                    }
+            
+            # Try to read a frame
+            ret, frame = cap.read()
+            cap.release()
+            
+            if ret and frame is not None:
+                height, width = frame.shape[:2]
+                channels = frame.shape[2] if len(frame.shape) > 2 else 1
+                return {
+                    "success": True,
+                    "message": "Camera connection successful",
+                    "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                    "resolution": f"{width}x{height}",
+                    "channels": channels
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "Connected but failed to read frame",
+                    "url": url.replace(test_data.password or '', '***') if test_data.password else url,
+                    "error": "No video data available from camera"
+                }
+        except Exception as e:
+            logger.error(f"Camera test failed: {e}")
+            return {
+                "success": False,
+                "message": "Camera test failed",
+                "error": str(e)
+            }
+        finally:
+            # Reset OpenCV environment variables after testing to not interfere with recording
+            import os
+            if 'OPENCV_FFMPEG_READ_ATTEMPTS' in os.environ:
+                del os.environ['OPENCV_FFMPEG_READ_ATTEMPTS']
+            if 'OPENCV_FFMPEG_CAPTURE_OPTIONS' in os.environ:
+                del os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS']
+    
+    # Run the synchronous camera test with shorter asyncio timeout
+    # Use a much shorter timeout since OpenCV ignores our settings
+    actual_timeout = min(test_data.timeout or 5, 8)  # Max 8 seconds
     try:
-        # Build connection URL based on connection type
-        if test_data.connection_type.lower() == 'rtsp':
-            if test_data.username and test_data.password:
-                url = f"rtsp://{test_data.username}:{test_data.password}@{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
-            else:
-                url = f"rtsp://{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
-        else:  # http/https
-            if test_data.username and test_data.password:
-                url = f"{test_data.connection_type}://{test_data.username}:{test_data.password}@{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
-            else:
-                url = f"{test_data.connection_type}://{test_data.ip_address}:{test_data.port}{test_data.stream_path}"
-        
-        # Test connection using OpenCV
-        cap = cv2.VideoCapture(url)
-        
-        if not cap.isOpened():
-            return {
-                "success": False,
-                "message": "Failed to connect to camera",
-                "url": url.replace(test_data.password or '', '***') if test_data.password else url,
-                "error": "Connection refused or invalid URL"
-            }
-        
-        # Try to read a frame
-        ret, frame = cap.read()
-        cap.release()
-        
-        if ret and frame is not None:
-            height, width, channels = frame.shape
-            return {
-                "success": True,
-                "message": "Camera connection successful",
-                "url": url.replace(test_data.password or '', '***') if test_data.password else url,
-                "resolution": f"{width}x{height}",
-                "channels": channels
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Connected but failed to read frame",
-                "url": url.replace(test_data.password or '', '***') if test_data.password else url,
-                "error": "No video data available"
-            }
+        result = await asyncio.wait_for(
+            asyncio.get_event_loop().run_in_executor(None, test_camera_sync),
+            timeout=actual_timeout
+        )
+        return result
+    except asyncio.TimeoutError:
+        return {
+            "success": False,
+            "message": "Camera test timed out", 
+            "error": f"Test exceeded {actual_timeout} second timeout",
+            "note": "Camera may be reachable but stream path might be incorrect"
+        }
     except Exception as e:
-        logging.error(f"Camera test failed: {e}")
+        logger.error(f"Camera test failed: {e}")
         return {
             "success": False,
             "message": "Camera test failed",
             "error": str(e)
         }
+
+@app.post("/api/cameras/test")
+async def test_camera_connection(test_data: CameraTestRequest):
+    """Test camera connection without saving"""
+    return await _test_camera_connection_internal(test_data)
+
+@app.post("/api/cameras/test-all-paths")
+async def test_all_camera_paths(test_data: CameraTestRequest):
+    """Test camera connection with multiple stream path options"""
+    # Common stream paths for different camera brands
+    stream_paths = []
+    
+    # Add current path first
+    if test_data.stream_path:
+        stream_paths.append(test_data.stream_path)
+    
+    # Add brand-specific paths based on connection type
+    if test_data.connection_type.lower() == 'rtsp':
+        brand_paths = {
+            'reolink': ['/Preview_01_main', '/Preview_01_sub', '/h265Preview_01_main', '/'],
+            'hikvision': ['/h264/ch1/main/av_stream', '/h264/ch1/sub/av_stream'],
+            'dahua': ['/cam/realmonitor?channel=1&subtype=0', '/cam/realmonitor?channel=1&subtype=1'],
+            'generic': ['/stream1', '/stream', '/live', '/rtsp']
+        }
+    else:
+        brand_paths = {
+            'generic': ['/mjpeg', '/video', '/stream', '/cgi-bin/mjpg/video.cgi']
+        }
+    
+    # Get camera brand from request or try common paths
+    camera_brand = getattr(test_data, 'brand', '').lower() or 'generic'
+    if camera_brand in brand_paths:
+        for path in brand_paths[camera_brand]:
+            if path not in stream_paths:
+                stream_paths.append(path)
+    
+    # Add generic paths if not already present
+    for path in brand_paths.get('generic', []):
+        if path not in stream_paths:
+            stream_paths.append(path)
+    
+    results = []
+    
+    for stream_path in stream_paths:
+        # Create a copy of test_data with current stream path
+        path_test_data = CameraTestRequest(
+            ip_address=test_data.ip_address,
+            port=test_data.port,
+            connection_type=test_data.connection_type,
+            stream_path=stream_path,
+            username=test_data.username,
+            password=test_data.password,
+            timeout=test_data.timeout or 3  # Shorter timeout for multiple tests
+        )
+        
+        logger.info(f"Testing stream path: {stream_path}")
+        result = await _test_camera_connection_internal(path_test_data)
+        result['stream_path'] = stream_path
+        results.append(result)
+        
+        # If we found a working path, mark it as recommended
+        if result.get('success'):
+            result['recommended'] = True
+            logger.info(f"Found working stream path: {stream_path}")
+            break
+    
+    return {
+        'results': results,
+        'successful_path': next((r['stream_path'] for r in results if r.get('success')), None),
+        'total_tested': len(results)
+    }
 
 @app.get("/api/cameras/{camera_id}/snapshot")
 async def get_camera_snapshot(
@@ -808,6 +1043,106 @@ async def set_recording_quality(camera_id: str, quality_settings: dict):
             "success": False,
             "message": f"Recording service unavailable: {str(e)}",
             "requested_settings": final_settings
+        }
+
+@app.get("/api/cameras/{camera_id}/diagnostics")
+async def get_camera_diagnostics(camera_id: str):
+    """
+    Run comprehensive diagnostics for a specific camera
+    Returns detailed connection analysis and recommendations
+    """
+    # Get camera from database
+    db_camera = await db.get_camera(camera_id)
+    if not db_camera:
+        raise HTTPException(404, "Camera not found")
+    
+    # Import diagnostics module
+    from diagnose_camera import CameraDiagnostics
+    
+    # Run diagnostics
+    diag = CameraDiagnostics()
+    
+    # Extract camera details
+    ip_address = db_camera.ip_address
+    port = db_camera.port or 554
+    username = db_camera.username
+    password = db_camera.password
+    brand = db_camera.brand or 'generic'
+    connection_type = db_camera.connection_type or 'rtsp'
+    
+    logger.info(f"Running diagnostics for camera {camera_id} at {ip_address}:{port}")
+    
+    try:
+        # Run diagnostic tests
+        results = await asyncio.get_event_loop().run_in_executor(
+            None,
+            diag.run_diagnostic,
+            ip_address,
+            port,
+            username,
+            password,
+            brand,
+            connection_type
+        )
+        
+        # Check current camera stream status
+        camera_stream = camera_manager.get_camera(camera_id)
+        if camera_stream:
+            results['current_stream_status'] = {
+                'is_running': camera_stream.is_running,
+                'is_healthy': camera_stream.is_healthy(),
+                'error_count': camera_stream.error_count,
+                'last_frame_age': time.time() - camera_stream.last_frame_time if camera_stream.last_frame_time else None
+            }
+        else:
+            results['current_stream_status'] = {
+                'is_running': False,
+                'is_healthy': False,
+                'error_count': 0,
+                'last_frame_age': None
+            }
+        
+        # Add quick actions based on results
+        quick_actions = []
+        
+        # Check if we found working paths
+        if 'rtsp_paths' in results['tests'] and results['tests']['rtsp_paths']['working_paths']:
+            best_path = results['tests']['rtsp_paths']['working_paths'][0]
+            if best_path['path'] != db_camera.stream_path:
+                quick_actions.append({
+                    'action': 'update_stream_path',
+                    'description': f"Update stream path to {best_path['path']}",
+                    'current_value': db_camera.stream_path,
+                    'recommended_value': best_path['path']
+                })
+        
+        # Check if different port is open
+        if 'port_scan' in results['tests']:
+            open_ports = results['tests']['port_scan']['open_ports']
+            if port not in open_ports and open_ports:
+                alternative_port = list(open_ports.keys())[0]
+                quick_actions.append({
+                    'action': 'update_port',
+                    'description': f"Try port {alternative_port} instead of {port}",
+                    'current_value': port,
+                    'recommended_value': alternative_port
+                })
+        
+        results['quick_actions'] = quick_actions
+        
+        return {
+            'success': True,
+            'camera_id': camera_id,
+            'diagnostics': results
+        }
+        
+    except Exception as e:
+        logger.error(f"Diagnostics failed for camera {camera_id}: {e}")
+        return {
+            'success': False,
+            'camera_id': camera_id,
+            'error': str(e),
+            'message': 'Failed to run diagnostics'
         }
 
 @app.get("/api/system/health")

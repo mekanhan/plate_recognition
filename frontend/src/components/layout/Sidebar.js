@@ -105,15 +105,18 @@ class Sidebar {
 
     toggleCollapse() {
         this.isCollapsed = !this.isCollapsed;
+        const appLayout = document.querySelector('.app-layout');
         const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
         
+        if (appLayout) {
+            appLayout.setAttribute('data-nav-expanded', (!this.isCollapsed).toString());
+        }
+        
+        // Keep legacy classes for backward compatibility during migration
         if (this.isCollapsed) {
             sidebar.classList.add('collapsed');
-            mainContent.classList.add('sidebar-collapsed');
         } else {
             sidebar.classList.remove('collapsed');
-            mainContent.classList.remove('sidebar-collapsed');
         }
 
         // Store preference
@@ -208,8 +211,21 @@ class Sidebar {
     // Initialize from stored preferences
     loadPreferences() {
         const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        
         if (isCollapsed) {
-            this.toggleCollapse();
+            // Don't call toggleCollapse() as it would toggle the state
+            // Instead, directly set the collapsed state
+            this.isCollapsed = true;
+            const appLayout = document.querySelector('.app-layout');
+            const sidebar = document.querySelector('.sidebar');
+            
+            if (appLayout) {
+                appLayout.setAttribute('data-nav-expanded', 'false');
+            }
+            
+            if (sidebar) {
+                sidebar.classList.add('collapsed');
+            }
         }
     }
 

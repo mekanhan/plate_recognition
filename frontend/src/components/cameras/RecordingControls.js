@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import config from '../../config/app.config.js';
 
 function RecordingControls({ camera }) {
     const [recordingQuality, setRecordingQuality] = useState('medium');
@@ -15,7 +16,7 @@ function RecordingControls({ camera }) {
     const fetchRecordingQuality = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/cameras/${camera.id}/recording/quality`);
+            const response = await fetch(config.buildApiUrl(`/api/cameras/${camera.id}/recording/quality`));
             if (response.ok) {
                 const data = await response.json();
                 setRecordingQuality(data.current_quality);
@@ -31,7 +32,7 @@ function RecordingControls({ camera }) {
     const updateRecordingQuality = async (newQuality) => {
         setIsUpdating(true);
         try {
-            const response = await fetch(`/api/cameras/${camera.id}/recording/quality`, {
+            const response = await fetch(config.buildApiUrl(`/api/cameras/${camera.id}/recording/quality`), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -6,8 +6,12 @@ import sys
 import os
 import cv2
 import numpy as np
-from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 import asyncio
+
+# Add project root to path for local imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 
 print("🤖 Testing AI Detection Pipeline...\n")
 

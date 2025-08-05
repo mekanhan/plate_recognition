@@ -2,9 +2,12 @@
  * API Service Layer
  * Centralized API communication for the LPR application
  */
+import config from '../config/app.config.js';
+
 class APIService {
     constructor() {
-        this.baseURL = window.location.origin;
+        // Use the correct API base URL from config
+        this.baseURL = config.API_BASE_URL;
         this.apiPrefix = '/api';
         this.defaultHeaders = {
             'Content-Type': 'application/json',

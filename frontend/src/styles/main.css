@@ -11,18 +11,39 @@
 @import './components/simple-camera-modal.css';
 @import './components/streaming.css';
 @import './components/playback.css';
+@import './components/recordings-page.css';
 
 /* Layout Styles */
-.main-content {
-    margin-left: var(--sidebar-width);
+.app-layout {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
     min-height: 100vh;
-    transition: margin-left var(--transition-base);
-    display: flex;
-    flex-direction: column;
+    background: var(--bg-primary);
+    transition: grid-template-columns var(--layout-transition);
 }
 
+.app-layout[data-nav-expanded="true"] {
+    grid-template-columns: var(--sidebar-width) 1fr;
+}
+
+.app-layout[data-nav-expanded="false"] {
+    grid-template-columns: var(--sidebar-collapsed-width) 1fr;
+}
+
+/* Sidebar styles are in components/sidebar.css */
+
+.main-content {
+    grid-column: 2;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    background: var(--bg-primary);
+}
+
+/* Legacy support - will be removed after full migration */
 .main-content.sidebar-collapsed {
-    margin-left: var(--sidebar-collapsed-width);
+    /* No longer needed with grid layout */
 }
 
 .content-section {
@@ -33,6 +54,12 @@
 
 .content-section.active {
     display: block;
+}
+
+/* Special handling for recordings page */
+.content-section#recordings.active {
+    padding: 0;
+    height: calc(100vh - var(--header-height));
 }
 
 /* Page Header */
@@ -447,13 +474,56 @@
 }
 
 /* Responsive Design */
+/* Tablet Responsive Design */
+@media (max-width: 1200px) and (min-width: 769px) {
+    .cameras-grid.grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+}
+
 @media (max-width: 768px) {
-    .main-content {
-        margin-left: 0;
+    /* Override grid layout for mobile */
+    .app-layout {
+        grid-template-columns: 1fr;
     }
     
-    .main-content.sidebar-collapsed {
-        margin-left: 0;
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        transform: translateX(-100%);
+        /* Removed width: var(--sidebar-width) - let grid control width */
+        z-index: 1000;
+        transition: transform var(--layout-transition);
+        height: 100vh;
+    }
+    
+    /* On mobile, sidebar is hidden by default */
+    .app-layout[data-nav-expanded="true"] .sidebar {
+        transform: translateX(-100%);
+    }
+    
+    .app-layout[data-nav-expanded="false"] .sidebar {
+        transform: translateX(0);
+    }
+    
+    /* Add overlay backdrop when sidebar is open on mobile */
+    .app-layout[data-nav-expanded="false"]::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        cursor: pointer;
+    }
+    
+    .main-content {
+        grid-column: 1;
+        margin-left: 0 !important;
     }
     
     .content-section {
@@ -1271,10 +1341,11 @@
 }
 
 .cameras-grid.grid {
-    grid-template-columns: repeat(auto-fit, minmax(680px, 1fr));
-    max-width: 1440px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    max-width: 1600px;
     margin: 2rem auto 0;
     justify-content: center;
+    align-items: start;
 }
 
 .cameras-grid.list {
@@ -3490,6 +3561,7 @@ input:checked + .slider:before {
     
     .cameras-grid.grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     /* Ensure camera video scales properly on mobile */

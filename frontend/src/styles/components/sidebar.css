@@ -1,22 +1,19 @@
 /* Sidebar Styles */
 .sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
+    grid-column: 1;
     height: 100vh;
-    width: var(--sidebar-width);
     background: var(--sidebar-bg);
     color: white;
-    z-index: var(--z-fixed);
-    transition: transform var(--transition-base), background-color var(--transition-base);
+    z-index: 100; /* Lowered from 1030 - sufficient for navigation */
+    transition: background-color var(--transition-base);
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    position: sticky;
+    top: 0;
+    /* Width is controlled by grid-template-columns, not explicit width */
 }
 
-.sidebar.collapsed {
-    width: var(--sidebar-collapsed-width);
-}
 
 .sidebar-header {
     padding: var(--spacing-lg);
@@ -232,19 +229,13 @@
 @media (max-width: 768px) {
     .sidebar {
         transform: translateX(-100%);
-        width: 100%;
-        max-width: 300px;
+        /* Removed width: 100% and max-width: 300px - let grid control width */
     }
     
     .sidebar.show {
         transform: translateX(0);
     }
-    
-    .sidebar.collapsed {
-        width: 100%;
-        max-width: 300px;
-    }
-    
+        
     .sidebar-header {
         padding: var(--spacing-md);
     }

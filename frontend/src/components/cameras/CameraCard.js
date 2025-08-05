@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RecordingControls from './RecordingControls';
+import config from '../../config/app.config.js';
 
 function CameraCard({ camera }) {
     const [snapshotUrl, setSnapshotUrl] = useState('');
@@ -7,6 +8,7 @@ function CameraCard({ camera }) {
     const [isLoading, setIsLoading] = useState(false);
     const [snapshotQuality, setSnapshotQuality] = useState('medium');
     const [cameraHealth, setCameraHealth] = useState(null);
+    const [recordingStatus, setRecordingStatus] = useState(null);
     
     useEffect(() => {
         // Initial snapshot load
@@ -30,7 +32,7 @@ function CameraCard({ camera }) {
         try {
             // Add timestamp to prevent caching and include quality parameter
             const timestamp = Date.now();
-            const newUrl = `/api/cameras/${camera.id}/snapshot?quality=${snapshotQuality}&t=${timestamp}`;
+            const newUrl = config.buildApiUrl(`/api/cameras/${camera.id}/snapshot?quality=${snapshotQuality}&t=${timestamp}`);
             setSnapshotUrl(newUrl);
             setLastUpdate(new Date());
         } catch (error) {
@@ -44,7 +46,7 @@ function CameraCard({ camera }) {
         if (camera.status !== 'online') return;
         
         try {
-            const response = await fetch(`/api/cameras/${camera.id}/health`);
+            const response = await fetch(config.buildApiUrl(`/api/cameras/${camera.id}/health`));
             if (response.ok) {
                 const healthData = await response.json();
                 setCameraHealth(healthData);
@@ -54,7 +56,20 @@ function CameraCard({ camera }) {
         }
     };
 
-    // Add health check to useEffect
+    const fetchRecordingStatus = async () => {
+        try {
+            const response = await fetch(config.buildRecordingUrl(`/recordings/status/${camera.id}`));
+            if (response.ok) {
+                const statusData = await response.json();
+                setRecordingStatus(statusData);
+            }
+        } catch (error) {
+            console.error('Failed to fetch recording status:', error);
+            setRecordingStatus(null);
+        }
+    };
+
+    // Add health check and recording status to useEffect
     useEffect(() => {
         if (camera.status === 'online') {
             fetchCameraHealth();
@@ -63,9 +78,16 @@ function CameraCard({ camera }) {
         }
     }, [camera.id, camera.status]);
 
+    // Recording status polling
+    useEffect(() => {
+        fetchRecordingStatus();
+        const recordingInterval = setInterval(fetchRecordingStatus, 30000); // Every 30 seconds
+        return () => clearInterval(recordingInterval);
+    }, [camera.id]);
+
     const openInVLC = async () => {
         try {
-            const response = await fetch(`/api/cameras/${camera.id}/open-vlc`, {
+            const response = await fetch(config.buildApiUrl(`/api/cameras/${camera.id}/open-vlc`), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,7 +115,7 @@ function CameraCard({ camera }) {
 
     const copyRTSPUrl = async () => {
         try {
-            const response = await fetch(`/api/cameras/${camera.id}/open-vlc`, {
+            const response = await fetch(config.buildApiUrl(`/api/cameras/${camera.id}/open-vlc`), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -114,6 +136,42 @@ function CameraCard({ camera }) {
             console.error('Failed to copy RTSP URL:', error);
             alert('Failed to copy RTSP URL to clipboard.');
         }
+    };
+
+    const openFullscreen = (imageUrl) => {
+        const fullscreenDiv = document.createElement('div');
+        fullscreenDiv.className = 'fullscreen-overlay';
+        fullscreenDiv.innerHTML = `
+            <div class="fullscreen-container">
+                <img src="${imageUrl}" alt="Camera Snapshot" class="fullscreen-image" />
+                <div class="fullscreen-controls">
+                    <button class="fullscreen-close" onclick="this.closest('.fullscreen-overlay').remove()">✕</button>
+                    <button class="fullscreen-download" onclick="downloadSnapshot('${imageUrl}', '${camera.display_name || camera.name}')">⬇</button>
+                </div>
+                <div class="fullscreen-info">
+                    <h3>${camera.display_name || camera.name}</h3>
+                    <p>Captured: ${lastUpdate ? lastUpdate.toLocaleString() : 'Now'}</p>
+                </div>
+            </div>
+        `;
+        
+        fullscreenDiv.addEventListener('click', (e) => {
+            if (e.target === fullscreenDiv) {
+                fullscreenDiv.remove();
+            }
+        });
+        
+        document.body.appendChild(fullscreenDiv);
+        
+        // Make download function globally available
+        window.downloadSnapshot = (imageUrl, cameraName) => {
+            const link = document.createElement('a');
+            link.href = imageUrl;
+            link.download = `${cameraName.replace(/[^a-z0-9]/gi, '_')}_snapshot_${new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
     };
 
     const getStatusColor = (status) => {
@@ -144,13 +202,27 @@ function CameraCard({ camera }) {
     return (
         <div className="camera-card">
             <div className="camera-header">
-                <h3>{camera.name}</h3>
+                <h3>{camera.display_name || camera.name}</h3>
+                {camera.short_id && (
+                    <div className="camera-id-badge">
+                        <span className="short-id">#{camera.short_id}</span>
+                    </div>
+                )}
                 <div className="camera-status">
                     <span 
                         className="status-indicator"
                         style={{ backgroundColor: getStatusColor(camera.status) }}
                     ></span>
                     <span className="status-text">{camera.status}</span>
+                    {recordingStatus && recordingStatus.is_recording && (
+                        <div className="recording-indicator">
+                            <span 
+                                className="recording-dot"
+                                style={{ backgroundColor: '#f44336' }}
+                            ></span>
+                            <span className="recording-text">Rec</span>
+                        </div>
+                    )}
                 </div>
             </div>
             
@@ -159,12 +231,18 @@ function CameraCard({ camera }) {
                     <div className="snapshot-wrapper">
                         <img 
                             src={snapshotUrl} 
-                            alt={camera.name}
+                            alt={camera.display_name || camera.name}
                             className="camera-snapshot"
+                            onClick={() => openFullscreen(snapshotUrl)}
                             onError={(e) => {
                                 e.target.src = '/static/camera_offline.jpg';
                             }}
                         />
+                        {lastUpdate && (
+                            <div className="snapshot-timestamp">
+                                {lastUpdate.toLocaleTimeString()}
+                            </div>
+                        )}
                         {isLoading && (
                             <div className="loading-overlay">
                                 <div className="loading-spinner"></div>

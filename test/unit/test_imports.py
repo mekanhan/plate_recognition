@@ -96,6 +96,10 @@ except ImportError as e:
     print(f"❌ aiofiles import failed: {e}")
     sys.exit(1)
 
+# Add project root to path for local imports
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 # Test local modules
 print("\nTesting local modules:")
 try:

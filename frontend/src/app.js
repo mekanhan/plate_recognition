@@ -92,20 +92,22 @@ class LPRApplication {
 
         // Create main application structure
         const appStructure = `
-            <nav class="sidebar"></nav>
-            <main class="main-content">
-                <header class="top-header"></header>
-                
-                <!-- Page Sections -->
-                <section id="dashboard" class="content-section active"></section>
-                <section id="cameras" class="content-section"></section>
-                <section id="recordings" class="content-section"></section>
-                <section id="detections" class="content-section"></section>
-                <section id="analytics" class="content-section"></section>
-                <section id="alerts" class="content-section"></section>
-                <section id="reports" class="content-section"></section>
-                <section id="settings" class="content-section"></section>
-            </main>
+            <div class="app-layout" data-nav-expanded="true">
+                <nav class="sidebar"></nav>
+                <main class="main-content">
+                    <header class="top-header"></header>
+                    
+                    <!-- Page Sections -->
+                    <section id="dashboard" class="content-section active"></section>
+                    <section id="cameras" class="content-section"></section>
+                    <section id="recordings" class="content-section"></section>
+                    <section id="detections" class="content-section"></section>
+                    <section id="analytics" class="content-section"></section>
+                    <section id="alerts" class="content-section"></section>
+                    <section id="reports" class="content-section"></section>
+                    <section id="settings" class="content-section"></section>
+                </main>
+            </div>
             
             <!-- Loading Overlay -->
             <div class="loading-overlay" id="loading-overlay">

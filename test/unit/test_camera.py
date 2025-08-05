@@ -5,9 +5,13 @@ Test camera connection and snapshot capture
 import sys
 import time
 import os
-from ai_pipeline.camera_manager import CameraManager, CameraConfig
 import cv2
 import numpy as np
+
+# Add project root to path for local imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from ai_pipeline.camera_manager import CameraManager, CameraConfig
 
 print("🎥 Testing Camera Connection...\n")
 

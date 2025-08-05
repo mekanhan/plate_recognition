@@ -27,7 +27,11 @@
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
     font-size: var(--font-size-lg);
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
 }
 
 .sidebar-toggle:hover {
@@ -373,10 +377,6 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .sidebar-toggle {
-        display: flex;
-    }
-    
     .top-header {
         padding: 0 var(--spacing-md);
     }

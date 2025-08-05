@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import config from '../../config/app.config.js';
 
 function SystemHealthDashboard() {
     const [systemHealth, setSystemHealth] = useState(null);
@@ -21,7 +22,7 @@ function SystemHealthDashboard() {
 
     const fetchSystemHealth = async () => {
         try {
-            const response = await fetch('/api/system/health');
+            const response = await fetch(config.buildApiUrl('/api/system/health'));
             if (response.ok) {
                 const data = await response.json();
                 setSystemHealth(data);

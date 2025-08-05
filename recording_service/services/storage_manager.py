@@ -173,8 +173,8 @@ class StorageManager:
             if not camera_dir.exists():
                 return None, None, 0
             
-            # Count video files
-            video_files = list(camera_dir.rglob("*.avi"))
+            # Count video files (both AVI and MP4 formats)
+            video_files = list(camera_dir.rglob("*.avi")) + list(camera_dir.rglob("*.mp4"))
             segment_count = len(video_files)
             
             if not video_files:
@@ -212,8 +212,8 @@ class StorageManager:
                 
                 camera_id = camera_dir.name.replace("camera_", "")
                 
-                # Get all video files for this camera
-                video_files = list(camera_dir.rglob("*.avi"))
+                # Get all video files for this camera (both AVI and MP4 formats)
+                video_files = list(camera_dir.rglob("*.avi")) + list(camera_dir.rglob("*.mp4"))
                 
                 # Sort by modification time (oldest first)
                 video_files.sort(key=lambda f: f.stat().st_mtime)

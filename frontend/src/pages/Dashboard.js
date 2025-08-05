@@ -4,6 +4,7 @@
  */
 // Removed live streaming imports to eliminate conflicts with Cameras page
 import playbackService from '../services/PlaybackService.js';
+import config from '../config/app.config.js';
 
 class Dashboard {
     constructor() {
@@ -377,7 +378,8 @@ class Dashboard {
     async loadCameraStatus() {
         try {
             // Simplified camera status loading without streaming
-            const response = await fetch('http://localhost:8001/api/v1/cameras/');
+            const url = config.buildApiUrl(config.API_ENDPOINTS.CAMERAS);
+            const response = await fetch(url);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -743,9 +745,13 @@ class Dashboard {
         if (!timelineContainer) return;
 
         try {
-            // Get today's recordings for camera 3 (first available camera)
+            // Get today's recordings for camera_946701d3 (actual camera)
             const dateRange = playbackService.getTodayRange();
-            const searchResults = await playbackService.searchRecordings(3, dateRange.start, dateRange.end);
+            const searchParams = {
+                start_date: dateRange.date, // Use today's date
+                end_date: dateRange.date    // Use today's date
+            };
+            const searchResults = await playbackService.searchRecordings('camera_946701d3', searchParams);
             
             const recordings = searchResults.segments || [];
             

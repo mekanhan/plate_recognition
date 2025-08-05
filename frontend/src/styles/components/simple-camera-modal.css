@@ -16,6 +16,27 @@
     transition: opacity var(--transition-base, 0.3s ease), visibility var(--transition-base, 0.3s ease);
 }
 
+/* Form validation styles */
+.form-input.valid {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-input.invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-select.valid {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.form-select.invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 .simple-camera-modal.show {
     opacity: 1;
     visibility: visible;

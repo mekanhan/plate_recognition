@@ -122,18 +122,24 @@ class CameraStream:
             self.logger.info(f"Connecting to {self.config.stream_url}")
             
             # IMPORTANT: This is local network connection only!
+            # For RTSP, use proper transport options
+            if self.config.protocol == "rtsp":
+                # Set RTSP transport options via OpenCV
+                import os
+                os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp'
+                
             self.capture = cv2.VideoCapture(self.config.stream_url)
             self.capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
             
-            # For RTSP, try TCP transport
+            # Set reasonable timeouts for RTSP
             if self.config.protocol == "rtsp":
-                self.capture.release()
-                self.capture = cv2.VideoCapture(self.config.stream_url + "?tcp")
+                self.capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)  # 10 seconds
+                self.capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 10000)  # 10 seconds
             
             if not self.capture.isOpened():
                 raise Exception("Failed to open stream")
                 
-            # Test read
+            # Test read with timeout
             ret, frame = self.capture.read()
             if not ret or frame is None:
                 raise Exception("Failed to read test frame")
@@ -147,6 +153,10 @@ class CameraStream:
                 self.capture.release()
                 self.capture = None
             return False
+        finally:
+            # Clean up environment variables
+            if 'OPENCV_FFMPEG_CAPTURE_OPTIONS' in os.environ:
+                del os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS']
     
     def get_frame(self) -> Optional[np.ndarray]:
         """Get frame for AI processing (not for browser!)"""

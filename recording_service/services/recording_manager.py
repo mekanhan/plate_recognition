@@ -50,7 +50,13 @@ class CameraRecorder:
         password = config.get('password', '')
         ip_address = config.get('ip_address', '')
         port = config.get('port', 554)
-        stream_path = config.get('stream_path', '/h264Preview_01_main')
+        stream_path = config.get('stream_path', '/')
+        
+        # For Reolink cameras, use proper stream paths
+        brand = config.get('brand', '').lower()
+        if brand == 'reolink' and stream_path == '/':
+            # Use h264 stream for better compatibility
+            stream_path = '/h264Preview_01_main'
         
         if username and password:
             auth = f"{username}:{password}@"
@@ -154,8 +160,16 @@ class CameraRecorder:
         try:
             logger.info(f"Connecting to {self.name} at {self.rtsp_url}")
             
+            # Set RTSP transport options for better compatibility
+            import os
+            os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp'
+            
             self.current_capture = cv2.VideoCapture(self.rtsp_url)
             self.current_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            
+            # Set reasonable timeouts for RTSP
+            self.current_capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)  # 10 seconds
+            self.current_capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 10000)  # 10 seconds
             
             if not self.current_capture.isOpened():
                 logger.error(f"Failed to open RTSP stream for {self.name}")
@@ -172,7 +186,15 @@ class CameraRecorder:
             
         except Exception as e:
             logger.error(f"Connection error for {self.name}: {e}")
+            if self.current_capture:
+                self.current_capture.release()
+                self.current_capture = None
             return False
+        finally:
+            # Clean up environment variables
+            import os
+            if 'OPENCV_FFMPEG_CAPTURE_OPTIONS' in os.environ:
+                del os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS']
     
     async def _start_new_segment(self):
         """Start recording a new 10-minute segment"""
@@ -183,17 +205,46 @@ class CameraRecorder:
         date_path = self.storage_path / now.strftime("%Y/%m/%d/%H")
         date_path.mkdir(parents=True, exist_ok=True)
         
-        # Generate filename: camera_id_YYYYMMDD_HHMMSS_600.avi
-        filename = f"camera_{self.camera_id}_{now.strftime('%Y%m%d_%H%M%S')}_600.avi"
+        # Generate filename: camera_id_YYYYMMDD_HHMMSS_600.mp4
+        filename = f"camera_{self.camera_id}_{now.strftime('%Y%m%d_%H%M%S')}_600.mp4"
         self.current_segment_path = date_path / filename
         
-        # Initialize video writer
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        # Get actual frame dimensions from the camera stream
+        if not self.current_capture:
+            logger.error(f"No capture available for {self.name}")
+            return
+            
+        # Read a test frame to get dimensions
+        ret, test_frame = self.current_capture.read()
+        if not ret or test_frame is None:
+            logger.error(f"Failed to read test frame for resolution detection from {self.name}")
+            # Fallback to common sub stream resolution
+            frame_height, frame_width = 360, 640
+        else:
+            frame_height, frame_width = test_frame.shape[:2]
+            logger.info(f"Detected resolution for {self.name}: {frame_width}x{frame_height}")
+        
+        # Store dimensions for database record
+        self.current_frame_width = frame_width
+        self.current_frame_height = frame_height
+        
+        # Initialize video writer with actual dimensions
+        # Try H264 codec first for browser compatibility
+        try:
+            fourcc = cv2.VideoWriter_fourcc(*'H264')  # H264 codec
+            mp4_path = self.current_segment_path.with_suffix('.mp4')
+            self.current_segment_path = mp4_path
+        except:
+            # Fallback to XVID if H264 fails
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')  # XVID codec with AVI container
+            avi_path = self.current_segment_path.with_suffix('.avi')
+            self.current_segment_path = avi_path
+        
         self.current_writer = cv2.VideoWriter(
             str(self.current_segment_path),
             fourcc,
             30.0,  # FPS
-            (3840, 2160)  # 4K resolution
+            (frame_width, frame_height)  # Actual resolution
         )
         
         if not self.current_writer.isOpened():
@@ -231,14 +282,14 @@ class CameraRecorder:
             segment_record = VideoRecording(
                 filename=self.current_segment_path.name,
                 camera_id=self.camera_id,
-                file_path=str(self.current_segment_path.relative_to(Path.cwd())),
+                file_path=str(self.current_segment_path),
                 start_time=self.segment_start_time,
                 end_time=self.segment_start_time + timedelta(minutes=10),
                 duration_seconds=600,  # 10 minutes
                 file_size_bytes=file_size,
-                video_codec='xvid',
-                video_width=3840,
-                video_height=2160,
+                video_codec='h264',
+                video_width=getattr(self, 'current_frame_width', 640),
+                video_height=getattr(self, 'current_frame_height', 360),
                 video_fps=30,
                 is_compressed=True,
                 has_audio=False
@@ -321,9 +372,11 @@ class RecordingManager:
         try:
             # Get all active cameras using the database service
             cameras = await self.db_service.get_all_cameras()
+            logger.info(f"DEBUG: Database returned {len(cameras)} total cameras")
             
             camera_configs = []
             for camera in cameras:
+                logger.info(f"DEBUG: Camera {camera.name} ({camera.camera_id}) has status: {camera.status}")
                 # Skip inactive cameras
                 if camera.status != 'active':
                     continue

@@ -191,8 +191,9 @@ class Cameras {
 
     async fetchCameras() {
         try {
-            // Load cameras directly from API
-            const response = await fetch('/api/cameras');
+            // Load cameras from API using config
+            const url = config.buildApiUrl(config.API_ENDPOINTS.CAMERAS);
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Failed to fetch cameras');
             }
@@ -200,19 +201,20 @@ class Cameras {
             
             // Transform API response to match frontend expectations
             return cameras.map(camera => ({
-                id: camera.id.toString(),
+                id: camera.camera_id || camera.id, // Use camera_id as primary identifier
+                camera_id: camera.camera_id || camera.id,
                 name: camera.name,
                 location: camera.location || 'unknown',
                 ipAddress: camera.ip_address,
                 port: camera.port,
                 connectionType: camera.connection_type,
                 streamPath: camera.stream_path,
-                status: camera.status || 'offline',
-                manufacturer: 'Unknown', // We don't store this yet
-                model: 'Unknown', // We don't store this yet
-                resolution: 'Unknown', // We don't store this yet
-                fps: 'Unknown', // We don't store this yet
-                lastSeen: new Date(camera.updated_at),
+                status: this.mapBackendStatus(camera.status),
+                manufacturer: camera.brand || 'Unknown',
+                model: camera.model || 'Unknown',
+                resolution: `${camera.resolution_width || 1920}x${camera.resolution_height || 1080}`,
+                fps: camera.max_fps || 30,
+                lastSeen: new Date(camera.updated_at || camera.created_at),
                 uptime: this.calculateUptime(new Date(camera.created_at)),
                 username: camera.username,
                 enabled: camera.enabled
@@ -231,6 +233,21 @@ class Cameras {
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         return `${days}d ${hours}h ${minutes}m`;
+    }
+
+    mapBackendStatus(backendStatus) {
+        // Map backend status values to frontend expected values
+        const statusMap = {
+            'active': 'online',
+            'inactive': 'offline', 
+            'error': 'error',
+            'offline': 'offline',
+            'online': 'online',
+            'warning': 'warning',
+            'connecting': 'warning',
+            'unknown': 'offline'
+        };
+        return statusMap[backendStatus] || 'offline';
     }
 
 
@@ -281,7 +298,8 @@ class Cameras {
                         <div class="camera-checkbox" style="display: ${this.selectedCameras.size > 0 || this.bulkMode ? 'block' : 'none'}">
                             <input type="checkbox" class="camera-select" data-camera-id="${camera.id}" ${this.selectedCameras.has(camera.id) ? 'checked' : ''}>
                         </div>
-                        <h4 class="camera-card-title">${camera.name}</h4>
+                        <h4 class="camera-card-title">${camera.display_name || camera.name}</h4>
+                        ${camera.short_id ? `<span class="camera-short-id">#${camera.short_id}</span>` : ''}
                         <div class="camera-card-status ${statusClass}">
                             <i class="fas ${this.getStatusIcon(camera.status)}"></i>
                             <span>${this.capitalizeFirst(camera.status)}</span>
@@ -355,7 +373,7 @@ class Cameras {
         // Display snapshot instead of video player
         container.innerHTML = `
             <img src="/api/cameras/${camera.id}/snapshot" 
-                 alt="${camera.name} snapshot" 
+                 alt="${camera.display_name || camera.name} snapshot" 
                  class="camera-snapshot"
                  onerror="this.src='/images/camera-placeholder.jpg'"
                  style="width: 100%; height: 100%; object-fit: cover;">
@@ -450,7 +468,8 @@ class Cameras {
                 </div>
                 <div class="row-info">
                     <div class="row-primary">
-                        <span class="camera-name">${camera.name}</span>
+                        <span class="camera-name">${camera.display_name || camera.name}</span>
+                        ${camera.short_id ? `<span class="camera-short-id-inline">#${camera.short_id}</span>` : ''}
                         <span class="camera-ip">${camera.ipAddress}</span>
                     </div>
                     <div class="row-secondary">
@@ -626,11 +645,18 @@ class Cameras {
         testBtn.disabled = true;
 
         try {
-            // Simulate connection test
-            await this.performConnectionTest(camera);
-            this.showToast(`Connection test successful for ${camera.name}`, 'success');
+            // Perform actual connection test
+            const result = await this.performConnectionTest(camera);
+            
+            if (result.success) {
+                const responseTime = result.response_time ? ` (${Math.round(result.response_time)}ms)` : '';
+                this.showToast(`✅ ${camera.name}: ${result.message}${responseTime}`, 'success');
+            } else {
+                this.showToast(`❌ ${camera.name}: ${result.message}`, 'error');
+            }
         } catch (error) {
-            this.showToast(`Connection test failed for ${camera.name}`, 'error');
+            console.error('Connection test error:', error);
+            this.showToast(`❌ ${camera.name}: Connection test failed`, 'error');
         } finally {
             testBtn.innerHTML = originalContent;
             testBtn.disabled = false;
@@ -805,8 +831,9 @@ class Cameras {
 
         if (confirm(`Are you sure you want to delete "${camera.name}"?`)) {
             try {
-                // Convert string ID to integer for API call
-                const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERA_BY_ID)(parseInt(cameraId)), {
+                // Use camera_id directly - no conversion needed
+                const apiUrl = config.buildApiUrl(config.API_ENDPOINTS.CAMERA_BY_ID(cameraId));
+                const response = await fetch(apiUrl, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
@@ -895,43 +922,130 @@ class Cameras {
         return Math.max(Math.round(score), 0);
     }
 
-    showToast(message, type = 'info') {
-        // Create simple toast notification
+    showToast(message, type = 'info', duration = 3000) {
+        // Create enhanced toast notification with better styling
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
+        
+        const iconMap = {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle', 
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        };
+        
+        const colorMap = {
+            success: '#10b981',
+            error: '#ef4444',
+            warning: '#f59e0b',
+            info: '#3b82f6'
+        };
+        
         toast.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-exclamation' : 'fa-info'}"></i>
-            <span>${message}</span>
+            <div class="toast-icon">
+                <i class="fas ${iconMap[type] || iconMap.info}"></i>
+            </div>
+            <div class="toast-content">
+                <span class="toast-message">${message}</span>
+            </div>
+            <button class="toast-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
         `;
         
-        // Style the toast
+        // Enhanced styling
         Object.assign(toast.style, {
             position: 'fixed',
             top: '20px',
             right: '20px',
-            padding: '12px 16px',
-            backgroundColor: type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6',
+            minWidth: '300px',
+            maxWidth: '500px',
+            padding: '16px 20px',
+            backgroundColor: colorMap[type] || colorMap.info,
             color: 'white',
-            borderRadius: '6px',
-            zIndex: '10000',
+            borderRadius: '8px',
+            zIndex: '10001',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            gap: '12px',
+            boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+            fontSize: '14px',
+            lineHeight: '1.4',
+            transform: 'translateX(100%)',
+            transition: 'transform 0.3s ease'
         });
+        
+        // Toast close button styling
+        const closeBtn = toast.querySelector('.toast-close');
+        if (closeBtn) {
+            Object.assign(closeBtn.style, {
+                background: 'rgba(255, 255, 255, 0.2)',
+                border: 'none',
+                borderRadius: '4px',
+                color: 'white',
+                cursor: 'pointer',
+                padding: '4px 6px',
+                fontSize: '12px',
+                marginLeft: 'auto'
+            });
+        }
         
         document.body.appendChild(toast);
         
-        // Remove after 3 seconds
+        // Animate in
+        setTimeout(() => {
+            toast.style.transform = 'translateX(0)';
+        }, 10);
+        
+        // Auto remove
         setTimeout(() => {
             if (toast.parentNode) {
-                toast.remove();
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
             }
-        }, 3000);
+        }, duration);
     }
 
     async performConnectionTest(camera) {
-        return new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERA_TEST_CONNECTION), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    ip_address: camera.ipAddress || camera.ip_address,
+                    port: camera.port || 80,
+                    connection_type: camera.connectionType || camera.connection_type || 'http',
+                    stream_path: camera.streamPath || camera.stream_path || '/mjpeg',
+                    username: camera.username || 'admin',
+                    password: camera.password || '',
+                    timeout: 10
+                })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                return {
+                    success: false,
+                    message: errorData.detail || `HTTP ${response.status}: ${response.statusText}`
+                };
+            }
+            
+            const result = await response.json();
+            return result;
+            
+        } catch (error) {
+            console.error('Connection test failed:', error);
+            return {
+                success: false,
+                message: `Network error: ${error.message}`
+            };
+        }
     }
 
     async performRebootCamera(cameraId) {
@@ -1007,12 +1121,12 @@ class Cameras {
         modal.innerHTML = `
             <div class="snapshot-modal-content">
                 <div class="snapshot-modal-header">
-                    <h3>${camera.name} - Live Snapshot</h3>
+                    <h3>${camera.display_name || camera.name} - Live Snapshot</h3>
                     <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
                 </div>
                 <div class="snapshot-modal-body">
                     <img src="/api/cameras/${cameraId}/snapshot?t=${Date.now()}" 
-                         alt="${camera.name} snapshot" 
+                         alt="${camera.display_name || camera.name} snapshot" 
                          style="max-width: 100%; height: auto;">
                 </div>
             </div>
@@ -1050,7 +1164,7 @@ class Cameras {
     async handleCapture(cameraId) {
         try {
             // Capture current snapshot
-            const response = await fetch(`/api/cameras/${cameraId}/snapshot`);
+            const response = await fetch(config.buildApiUrl(`/api/cameras/${cameraId}/snapshot`));
             if (response.ok) {
                 this.showToast('Snapshot captured successfully', 'success');
             } else {

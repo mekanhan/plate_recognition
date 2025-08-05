@@ -14,10 +14,10 @@ const configs = {
         RECORDING_API_URL: 'http://localhost:8002'
     },
     production: {
-        // In production, use the same origin as the frontend
-        API_BASE_URL: window.location.origin,
-        WS_BASE_URL: `ws://${window.location.host}`,
-        RECORDING_API_URL: `${window.location.origin}:8002`
+        // In production, use proper API ports
+        API_BASE_URL: 'http://localhost:8001',
+        WS_BASE_URL: 'ws://localhost:8001',
+        RECORDING_API_URL: 'http://localhost:8002'
     },
     staging: {
         // Add staging configuration if needed
@@ -45,6 +45,8 @@ const config = {
         CAMERA_BY_ID: (id) => `/api/cameras/${id}`,
         CAMERA_SNAPSHOT: (id) => `/api/cameras/${id}/snapshot`,
         CAMERA_HEALTH: (id) => `/api/cameras/${id}/health`,
+        CAMERA_TEST_CONNECTION: '/api/cameras/test',
+        CAMERA_TEST_ALL_PATHS: '/api/cameras/test-all-paths',
         
         // Recording quality endpoints
         CAMERA_RECORDING_QUALITY: (id) => `/api/cameras/${id}/recording/quality`,

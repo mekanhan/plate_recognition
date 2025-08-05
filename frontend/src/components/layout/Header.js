@@ -43,9 +43,7 @@ class Header {
     getTemplate() {
         return `
             <div class="header-left">
-                <button class="sidebar-toggle">
-                    <i class="fas fa-bars"></i>
-                </button>
+               
             </div>
             
             <div class="header-right">
@@ -169,17 +167,17 @@ class Header {
     }
 
     toggleSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const mainContent = document.querySelector('.main-content');
-        
-        if (sidebar && mainContent) {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('sidebar-collapsed');
-        }
-
-        // Trigger sidebar component if it exists
-        if (window.sidebar) {
+        // Use the sidebar component's toggle method directly
+        if (window.sidebar && window.sidebar.toggleCollapse) {
             window.sidebar.toggleCollapse();
+        } else {
+            // Fallback if sidebar component not available
+            const appLayout = document.querySelector('.app-layout');
+            if (appLayout) {
+                const isExpanded = appLayout.getAttribute('data-nav-expanded') === 'true';
+                appLayout.setAttribute('data-nav-expanded', (!isExpanded).toString());
+                localStorage.setItem('sidebar-collapsed', isExpanded.toString());
+            }
         }
     }
 

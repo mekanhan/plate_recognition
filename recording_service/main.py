@@ -19,7 +19,7 @@ import uvicorn
 sys.path.append(str(Path(__file__).parent.parent))
 
 from database.service import DatabaseService
-from recording_service.services.recording_manager import RecordingManager
+from recording_service.services.ffmpeg_recording_manager import FFmpegRecordingManager
 from recording_service.services.playback_service import PlaybackService
 from recording_service.services.storage_manager import StorageManager
 
@@ -57,9 +57,9 @@ async def lifespan(app: FastAPI):
         storage_limit_gb=10  # Configurable
     )
     
-    recording_manager = RecordingManager(
+    recording_manager = FFmpegRecordingManager(
         db_service=db_service,
-        storage_manager=storage_manager
+        storage_path="recordings"
     )
     
     playback_service = PlaybackService(
@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI):
     )
     
     # Start background recording
-    await recording_manager.start_recording()
+    await recording_manager.start()
     
     logger.info("Recording Service started successfully")
     
@@ -77,7 +77,7 @@ async def lifespan(app: FastAPI):
     # Cleanup
     logger.info("Shutting down Recording Service...")
     if recording_manager:
-        await recording_manager.stop_recording()
+        await recording_manager.stop()
     logger.info("Recording Service stopped")
 
 # Create FastAPI app
@@ -107,7 +107,7 @@ async def health_check():
         "status": "running",
         "version": "1.0.0",
         "timestamp": datetime.now().isoformat(),
-        "recording_active": recording_manager.is_recording() if recording_manager else False
+        "recording_active": bool(recording_manager and recording_manager.recorders)
     }
 
 # Recording status endpoints
@@ -208,7 +208,20 @@ async def stream_video_segment(
     if not playback_service:
         raise HTTPException(status_code=503, detail="Playback service not initialized")
     
-    return await playback_service.stream_segment(segment_filename, range)
+    return await playback_service.stream_segment_file_based(segment_filename, range)
+
+@app.options("/api/v1/recordings/stream/{segment_filename}")
+async def stream_video_options(segment_filename: str):
+    """Handle CORS preflight requests for video streaming"""
+    return {
+        "status": "ok",
+        "headers": {
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Access-Control-Allow-Headers": "Range, Content-Type",
+            "Access-Control-Max-Age": "3600"
+        }
+    }
 
 @app.get("/api/v1/recordings/cameras/{camera_id}/details")
 async def get_recording_details(

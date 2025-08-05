@@ -271,7 +271,9 @@ class VideoPlaybackPlayer {
             
             // Load first segment if available and autoplay is enabled
             if (this.segments.length > 0) {
-                await this.loadSegment(this.segments[0]);
+                // Prefer MP4 files over AVI files for better browser compatibility
+                const firstSegment = this.findBestSegmentToLoad(this.segments);
+                await this.loadSegment(firstSegment);
                 if (this.options.autoplay) {
                     this.play();
                 }
@@ -288,10 +290,50 @@ class VideoPlaybackPlayer {
     }
     
     /**
+     * Find the best segment to load (prefer MP4 over AVI for browser compatibility)
+     */
+    findBestSegmentToLoad(segments) {
+        if (!segments || segments.length === 0) return null;
+        
+        // First, try to find an MP4 file
+        const mp4Segment = segments.find(segment => 
+            segment.filename && segment.filename.toLowerCase().endsWith('.mp4')
+        );
+        
+        if (mp4Segment) {
+            console.log('Selected MP4 segment for playback:', mp4Segment.filename);
+            return mp4Segment;
+        }
+        
+        // Fallback to first segment (likely AVI) - but warn user
+        console.warn('No MP4 segments found, using first available segment (may have compatibility issues):', segments[0]?.filename);
+        return segments[0];
+    }
+    
+    /**
+     * Check if segment is compatible with browser video playback
+     */
+    isBrowserCompatible(segment) {
+        if (!segment || !segment.filename) return false;
+        
+        const filename = segment.filename.toLowerCase();
+        const compatibleFormats = ['.mp4', '.webm', '.ogg'];
+        
+        return compatibleFormats.some(format => filename.endsWith(format));
+    }
+    
+    /**
      * Load a specific segment
      */
     async loadSegment(segment) {
         if (!segment || this.loadingSegment) return;
+        
+        // Check if segment is browser-compatible
+        if (!this.isBrowserCompatible(segment)) {
+            console.warn('Segment not browser compatible:', segment.filename);
+            this.showError('Video format not supported by browser. Please try a different segment.');
+            return;
+        }
         
         this.loadingSegment = true;
         this.showLoading(true);

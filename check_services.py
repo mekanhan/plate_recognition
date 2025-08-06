@@ -129,6 +129,70 @@ class ServiceChecker:
             return f'{response_time:.0f}ms ⚠️'
         else:
             return f'{response_time:.0f}ms ❌'
+    
+    def check_recording_details(self):
+        """Check detailed recording service status"""
+        try:
+            req = urllib.request.Request('http://localhost:8002/health/detailed')
+            req.add_header('User-Agent', 'LPR-HealthCheck/1.0')
+            
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode('utf-8'))
+                
+                print("\n📹 RECORDING SERVICE DETAILED STATUS")
+                print("   " + "-" * 50)
+                
+                # Overall status
+                status = data.get('status', 'unknown')
+                print(f"   Service Status: {self.format_status('healthy' if status == 'healthy' else 'unhealthy')}")
+                
+                # Recording status
+                rec_status = data.get('recording_status', {})
+                active = rec_status.get('active_recordings', 0)
+                total = rec_status.get('total_cameras', 0)
+                print(f"   Active Recordings: {active}/{total} cameras")
+                
+                # Shutdown status
+                shutdown = data.get('shutdown_status', {})
+                if shutdown.get('is_shutting_down'):
+                    print(f"   ⚠️  SHUTDOWN IN PROGRESS")
+                    print(f"       Requested at: {shutdown.get('shutdown_requested_at')}")
+                    print(f"       Cameras stopped: {shutdown.get('cameras_stopped', 0)}/{total}")
+                
+                # System stats
+                stats = data.get('system_stats', {})
+                uptime = stats.get('uptime_seconds', 0)
+                uptime_str = f"{int(uptime // 3600)}h {int((uptime % 3600) // 60)}m {int(uptime % 60)}s"
+                print(f"   Uptime: {uptime_str}")
+                print(f"   Total Segments: {stats.get('total_segments', 0)}")
+                print(f"   Total Size: {stats.get('total_size_mb', 0):.1f} MB")
+                print(f"   Total Errors: {stats.get('total_errors', 0)}")
+                
+                # Camera details
+                cameras = rec_status.get('cameras', {})
+                if cameras:
+                    print("\n   📷 CAMERA RECORDING STATUS:")
+                    for cam_id, cam_status in cameras.items():
+                        rec_icon = "🔴" if cam_status.get('is_recording') else "⚫"
+                        conn_status = cam_status.get('connection_status', 'unknown')
+                        error_count = cam_status.get('error_count', 0)
+                        error_str = f" (⚠️  {error_count} errors)" if error_count > 0 else ""
+                        
+                        print(f"       {rec_icon} {cam_status.get('name', cam_id)}: {conn_status}{error_str}")
+                        if cam_status.get('ffmpeg_pid'):
+                            print(f"          FFmpeg PID: {cam_status.get('ffmpeg_pid')}")
+                        if cam_status.get('last_segment_time'):
+                            print(f"          Last segment: {cam_status.get('last_segment_time')}")
+                
+                return True
+                
+        except urllib.error.URLError as e:
+            print("\n📹 RECORDING SERVICE DETAILED STATUS")
+            print("   ❌ Could not connect to recording service for detailed status")
+            return False
+        except Exception as e:
+            print(f"\n   ❌ Error checking recording details: {e}")
+            return False
 
     def check_all_services(self):
         """Check all services and return results"""
@@ -168,9 +232,9 @@ class ServiceChecker:
                     print(f"   Database: {database}")
                 elif service_key == 'recording_service':
                     active_cameras = data.get('active_cameras', 0)
-                    total_segments = data.get('total_segments', 0)
                     print(f"   Active Cameras: {active_cameras}")
-                    print(f"   Total Segments: {total_segments}")
+                    # Show detailed recording status if available
+                    self.check_recording_details()
         
         # Overall status
         print("\n" + "=" * 70)

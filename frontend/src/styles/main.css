@@ -13,6 +13,7 @@
 @import './components/forms.css';
 @import './components/status-indicators.css';
 @import './components/cards.css';
+@import './components/camera-card.css';
 @import './components/modal.css';
 @import './components/simple-camera-modal.css';
 @import './components/streaming.css';

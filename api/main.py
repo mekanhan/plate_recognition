@@ -26,6 +26,10 @@ from ai_pipeline.camera_manager import CameraManager, CameraConfig
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 from database.service import DatabaseService
 from utils.camera_utils import generate_camera_id, validate_camera_id, CameraValidation, CameraDisplayUtils
+try:
+    from .camera_endpoints import router as camera_router, init_camera_api
+except ImportError:
+    from api.camera_endpoints import router as camera_router, init_camera_api
 
 # Pydantic models for API requests
 class CameraCreate(BaseModel):
@@ -203,6 +207,12 @@ async def lifespan(app: FastAPI):
     # Load camera configurations
     await load_cameras()
     
+    # Initialize camera API (database-driven)
+    try:
+        await init_camera_api()
+    except Exception as e:
+        logging.error(f"Failed to initialize Camera API: {e}")
+    
     # Start processing loop
     asyncio.create_task(processing_loop())
     
@@ -231,6 +241,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include the new database-driven camera management API
+app.include_router(camera_router, prefix="/v2")
 
 # Mount static files for images
 app.mount("/images", StaticFiles(directory="detections"), name="images")

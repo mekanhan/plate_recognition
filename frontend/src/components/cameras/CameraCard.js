@@ -9,6 +9,8 @@ function CameraCard({ camera }) {
     const [snapshotQuality, setSnapshotQuality] = useState('medium');
     const [cameraHealth, setCameraHealth] = useState(null);
     const [recordingStatus, setRecordingStatus] = useState(null);
+    const [detailedRecordingStatus, setDetailedRecordingStatus] = useState(null);
+    const [recordingExpanded, setRecordingExpanded] = useState(false);
     
     useEffect(() => {
         // Initial snapshot load
@@ -69,6 +71,37 @@ function CameraCard({ camera }) {
         }
     };
 
+    const fetchDetailedRecordingStatus = async () => {
+        try {
+            // Get detailed recording health for this camera
+            const response = await fetch(config.buildRecordingUrl('/health/detailed'));
+            if (response.ok) {
+                const detailedData = await response.json();
+                
+                // Extract camera-specific data
+                const cameraRecordingData = detailedData.recording_status?.cameras?.[camera.id];
+                if (cameraRecordingData) {
+                    setDetailedRecordingStatus({
+                        ...cameraRecordingData,
+                        service_uptime: detailedData.system_stats?.uptime_seconds || 0,
+                        total_errors: detailedData.system_stats?.total_errors || 0,
+                        is_shutting_down: detailedData.shutdown_status?.is_shutting_down || false
+                    });
+                } else {
+                    // Camera not found in recording service
+                    setDetailedRecordingStatus({
+                        not_recording: true,
+                        connection_status: 'not_configured',
+                        error_count: 0
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch detailed recording status:', error);
+            setDetailedRecordingStatus(null);
+        }
+    };
+
     // Add health check and recording status to useEffect
     useEffect(() => {
         if (camera.status === 'online') {
@@ -81,7 +114,13 @@ function CameraCard({ camera }) {
     // Recording status polling
     useEffect(() => {
         fetchRecordingStatus();
-        const recordingInterval = setInterval(fetchRecordingStatus, 30000); // Every 30 seconds
+        fetchDetailedRecordingStatus();
+        
+        const recordingInterval = setInterval(() => {
+            fetchRecordingStatus();
+            fetchDetailedRecordingStatus();
+        }, 30000); // Every 30 seconds
+        
         return () => clearInterval(recordingInterval);
     }, [camera.id]);
 
@@ -199,6 +238,64 @@ function CameraCard({ camera }) {
         }
     };
 
+    const formatUptime = (seconds) => {
+        if (!seconds || seconds < 0) return '0m';
+        
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+        return `${minutes}m`;
+    };
+
+    const formatFileSize = (bytes) => {
+        if (!bytes || bytes === 0) return '0 B';
+        
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    };
+
+    const startRecording = async () => {
+        try {
+            const response = await fetch(config.buildRecordingUrl(`/recordings/cameras/${camera.id}/start`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                alert('Recording started successfully');
+                fetchRecordingStatus();
+                fetchDetailedRecordingStatus();
+            } else {
+                throw new Error('Failed to start recording');
+            }
+        } catch (error) {
+            alert(`Failed to start recording: ${error.message}`);
+        }
+    };
+
+    const stopRecording = async () => {
+        try {
+            const response = await fetch(config.buildRecordingUrl(`/recordings/cameras/${camera.id}/stop`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                alert('Recording stopped successfully');
+                fetchRecordingStatus();
+                fetchDetailedRecordingStatus();
+            } else {
+                throw new Error('Failed to stop recording');
+            }
+        } catch (error) {
+            alert(`Failed to stop recording: ${error.message}`);
+        }
+    };
+
     return (
         <div className="camera-card">
             <div className="camera-header">
@@ -300,6 +397,152 @@ function CameraCard({ camera }) {
                     <div className="info-row">
                         <span className="info-label">Last Update:</span>
                         <span className="info-value">{lastUpdate.toLocaleTimeString()}</span>
+                    </div>
+                )}
+            </div>
+            
+            {/* Recording Status Section */}
+            <div className="recording-status-section">
+                <div 
+                    className="recording-status-header"
+                    onClick={() => setRecordingExpanded(!recordingExpanded)}
+                >
+                    <span className="recording-status-title">
+                        <span className="recording-icon">🎥</span>
+                        Recording Status
+                    </span>
+                    <div className="recording-status-summary">
+                        {detailedRecordingStatus ? (
+                            detailedRecordingStatus.not_recording ? (
+                                <span className="recording-status-badge not-recording">Not Recording</span>
+                            ) : detailedRecordingStatus.is_recording ? (
+                                <span className="recording-status-badge recording">
+                                    <span className="recording-pulse"></span>
+                                    Recording
+                                </span>
+                            ) : (
+                                <span className="recording-status-badge error">Stopped</span>
+                            )
+                        ) : (
+                            <span className="recording-status-badge unknown">Loading...</span>
+                        )}
+                        <span className={`expand-arrow ${recordingExpanded ? 'expanded' : ''}`}>▼</span>
+                    </div>
+                </div>
+                
+                {recordingExpanded && (
+                    <div className="recording-status-details">
+                        {detailedRecordingStatus ? (
+                            detailedRecordingStatus.not_recording ? (
+                                <div className="recording-info-grid">
+                                    <div className="recording-info-item">
+                                        <span className="recording-info-label">Status:</span>
+                                        <span className="recording-info-value">Camera not configured for recording</span>
+                                    </div>
+                                    <div className="recording-controls">
+                                        <button 
+                                            className="recording-btn start"
+                                            onClick={startRecording}
+                                        >
+                                            ▶ Start Recording
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="recording-info-grid">
+                                    <div className="recording-info-item">
+                                        <span className="recording-info-label">Connection:</span>
+                                        <span className={`recording-info-value ${detailedRecordingStatus.connection_status === 'connected' ? 'success' : 'error'}`}>
+                                            {detailedRecordingStatus.connection_status === 'connected' ? '✅' : '❌'} 
+                                            {detailedRecordingStatus.connection_status || 'Unknown'}
+                                        </span>
+                                    </div>
+                                    
+                                    {detailedRecordingStatus.ffmpeg_pid && (
+                                        <div className="recording-info-item">
+                                            <span className="recording-info-label">FFmpeg PID:</span>
+                                            <span className="recording-info-value">{detailedRecordingStatus.ffmpeg_pid}</span>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="recording-info-item">
+                                        <span className="recording-info-label">Segments:</span>
+                                        <span className="recording-info-value">
+                                            {detailedRecordingStatus.total_segments || 0}
+                                            {detailedRecordingStatus.last_segment_time && (
+                                                <small> (last: {new Date(detailedRecordingStatus.last_segment_time).toLocaleTimeString()})</small>
+                                            )}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="recording-info-item">
+                                        <span className="recording-info-label">Storage:</span>
+                                        <span className="recording-info-value">
+                                            {formatFileSize(detailedRecordingStatus.total_size_mb * 1024 * 1024 || 0)}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="recording-info-item">
+                                        <span className="recording-info-label">Uptime:</span>
+                                        <span className="recording-info-value">
+                                            {formatUptime(detailedRecordingStatus.uptime_seconds)}
+                                        </span>
+                                    </div>
+                                    
+                                    {detailedRecordingStatus.error_count > 0 && (
+                                        <div className="recording-info-item">
+                                            <span className="recording-info-label">Errors:</span>
+                                            <span className="recording-info-value error">
+                                                ⚠️ {detailedRecordingStatus.error_count}
+                                            </span>
+                                        </div>
+                                    )}
+                                    
+                                    {detailedRecordingStatus.is_shutting_down && (
+                                        <div className="recording-info-item full-width">
+                                            <span className="recording-info-value warning">
+                                                🛑 Recording service is shutting down...
+                                            </span>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="recording-controls">
+                                        {detailedRecordingStatus.is_recording ? (
+                                            <button 
+                                                className="recording-btn stop"
+                                                onClick={stopRecording}
+                                            >
+                                                ⏹ Stop Recording
+                                            </button>
+                                        ) : (
+                                            <button 
+                                                className="recording-btn start"
+                                                onClick={startRecording}
+                                            >
+                                                ▶ Start Recording
+                                            </button>
+                                        )}
+                                        <button 
+                                            className="recording-btn refresh"
+                                            onClick={() => {
+                                                fetchRecordingStatus();
+                                                fetchDetailedRecordingStatus();
+                                            }}
+                                        >
+                                            🔄 Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            )
+                        ) : (
+                            <div className="recording-info-grid">
+                                <div className="recording-info-item">
+                                    <span className="recording-info-value error">
+                                        ❌ Unable to connect to recording service
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

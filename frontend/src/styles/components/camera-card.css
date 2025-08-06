@@ -305,6 +305,122 @@
     border-bottom: 1px solid #f0f0f0;
 }
 
+/* Recording Status Styling - Using existing info-row pattern */
+.recording-status-loading {
+    color: #ff9800;
+    font-style: italic;
+}
+
+.recording-status-active {
+    color: #4CAF50;
+    font-weight: 500;
+}
+
+.recording-status-not-recording {
+    color: #666;
+}
+
+.recording-status-stopped {
+    color: #f44336;
+}
+
+.recording-status-error {
+    color: #f44336;
+}
+
+.recording-status-warning {
+    color: #ff9800;
+}
+
+.recording-status-not-configured {
+    color: #666;
+    font-style: italic;
+}
+
+.recording-connection-success {
+    color: #4CAF50;
+}
+
+.recording-connection-error {
+    color: #f44336;
+}
+
+/* Recording Controls Section - Integrated with camera info styling */
+.recording-controls-section {
+    padding: 16px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    background: white !important;
+}
+
+.recording-controls-section .recording-controls {
+    display: flex !important;
+    gap: 12px !important;
+    margin-top: 8px !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+.recording-controls .recording-btn,
+.recording-btn {
+    padding: 10px 16px !important;
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    font-size: 0.9em !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    min-width: 120px !important;
+    background: white !important;
+    color: #333 !important;
+    margin: 0 !important;
+}
+
+.recording-controls .recording-btn:hover,
+.recording-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.recording-controls .recording-btn.start,
+.recording-btn.start {
+    border-color: #4CAF50 !important;
+    color: #4CAF50 !important;
+}
+
+.recording-controls .recording-btn.start:hover,
+.recording-btn.start:hover {
+    background: #4CAF50 !important;
+    color: white !important;
+}
+
+.recording-controls .recording-btn.stop,
+.recording-btn.stop {
+    border-color: #f44336 !important;
+    color: #f44336 !important;
+}
+
+.recording-controls .recording-btn.stop:hover,
+.recording-btn.stop:hover {
+    background: #f44336 !important;
+    color: white !important;
+}
+
+.recording-controls .recording-btn.refresh,
+.recording-btn.refresh {
+    border-color: #2196F3 !important;
+    color: #2196F3 !important;
+}
+
+.recording-controls .recording-btn.refresh:hover,
+.recording-btn.refresh:hover {
+    background: #2196F3 !important;
+    color: white !important;
+}
+
 .info-row {
     display: flex;
     justify-content: space-between;
@@ -446,6 +562,24 @@
         max-width: 100%;
         text-align: left;
     }
+    
+    /* Recording controls mobile adjustments */
+    .recording-controls-section {
+        padding: 12px;
+    }
+    
+    .recording-controls {
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 6px;
+    }
+    
+    .recording-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 12px 16px;
+        font-size: 0.9em;
+    }
 }
 
 /* Dark theme support */
@@ -493,6 +627,60 @@
     
     .offline-placeholder {
         color: #aaa;
+    }
+    
+    /* Recording status dark theme */
+    .recording-controls-section {
+        background: #2d2d2d !important;
+        border-bottom-color: #444 !important;
+    }
+    
+    .recording-controls .recording-btn,
+    .recording-btn {
+        background: #2d2d2d !important;
+        color: #fff !important;
+        border-color: #555 !important;
+    }
+    
+    .recording-controls .recording-btn:hover,
+    .recording-btn:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    .recording-controls .recording-btn.start,
+    .recording-btn.start {
+        border-color: #4CAF50 !important;
+        color: #4CAF50 !important;
+    }
+    
+    .recording-controls .recording-btn.start:hover,
+    .recording-btn.start:hover {
+        background: #4CAF50 !important;
+        color: white !important;
+    }
+    
+    .recording-controls .recording-btn.stop,
+    .recording-btn.stop {
+        border-color: #f44336 !important;
+        color: #f44336 !important;
+    }
+    
+    .recording-controls .recording-btn.stop:hover,
+    .recording-btn.stop:hover {
+        background: #f44336 !important;
+        color: white !important;
+    }
+    
+    .recording-controls .recording-btn.refresh,
+    .recording-btn.refresh {
+        border-color: #2196F3 !important;
+        color: #2196F3 !important;
+    }
+    
+    .recording-controls .recording-btn.refresh:hover,
+    .recording-btn.refresh:hover {
+        background: #2196F3 !important;
+        color: white !important;
     }
 }
 

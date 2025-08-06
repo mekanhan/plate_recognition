@@ -40,13 +40,23 @@ const config = {
     
     // API Endpoints - relative paths that will be appended to API_BASE_URL
     API_ENDPOINTS: {
-        // Camera endpoints - Clean Architecture
+        // Camera endpoints - Clean Architecture (Legacy)
         CAMERAS: '/api/cameras',
         CAMERA_BY_ID: (id) => `/api/cameras/${id}`,
         CAMERA_SNAPSHOT: (id) => `/api/cameras/${id}/snapshot`,
         CAMERA_HEALTH: (id) => `/api/cameras/${id}/health`,
         CAMERA_TEST_CONNECTION: '/api/cameras/test',
         CAMERA_TEST_ALL_PATHS: '/api/cameras/test-all-paths',
+        
+        // NEW Database-driven Camera Management API (v2)
+        CAMERAS_V2: '/v2/api/cameras',
+        CAMERAS_V2_STATUS: '/v2/api/cameras/status',
+        CAMERA_V2_BY_ID: (id) => `/v2/api/cameras/${id}`,
+        CAMERA_V2_STATUS: (id) => `/v2/api/cameras/${id}/status`,
+        CAMERA_V2_START: (id) => `/v2/api/cameras/${id}/start`,
+        CAMERA_V2_STOP: (id) => `/v2/api/cameras/${id}/stop`,
+        CAMERA_V2_RESTART: (id) => `/v2/api/cameras/${id}/restart`,
+        CAMERA_V2_SETTINGS: (id) => `/v2/api/cameras/${id}/settings`,
         
         // Recording quality endpoints
         CAMERA_RECORDING_QUALITY: (id) => `/api/cameras/${id}/recording/quality`,
@@ -56,9 +66,9 @@ const config = {
         
         // Playback endpoints
         PLAYBACK: '/api/v1/playback/',
-        PLAYBACK_SEGMENTS: (cameraId) => `/api/v1/playback/cameras/${cameraId}/segments`,
+        PLAYBACK_SEGMENTS: (cameraId) => `/api/v1/playbook/cameras/${cameraId}/segments`,
         
-        // Recording endpoints (on different port)
+        // Recording endpoints (on different port) - Legacy
         RECORDINGS: '/api/v1/recordings/',
         RECORDING_STATUS: (cameraId) => `/recordings/status/${cameraId}`,
         RECORDING_SEGMENTS: (cameraId) => `/recordings/${cameraId}/segments`,

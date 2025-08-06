@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import json
 import logging
-from .models import Base, Camera, Detection, VideoRecording, VideoClip, HourlyStatistics
+from .models import (Base, Camera, Detection, VideoRecording, VideoClip, HourlyStatistics,
+                     CameraNew, CameraConnection, CameraRecordingConfig, CameraSetting, CameraStatus)
 
 class DatabaseService:
     def __init__(self, database_url: str = "sqlite+aiosqlite:///data/license_plates.db"):

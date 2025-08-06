@@ -70,6 +70,10 @@ async def lifespan(app: FastAPI):
     # Start background recording
     await recording_manager.start()
     
+    # Track startup time
+    app.state.start_time = datetime.now()
+    app.state.shutdown_info = None
+    
     logger.info("Recording Service started successfully")
     
     yield
@@ -107,7 +111,112 @@ async def health_check():
         "status": "running",
         "version": "1.0.0",
         "timestamp": datetime.now().isoformat(),
-        "recording_active": bool(recording_manager and recording_manager.recorders)
+        "recording_active": bool(recording_manager and recording_manager.recorders),
+        "active_cameras": len(recording_manager.recorders) if recording_manager else 0,
+        "storage_path": recording_manager.storage_path if recording_manager else None
+    }
+
+# Detailed health check endpoint
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Detailed health check with recording status for each camera"""
+    if not recording_manager:
+        return {
+            "status": "initializing",
+            "timestamp": datetime.now().isoformat(),
+            "details": "Recording manager not yet initialized"
+        }
+    
+    # Get status for all cameras
+    camera_statuses = {}
+    total_errors = 0
+    total_segments = 0
+    total_size_mb = 0
+    
+    for camera_id, recorder in recording_manager.recorders.items():
+        status = recorder.get_status()
+        camera_statuses[camera_id] = {
+            "name": status.get("name"),
+            "is_recording": status.get("is_recording"),
+            "connection_status": "connected" if status.get("is_recording") else "disconnected",
+            "last_segment_time": status.get("last_segment_time"),
+            "error_count": status.get("error_count", 0),
+            "ffmpeg_pid": status.get("process_pid"),
+            "total_segments": status.get("total_segments", 0),
+            "total_size_mb": status.get("total_size_mb", 0),
+            "uptime_seconds": status.get("uptime_seconds", 0)
+        }
+        total_errors += status.get("error_count", 0)
+        total_segments += status.get("total_segments", 0)
+        total_size_mb += status.get("total_size_mb", 0)
+    
+    # Check if shutdown is in progress
+    shutdown_info = getattr(app.state, 'shutdown_info', None)
+    
+    return {
+        "status": "healthy" if not shutdown_info else "shutting_down",
+        "timestamp": datetime.now().isoformat(),
+        "recording_status": {
+            "active_recordings": sum(1 for s in camera_statuses.values() if s["is_recording"]),
+            "total_cameras": len(camera_statuses),
+            "cameras": camera_statuses
+        },
+        "shutdown_status": {
+            "is_shutting_down": bool(shutdown_info),
+            "shutdown_requested_at": shutdown_info.get("requested_at") if shutdown_info else None,
+            "cameras_stopped": shutdown_info.get("cameras_stopped", 0) if shutdown_info else 0
+        },
+        "system_stats": {
+            "uptime_seconds": (datetime.now() - app.state.start_time).total_seconds() if hasattr(app.state, 'start_time') else 0,
+            "total_segments": total_segments,
+            "total_size_mb": round(total_size_mb, 2),
+            "total_errors": total_errors,
+            "storage_path": recording_manager.storage_path
+        }
+    }
+
+# Graceful shutdown endpoint
+@app.post("/shutdown")
+async def graceful_shutdown():
+    """Trigger graceful shutdown of recording service"""
+    if not recording_manager:
+        raise HTTPException(status_code=503, detail="Recording manager not initialized")
+    
+    # Mark shutdown as requested
+    app.state.shutdown_info = {
+        "requested_at": datetime.now().isoformat(),
+        "cameras_stopped": 0,
+        "total_cameras": len(recording_manager.recorders) if recording_manager else 0
+    }
+    
+    # Create background task to stop recordings
+    async def stop_recordings():
+        try:
+            if recording_manager:
+                # Stop each camera recording
+                for camera_id in list(recording_manager.recorders.keys()):
+                    await recording_manager.stop_camera(camera_id)
+                    if app.state.shutdown_info:
+                        app.state.shutdown_info["cameras_stopped"] += 1
+                
+                # Stop the manager
+                await recording_manager.stop()
+            
+            # Schedule server shutdown after a delay
+            await asyncio.sleep(2)
+            logger.info("Initiating server shutdown...")
+            # Note: Actual server shutdown would be handled by the process manager
+            
+        except Exception as e:
+            logger.error(f"Error during graceful shutdown: {e}")
+    
+    # Start shutdown process in background
+    asyncio.create_task(stop_recordings())
+    
+    return {
+        "message": "Shutdown initiated",
+        "cameras_to_stop": len(recording_manager.recorders) if recording_manager else 0,
+        "max_wait_seconds": 30
     }
 
 # Recording status endpoints

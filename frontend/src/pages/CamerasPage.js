@@ -176,6 +176,301 @@ class Cameras {
         window.addEventListener('cameraUpdated', () => this.loadCameras());
     }
 
+    // Recording status management
+    recordingStatusData = {};
+
+    async loadRecordingStatus(cameraId) {
+        const statusValueElement = document.getElementById(`recording-status-value-${cameraId}`);
+        const detailsElement = document.getElementById(`recording-details-${cameraId}`);
+        const controlsElement = document.getElementById(`recording-controls-${cameraId}`);
+        
+        try {
+            // Get detailed recording status from recording service
+            const response = await fetch('http://localhost:8002/health/detailed');
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Extract camera-specific data
+                const cameraData = data.recording_status?.cameras?.[cameraId];
+                if (cameraData) {
+                    // Camera is in recording service
+                    const recordingData = {
+                        ...cameraData,
+                        service_uptime: data.system_stats?.uptime_seconds || 0,
+                        is_shutting_down: data.shutdown_status?.is_shutting_down || false
+                    };
+                    
+                    this.recordingStatusData[cameraId] = recordingData;
+                    this.updateRecordingStatusDisplay(cameraId, recordingData);
+                } else {
+                    // Camera not in recording service
+                    const notRecordingData = {
+                        not_recording: true,
+                        connection_status: 'not_configured'
+                    };
+                    this.recordingStatusData[cameraId] = notRecordingData;
+                    this.updateRecordingStatusDisplay(cameraId, notRecordingData);
+                }
+            } else {
+                throw new Error('Recording service unavailable');
+            }
+        } catch (error) {
+            console.error('Failed to load recording status:', error);
+            
+            // Set all recording-related fields to defaults when service is unavailable
+            const camera = this.cameras.find(c => c.id === cameraId);
+            this.setRecordingFieldsToDefaults(cameraId, camera);
+            
+            // Hide controls when service is offline
+            const controlsElement = document.getElementById(`recording-controls-${cameraId}`);
+            if (controlsElement) {
+                controlsElement.style.display = 'none';
+            }
+        }
+    }
+
+    updateRecordingStatusDisplay(cameraId, recordingData) {
+        const camera = this.cameras.find(c => c.id === cameraId);
+        
+        // Update all 8 standardized fields using the standard field processing
+        this.updateStandardFields(cameraId, camera, recordingData);
+        
+        // Show recording controls
+        const controlsElement = document.getElementById(`recording-controls-${cameraId}`);
+        if (controlsElement) {
+            controlsElement.style.display = 'block';
+            this.renderRecordingControls(cameraId, recordingData, controlsElement);
+        }
+    }
+
+    updateStandardFields(cameraId, camera, recordingData) {
+        // Calculate storage used (convert MB to bytes for proper formatting)
+        const storageBytes = recordingData?.total_size_mb ? recordingData.total_size_mb * 1024 * 1024 : 0;
+        
+        // Update each of the 8 standard fields
+        const fieldUpdates = {
+            'recording-status': this.getStandardFieldValue('recordingStatus', null, camera, recordingData),
+            'connection-status': this.getStandardFieldValue('connectionStatus', null, camera, recordingData),
+            'ffmpeg-pid': this.getStandardFieldValue('ffmpegPid', recordingData?.ffmpeg_pid, camera, recordingData),
+            'segments-created': this.getStandardFieldValue('segmentsCreated', null, camera, recordingData),
+            'storage-used': this.getStandardFieldValue('storageUsed', storageBytes, camera, recordingData),
+            'recording-uptime': this.getStandardFieldValue('recordingUptime', recordingData?.uptime_seconds, camera, recordingData)
+        };
+        
+        // Update both grid and list views
+        Object.entries(fieldUpdates).forEach(([fieldId, value]) => {
+            // Grid view
+            const gridElement = document.getElementById(`${fieldId}-${cameraId}`);
+            if (gridElement) {
+                gridElement.textContent = value;
+                this.applyFieldStyling(gridElement, fieldId, recordingData);
+            }
+            
+            // List view (if exists)
+            const listElement = document.getElementById(`${fieldId}-row-${cameraId}`);
+            if (listElement) {
+                listElement.textContent = value;
+                this.applyFieldStyling(listElement, fieldId, recordingData);
+            }
+        });
+    }
+
+    applyFieldStyling(element, fieldId, recordingData) {
+        // Remove existing status classes
+        element.className = element.className.replace(/recording-status-\w+/g, '');
+        
+        // Apply appropriate styling based on field and data
+        switch (fieldId) {
+            case 'recording-status':
+                if (recordingData?.not_recording) {
+                    element.classList.add('recording-status-not-configured');
+                } else if (recordingData?.is_recording) {
+                    element.classList.add('recording-status-active');
+                } else {
+                    element.classList.add('recording-status-stopped');
+                }
+                break;
+                
+            case 'connection-status':
+                if (recordingData?.connection_status === 'connected') {
+                    element.classList.add('recording-connection-success');
+                } else {
+                    element.classList.add('recording-connection-error');
+                }
+                break;
+                
+            case 'ffmpeg-pid':
+            case 'segments-created':
+            case 'storage-used':
+            case 'recording-uptime':
+                // These fields use default styling
+                break;
+        }
+    }
+
+    setRecordingFieldsToDefaults(cameraId, camera) {
+        // Set recording-related fields (fields 3-8) to their defaults when service is unavailable
+        const defaultFieldUpdates = {
+            'recording-status': this.getStandardFieldValue('recordingStatus', null, camera, null),
+            'connection-status': this.getStandardFieldValue('connectionStatus', null, camera, null),
+            'ffmpeg-pid': this.getStandardFieldValue('ffmpegPid', null, camera, null),
+            'segments-created': this.getStandardFieldValue('segmentsCreated', null, camera, null),
+            'storage-used': this.getStandardFieldValue('storageUsed', null, camera, null),
+            'recording-uptime': this.getStandardFieldValue('recordingUptime', null, camera, null)
+        };
+        
+        Object.entries(defaultFieldUpdates).forEach(([fieldId, value]) => {
+            // Grid view
+            const gridElement = document.getElementById(`${fieldId}-${cameraId}`);
+            if (gridElement) {
+                gridElement.textContent = value;
+                gridElement.className = gridElement.className.replace(/recording-status-\w+/g, '');
+                gridElement.classList.add('recording-status-error');
+            }
+            
+            // List view (if exists) 
+            const listElement = document.getElementById(`${fieldId}-row-${cameraId}`);
+            if (listElement) {
+                listElement.textContent = value;
+                listElement.className = listElement.className.replace(/recording-status-\w+/g, '');
+                listElement.classList.add('recording-status-error');
+            }
+        });
+    }
+
+
+    renderRecordingControls(cameraId, recordingData, container) {
+        const controlsHtml = `
+            <div class="recording-controls">
+                ${recordingData.is_recording ? `
+                    <button class="recording-btn stop" onclick="camerasPage.stopRecording('${cameraId}')">
+                        ⏹ Stop Recording
+                    </button>
+                ` : `
+                    <button class="recording-btn start" onclick="camerasPage.startRecording('${cameraId}')">
+                        ▶ Start Recording
+                    </button>
+                `}
+                <button class="recording-btn refresh" onclick="camerasPage.loadRecordingStatus('${cameraId}')">
+                    🔄 Refresh Status
+                </button>
+            </div>
+        `;
+        container.innerHTML = controlsHtml;
+    }
+
+    async startRecording(cameraId) {
+        try {
+            // Use new database-driven API first
+            const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERA_V2_START(cameraId)), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                this.showToast(result.message || 'Recording started successfully', 'success');
+                
+                // Refresh status to show updated recording state
+                setTimeout(() => this.loadRecordingStatus(cameraId), 1000);
+            } else {
+                // Fallback to legacy recording service
+                await this.startRecordingLegacy(cameraId);
+            }
+        } catch (error) {
+            console.error('Failed to start recording via v2 API, trying legacy:', error);
+            await this.startRecordingLegacy(cameraId);
+        }
+    }
+
+    async startRecordingLegacy(cameraId) {
+        try {
+            const response = await fetch(`http://localhost:8002/recordings/cameras/${cameraId}/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                this.showToast('Recording started successfully', 'success');
+                this.loadRecordingStatus(cameraId);
+            } else {
+                throw new Error('Failed to start recording');
+            }
+        } catch (error) {
+            this.showToast(`Failed to start recording: ${error.message}`, 'error');
+        }
+    }
+
+    async stopRecording(cameraId) {
+        try {
+            // Use new database-driven API first
+            const response = await fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERA_V2_STOP(cameraId)), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                this.showToast(result.message || 'Recording stopped successfully', 'success');
+                
+                // Refresh status to show updated recording state
+                setTimeout(() => this.loadRecordingStatus(cameraId), 1000);
+            } else {
+                // Fallback to legacy recording service
+                await this.stopRecordingLegacy(cameraId);
+            }
+        } catch (error) {
+            console.error('Failed to stop recording via v2 API, trying legacy:', error);
+            await this.stopRecordingLegacy(cameraId);
+        }
+    }
+
+    async stopRecordingLegacy(cameraId) {
+        try {
+            const response = await fetch(`http://localhost:8002/recordings/cameras/${cameraId}/stop`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                this.showToast('Recording stopped successfully', 'success');
+                this.loadRecordingStatus(cameraId);
+            } else {
+                throw new Error('Failed to stop recording');
+            }
+        } catch (error) {
+            this.showToast(`Failed to stop recording: ${error.message}`, 'error');
+        }
+    }
+
+    formatUptime(seconds) {
+        if (!seconds || seconds < 0) return '0m';
+        
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+        
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`;
+        }
+        return `${minutes}m`;
+    }
+
+    formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '0 B';
+        
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    initializeRecordingStatusBadge(camera) {
+        // Set all fields to proper defaults first
+        this.setRecordingFieldsToDefaults(camera.id, camera);
+        
+        // Then load actual recording status
+        this.loadRecordingStatus(camera.id);
+    }
+
     async loadCameras() {
         try {
             // In a real application, this would be an API call
@@ -279,6 +574,8 @@ class Cameras {
         if (this.currentView === 'grid') {
             this.filteredCameras.forEach(camera => {
                 this.initializeCameraPlayer(camera);
+                // Initialize recording status badges
+                this.initializeRecordingStatusBadge(camera);
             });
         }
 
@@ -343,20 +640,53 @@ class Cameras {
                     </div>
                     
                     <div class="camera-card-info">
+                        <!-- 8 Standard Fields - Always displayed in exact order -->
                         <div class="info-row">
                             <span class="info-label">Location:</span>
-                            <span class="info-value">${this.capitalizeFirst(camera.location)}</span>
+                            <span class="info-value" id="location-${camera.id}">${this.getStandardFieldValue('location', camera.location)}</span>
                         </div>
-                        ${camera.status === 'offline' ? `
-                        <div class="info-row error">
-                            <span class="info-label">Last Seen:</span>
-                            <span class="info-value">${this.getRelativeTime(camera.lastSeen)}</span>
-                        </div>
-                        ` : ''}
+                        
                         <div class="info-row">
                             <span class="info-label">Connection:</span>
-                            <span class="info-value">${camera.connectionType?.toUpperCase() || 'HTTP'} (${camera.ipAddress})</span>
+                            <span class="info-value" id="connection-${camera.id}">${this.getStandardFieldValue('connection', null, camera)}</span>
                         </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">Recording Status:</span>
+                            <span class="info-value" id="recording-status-${camera.id}">Loading...</span>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">Connection Status:</span>
+                            <span class="info-value" id="connection-status-${camera.id}">Loading...</span>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">FFmpeg PID:</span>
+                            <span class="info-value" id="ffmpeg-pid-${camera.id}">Loading...</span>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">Segments Created:</span>
+                            <span class="info-value" id="segments-created-${camera.id}">Loading...</span>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">Storage Used:</span>
+                            <span class="info-value" id="storage-used-${camera.id}">Loading...</span>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">Recording Uptime:</span>
+                            <span class="info-value" id="recording-uptime-${camera.id}">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recording Controls Section -->
+                <div class="recording-controls-section" id="recording-controls-${camera.id}" style="display: none;">
+                    <div class="recording-controls">
+                        <!-- Recording control buttons will be inserted here -->
                     </div>
                 </div>
                 
@@ -920,6 +1250,80 @@ class Cameras {
         }
         
         return Math.max(Math.round(score), 0);
+    }
+
+    // Standardized field value processing for camera info standards
+    getStandardFieldValue(fieldName, actualValue, camera = null, recordingData = null) {
+        const defaults = {
+            'location': 'Unknown',
+            'connection': 'Unknown', 
+            'recordingStatus': 'Not Set',
+            'connectionStatus': 'Unknown',
+            'ffmpegPid': 'None',
+            'segmentsCreated': 'None',
+            'storageUsed': '0 B',
+            'recordingUptime': 'None'
+        };
+        
+        // Check various "empty" conditions
+        if (actualValue === null || 
+            actualValue === undefined || 
+            actualValue === '' || 
+            actualValue === 'N/A' ||
+            actualValue === -1 ||
+            (typeof actualValue === 'string' && actualValue.trim() === '')) {
+            return defaults[fieldName];
+        }
+        
+        // Field-specific processing
+        switch (fieldName) {
+            case 'location':
+                return this.capitalizeFirst(actualValue);
+                
+            case 'connection':
+                if (camera) {
+                    const protocol = camera.connectionType?.toUpperCase() || 'HTTP';
+                    const ip = camera.ipAddress || camera.ip_address;
+                    return ip ? `${protocol} (${ip})` : defaults[fieldName];
+                }
+                return defaults[fieldName];
+                
+            case 'recordingStatus':
+                if (!recordingData) return defaults[fieldName];
+                if (recordingData.not_recording) return 'Not Set';
+                if (recordingData.is_recording) return '▶️ Recording';
+                return '⏹️ Stopped';
+                
+            case 'connectionStatus':
+                if (!recordingData) return defaults[fieldName];
+                const status = recordingData.connection_status || 'unknown';
+                const icon = status === 'connected' ? '✅' : status === 'connecting' ? '🔄' : status === 'reconnecting' ? '⚠️' : '❌';
+                return `${icon} ${this.capitalizeFirst(status)}`;
+                
+            case 'ffmpegPid':
+                return actualValue && actualValue > 0 ? actualValue.toString() : defaults[fieldName];
+                
+            case 'segmentsCreated':
+                if (!recordingData) return defaults[fieldName];
+                const count = recordingData.total_segments || 0;
+                if (count === 0) return '0';
+                const timestamp = recordingData.last_segment_time;
+                if (timestamp) {
+                    return `${count} (last: ${new Date(timestamp).toLocaleTimeString()})`;
+                }
+                return count > 0 ? `${count} (last: Unknown)` : defaults[fieldName];
+                
+            case 'storageUsed':
+                if (!actualValue || actualValue === 0) return defaults[fieldName];
+                return this.formatFileSize(actualValue);
+                
+            case 'recordingUptime':
+                if (!actualValue || actualValue <= 0) return defaults[fieldName];
+                return this.formatUptime(actualValue);
+                
+            default:
+                return actualValue || defaults[fieldName];
+        }
     }
 
     showToast(message, type = 'info', duration = 3000) {

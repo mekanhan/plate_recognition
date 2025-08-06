@@ -2,7 +2,7 @@
 Database models
 Uses SQLAlchemy for async SQLite (following existing system architecture)
 """
-from sqlalchemy import Column, String, Float, DateTime, Integer, JSON, Boolean, Text
+from sqlalchemy import Column, String, Float, DateTime, Integer, JSON, Boolean, Text, ForeignKey, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
@@ -160,6 +160,98 @@ class StorageStats(Base):
     oldest_segment_date = Column(String(10))  # YYYY-MM-DD
     newest_segment_date = Column(String(10))  # YYYY-MM-DD
 
+# New Camera Management Models (Database-Driven Architecture)
+
+class CameraNew(Base):
+    """New normalized camera model for database-driven architecture"""
+    __tablename__ = 'cameras_new'
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    camera_id = Column(String(50), unique=True, nullable=False)  # e.g., "camera_946701d3"
+    name = Column(String(100), nullable=False)                    # e.g., "Reolink Main Entrance"
+    location = Column(String(200))                               # e.g., "Entrance", "Parking Lot"
+    status = Column(String(20), default='active')                # active, inactive, maintenance
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    connections = relationship("CameraConnection", back_populates="camera", cascade="all, delete-orphan")
+    recording_config = relationship("CameraRecordingConfig", back_populates="camera", uselist=False, cascade="all, delete-orphan")
+    settings = relationship("CameraSetting", back_populates="camera", cascade="all, delete-orphan")
+    status_record = relationship("CameraStatus", back_populates="camera", uselist=False, cascade="all, delete-orphan")
+
+class CameraConnection(Base):
+    """Camera connection details (RTSP, HTTP, etc.)"""
+    __tablename__ = 'camera_connections'
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    camera_id = Column(String(36), ForeignKey('cameras_new.id'), nullable=False)
+    protocol = Column(String(10), nullable=False)               # RTSP, HTTP, HTTPS
+    ip_address = Column(String(45), nullable=False)             # 10.0.0.181
+    port = Column(Integer, default=554)                         # 554 for RTSP
+    username = Column(String(100))                              # encrypted
+    password = Column(String(100))                              # encrypted
+    stream_path = Column(String(200))                           # /h264/ch1/main/av_stream
+    is_active = Column(Boolean, default=True)
+    last_connected = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    camera = relationship("CameraNew", back_populates="connections")
+
+class CameraRecordingConfig(Base):
+    """Camera recording configuration"""
+    __tablename__ = 'camera_recording_config'
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    camera_id = Column(String(36), ForeignKey('cameras_new.id'), nullable=False)
+    enabled = Column(Boolean, default=False)
+    recording_path = Column(String(500))                        # /recordings/camera_946701d3/
+    segment_duration = Column(Integer, default=600)             # 10 minutes in seconds
+    retention_days = Column(Integer, default=30)                # How long to keep recordings
+    video_codec = Column(String(20), default='h264')
+    audio_enabled = Column(Boolean, default=True)
+    motion_detection = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    camera = relationship("CameraNew", back_populates="recording_config")
+
+class CameraSetting(Base):
+    """Flexible key-value settings for cameras"""
+    __tablename__ = 'camera_settings'
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    camera_id = Column(String(36), ForeignKey('cameras_new.id'), nullable=False)
+    setting_key = Column(String(100), nullable=False)           # e.g., "resolution", "fps", "quality"
+    setting_value = Column(Text, nullable=False)                # e.g., "1920x1080", "30", "high"
+    setting_type = Column(String(20))                           # string, integer, boolean, json
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    camera = relationship("CameraNew", back_populates="settings")
+
+class CameraStatus(Base):
+    """Real-time camera status (for 8-field standard)"""
+    __tablename__ = 'camera_status'
+    
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    camera_id = Column(String(36), ForeignKey('cameras_new.id'), nullable=False, unique=True)
+    recording_status = Column(String(20), default='stopped')    # recording, paused, stopped
+    connection_status = Column(String(20), default='disconnected') # connected, disconnected, reconnecting
+    ffmpeg_pid = Column(Integer)
+    segments_created = Column(Integer, default=0)
+    last_segment_time = Column(DateTime)
+    storage_used_bytes = Column(BigInteger, default=0)
+    recording_started_at = Column(DateTime)
+    last_heartbeat = Column(DateTime, default=datetime.utcnow)
+    error_message = Column(Text)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    camera = relationship("CameraNew", back_populates="status_record")
+
 # Database indexes for efficient queries
 from sqlalchemy import Index
 
@@ -176,3 +268,13 @@ Index('idx_detection_camera_time', Detection.camera_id, Detection.detected_at)
 
 # Indexes for Camera table
 Index('idx_camera_camera_id', Camera.camera_id)
+
+# Indexes for new Camera Management tables
+Index('idx_cameras_new_camera_id', CameraNew.camera_id)
+Index('idx_camera_connections_camera_id', CameraConnection.camera_id)
+Index('idx_camera_connections_active', CameraConnection.is_active)
+Index('idx_camera_recording_config_camera_id', CameraRecordingConfig.camera_id)
+Index('idx_camera_settings_camera_id', CameraSetting.camera_id)
+Index('idx_camera_settings_key', CameraSetting.camera_id, CameraSetting.setting_key)
+Index('idx_camera_status_camera_id', CameraStatus.camera_id)
+Index('idx_camera_status_heartbeat', CameraStatus.last_heartbeat)

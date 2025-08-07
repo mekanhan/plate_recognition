@@ -55,3 +55,12 @@ recordings/camera_camera_946701d3/*
 recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/*
 **/*.mp4
 **/*.avi
+**/*.jpg
+**/*.jpeg
+**/*.png
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+detections/

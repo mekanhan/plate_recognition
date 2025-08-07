@@ -11,6 +11,7 @@ from typing import Dict, Optional, List
 import time
 import json
 import signal
+import os
 from database.models import VideoRecording, Camera
 
 logger = logging.getLogger(__name__)
@@ -80,21 +81,18 @@ class FFmpegCameraRecorder:
             # Generate output filename pattern with strftime support
             output_pattern = str(self.current_output_dir / f"camera_{self.camera_id}_%Y%m%d_%H%M%S.mp4")
             
-            # FFmpeg command for segmented recording (simplified to match working test)
+            # FFmpeg command for segmented recording (simplified and working)
             cmd = [
                 'ffmpeg',
                 '-y',  # Overwrite output files
+                
+                # Input options
                 '-rtsp_transport', 'tcp',  # Use TCP for RTSP (more reliable)
                 '-i', self.rtsp_url,       # Input RTSP stream
                 
-                # Video settings - convert H.265 to H.264 for browser compatibility
-                '-c:v', 'libx264',         # Encode to H.264 (universal browser support)
-                '-preset', 'ultrafast',    # Ultrafast preset for real-time transcoding
-                '-crf', '28',              # Higher CRF for faster encoding
-                '-r', '15',                # Reduce frame rate to 15fps for stability
-                '-vf', 'scale=1920:1080',  # Scale down from 4K to 1080p
-                '-c:a', 'aac',             # Encode audio to AAC (browser compatible)
-                '-err_detect', 'ignore_err', # Ignore stream errors to prevent crashes
+                # Video settings - copy stream directly (no re-encoding for stability)
+                '-c:v', 'copy',            # Copy video stream (no re-encoding)
+                '-c:a', 'copy',            # Copy audio stream (no re-encoding)
                 
                 # Segmentation settings (simplified)
                 '-f', 'segment',           # Use segment muxer
@@ -355,6 +353,9 @@ class FFmpegRecordingManager:
         self.is_running = True
         
         try:
+            # Clean up any zombie FFmpeg processes first
+            await self._cleanup_zombie_processes()
+            
             # Get enabled cameras from database
             cameras = await self._get_enabled_cameras()
             
@@ -375,6 +376,9 @@ class FFmpegRecordingManager:
             
             logger.info(f"FFmpeg Recording Manager started with {len(self.recorders)} active recorders")
             
+            # Start monitoring task
+            asyncio.create_task(self._monitor_recordings())
+            
         except Exception as e:
             logger.error(f"Error starting recording manager: {e}")
     
@@ -394,6 +398,81 @@ class FFmpegRecordingManager:
         
         self.recorders.clear()
         logger.info("All FFmpeg recorders stopped")
+    
+    async def _cleanup_zombie_processes(self):
+        """Clean up any zombie FFmpeg processes from previous runs"""
+        try:
+            # Find all FFmpeg processes recording to our storage path
+            result = await asyncio.create_subprocess_shell(
+                f"ps aux | grep ffmpeg | grep {self.storage_path} | grep -v grep",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, _ = await result.communicate()
+            
+            if stdout:
+                lines = stdout.decode().strip().split('\n')
+                for line in lines:
+                    parts = line.split()
+                    if len(parts) > 1:
+                        pid = int(parts[1])
+                        logger.warning(f"Found zombie FFmpeg process (PID: {pid}), terminating...")
+                        try:
+                            os.kill(pid, signal.SIGTERM)
+                            await asyncio.sleep(2)
+                            # Force kill if still running
+                            try:
+                                os.kill(pid, signal.SIGKILL)
+                            except ProcessLookupError:
+                                pass  # Process already terminated
+                        except Exception as e:
+                            logger.error(f"Error killing process {pid}: {e}")
+                
+                logger.info(f"Cleaned up {len(lines)} zombie FFmpeg processes")
+                
+        except Exception as e:
+            logger.error(f"Error cleaning up zombie processes: {e}")
+    
+    async def _monitor_recordings(self):
+        """Monitor recordings and restart failed ones"""
+        check_interval = 60  # Check every minute
+        max_retry_attempts = 3
+        retry_counts = {}
+        
+        while self.is_running:
+            try:
+                # Check each recorder
+                for camera_id, recorder in list(self.recorders.items()):
+                    if not recorder.is_recording:
+                        # Recording has stopped
+                        retry_count = retry_counts.get(camera_id, 0)
+                        
+                        if retry_count < max_retry_attempts:
+                            logger.warning(f"Recording stopped for {recorder.name}, attempting restart (attempt {retry_count + 1}/{max_retry_attempts})")
+                            
+                            # Exponential backoff: wait longer between retries
+                            await asyncio.sleep(min(60 * (2 ** retry_count), 300))  # Max 5 minutes
+                            
+                            success = await recorder.start_recording()
+                            if success:
+                                logger.info(f"Successfully restarted recording for {recorder.name}")
+                                retry_counts[camera_id] = 0
+                            else:
+                                retry_counts[camera_id] = retry_count + 1
+                                logger.error(f"Failed to restart recording for {recorder.name}")
+                        else:
+                            logger.error(f"Max retry attempts reached for {recorder.name}, removing from active recorders")
+                            del self.recorders[camera_id]
+                            del retry_counts[camera_id]
+                    else:
+                        # Recording is active, reset retry count
+                        retry_counts[camera_id] = 0
+                
+                await asyncio.sleep(check_interval)
+                
+            except Exception as e:
+                logger.error(f"Error in recording monitor: {e}")
+                await asyncio.sleep(check_interval)
     
     async def _get_enabled_cameras(self) -> List[Dict]:
         """Get enabled cameras from database"""

@@ -353,21 +353,44 @@ async def get_cameras():
     """Get all cameras with real-time connection status"""
     cameras = await db.get_all_cameras()
     
+    # Try to get recording service status for better accuracy
+    recording_statuses = {}
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get("http://localhost:8002/health/detailed")
+            if response.status_code == 200:
+                data = response.json()
+                if 'recording_status' in data and 'cameras' in data['recording_status']:
+                    recording_statuses = data['recording_status']['cameras']
+    except Exception as e:
+        logging.debug(f"Could not fetch recording service status: {e}")
+    
     result = []
     for c in cameras:
-        # Determine real connection status
-        camera_stream = camera_manager.get_camera(c.camera_id)
+        # First check if camera is actively recording (most reliable indicator)
         connection_status = "offline"
         
-        if camera_stream:
-            # Check if camera is actively streaming
-            if camera_stream.is_healthy():
+        # Check recording service first (FFmpeg connection is more reliable)
+        if c.camera_id in recording_statuses:
+            rec_status = recording_statuses[c.camera_id]
+            if rec_status.get('is_recording'):
+                connection_status = "online"  # Actively recording means camera is connected
+            elif rec_status.get('connection_status') == 'connected':
                 connection_status = "online"
-            elif camera_stream.is_running:
-                connection_status = "connecting"
-        elif c.status == 'active':
-            # Camera is in database but not in manager - needs connection test
-            connection_status = "unknown"
+        else:
+            # Fallback to local camera manager check
+            camera_stream = camera_manager.get_camera(c.camera_id)
+            
+            if camera_stream:
+                # Check if camera is actively streaming
+                if camera_stream.is_healthy():
+                    connection_status = "online"
+                elif camera_stream.is_running:
+                    connection_status = "connecting"
+            elif c.status == 'active':
+                # Camera is in database but not in manager - needs connection test
+                connection_status = "unknown"
         
         # Create display-friendly summary
         camera_data = {
@@ -530,6 +553,43 @@ async def update_camera(camera_id: str, camera_data: CameraUpdate):
         logging.error(f"Failed to update camera {camera_id}: {e}")
         raise HTTPException(500, f"Failed to update camera: {str(e)}")
 
+@app.get("/api/cameras/{camera_id}")
+async def get_camera(camera_id: str):
+    """Get a specific camera by ID"""
+    try:
+        camera = await db.get_camera(camera_id)
+        if not camera:
+            raise HTTPException(404, f"Camera {camera_id} not found")
+        
+        return {
+            "id": camera.camera_id,
+            "camera_id": camera.camera_id,
+            "name": camera.name,
+            "ip_address": camera.ip_address,
+            "port": camera.port,
+            "connection_type": camera.connection_type,
+            "stream_path": camera.stream_path,
+            "location": camera.location,
+            "username": camera.username,
+            "password": camera.password,
+            "status": camera.status,
+            "enabled": camera.status == 'active',
+            "brand": camera.brand,
+            "model": camera.model,
+            "resolution_width": camera.resolution_width,
+            "resolution_height": camera.resolution_height,
+            "max_fps": camera.max_fps,
+            "video_quality": camera.video_quality,
+            "low_latency": camera.low_latency,
+            "created_at": camera.created_at.isoformat() if camera.created_at else None,
+            "updated_at": camera.updated_at.isoformat() if camera.updated_at else None
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Failed to get camera {camera_id}: {e}")
+        raise HTTPException(500, f"Failed to get camera: {str(e)}")
+
 @app.delete("/api/cameras/{camera_id}")
 async def delete_camera(camera_id: str):
     """Delete a camera"""
@@ -557,6 +617,101 @@ async def delete_camera(camera_id: str):
     except Exception as e:
         logging.error(f"Failed to delete camera {camera_id}: {e}")
         raise HTTPException(500, f"Failed to delete camera: {str(e)}")
+
+@app.post("/api/cameras/{camera_id}/test")
+async def test_camera_connection(camera_id: str):
+    """Test connection to a specific camera"""
+    try:
+        # Get camera from database
+        camera = await db.get_camera(camera_id)
+        if not camera:
+            raise HTTPException(404, f"Camera {camera_id} not found")
+        
+        # Create test request from camera data
+        test_request = CameraTestRequest(
+            ip_address=camera.ip_address,
+            port=camera.port,
+            username=camera.username,
+            password=camera.password,
+            stream_path=camera.stream_path,
+            connection_type=camera.connection_type,
+            timeout=5
+        )
+        
+        # Test the connection
+        result = await _test_camera_connection_internal(test_request)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Failed to test camera {camera_id}: {e}")
+        raise HTTPException(500, f"Failed to test camera: {str(e)}")
+
+@app.post("/api/cameras/{camera_id}/start")
+async def start_camera_recording(camera_id: str):
+    """Start recording for a specific camera"""
+    try:
+        # Get camera from database
+        camera = await db.get_camera(camera_id)
+        if not camera:
+            raise HTTPException(404, f"Camera {camera_id} not found")
+        
+        # Check if camera is already active
+        if camera.status == 'active':
+            return {"message": f"Camera {camera_id} is already recording", "status": "active"}
+        
+        # Update camera status to active
+        await db.update_camera(camera_id, {"status": "active"})
+        
+        # Notify recording service to start recording
+        import httpx
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(f"http://localhost:8002/recordings/camera/{camera_id}/start")
+                if response.status_code == 200:
+                    return {"message": f"Recording started for camera {camera_id}", "status": "active"}
+            except:
+                pass  # Recording service might not support this endpoint yet
+        
+        return {"message": f"Camera {camera_id} set to active, recording will start on next service restart", "status": "active"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Failed to start recording for camera {camera_id}: {e}")
+        raise HTTPException(500, f"Failed to start recording: {str(e)}")
+
+@app.post("/api/cameras/{camera_id}/stop")
+async def stop_camera_recording(camera_id: str):
+    """Stop recording for a specific camera"""
+    try:
+        # Get camera from database
+        camera = await db.get_camera(camera_id)
+        if not camera:
+            raise HTTPException(404, f"Camera {camera_id} not found")
+        
+        # Check if camera is already inactive
+        if camera.status == 'inactive':
+            return {"message": f"Camera {camera_id} is not recording", "status": "inactive"}
+        
+        # Update camera status to inactive
+        await db.update_camera(camera_id, {"status": "inactive"})
+        
+        # Notify recording service to stop recording
+        import httpx
+        async with httpx.AsyncClient() as client:
+            try:
+                response = await client.post(f"http://localhost:8002/recordings/camera/{camera_id}/stop")
+                if response.status_code == 200:
+                    return {"message": f"Recording stopped for camera {camera_id}", "status": "inactive"}
+            except:
+                pass  # Recording service might not support this endpoint yet
+        
+        return {"message": f"Camera {camera_id} set to inactive, recording will stop on next service restart", "status": "inactive"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Failed to stop recording for camera {camera_id}: {e}")
+        raise HTTPException(500, f"Failed to stop recording: {str(e)}")
 
 async def _test_camera_connection_internal(test_data: CameraTestRequest):
     """Internal camera connection test function with timeout"""

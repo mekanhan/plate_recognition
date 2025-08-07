@@ -32,6 +32,7 @@ class FFmpegCameraRecorder:
         self.ffmpeg_process: Optional[asyncio.subprocess.Process] = None
         self.current_output_dir = None
         self.segment_duration = 600  # 10 minutes in seconds
+        self.current_hour = None  # Track current hour for folder management
         
         # Statistics tracking
         self.total_segments = 0
@@ -69,6 +70,7 @@ class FFmpegCameraRecorder:
         try:
             # Create date-based directory structure
             now = datetime.now()
+            self.current_hour = now.hour  # Track the current hour
             self.current_output_dir = (
                 self.storage_path / 
                 str(now.year) / 
@@ -335,6 +337,37 @@ class FFmpegCameraRecorder:
             'uptime_seconds': (datetime.now() - self.start_time).total_seconds() if self.start_time else 0,
             'last_segment_time': self.last_segment_time.isoformat() if self.last_segment_time else None
         }
+    
+    def should_restart_for_hour_change(self) -> bool:
+        """Check if recording should be restarted due to hour change"""
+        if not self.is_recording or self.current_hour is None:
+            return False
+        
+        current_hour = datetime.now().hour
+        return current_hour != self.current_hour
+    
+    async def restart_for_hour_change(self) -> bool:
+        """Gracefully restart recording for new hour folder"""
+        if not self.should_restart_for_hour_change():
+            return True
+        
+        current_hour = datetime.now().hour
+        logger.info(f"Hour changed from {self.current_hour} to {current_hour}, restarting recording for {self.name}")
+        
+        # Stop current recording
+        await self.stop_recording()
+        
+        # Brief pause to ensure clean stop
+        await asyncio.sleep(2)
+        
+        # Start recording with new hour folder
+        success = await self.start_recording()
+        if success:
+            logger.info(f"Successfully restarted recording for {self.name} in new hour folder: {self.current_hour:02d}")
+        else:
+            logger.error(f"Failed to restart recording for {self.name} after hour change")
+        
+        return success
 
 
 class FFmpegRecordingManager:
@@ -467,6 +500,13 @@ class FFmpegRecordingManager:
                     else:
                         # Recording is active, reset retry count
                         retry_counts[camera_id] = 0
+                        
+                        # Check if hour has changed and restart if needed
+                        if recorder.should_restart_for_hour_change():
+                            logger.info(f"Detected hour change for {recorder.name}, performing hourly restart")
+                            success = await recorder.restart_for_hour_change()
+                            if not success:
+                                logger.error(f"Failed hourly restart for {recorder.name}, will retry next cycle")
                 
                 await asyncio.sleep(check_interval)
                 

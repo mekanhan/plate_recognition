@@ -1,0 +1,50 @@
+{
+    "storage_manager": {
+        "max_storage_gb": 10.0,
+        "cleanup_threshold_gb": 9.0,
+        "min_free_space_gb": 1.0,
+        "cleanup_strategy": "oldest_first",
+        "retention_days": 30,
+        "detection_dirs": {
+            "frames": "detections/frames",
+            "plates": "detections/plates"
+        }
+    },
+    "deduplication": {
+        "window_seconds": 1800,
+        "cooldown_minutes": 30,
+        "min_confidence_improvement": 0.25,
+        "max_per_plate_per_hour": 2,
+        "min_bbox_distance": 100,
+        "quality_factors": {
+            "confidence": 0.4,
+            "ocr_confidence": 0.3,
+            "bbox_size": 0.3
+        },
+        "noise_patterns": [
+            "TEXAS",
+            "CALIFORNIA", 
+            "FLORIDA",
+            "STATE",
+            "DEALER",
+            "EXEMPT",
+            "VETERAN",
+            "DISABLED"
+        ],
+        "min_plate_length": 3,
+        "dramatic_improvement_threshold": 0.5
+    },
+    "object_tracking": {
+        "max_lost_frames": 30,
+        "min_iou_threshold": 0.3,
+        "max_track_age_seconds": 60,
+        "min_appearances_for_stable": 3
+    },
+    "comments": {
+        "cooldown_minutes": "Time to wait before saving same plate again",
+        "max_per_plate_per_hour": "Maximum times to save same plate per hour",
+        "window_seconds": "Time window for grouping related detections",
+        "min_confidence_improvement": "Minimum quality improvement to replace existing image",
+        "dramatic_improvement_threshold": "Quality improvement needed during cooldown period"
+    }
+}

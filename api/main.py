@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # Import our services
 from ai_pipeline.camera_manager import CameraManager, CameraConfig
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
+from ai_features.vehicle.detection.pipeline import EnhancedProcessingPipeline
 from database.service import DatabaseService
 from utils.camera_utils import generate_camera_id, validate_camera_id, CameraValidation, CameraDisplayUtils
 try:
@@ -192,7 +193,8 @@ async def lifespan(app: FastAPI):
     # Initialize services
     camera_manager = CameraManager()
     detector = LicensePlateDetector()
-    pipeline = ProcessingPipeline(detector)
+    # Use enhanced pipeline with smart deduplication
+    pipeline = EnhancedProcessingPipeline()
     db = DatabaseService()
     
     # Create database tables
@@ -203,6 +205,7 @@ async def lifespan(app: FastAPI):
     os.makedirs("detections/frames", exist_ok=True)
     os.makedirs("detections/plates", exist_ok=True)
     os.makedirs("static", exist_ok=True)
+    os.makedirs("config", exist_ok=True)
     
     # Load camera configurations
     await load_cameras()
@@ -222,7 +225,7 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     camera_manager.stop_all()
-    pipeline.cleanup()
+    # Enhanced pipeline doesn't need cleanup - resources are auto-managed
     await db.close()
     logging.info("LPR System shutdown complete")
 
@@ -311,10 +314,10 @@ async def processing_loop():
                         # Process for detections
                         detections = await pipeline.process_frame(camera_id, frame)
                         
-                        # Save detections to database
+                        # Save detections to database with deduplication fields
                         for detection in detections:
                             detection_data = {
-                                'detection_id': detection.detection_id,
+                                'id': detection.detection_id,  # Fixed: database uses 'id', not 'detection_id'
                                 'camera_id': detection.camera_id,
                                 'detected_at': detection.timestamp,
                                 'plate_text': detection.plate_text,
@@ -323,7 +326,14 @@ async def processing_loop():
                                 'vehicle_bbox': detection.vehicle_bbox,
                                 'plate_bbox': detection.plate_bbox,
                                 'frame_path': detection.frame_path,
-                                'plate_image_path': detection.plate_image_path
+                                'plate_image_path': detection.plate_image_path,
+                                # Deduplication fields
+                                'group_id': detection.group_id,
+                                'track_id': detection.track_id,
+                                'is_best_shot': detection.is_best_shot,
+                                'image_saved': detection.image_saved,
+                                'ocr_confidence': detection.ocr_confidence,
+                                'meta_data': detection.detection_metadata
                             }
                             await db.save_detection(detection_data)
                 else:
@@ -1316,8 +1326,13 @@ async def get_camera_diagnostics(camera_id: str):
 @app.get("/api/system/health")
 async def get_system_health():
     """
-    Get overall system health status
+    Get overall system health status with storage info
     """
+    # Import storage manager for health check
+    from ai_features.core.storage_manager import StorageManager
+    storage_mgr = StorageManager()
+    storage_stats = storage_mgr.get_storage_usage()
+    
     system_health = {
         "api_status": "healthy",
         "database_status": "connected",
@@ -1328,6 +1343,12 @@ async def get_system_health():
             "yolo_vehicle": hasattr(detector, 'vehicle_model'),
             "yolo_plate": hasattr(detector, 'plate_model'),
             "ocr_reader": hasattr(detector, 'ocr_reader')
+        },
+        "storage": {
+            "used_gb": storage_stats['total_size_gb'],
+            "limit_gb": 10.0,
+            "percentage_used": storage_stats['percentage_used'],
+            "health_status": storage_mgr._get_health_status(storage_stats)
         }
     }
     
@@ -1347,6 +1368,55 @@ async def get_system_health():
     system_health["cameras"] = cameras_summary
     
     return system_health
+
+@app.get("/api/storage/stats")
+async def get_storage_stats():
+    """Get detailed storage statistics and deduplication metrics"""
+    from ai_features.core.storage_manager import StorageManager
+    from ai_features.vehicle.detection.pipeline import EnhancedProcessingPipeline
+    
+    storage_mgr = StorageManager()
+    
+    # Get storage stats
+    storage_report = storage_mgr.get_storage_report()
+    
+    # Get deduplication stats from pipeline if available
+    dedup_stats = {}
+    if hasattr(pipeline, 'dedup_manager'):
+        dedup_stats = pipeline.dedup_manager.get_stats()
+    
+    return {
+        "storage": storage_report,
+        "deduplication": dedup_stats
+    }
+
+@app.post("/api/storage/cleanup")
+async def trigger_storage_cleanup(force: bool = False):
+    """Manually trigger storage cleanup"""
+    from ai_features.core.storage_manager import StorageManager
+    
+    storage_mgr = StorageManager()
+    cleanup_result = storage_mgr.cleanup_old_detections(force=force)
+    
+    return {
+        "success": True,
+        "cleanup_stats": cleanup_result,
+        "storage_after": storage_mgr.get_storage_usage()
+    }
+
+@app.post("/api/storage/emergency-cleanup")
+async def emergency_cleanup():
+    """Emergency storage cleanup - deletes oldest 50% of files"""
+    from ai_features.core.storage_manager import StorageManager
+    
+    storage_mgr = StorageManager()
+    cleanup_result = storage_mgr.emergency_cleanup()
+    
+    return {
+        "success": True,
+        "cleanup_stats": cleanup_result,
+        "storage_after": storage_mgr.get_storage_usage()
+    }
 
 @app.get("/api/analytics/overview")
 async def get_analytics_overview():

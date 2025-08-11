@@ -25,6 +25,119 @@ Before implementing ANY solution, Claude must ask these questions:
 - **Real-time status display** (not database status)
 - **Remove barriers, don't add them**
 
+## Documentation-First Implementation Protocol
+
+Before implementing ANY code changes, Claude MUST:
+
+1. **Search Documentation**: Use Glob and Read tools to find relevant documentation in:
+   - `/docs/` - Architecture and implementation guides
+   - `/docs/features/` - Feature specifications
+   - `/docs/fixes/` - Previous fix implementations
+   - `/docs/TESTING/` - Test scenarios and expected values
+   - Project README files
+
+2. **Review Existing Solutions**: Check if the issue was previously addressed:
+   - Look for similar fixes in `/docs/fixes/`
+   - Check implementation reports for lessons learned
+   - Review architecture decisions and constraints
+
+3. **Follow Documented Patterns**: Ensure new code follows:
+   - Established architectural patterns
+   - Coding conventions from existing documentation
+   - Database schema standards
+   - API endpoint patterns
+
+4. **Update Documentation**: After implementation:
+   - Create or update relevant documentation
+   - Document any architectural decisions
+   - Add troubleshooting notes if applicable
+
+**MANDATORY**: If no relevant documentation exists, Claude must ask the user whether to proceed or create documentation first.
+
+## Breaking Changes Prevention Protocol
+
+Before implementing ANY code changes that modify existing functionality, Claude MUST ask these critical questions:
+
+### 1. **Impact Assessment Questions**
+- **Will this break existing imports?** Check all files that import from the modules being changed
+- **What APIs/interfaces will be affected?** Identify all public methods, classes, and endpoints
+- **Are there existing tests that might fail?** Review test files that depend on current behavior
+- **How will database changes impact existing data?** Analyze schema modifications and data migration needs
+- **Will frontend/API consumers be affected?** Check for endpoint signature changes
+
+### 2. **Backward Compatibility Requirements**
+- **Maintain Existing Interfaces**: Keep all public class names, method signatures, and return types unchanged
+- **Use Facade Pattern**: When refactoring, create thin wrapper classes that delegate to new implementation
+- **Optional New Fields**: Add database columns and dataclass fields with defaults to avoid breaking existing records
+- **API Versioning**: Add new endpoints rather than modifying existing ones when possible
+- **Gradual Migration**: Support both old and new systems during transition periods
+
+### 3. **Migration Strategy Framework**
+- **Document Migration Path**: Clearly explain how existing code will continue working
+- **Provide Compatibility Layer**: Create adapters/wrappers to bridge old and new implementations
+- **Test Thoroughly**: Verify all existing functionality continues working with new changes
+- **Version Support**: Plan how long to maintain backward compatibility
+- **Rollback Plan**: Ensure changes can be safely reverted if issues arise
+
+### 4. **Specific Check Points**
+
+**Database Changes:**
+- Use `ALTER TABLE ADD COLUMN` with defaults, never `ALTER COLUMN` existing fields
+- Ensure new columns are nullable or have sensible defaults
+- Test with existing data records
+
+**Code Refactoring:**
+- Keep original files as facade/wrapper layers
+- Move implementation to new organized structure
+- Maintain exact same public APIs
+
+**Import Dependencies:**
+- Check all files using `grep -r "from module_being_changed"`
+- Ensure import statements continue working unchanged
+- Test import compatibility
+
+**API Endpoints:**
+- Never change existing endpoint signatures
+- Add new endpoints for new features
+- Maintain response format compatibility
+
+### 5. **Required Questions Before Implementation**
+
+Claude MUST ask the user:
+
+1. **"Will this change break any existing imports or code that depends on [specific module/class]?"**
+2. **"Should I maintain backward compatibility by keeping the existing [class/API/endpoint] as a wrapper?"**
+3. **"How do you want to handle existing [database records/API consumers/test cases] during this change?"**
+4. **"Would you prefer I add new functionality alongside existing code rather than modifying it?"**
+
+### 6. **Implementation Safety Pattern**
+
+**✅ SAFE APPROACH:**
+```python
+# Keep existing interface working
+class ExistingClass:
+    def __init__(self, *args, **kwargs):
+        # Delegate to new implementation
+        self._impl = NewImplementation(*args, **kwargs)
+    
+    def existing_method(self, param):
+        # Maintain exact same signature and behavior
+        return self._impl.new_method(param)
+```
+
+**❌ UNSAFE APPROACH:**
+```python
+# This breaks existing code!
+class ExistingClass:  # Changed constructor parameters
+    def __init__(self, new_required_param, *args, **kwargs):
+        ...
+    
+    def existing_method(self, param, new_param):  # Changed signature
+        ...
+```
+
+**MANDATORY**: If there's any doubt about breaking changes, Claude must ask the user for clarification and approval before proceeding.
+
 ## Key Commands
 
 ### Quick Start (NEW - Recommended)

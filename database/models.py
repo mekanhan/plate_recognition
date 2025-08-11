@@ -54,6 +54,15 @@ class Detection(Base):
     plate_image_path = Column(String(500))
     video_clip_id = Column(String(36))
     meta_data = Column(JSON, default={})
+    
+    # Deduplication fields
+    group_id = Column(String(50))  # Groups related detections
+    is_best_shot = Column(Boolean, default=False)  # Marks the best detection in a group
+    duplicate_of = Column(String(36))  # References the primary detection if this is a duplicate
+    track_id = Column(String(50))  # Object tracking ID
+    ocr_confidence = Column(Float)  # Separate OCR confidence score
+    image_saved = Column(Boolean, default=True)  # Whether image was saved (for dedup)
+    
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class VideoRecording(Base):

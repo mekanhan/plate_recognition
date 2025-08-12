@@ -176,6 +176,24 @@ python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}')"
 cd ai_pipeline/train && bash train_yolo.sh
 ```
 
+### Database Migrations
+```bash
+# Check migration status
+python3 migrate.py current
+
+# Apply pending migrations
+python3 migrate.py upgrade
+
+# Create new migration (after model changes)
+python3 migrate.py create "Description of changes"
+
+# Show migration history
+python3 migrate.py history
+
+# Rollback to previous version
+python3 migrate.py downgrade -1
+```
+
 ### Service Access
 - **Frontend URL**: http://localhost:8080/
 - **Main API**: http://localhost:8001/

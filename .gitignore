@@ -1,67 +1,326 @@
-input_videos
-output_images
-output_videos
-cropped_images
-datasets
-runs
-temp_stream.mp4
-utils/__pycache__
-.venv
-data/license_plates/*
+# =============================================================================
+# LPR System .gitignore - Best Practices for Python ML/AI Projects
+# =============================================================================
+
+# =============================================================================
+# Python
+# =============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# =============================================================================
+# Environment & Configuration
+# =============================================================================
+# Environment files - CRITICAL for security
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.test
+
+# Configuration files that may contain secrets
+config.ini
+config.yaml
+config.json
+secrets.json
+credentials.json
+
+# =============================================================================
+# Database & Data Storage
+# =============================================================================
 # Database files
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
 data/*.db
 data/*_backup_*.db
-scripts/__init__.py
-scripts/__pycache__
-tests/__init__.py
-tests/__pycache__
-app/__pycache__
-app/routers/__init__.py
-app/routers/__pycache__
-app/services/__init__.py
-app/services/__pycache__
-app/utils/__init__.py
-app/utils/__pycache__
-app/dependencies/__init__.py
-app/dependencies/__pycache__
-config/__pycache__
-config/__init__.py
-.env
-tests/output
-venv
-train/videos/*
-train/dataset/images/*
-data/enhanced_plates/*
 data/license_plates/*
-logs/*
-app/factories/__pycache__/*
-app/repositories/__pycache__/*
+data/enhanced_plates/*
 data/videos/*
-app/repositories/__pycache__/sql_repository.cpython-312.pyc
-.claude
-app/interfaces/__pycache__/*
-app/interfaces/__init__.py/*
-data
-app.log
-node_modules
-ui-prototypes/prototype6/__pycache__/*
-**/__pycache__/
-**/*.pyc
-recordings/
-recordings/camera_camera_946701d3/*
-recordings/camera_e4036ff5-fd9a-431a-8583-3ec721f53f1a/*
-**/*.mp4
-**/*.avi
-**/*.jpg
-**/*.jpeg
-**/*.png
+
+# User data and authentication files
+data/users.json
+data/sessions/
+data/auth/
+
+# Application data directory (keep structure, ignore content)  
+data/
+
+# Database migration temp files
+migrations/versions/__pycache__/
+alembic/versions/__pycache__/
+
+# =============================================================================
+# AI/ML Models & Training
+# =============================================================================
+# Pre-trained models (download via script instead)
+*.pt
+*.pth
+*.onnx
+*.trt
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+*.pb
+*.tflite
+*.engine
+
+# Model directories
+ai_pipeline/train/models/pretrained/*.pt
+ai_pipeline/train/models/*.pt
+models/
+checkpoints/
+yolov*.pt
+yolo*.pt
+
+# Training artifacts
+runs/
+wandb/
+tensorboard_logs/
+mlruns/
+.mlflow/
+
+# =============================================================================
+# Media Files & Recordings
+# =============================================================================
+# Video files
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.flv
+*.wmv
+*.webm
+
+# Image files
 *.jpg
 *.jpeg
 *.png
-*.mp4
-*.avi
+*.gif
+*.bmp
+*.tiff
+*.webp
+
+# Audio files
+*.mp3
+*.wav
+*.flac
+*.aac
+
+# Exclude specific directories
+recordings/
 detections/
+input_videos/
+output_images/
+output_videos/
+cropped_images/
+datasets/
+train/videos/*
+train/dataset/images/*
+
+# =============================================================================
+# Logs & Monitoring
+# =============================================================================
+# Log files
 *.log
+logs/
+log/
+app.log
+*.log.*
+*.out
+*.err
+
+# System monitoring
+prometheus_data/
+grafana_data/
+
+# =============================================================================
+# Development Tools
+# =============================================================================
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# =============================================================================
+# Web & Frontend
+# =============================================================================
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn/
+
+# Frontend build files
+dist/
+build/
+*.bundle.js
+*.bundle.css
+
+# =============================================================================
+# System & OS
+# =============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# =============================================================================
+# Docker & Containers
+# =============================================================================
+docker-compose.override.yml
+.dockerignore
+
+# =============================================================================
+# Backup & Temporary Files
+# =============================================================================
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+*.tmp
+*.temp
+temp_*
+.tmp/
+tmp/
+
+# =============================================================================
+# Security & Sensitive Data
+# =============================================================================
+# SSH keys
+*.pem
+*.key
+*.crt
+*.cert
+id_rsa*
+id_ed25519*
+
+# SSL certificates
+*.p12
+*.pfx
+
+# API keys and tokens
+.secrets
+api_keys.txt
+tokens.txt
+
+# Authentication and session data
+sessions/
+auth_tokens/
+jwt_keys/
+user_data/
+*.session
+
+# Claude AI files (may contain context)
+.claude/
+
+# =============================================================================
+# Project Specific Exclusions
+# =============================================================================
+# Temporary stream files
+temp_stream.mp4
+
+# Claude AI files
+.claude
+
+# Test output
+tests/output/
+
+# Coverage reports
+htmlcov/
+
+# Specific camera recordings (keep structure, ignore content)
+recordings/camera_*/

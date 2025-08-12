@@ -11,15 +11,17 @@ from pathlib import Path
 def main():
     print("🚀 Starting License Plate Recognition System...")
     
-    # Check if database schema needs updating
-    db_path = Path("data/license_plates.db")
-    if db_path.exists():
-        print("📊 Checking database schema...")
-        result = subprocess.run([sys.executable, "update_database_schema.py"], 
-                              capture_output=True, text=True)
-        if result.returncode != 0:
-            print("❌ Database update failed. Please check the error.")
-            return 1
+    # Check and apply pending database migrations
+    print("📊 Checking database migrations...")
+    result = subprocess.run([sys.executable, "migrate.py", "upgrade"], 
+                          capture_output=True, text=True)
+    if result.returncode != 0:
+        print("❌ Database migration failed. Please check the error.")
+        if result.stderr:
+            print(f"Error: {result.stderr}")
+        return 1
+    else:
+        print("✅ Database migrations up to date")
     
     # Use the detached start script
     print("🔄 Starting all services...")

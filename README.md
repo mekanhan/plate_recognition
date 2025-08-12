@@ -2,19 +2,40 @@
 
 A comprehensive License Plate Recognition (LPR) system with 24/7 recording capabilities, real-time detection, and web-based management interface.
 
+## ⚡ Initial Setup
+
+### 1. **Environment Configuration**
+```bash
+# Copy environment template
+cp .env.sample .env
+# Edit .env with your settings
+```
+
+### 2. **Download Required Models**
+```bash
+# Download all YOLO models (required for detection)
+python3 scripts/download_models.py
+
+# Or download specific models only
+python3 scripts/download_models.py --model yolov8m.pt
+
+# List available models
+python3 scripts/download_models.py --list
+```
+
 ## 🚀 Quick Start
 
-The easiest way to start the entire system:
+After setup, start the entire system:
 
 ```bash
-cd /home/mekanhan/github/learning/plate_recognition
 python3 start_lpr.py
 ```
 
 This single command will:
 - ✅ Check database schema
-- ✅ Start all three services
+- ✅ Start all three services  
 - ✅ Show you the access URLs
+- ✅ Validate model files are present
 
 ## 📋 System Components
 

@@ -2,7 +2,7 @@
 FastAPI Backend
 IMPORTANT: This serves data and snapshots, NOT video streams!
 """
-from fastapi import FastAPI, HTTPException, Query, Body
+from fastapi import FastAPI, HTTPException, Query, Body, Depends
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -32,6 +32,25 @@ try:
     from .camera_endpoints import router as camera_router, init_camera_api
 except ImportError:
     from api.camera_endpoints import router as camera_router, init_camera_api
+
+# Import authentication system  
+from auth.endpoints import auth_router, users_router
+from auth.dependencies import (
+    get_current_user, get_optional_user, require_admin, require_operator,
+    require_camera_view, require_camera_manage, require_detection_view,
+    require_recording_view, require_system_config
+)
+from auth.models import User
+
+# Import monitoring system
+from monitoring.endpoints import monitoring_router, periodic_metrics_update
+from monitoring.middleware import setup_monitoring_middleware
+from monitoring.metrics import metrics
+from monitoring.health import health_monitor
+
+# Import analytics system
+from analytics.endpoints import analytics_router
+from analytics import initialize_analytics_system
 
 # Pydantic models for API requests
 class CameraCreate(BaseModel):
@@ -211,6 +230,19 @@ async def lifespan(app: FastAPI):
     # Load camera configurations
     await load_cameras()
     
+    # Initialize authentication system
+    try:
+        from auth import initialize_auth_system
+        initialize_auth_system()
+    except Exception as e:
+        logging.error(f"Failed to initialize Authentication system: {e}")
+    
+    # Initialize analytics system
+    try:
+        initialize_analytics_system()
+    except Exception as e:
+        logging.error(f"Failed to initialize Analytics system: {e}")
+    
     # Initialize camera API (database-driven)
     try:
         await init_camera_api()
@@ -219,6 +251,16 @@ async def lifespan(app: FastAPI):
     
     # Start processing loop
     asyncio.create_task(processing_loop())
+    
+    # Start monitoring tasks
+    asyncio.create_task(periodic_metrics_update())
+    
+    # Initialize metrics with system info
+    try:
+        metrics.update_system_info("1.0.0", "web_ui", False)  # You'd get these dynamically
+        logging.info("Monitoring system initialized")
+    except Exception as e:
+        logging.error(f"Failed to initialize monitoring: {e}")
     
     logging.info("LPR System started successfully")
     
@@ -246,7 +288,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include the new database-driven camera management API
+# Setup monitoring middleware
+setup_monitoring_middleware(app)
+
+# Include routers
+app.include_router(auth_router, prefix="/api")
+app.include_router(users_router, prefix="/api") 
+app.include_router(monitoring_router)
+app.include_router(analytics_router)
 app.include_router(camera_router, prefix="/v2")
 
 # Mount static files for images
@@ -313,7 +362,19 @@ async def processing_loop():
                     frame = camera.get_frame()
                     if frame is not None:
                         # Process for detections
+                        start_time = time.time()
                         detections = await pipeline.process_frame(camera_id, frame)
+                        processing_time = time.time() - start_time
+                        
+                        # Record processing metrics
+                        for detection in detections:
+                            metrics.record_detection(
+                                camera_id=detection.camera_id,
+                                vehicle_type=detection.vehicle_type or "unknown",
+                                confidence=detection.confidence,
+                                ocr_confidence=detection.ocr_confidence or 0.0,
+                                processing_time=processing_time
+                            )
                         
                         # Save detections to database with deduplication fields
                         for detection in detections:
@@ -340,6 +401,8 @@ async def processing_loop():
                 else:
                     # Update camera status to offline when unhealthy
                     await db.update_camera_status(camera_id, "offline")
+                    # Record camera error
+                    metrics.record_camera_error(camera_id, "unhealthy")
             
             await asyncio.sleep(0.1)  # Process at 10 FPS
             
@@ -1008,6 +1071,7 @@ async def get_recent_detections(
 
 @app.get("/api/detections/search")
 async def search_detections(
+    current_user: User = Depends(require_detection_view),
     plate: Optional[str] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,

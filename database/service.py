@@ -74,27 +74,208 @@ class DatabaseService:
                                start_date: Optional[datetime] = None,
                                end_date: Optional[datetime] = None,
                                camera_id: Optional[str] = None,
-                               limit: int = 100) -> List[Detection]:
-        """Search detections by criteria"""
+                               min_confidence: Optional[float] = None,
+                               vehicle_type: Optional[str] = None,
+                               limit: int = 100,
+                               offset: int = 0) -> List[Detection]:
+        """Search detections by criteria with enhanced filtering"""
         async with self.async_session() as session:
             query = select(Detection).order_by(desc(Detection.detected_at))
             
             conditions = []
             if plate_text:
-                conditions.append(Detection.plate_text.like(f"%{plate_text}%"))
+                # Support both exact match and fuzzy search
+                if plate_text.startswith('"') and plate_text.endswith('"'):
+                    # Exact match
+                    exact_plate = plate_text.strip('"')
+                    conditions.append(Detection.plate_text == exact_plate)
+                else:
+                    # Fuzzy search
+                    conditions.append(Detection.plate_text.like(f"%{plate_text}%"))
             if start_date:
                 conditions.append(Detection.detected_at >= start_date)
             if end_date:
                 conditions.append(Detection.detected_at <= end_date)
             if camera_id:
                 conditions.append(Detection.camera_id == camera_id)
+            if min_confidence is not None:
+                conditions.append(Detection.confidence >= min_confidence)
+            if vehicle_type:
+                conditions.append(Detection.vehicle_type.like(f"%{vehicle_type}%"))
             
             if conditions:
                 query = query.where(and_(*conditions))
             
+            query = query.offset(offset).limit(limit)
+            result = await session.execute(query)
+            return result.scalars().all()
+    
+    async def get_search_count(self,
+                              plate_text: Optional[str] = None,
+                              start_date: Optional[datetime] = None,
+                              end_date: Optional[datetime] = None,
+                              camera_id: Optional[str] = None,
+                              min_confidence: Optional[float] = None,
+                              vehicle_type: Optional[str] = None) -> int:
+        """Get count of detections matching search criteria"""
+        async with self.async_session() as session:
+            query = select(func.count(Detection.id))
+            
+            conditions = []
+            if plate_text:
+                if plate_text.startswith('"') and plate_text.endswith('"'):
+                    exact_plate = plate_text.strip('"')
+                    conditions.append(Detection.plate_text == exact_plate)
+                else:
+                    conditions.append(Detection.plate_text.like(f"%{plate_text}%"))
+            if start_date:
+                conditions.append(Detection.detected_at >= start_date)
+            if end_date:
+                conditions.append(Detection.detected_at <= end_date)
+            if camera_id:
+                conditions.append(Detection.camera_id == camera_id)
+            if min_confidence is not None:
+                conditions.append(Detection.confidence >= min_confidence)
+            if vehicle_type:
+                conditions.append(Detection.vehicle_type.like(f"%{vehicle_type}%"))
+            
+            if conditions:
+                query = query.where(and_(*conditions))
+            
+            result = await session.execute(query)
+            return result.scalar() or 0
+    
+    async def get_similar_plates(self, plate_text: str, limit: int = 10) -> List[Detection]:
+        """Find plates similar to the given text using fuzzy matching"""
+        async with self.async_session() as session:
+            # Simple similarity: plates that share most characters
+            similar_conditions = []
+            
+            # Remove common characters for pattern matching
+            base_chars = set(plate_text.upper())
+            
+            # Find plates with similar character sets
+            query = select(Detection).order_by(desc(Detection.detected_at))
+            
+            # Look for plates with similar length and characters
+            length_tolerance = 2
+            min_length = max(1, len(plate_text) - length_tolerance)
+            max_length = len(plate_text) + length_tolerance
+            
+            similar_conditions.append(
+                func.length(Detection.plate_text).between(min_length, max_length)
+            )
+            
+            # Add wildcard patterns for partial matches
+            for i in range(len(plate_text)):
+                if i < len(plate_text) - 1:
+                    pattern = plate_text[:i] + '%' + plate_text[i+1:]
+                    similar_conditions.append(Detection.plate_text.like(pattern))
+            
+            if similar_conditions:
+                # Use OR condition for similarity matching
+                from sqlalchemy import or_
+                query = query.where(or_(*similar_conditions))
+            
             query = query.limit(limit)
             result = await session.execute(query)
             return result.scalars().all()
+    
+    async def get_plate_history(self, plate_text: str, days: int = 30) -> List[Detection]:
+        """Get complete history for a specific plate"""
+        async with self.async_session() as session:
+            start_date = datetime.now() - timedelta(days=days)
+            
+            query = select(Detection).where(
+                and_(
+                    Detection.plate_text == plate_text.upper(),
+                    Detection.detected_at >= start_date
+                )
+            ).order_by(desc(Detection.detected_at))
+            
+            result = await session.execute(query)
+            return result.scalars().all()
+    
+    async def get_detection_stats(self, 
+                                 start_date: Optional[datetime] = None,
+                                 end_date: Optional[datetime] = None) -> Dict[str, Any]:
+        """Get detection statistics for the given time period"""
+        async with self.async_session() as session:
+            query = select(Detection)
+            
+            conditions = []
+            if start_date:
+                conditions.append(Detection.detected_at >= start_date)
+            if end_date:
+                conditions.append(Detection.detected_at <= end_date)
+            
+            if conditions:
+                query = query.where(and_(*conditions))
+            
+            result = await session.execute(query)
+            detections = result.scalars().all()
+            
+            if not detections:
+                return {
+                    "total_detections": 0,
+                    "unique_plates": 0,
+                    "avg_confidence": 0.0,
+                    "top_cameras": [],
+                    "vehicle_types": {},
+                    "hourly_distribution": {},
+                    "confidence_distribution": {}
+                }
+            
+            # Calculate statistics
+            unique_plates = set(d.plate_text for d in detections)
+            avg_confidence = sum(d.confidence for d in detections) / len(detections)
+            
+            # Camera statistics
+            camera_counts = {}
+            for d in detections:
+                camera_counts[d.camera_id] = camera_counts.get(d.camera_id, 0) + 1
+            top_cameras = sorted(camera_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            
+            # Vehicle type distribution
+            vehicle_types = {}
+            for d in detections:
+                if d.vehicle_type:
+                    vehicle_types[d.vehicle_type] = vehicle_types.get(d.vehicle_type, 0) + 1
+            
+            # Hourly distribution
+            hourly_dist = {}
+            for d in detections:
+                hour = d.detected_at.hour
+                hourly_dist[hour] = hourly_dist.get(hour, 0) + 1
+            
+            # Confidence distribution
+            confidence_ranges = {
+                "high (>80%)": 0,
+                "medium (50-80%)": 0,
+                "low (<50%)": 0
+            }
+            
+            for d in detections:
+                if d.confidence > 0.8:
+                    confidence_ranges["high (>80%)"] += 1
+                elif d.confidence > 0.5:
+                    confidence_ranges["medium (50-80%)"] += 1
+                else:
+                    confidence_ranges["low (<50%)"] += 1
+            
+            return {
+                "total_detections": len(detections),
+                "unique_plates": len(unique_plates),
+                "avg_confidence": round(avg_confidence, 3),
+                "top_cameras": top_cameras,
+                "vehicle_types": vehicle_types,
+                "hourly_distribution": hourly_dist,
+                "confidence_distribution": confidence_ranges,
+                "date_range": {
+                    "start": min(d.detected_at for d in detections).isoformat(),
+                    "end": max(d.detected_at for d in detections).isoformat()
+                }
+            }
     
     async def add_camera(self, camera_data: Dict) -> str:
         """Add a new camera"""

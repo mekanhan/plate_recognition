@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 import asyncio
 import logging
 from typing import Optional, List, Dict, Any
+from difflib import SequenceMatcher
 from contextlib import asynccontextmanager
 
 # Configure logging
@@ -1011,16 +1012,81 @@ async def search_detections(
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
     camera_id: Optional[str] = None,
-    limit: int = Query(100, ge=1, le=500)
+    min_confidence: Optional[float] = Query(None, ge=0.0, le=1.0),
+    vehicle_type: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    include_count: bool = Query(False)
 ):
-    """Search detections by criteria"""
+    """Enhanced search detections with advanced filtering and pagination"""
     detections = await db.search_detections(
         plate_text=plate,
         start_date=start_date,
         end_date=end_date,
         camera_id=camera_id,
-        limit=limit
+        min_confidence=min_confidence,
+        vehicle_type=vehicle_type,
+        limit=limit,
+        offset=offset
     )
+    
+    results = [{
+        "id": d.id,
+        "camera_id": d.camera_id,
+        "plate_text": d.plate_text,
+        "confidence": d.confidence,
+        "vehicle_type": d.vehicle_type,
+        "detected_at": d.detected_at.isoformat(),
+        "plate_image": f"/images/plates/{os.path.basename(d.plate_image_path)}" if d.plate_image_path else None,
+        "frame_image": f"/images/frames/{os.path.basename(d.frame_path)}" if d.frame_path else None
+    } for d in detections]
+    
+    if include_count:
+        total_count = await db.get_search_count(
+            plate_text=plate,
+            start_date=start_date,
+            end_date=end_date,
+            camera_id=camera_id,
+            min_confidence=min_confidence,
+            vehicle_type=vehicle_type
+        )
+        
+        return {
+            "results": results,
+            "pagination": {
+                "total_count": total_count,
+                "limit": limit,
+                "offset": offset,
+                "has_more": (offset + len(results)) < total_count
+            }
+        }
+    
+    return results
+
+@app.get("/api/detections/similar/{plate_text}")
+async def get_similar_plates(plate_text: str, limit: int = Query(10, ge=1, le=50)):
+    """Find plates similar to the given text"""
+    similar_detections = await db.get_similar_plates(plate_text, limit)
+    
+    return [{
+        "id": d.id,
+        "camera_id": d.camera_id,
+        "plate_text": d.plate_text,
+        "confidence": d.confidence,
+        "vehicle_type": d.vehicle_type,
+        "detected_at": d.detected_at.isoformat(),
+        "plate_image": f"/images/plates/{os.path.basename(d.plate_image_path)}" if d.plate_image_path else None,
+        "frame_image": f"/images/frames/{os.path.basename(d.frame_path)}" if d.frame_path else None,
+        "similarity_score": _calculate_similarity_score(plate_text, d.plate_text)
+    } for d in similar_detections]
+
+@app.get("/api/detections/history/{plate_text}")
+async def get_plate_history(
+    plate_text: str,
+    days: int = Query(30, ge=1, le=365)
+):
+    """Get complete history for a specific plate number"""
+    history = await db.get_plate_history(plate_text, days)
     
     return [{
         "id": d.id,
@@ -1031,7 +1097,39 @@ async def search_detections(
         "detected_at": d.detected_at.isoformat(),
         "plate_image": f"/images/plates/{os.path.basename(d.plate_image_path)}" if d.plate_image_path else None,
         "frame_image": f"/images/frames/{os.path.basename(d.frame_path)}" if d.frame_path else None
-    } for d in detections]
+    } for d in history]
+
+@app.get("/api/detections/stats")
+async def get_detection_statistics(
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None
+):
+    """Get detection statistics for analysis"""
+    stats = await db.get_detection_stats(start_date, end_date)
+    return stats
+
+def _calculate_similarity_score(target: str, candidate: str) -> float:
+    """Calculate simple similarity score between two plate texts"""
+    if not target or not candidate:
+        return 0.0
+    
+    target = target.upper()
+    candidate = candidate.upper()
+    
+    if target == candidate:
+        return 1.0
+    
+    # Simple character-based similarity
+    target_chars = set(target)
+    candidate_chars = set(candidate)
+    
+    if not target_chars or not candidate_chars:
+        return 0.0
+    
+    intersection = len(target_chars & candidate_chars)
+    union = len(target_chars | candidate_chars)
+    
+    return intersection / union if union > 0 else 0.0
 
 @app.get("/api/detections/{detection_id}")
 async def get_detection(detection_id: str):

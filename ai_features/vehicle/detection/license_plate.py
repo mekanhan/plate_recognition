@@ -13,6 +13,8 @@ import re
 
 from ...core.base_model import BaseAIModel
 from ...core.types import PlateInfo, VehicleInfo
+from ..ocr.enhanced_ocr import EnhancedOCRProcessor
+from ..ocr.plate_validator import PlateRegion
 
 
 class LicensePlateModel(BaseAIModel):
@@ -50,7 +52,7 @@ class LicensePlateModel(BaseAIModel):
         self.plate_pattern = re.compile(r'^[A-Z0-9\s\-]{4,8}$')
     
     def _load_model(self):
-        """Load YOLO models and OCR reader"""
+        """Load YOLO models and enhanced OCR processor"""
         models = {}
         
         # Load vehicle detection model
@@ -66,14 +68,19 @@ class LicensePlateModel(BaseAIModel):
             self.logger.warning(f"Plate model not found at {plate_model_full_path}, using vehicle model")
             models['plate'] = models['vehicle']
         
-        # Initialize OCR reader
-        self.logger.info("Initializing EasyOCR reader")
-        models['ocr'] = easyocr.Reader(['en'], gpu=(self.device == "cuda"))
+        # Initialize enhanced OCR processor
+        self.logger.info("Initializing Enhanced OCR processor")
+        gpu_enabled = (self.device == "cuda")
+        models['ocr'] = EnhancedOCRProcessor(languages=['en'], gpu_enabled=gpu_enabled)
+        
+        # Keep legacy OCR reader for backward compatibility
+        models['legacy_ocr'] = easyocr.Reader(['en'], gpu=gpu_enabled)
         
         # Store models
         self.vehicle_model = models['vehicle']
         self.plate_model = models['plate']
-        self.ocr_reader = models['ocr']
+        self.ocr_processor = models['ocr']  # New enhanced OCR
+        self.ocr_reader = models['legacy_ocr']  # Legacy compatibility
         
         return models
     
@@ -231,7 +238,7 @@ class LicensePlateModel(BaseAIModel):
         return plates
     
     def read_plate(self, frame: np.ndarray, plate_bbox: List[int]) -> Tuple[str, float]:
-        """Read license plate text using OCR with multiple attempts"""
+        """Read license plate text using enhanced OCR with validation"""
         x1, y1, x2, y2 = plate_bbox
         
         # Extract plate region with some padding
@@ -246,10 +253,38 @@ class LicensePlateModel(BaseAIModel):
         if plate_image.size == 0:
             return "", 0.0
         
-        # Try OCR with multiple preprocessing approaches
+        # Use enhanced OCR processor if available
+        if hasattr(self, 'ocr_processor') and self.ocr_processor:
+            result = self.ocr_processor.process_plate(
+                plate_image, 
+                camera_id=None,
+                region=PlateRegion.US
+            )
+            
+            # First check if we got raw text from enhanced OCR
+            raw_text = result.get('raw_text', '')
+            
+            if result['is_valid']:
+                # Valid result from enhanced OCR
+                return result['plate_text'], result['ocr_confidence']
+            elif raw_text and not self._is_state_name(raw_text):
+                # Enhanced OCR extracted text but validation failed
+                # Still use it if it's not a state name
+                self.logger.debug(f"Using raw enhanced OCR text despite validation: {raw_text}")
+                return raw_text.upper().strip(), result.get('ocr_confidence', 0.5)
+            else:
+                # Log why it failed for debugging
+                self.logger.debug(f"Enhanced OCR failed: {result.get('validation_issues', [])}")
+        
+        # Fallback to legacy OCR method only if enhanced completely failed
         best_text, best_confidence = self._multi_ocr_attempt(plate_image)
         
-        # Validate plate format
+        # IMPORTANT: Filter out state names even from legacy OCR
+        if self._is_state_name(best_text):
+            self.logger.debug(f"Filtered out state name from legacy OCR: {best_text}")
+            return "", 0.0
+        
+        # Validate plate format using legacy validation
         if self._validate_plate_text(best_text):
             return best_text.upper().strip(), best_confidence
         
@@ -278,8 +313,46 @@ class LicensePlateModel(BaseAIModel):
                 
                 results = self.ocr_reader.readtext(processed_image)
                 
+                # Priority-based text selection (prioritize larger text and actual plate patterns)
+                candidates = []
                 for (bbox, text, confidence) in results:
-                    if confidence > best_confidence and len(text) >= 4:
+                    if confidence > 0.1 and len(text) >= 3:
+                        # Calculate text size
+                        text_area = self._calculate_text_area(bbox)
+                        
+                        # Check if it looks like a plate number vs state name
+                        is_state_name = self._is_state_name(text)
+                        
+                        # Skip state names entirely in legacy OCR
+                        if is_state_name:
+                            self.logger.debug(f"Skipping state name in legacy OCR: {text}")
+                            continue
+                        
+                        # Calculate priority score for non-state text
+                        priority_score = confidence
+                        
+                        # Bonus for mixed alphanumeric (typical plates)
+                        has_letters = any(c.isalpha() for c in text)
+                        has_numbers = any(c.isdigit() for c in text)
+                        if has_letters and has_numbers:
+                            priority_score *= 2.5  # Strong preference for mixed
+                        
+                        if text_area > 1000:  # Larger text gets bonus
+                            priority_score *= 1.5
+                        
+                        # Length preference (ideal plate length)
+                        if 5 <= len(text) <= 7:
+                            priority_score *= 1.2
+                        
+                        candidates.append((text, confidence, priority_score))
+                
+                # Select best candidate by priority score
+                if candidates:
+                    candidates.sort(key=lambda x: x[2], reverse=True)
+                    text, confidence, _ = candidates[0]
+                    
+                    # Double-check it's not a state name (extra safety)
+                    if not self._is_state_name(text) and confidence > best_confidence:
                         best_text = text
                         best_confidence = confidence
                         
@@ -288,6 +361,42 @@ class LicensePlateModel(BaseAIModel):
                 continue
         
         return best_text, best_confidence
+    
+    def _calculate_text_area(self, bbox) -> float:
+        """Calculate area of bounding box for text size estimation"""
+        try:
+            if len(bbox) == 4 and len(bbox[0]) == 2:
+                # Format: [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+                x_coords = [point[0] for point in bbox]
+                y_coords = [point[1] for point in bbox]
+                width = max(x_coords) - min(x_coords)
+                height = max(y_coords) - min(y_coords)
+                return width * height
+        except:
+            pass
+        return 0.0
+    
+    def _is_state_name(self, text: str) -> bool:
+        """Check if text is likely a state name rather than license plate number"""
+        state_names = {
+            'TEXAS', 'CALIFORNIA', 'FLORIDA', 'NEWYORK', 'NEW YORK', 'ILLINOIS', 'OHIO',
+            'GEORGIA', 'MICHIGAN', 'PENNSYLVANIA', 'VIRGINIA', 'WASHINGTON',
+            'ARIZONA', 'MASSACHUSETTS', 'TENNESSEE', 'INDIANA', 'MISSOURI',
+            'MARYLAND', 'WISCONSIN', 'MINNESOTA', 'COLORADO', 'ALABAMA',
+            'SOUTHCAROLINA', 'LOUISIANA', 'KENTUCKY', 'OREGON', 'OKLAHOMA',
+            'CONNECTICUT', 'IOWA', 'ARKANSAS', 'UTAH', 'NEVADA', 'NEWMEXICO',
+            'WESTVIRGINIA', 'NEBRASKA', 'IDAHO', 'HAWAII', 'NEWHAMPSHIRE',
+            'MAINE', 'MONTANA', 'RHODEISLAND', 'DELAWARE', 'SOUTHDAKOTA',
+            'NORTHDAKOTA', 'ALASKA', 'VERMONT', 'WYOMING',
+            'STATE', 'USA', 'AMERICA', 'COUNTY', 'EXEMPT', 'DEALER',
+            'VETERAN', 'DISABLED', 'GOVT', 'POLICE', 'FIRE', 'CITY',
+            # Common misreads of TEXAS
+            'TEAXS', 'TEXSA', 'TXEAS', 'TESAS', 'TEBAS', 'TEKXAS',
+            # Other noise words
+            'PLATE', 'LICENSE', 'VEHICLE', 'AUTO', 'MOTOR'
+        }
+        clean_text = text.upper().replace(' ', '').strip()
+        return clean_text in {s.replace(' ', '') for s in state_names}
     
     def _enhance_contrast(self, image: np.ndarray) -> np.ndarray:
         """Enhance image contrast for better OCR"""

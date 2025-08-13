@@ -7,6 +7,7 @@ import threading
 import queue
 import time
 import logging
+import os
 from dataclasses import dataclass
 from typing import Optional, Dict, List
 import numpy as np
@@ -205,8 +206,6 @@ class CameraStream:
                 return False
             
             # Enhanced RTSP/HTTP connection setup
-            import os
-            
             if self.config.protocol == "rtsp":
                 # Optimized RTSP transport options
                 ffmpeg_options = [

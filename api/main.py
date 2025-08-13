@@ -252,6 +252,9 @@ async def lifespan(app: FastAPI):
     # Start processing loop
     asyncio.create_task(processing_loop())
     
+    # Start camera recovery task
+    asyncio.create_task(camera_recovery_task())
+    
     # Start monitoring tasks
     asyncio.create_task(periodic_metrics_update())
     
@@ -318,6 +321,7 @@ async def load_cameras():
                     username=camera.username or "admin",
                     password=camera.password or "",
                     port=camera.port or 554,
+                    protocol=camera.connection_type or "rtsp",
                     stream_path=camera.stream_path or "/stream",
                     location=camera.location or "Unknown"
                 )
@@ -347,6 +351,30 @@ async def reload_cameras():
     except Exception as e:
         logging.error(f"Failed to reload cameras: {e}")
         return False
+
+# PERIODIC CAMERA RECOVERY TASK
+async def camera_recovery_task():
+    """Periodic task to recover offline cameras"""
+    while True:
+        try:
+            await asyncio.sleep(300)  # Run every 5 minutes
+            
+            # Get all offline cameras
+            offline_cameras = await db.get_cameras_by_status("offline")
+            
+            for camera in offline_cameras:
+                camera_id = camera.camera_id
+                logging.info(f"Attempting recovery for offline camera: {camera_id}")
+                
+                # Try to restart the camera
+                if camera_manager.restart_camera(camera_id):
+                    await db.update_camera_status(camera_id, "active")
+                    logging.info(f"Successfully recovered offline camera: {camera_id}")
+                else:
+                    logging.warning(f"Failed to recover offline camera: {camera_id}")
+                    
+        except Exception as e:
+            logging.error(f"Camera recovery task error: {e}")
 
 async def processing_loop():
     """Main processing loop - runs continuously"""
@@ -399,10 +427,26 @@ async def processing_loop():
                             }
                             await db.save_detection(detection_data)
                 else:
-                    # Update camera status to offline when unhealthy
-                    await db.update_camera_status(camera_id, "offline")
-                    # Record camera error
-                    metrics.record_camera_error(camera_id, "unhealthy")
+                    # Only attempt recovery if we haven't tried recently (throttle to prevent spam)
+                    current_time = time.time()
+                    last_recovery_key = f"last_recovery_{camera_id}"
+                    
+                    if not hasattr(processing_loop, last_recovery_key) or \
+                       current_time - getattr(processing_loop, last_recovery_key, 0) > 60:  # 1 minute throttle
+                        
+                        setattr(processing_loop, last_recovery_key, current_time)
+                        recovery_success = camera_manager.restart_camera(camera_id)
+                        if recovery_success:
+                            logging.info(f"Successfully recovered camera {camera_id}")
+                            await db.update_camera_status(camera_id, "active")
+                        else:
+                            # Update camera status to offline when unhealthy and recovery fails
+                            await db.update_camera_status(camera_id, "offline")
+                            # Record camera error
+                            metrics.record_camera_error(camera_id, "unhealthy")
+                    else:
+                        # Skip recovery attempt, too soon since last try
+                        pass
             
             await asyncio.sleep(0.1)  # Process at 10 FPS
             

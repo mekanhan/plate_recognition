@@ -25,6 +25,41 @@ Before implementing ANY solution, Claude must ask these questions:
 - **Real-time status display** (not database status)
 - **Remove barriers, don't add them**
 
+## Implementation Testing Requirements
+
+**MANDATORY**: After implementing ANY code changes, Claude MUST verify all fixes work completely before claiming success.
+
+### Testing Protocol
+
+1. **Code Validation**
+   - Fix all syntax errors and missing imports
+   - Restart affected services completely
+   - Verify no error messages in logs
+
+2. **Endpoint Testing**
+   - Test all modified API endpoints with curl
+   - Verify JSON responses are valid
+   - Check error handling works properly
+
+3. **System Integration**
+   - Run `python3 check_services.py` to verify all services healthy
+   - Check service logs for stability (minimum 5 minutes)
+   - Confirm no recurring errors or spam
+
+4. **Functional Verification**
+   - Test actual functionality (not just API responses)
+   - Verify database operations work
+   - Confirm user-facing features operate correctly
+
+### Never Claim Success Unless:
+- ✅ All services start without errors
+- ✅ All endpoints return valid responses  
+- ✅ System runs stably for 5+ minutes
+- ✅ Logs show no recurring errors
+- ✅ User-requested functionality actually works
+
+**If ANY test fails, continue debugging until ALL tests pass.**
+
 ## Documentation-First Implementation Protocol
 
 Before implementing ANY code changes, Claude MUST:

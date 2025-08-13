@@ -515,13 +515,15 @@ class FFmpegRecordingManager:
                 await asyncio.sleep(check_interval)
     
     async def _get_enabled_cameras(self) -> List[Dict]:
-        """Get enabled cameras from database"""
+        """Get enabled cameras from database (includes offline cameras for recovery)"""
         cameras = []
         
         try:
             async with self.db_service.async_session() as session:
+                # Load ALL cameras except those explicitly marked as 'inactive'
+                # This allows offline cameras to be recovered automatically
                 result = await session.execute(
-                    Camera.__table__.select().where(Camera.status == 'active')
+                    Camera.__table__.select().where(Camera.status != 'inactive')
                 )
                 
                 for row in result.fetchall():
@@ -533,12 +535,18 @@ class FFmpegRecordingManager:
                         'username': row.username,
                         'password': row.password,
                         'stream_path': row.stream_path,
+                        'connection_type': row.connection_type or 'rtsp',
+                        'database_status': row.status,  # Track original status
                     }
                     cameras.append(camera_config)
+                    
+                    # Log camera discovery for debugging
+                    logger.info(f"Discovered camera: {row.name} ({row.camera_id}) - Status: {row.status}")
                     
         except Exception as e:
             logger.error(f"Error loading cameras from database: {e}")
         
+        logger.info(f"Found {len(cameras)} cameras for recording (including offline cameras for recovery)")
         return cameras
     
     def get_status(self) -> Dict:
@@ -551,6 +559,18 @@ class FFmpegRecordingManager:
                 for camera_id, recorder in self.recorders.items()
             }
         }
+
+    async def get_camera_status(self, camera_id: str) -> Optional[Dict]:
+        """Get status for a specific camera"""
+        if camera_id in self.recorders:
+            recorder = self.recorders[camera_id]
+            return {
+                'camera_id': camera_id,
+                'is_recording': recorder.is_recording,
+                'status': 'active' if recorder.is_recording else 'inactive',
+                'recording_details': recorder.get_status()
+            }
+        return None
     
     async def reload_cameras(self) -> bool:
         """Reload cameras from database (hot reload)"""

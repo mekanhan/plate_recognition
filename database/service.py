@@ -341,6 +341,14 @@ class DatabaseService:
                 camera.status = status
                 camera.updated_at = datetime.utcnow()
                 await session.commit()
+
+    async def get_cameras_by_status(self, status: str) -> List[Camera]:
+        """Get all cameras with a specific status"""
+        async with self.async_session() as session:
+            result = await session.execute(
+                select(Camera).where(Camera.status == status)
+            )
+            return result.scalars().all()
     
     async def update_camera_test_result(self, camera_id: str, test_result: str):
         """Update camera test result"""

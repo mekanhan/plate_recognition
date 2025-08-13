@@ -702,7 +702,7 @@ class Cameras {
         // Clean up existing player first
         // Display snapshot instead of video player
         container.innerHTML = `
-            <img src="/api/cameras/${camera.id}/snapshot" 
+            <img src="http://localhost:8001/api/cameras/${camera.id}/snapshot" 
                  alt="${camera.display_name || camera.name} snapshot" 
                  class="camera-snapshot"
                  onerror="this.src='/images/camera-placeholder.jpg'"
@@ -1529,7 +1529,7 @@ class Cameras {
                     <button class="close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
                 </div>
                 <div class="snapshot-modal-body">
-                    <img src="/api/cameras/${cameraId}/snapshot?t=${Date.now()}" 
+                    <img src="http://localhost:8001/api/cameras/${cameraId}/snapshot?t=${Date.now()}" 
                          alt="${camera.display_name || camera.name} snapshot" 
                          style="max-width: 100%; height: auto;">
                 </div>
@@ -1540,7 +1540,7 @@ class Cameras {
         // Auto-refresh snapshot every 5 seconds
         const img = modal.querySelector('img');
         const refreshInterval = setInterval(() => {
-            img.src = `/api/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+            img.src = `http://localhost:8001/api/cameras/${cameraId}/snapshot?t=${Date.now()}`;
         }, 5000);
         
         // Clean up interval when modal is closed
@@ -1557,7 +1557,7 @@ class Cameras {
         const snapshotImg = document.querySelector(`[data-camera-id="${cameraId}"] .camera-snapshot`);
         if (snapshotImg) {
             try {
-                snapshotImg.src = `/api/cameras/${cameraId}/snapshot?t=${Date.now()}`;
+                snapshotImg.src = `http://localhost:8001/api/cameras/${cameraId}/snapshot?t=${Date.now()}`;
                 this.showToast('Snapshot refreshed', 'success');
             } catch (error) {
                 this.showToast(`Failed to refresh snapshot: ${error.message}`, 'error');

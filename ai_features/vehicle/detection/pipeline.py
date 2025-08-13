@@ -18,6 +18,7 @@ from .license_plate import LicensePlateModel
 from ...core.storage_manager import StorageManager
 from ...core.deduplication import DeduplicationManager, DetectionRecord
 from ...core.object_tracker import SimpleObjectTracker
+from ...core.quality_metrics import QualityMetrics
 
 
 class EnhancedProcessingPipeline:
@@ -36,10 +37,15 @@ class EnhancedProcessingPipeline:
         self.storage_manager = StorageManager(config.get('storage_manager'))
         self.dedup_manager = DeduplicationManager(config.get('deduplication'))
         self.object_tracker = SimpleObjectTracker(config.get('object_tracking'))
+        self.quality_metrics = QualityMetrics()
         
         # Performance tracking
         self.total_frames_processed = 0
         self.average_processing_time = 0.0
+        self.quality_stats = {'total_detections': 0, 'quality_distribution': {}}
+        
+        # Minimum quality threshold for processing (configurable)
+        self.min_quality_score = config.get('quality_control', {}).get('min_quality_score', 60)
         
         # Log configuration
         self.logger.info(f"Deduplication config: cooldown={config.get('deduplication', {}).get('cooldown_minutes', 30)}min, "
@@ -118,13 +124,19 @@ class EnhancedProcessingPipeline:
             
             self.logger.info(f"Processing plate {i+1}/{len(plates)}: bbox={plate.bbox}, conf={plate.confidence:.2f}")
             
+            # Calculate POP metrics for quality assessment
+            pop_metrics = self.quality_metrics.calculate_pop_metrics(frame, plate.bbox)
+            
+            self.logger.info(f"POP metrics: {pop_metrics['total_pixels']} pixels, "
+                           f"quality={pop_metrics['quality_level']} ({pop_metrics['quality_score']:.1f}%)")
+            
             # Read plate text
             plate_text, ocr_confidence = self.lpr_model.read_plate(frame, plate.bbox)
             
             self.logger.info(f"OCR result: text='{plate_text}', conf={ocr_confidence:.2f}")
             
-            # Production-ready confidence thresholds with smart validation
-            is_valid_detection = self._validate_detection(plate_text, ocr_confidence)
+            # Enhanced validation including POP quality
+            is_valid_detection = self._validate_detection(plate_text, ocr_confidence, pop_metrics)
             
             if not is_valid_detection:
                 self.logger.info(f"Skipping invalid detection: text='{plate_text}', ocr_conf={ocr_confidence:.2f}")
@@ -205,7 +217,8 @@ class EnhancedProcessingPipeline:
                     'plate_confidence': plate.confidence,
                     'processing_version': '2.0',
                     'detection_type': 'vehicle_based' if vehicle else 'full_frame',
-                    'dedup_reason': reason
+                    'dedup_reason': reason,
+                    'pop_metrics': pop_metrics
                 }
             )
             
@@ -217,8 +230,8 @@ class EnhancedProcessingPipeline:
         
         return detections
     
-    def _validate_detection(self, plate_text: str, ocr_confidence: float) -> bool:
-        """Smart detection validation with multiple criteria"""
+    def _validate_detection(self, plate_text: str, ocr_confidence: float, pop_metrics: Dict) -> bool:
+        """Enhanced detection validation with POP quality assessment"""
         # Basic confidence threshold
         if ocr_confidence < 0.2:
             return False
@@ -233,23 +246,33 @@ class EnhancedProcessingPipeline:
         if len(clean_text) < 2:
             return False
         
+        # POP quality threshold - reject plates that are too small or low quality
+        if not pop_metrics.get('meets_minimum_quality', False):
+            self.logger.info(f"Rejected due to poor POP quality: {pop_metrics.get('quality_score', 0):.1f}%")
+            return False
+        
+        # For very high quality plates, relax OCR confidence requirements
+        if pop_metrics.get('recommended_for_ocr', False):
+            min_confidence = 0.15  # Lower threshold for high-quality plates
+        else:
+            min_confidence = 0.3   # Higher threshold for lower-quality plates
+        
         # State name detection (common US states)
         state_patterns = ['TEXAS', 'CALIFORNIA', 'FLORIDA', 'NEW YORK', 'ILLINOIS']
         if any(state in plate_text.upper() for state in state_patterns):
-            # Lower confidence threshold for state names
-            return ocr_confidence >= 0.15
+            return ocr_confidence >= min_confidence * 0.75  # Slightly lower for state names
         
         # Alphanumeric patterns (typical license plate format)
         alphanumeric_pattern = re.compile(r'^[A-Z0-9\s\-]{3,8}$')
         if alphanumeric_pattern.match(clean_text):
-            return ocr_confidence >= 0.4  # Higher confidence for license plate numbers
+            return ocr_confidence >= min_confidence * 1.2  # Higher confidence for license plate numbers
         
         # Special case: single words that might be license plates
         if len(clean_text) >= 3 and clean_text.isalnum():
-            return ocr_confidence >= 0.3
+            return ocr_confidence >= min_confidence
         
         # Default: require higher confidence for unknown patterns
-        return ocr_confidence >= 0.5
+        return ocr_confidence >= min_confidence * 1.5
     
     def _save_detection_images(self, camera_id: str, detection_id: str, frame: np.ndarray, 
                               vehicle_bbox: List[int], plate_bbox: List[int]) -> tuple:

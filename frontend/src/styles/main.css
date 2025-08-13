@@ -292,27 +292,48 @@
 /* Dashboard Grid */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 1.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
     grid-template-areas: 
         "feeds detections"
         "analytics health";
 }
 
-.camera-feeds {
+.camera-status-overview {
     grid-area: feeds;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem;
+    min-height: 350px;
 }
 
 .recent-detections {
     grid-area: detections;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem;
+    min-height: 350px;
 }
 
 .analytics-chart {
     grid-area: analytics;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem;
+    min-height: 350px;
 }
 
 .system-health {
     grid-area: health;
+    background: var(--bg-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.75rem;
+    min-height: 350px;
 }
 
 /* Loading Styles */
@@ -846,11 +867,28 @@
 @media (max-width: 1200px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
         grid-template-areas: 
             "feeds"
             "detections"
             "analytics"
             "health";
+    }
+    
+    .storage-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-grid {
+        gap: 1rem;
+    }
+    
+    .storage-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 }
 

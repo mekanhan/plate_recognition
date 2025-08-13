@@ -226,7 +226,7 @@ async def get_all_recording_status():
     if not recording_manager:
         raise HTTPException(status_code=503, detail="Recording manager not initialized")
     
-    return await recording_manager.get_status_all_cameras()
+    return recording_manager.get_status()
 
 @app.get("/recordings/status/{camera_id}")
 async def get_camera_recording_status(camera_id: str):
@@ -273,10 +273,10 @@ async def reload_all_cameras():
     
     success = await recording_manager.reload_cameras()
     if success:
-        status = await recording_manager.get_status_all_cameras()
+        status = recording_manager.get_status()
         return {
             "message": "Cameras reloaded successfully",
-            "active_cameras": len(status.get("cameras", {})),
+            "active_cameras": len(status.get("recorders", {})),
             "status": status
         }
     else:

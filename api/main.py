@@ -1224,44 +1224,34 @@ async def get_detection(detection_id: str):
 @app.get("/api/cameras/{camera_id}/health")
 async def get_camera_health(camera_id: str):
     """
-    Get comprehensive camera health status
+    Get comprehensive camera health status with enhanced diagnostics
     """
     camera = camera_manager.get_camera(camera_id)
     if not camera:
         raise HTTPException(404, "Camera not found")
     
+    # Get enhanced health status from camera
+    health_status = camera.get_health_status()
+    
     # Get camera from database
     db_camera = await db.get_camera(camera_id)
+    health_status["database_status"] = "found" if db_camera else "missing"
+    health_status["backend_processing"] = True  # Always true if endpoint responds
     
-    # Calculate connection status
-    current_time = time.time()
-    last_frame_age = current_time - camera.last_frame_time if camera.last_frame_time > 0 else None
-    
-    health_status = {
-        "camera_id": camera_id,
-        "name": camera.config.name,
-        "connection_status": "connected" if camera.last_frame_time > 0 and last_frame_age < 30 else "disconnected",
-        "last_frame_time": camera.last_frame_time,
-        "last_frame_age_seconds": last_frame_age,
-        "rtsp_url": camera.config.stream_url,
-        "is_capturing": camera.is_running,
-        "buffer_size": camera.frame_buffer.qsize() if hasattr(camera.frame_buffer, 'qsize') else 0,
-        "database_status": "found" if db_camera else "missing",
-        "backend_processing": True,  # Always true if endpoint responds
-        "snapshot_available": camera.last_frame is not None,
-        "stream_config": {
-            "ip_address": camera.config.ip_address,
-            "port": camera.config.port,
-            "stream_path": camera.config.stream_path,
-            "username": camera.config.username
+    # Add stream configuration details
+    if db_camera:
+        health_status["stream_config"] = {
+            "ip_address": db_camera.ip_address,
+            "port": db_camera.port,
+            "stream_path": db_camera.stream_path,
+            "connection_type": db_camera.connection_type,
+            "username": db_camera.username
         }
-    }
     
     # Add recording status if available
     try:
-        # Try to get recording status from the 24/7 recording system
         import aiohttp
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=3)) as session:
             async with session.get(f"http://localhost:8002/recordings/status/{camera_id}") as response:
                 if response.status == 200:
                     recording_data = await response.json()
@@ -1272,6 +1262,113 @@ async def get_camera_health(camera_id: str):
         health_status["recording_status"] = {"status": "error", "message": str(e)}
     
     return health_status
+
+@app.get("/api/cameras/health/summary")
+async def get_cameras_health_summary():
+    """Get health summary for all cameras"""
+    health_report = camera_manager.get_system_health()
+    return health_report
+
+@app.post("/api/cameras/{camera_id}/restart")
+async def restart_camera(camera_id: str):
+    """Restart a specific camera connection"""
+    try:
+        # Check if camera exists in database
+        db_camera = await db.get_camera(camera_id)
+        if not db_camera:
+            raise HTTPException(404, "Camera not found in database")
+        
+        # Check if camera exists in manager
+        camera = camera_manager.get_camera(camera_id)
+        if not camera:
+            raise HTTPException(404, "Camera not found in manager")
+        
+        # Attempt restart
+        success = camera_manager.restart_camera(camera_id)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"Camera {camera_id} restart initiated",
+                "camera_name": db_camera.name
+            }
+        else:
+            return {
+                "success": False,
+                "message": f"Failed to restart camera {camera_id}",
+                "camera_name": db_camera.name
+            }
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error restarting camera {camera_id}: {e}")
+        raise HTTPException(500, f"Internal error restarting camera: {str(e)}")
+
+@app.post("/api/cameras/restart/all")
+async def restart_all_cameras():
+    """Restart all cameras"""
+    try:
+        results = {}
+        cameras = await db.get_all_cameras()
+        
+        for camera in cameras:
+            if camera.status == 'active':
+                success = camera_manager.restart_camera(camera.camera_id)
+                results[camera.camera_id] = {
+                    "name": camera.name,
+                    "success": success
+                }
+        
+        successful_restarts = sum(1 for r in results.values() if r["success"])
+        total_cameras = len(results)
+        
+        return {
+            "success": successful_restarts > 0,
+            "message": f"Restarted {successful_restarts}/{total_cameras} cameras",
+            "results": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error restarting all cameras: {e}")
+        raise HTTPException(500, f"Internal error restarting cameras: {str(e)}")
+
+@app.get("/api/cameras/health/detailed")
+async def get_detailed_health_status():
+    """Get detailed health status including network and performance metrics"""
+    try:
+        health_report = camera_manager.get_system_health()
+        
+        # Add system-level metrics
+        health_report["system_metrics"] = {
+            "timestamp": datetime.now().isoformat(),
+            "uptime_seconds": time.time() - start_time if 'start_time' in globals() else 0,
+            "processing_loop_active": True,  # Could be enhanced with actual status
+            "ai_models_loaded": {
+                "vehicle_detection": hasattr(detector, 'vehicle_model') if detector else False,
+                "plate_detection": hasattr(detector, 'plate_model') if detector else False,
+                "ocr_reader": hasattr(detector, 'ocr_reader') if detector else False
+            }
+        }
+        
+        # Add network connectivity tests for each camera
+        for camera_id, camera_health in health_report["cameras"].items():
+            db_camera = await db.get_camera(camera_id)
+            if db_camera:
+                # Test basic network connectivity
+                import socket
+                try:
+                    sock = socket.create_connection((db_camera.ip_address, db_camera.port), timeout=2)
+                    sock.close()
+                    camera_health["network_reachable"] = True
+                except:
+                    camera_health["network_reachable"] = False
+        
+        return health_report
+        
+    except Exception as e:
+        logger.error(f"Error getting detailed health status: {e}")
+        raise HTTPException(500, f"Internal error: {str(e)}")
 
 @app.get("/api/cameras/{camera_id}/recording/quality")
 async def get_recording_quality(camera_id: str):
@@ -1584,6 +1681,331 @@ async def emergency_cleanup():
 async def get_analytics_overview():
     """Get dashboard analytics"""
     return await db.get_analytics_overview()
+
+@app.get("/api/quality/metrics")
+async def get_quality_metrics(
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    camera_id: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=1000)
+):
+    """Get POP quality metrics and statistics for detections"""
+    try:
+        from ai_features.core.quality_metrics import QualityMetrics
+        
+        # Get recent detections with metadata
+        detections = await db.get_recent_detections(limit, camera_id)
+        
+        # Filter by date range if provided
+        if start_date or end_date:
+            filtered_detections = []
+            for detection in detections:
+                if start_date and detection.detected_at < start_date:
+                    continue
+                if end_date and detection.detected_at > end_date:
+                    continue
+                filtered_detections.append(detection)
+            detections = filtered_detections
+        
+        # Extract POP metrics from detection metadata
+        detections_with_pop = []
+        for detection in detections:
+            detection_dict = {
+                "id": detection.id,
+                "camera_id": detection.camera_id,
+                "plate_text": detection.plate_text,
+                "confidence": detection.confidence,
+                "detected_at": detection.detected_at.isoformat(),
+                "pop_metrics": {}
+            }
+            
+            # Extract POP metrics from metadata if available
+            if detection.meta_data and isinstance(detection.meta_data, dict):
+                pop_metrics = detection.meta_data.get('pop_metrics', {})
+                if pop_metrics:
+                    detection_dict['pop_metrics'] = pop_metrics
+            
+            detections_with_pop.append(detection_dict)
+        
+        # Calculate quality statistics
+        quality_metrics = QualityMetrics()
+        quality_stats = quality_metrics.get_quality_statistics(detections_with_pop)
+        
+        # Group by quality level for breakdown
+        quality_breakdown = {
+            "excellent": {"count": 0, "percentage": 0, "avg_pixels": 0},
+            "good": {"count": 0, "percentage": 0, "avg_pixels": 0},
+            "fair": {"count": 0, "percentage": 0, "avg_pixels": 0},
+            "poor": {"count": 0, "percentage": 0, "avg_pixels": 0},
+            "unusable": {"count": 0, "percentage": 0, "avg_pixels": 0}
+        }
+        
+        # Calculate breakdown
+        total_count = len(detections_with_pop)
+        pixels_by_level = {"excellent": [], "good": [], "fair": [], "poor": [], "unusable": []}
+        
+        for detection in detections_with_pop:
+            pop_metrics = detection.get('pop_metrics', {})
+            level = pop_metrics.get('quality_level', 'unusable')
+            pixels = pop_metrics.get('total_pixels', 0)
+            
+            if level in quality_breakdown:
+                quality_breakdown[level]["count"] += 1
+                pixels_by_level[level].append(pixels)
+        
+        # Calculate percentages and averages
+        for level in quality_breakdown:
+            count = quality_breakdown[level]["count"]
+            quality_breakdown[level]["percentage"] = round((count / total_count * 100), 1) if total_count > 0 else 0
+            if pixels_by_level[level]:
+                quality_breakdown[level]["avg_pixels"] = round(sum(pixels_by_level[level]) / len(pixels_by_level[level]), 1)
+        
+        # Camera-specific statistics
+        camera_stats = {}
+        for detection in detections_with_pop:
+            cam_id = detection['camera_id']
+            if cam_id not in camera_stats:
+                camera_stats[cam_id] = {
+                    "total_detections": 0,
+                    "avg_quality_score": 0,
+                    "avg_pop": 0,
+                    "quality_distribution": {"excellent": 0, "good": 0, "fair": 0, "poor": 0, "unusable": 0}
+                }
+            
+            camera_stats[cam_id]["total_detections"] += 1
+            pop_metrics = detection.get('pop_metrics', {})
+            
+            # Accumulate for averages
+            quality_score = pop_metrics.get('quality_score', 0)
+            total_pixels = pop_metrics.get('total_pixels', 0)
+            quality_level = pop_metrics.get('quality_level', 'unusable')
+            
+            current_count = camera_stats[cam_id]["total_detections"]
+            camera_stats[cam_id]["avg_quality_score"] = (
+                (camera_stats[cam_id]["avg_quality_score"] * (current_count - 1) + quality_score) / current_count
+            )
+            camera_stats[cam_id]["avg_pop"] = (
+                (camera_stats[cam_id]["avg_pop"] * (current_count - 1) + total_pixels) / current_count
+            )
+            camera_stats[cam_id]["quality_distribution"][quality_level] += 1
+        
+        # Round camera stats
+        for cam_id in camera_stats:
+            camera_stats[cam_id]["avg_quality_score"] = round(camera_stats[cam_id]["avg_quality_score"], 1)
+            camera_stats[cam_id]["avg_pop"] = round(camera_stats[cam_id]["avg_pop"], 1)
+        
+        return {
+            "summary": quality_stats,
+            "quality_breakdown": quality_breakdown,
+            "camera_statistics": camera_stats,
+            "total_detections": total_count,
+            "date_range": {
+                "start": start_date.isoformat() if start_date else None,
+                "end": end_date.isoformat() if end_date else None
+            },
+            "filter": {
+                "camera_id": camera_id,
+                "limit": limit
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get quality metrics: {e}")
+        raise HTTPException(500, f"Failed to get quality metrics: {str(e)}")
+
+@app.get("/api/quality/thresholds")
+async def get_quality_thresholds():
+    """Get current quality thresholds and settings"""
+    try:
+        from ai_features.core.quality_metrics import QualityMetrics
+        
+        quality_metrics = QualityMetrics()
+        
+        return {
+            "pop_thresholds": quality_metrics.pop_thresholds,
+            "quality_score_weights": {
+                "pop_score": 0.40,
+                "sharpness": 0.25,
+                "contrast": 0.20,
+                "brightness": 0.10,
+                "aspect_ratio": 0.05
+            },
+            "minimum_quality_threshold": 60,
+            "recommended_ocr_threshold": 70,
+            "description": {
+                "pop_thresholds": "Pixel count thresholds for quality classification",
+                "quality_score": "Overall quality score calculation (0-100)",
+                "weights": "Relative importance of each quality factor"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get quality thresholds: {e}")
+        raise HTTPException(500, f"Failed to get quality thresholds: {str(e)}")
+
+@app.post("/api/quality/filter")
+async def filter_detections_by_quality(
+    filter_request: dict = Body(...),
+    limit: int = Query(100, ge=1, le=1000)
+):
+    """Filter detections based on quality criteria
+    
+    Expected filter_request format:
+    {
+        "min_quality_score": 60,
+        "quality_levels": ["good", "excellent"],
+        "min_pop": 1000,
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31",
+        "camera_id": "optional"
+    }
+    """
+    try:
+        from ai_features.core.quality_metrics import QualityMetrics
+        
+        # Get detection parameters
+        min_quality_score = filter_request.get('min_quality_score', 60)
+        quality_levels = filter_request.get('quality_levels', [])
+        min_pop = filter_request.get('min_pop', 0)
+        start_date_str = filter_request.get('start_date')
+        end_date_str = filter_request.get('end_date')
+        camera_id = filter_request.get('camera_id')
+        
+        # Parse dates
+        start_date = datetime.fromisoformat(start_date_str) if start_date_str else None
+        end_date = datetime.fromisoformat(end_date_str) if end_date_str else None
+        
+        # Get detections from database
+        detections = await db.get_recent_detections(limit * 2, camera_id)  # Get extra to account for filtering
+        
+        # Filter by date range
+        if start_date or end_date:
+            filtered_detections = []
+            for detection in detections:
+                if start_date and detection.detected_at < start_date:
+                    continue
+                if end_date and detection.detected_at > end_date:
+                    continue
+                filtered_detections.append(detection)
+            detections = filtered_detections
+        
+        # Convert to format with POP metrics
+        detections_with_pop = []
+        for detection in detections:
+            detection_dict = {
+                "id": detection.id,
+                "camera_id": detection.camera_id,
+                "plate_text": detection.plate_text,
+                "confidence": detection.confidence,
+                "vehicle_type": detection.vehicle_type,
+                "detected_at": detection.detected_at.isoformat(),
+                "plate_image": f"/images/plates/{os.path.basename(detection.plate_image_path)}" if detection.plate_image_path else None,
+                "frame_image": f"/images/frames/{os.path.basename(detection.frame_path)}" if detection.frame_path else None,
+                "pop_metrics": {}
+            }
+            
+            # Extract POP metrics from metadata
+            if detection.meta_data and isinstance(detection.meta_data, dict):
+                pop_metrics = detection.meta_data.get('pop_metrics', {})
+                if pop_metrics:
+                    detection_dict['pop_metrics'] = pop_metrics
+            
+            detections_with_pop.append(detection_dict)
+        
+        # Apply quality filters
+        quality_metrics = QualityMetrics()
+        filtered_results = []
+        
+        for detection in detections_with_pop:
+            pop_metrics = detection.get('pop_metrics', {})
+            
+            # Check quality score threshold
+            quality_score = pop_metrics.get('quality_score', 0)
+            if quality_score < min_quality_score:
+                continue
+            
+            # Check quality level filter
+            if quality_levels:
+                quality_level = pop_metrics.get('quality_level', 'unusable')
+                if quality_level not in quality_levels:
+                    continue
+            
+            # Check minimum POP threshold
+            total_pixels = pop_metrics.get('total_pixels', 0)
+            if total_pixels < min_pop:
+                continue
+            
+            filtered_results.append(detection)
+        
+        # Limit results
+        filtered_results = filtered_results[:limit]
+        
+        return {
+            "detections": filtered_results,
+            "total_filtered": len(filtered_results),
+            "filter_criteria": filter_request,
+            "applied_filters": {
+                "min_quality_score": min_quality_score,
+                "quality_levels": quality_levels,
+                "min_pop": min_pop,
+                "date_range": {
+                    "start": start_date.isoformat() if start_date else None,
+                    "end": end_date.isoformat() if end_date else None
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to filter detections by quality: {e}")
+        raise HTTPException(500, f"Failed to filter detections: {str(e)}")
+
+@app.get("/api/detections/{detection_id}/quality")
+async def get_detection_quality_details(detection_id: str):
+    """Get detailed quality metrics for a specific detection"""
+    try:
+        # Get detection from database
+        detection = await db.get_detection_by_id(detection_id)
+        if not detection:
+            raise HTTPException(404, "Detection not found")
+        
+        # Extract quality metrics from metadata
+        quality_details = {
+            "detection_id": detection_id,
+            "plate_text": detection.plate_text,
+            "confidence": detection.confidence,
+            "detected_at": detection.detected_at.isoformat(),
+            "pop_metrics": {},
+            "quality_assessment": {}
+        }
+        
+        if detection.meta_data and isinstance(detection.meta_data, dict):
+            pop_metrics = detection.meta_data.get('pop_metrics', {})
+            if pop_metrics:
+                quality_details['pop_metrics'] = pop_metrics
+                
+                # Add quality assessment
+                quality_score = pop_metrics.get('quality_score', 0)
+                quality_level = pop_metrics.get('quality_level', 'unusable')
+                total_pixels = pop_metrics.get('total_pixels', 0)
+                
+                quality_details['quality_assessment'] = {
+                    "overall_grade": quality_level.title(),
+                    "score_out_of_100": quality_score,
+                    "pixel_resolution": f"{pop_metrics.get('width', 0)}x{pop_metrics.get('height', 0)} ({total_pixels} pixels)",
+                    "meets_minimum_quality": pop_metrics.get('meets_minimum_quality', False),
+                    "recommended_for_ocr": pop_metrics.get('recommended_for_ocr', False),
+                    "sharpness_rating": "High" if pop_metrics.get('sharpness', 0) > 50 else "Medium" if pop_metrics.get('sharpness', 0) > 20 else "Low",
+                    "contrast_rating": "High" if pop_metrics.get('contrast', 0) > 40 else "Medium" if pop_metrics.get('contrast', 0) > 20 else "Low",
+                    "brightness_rating": "Optimal" if 80 <= pop_metrics.get('brightness', 0) <= 180 else "Suboptimal"
+                }
+        
+        return quality_details
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get detection quality details: {e}")
+        raise HTTPException(500, f"Failed to get quality details: {str(e)}")
 
 @app.post("/api/cameras/{camera_id}/open-vlc")
 async def open_vlc(camera_id: str):

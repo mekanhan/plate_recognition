@@ -551,3 +551,75 @@ class FFmpegRecordingManager:
                 for camera_id, recorder in self.recorders.items()
             }
         }
+    
+    async def reload_cameras(self) -> bool:
+        """Reload cameras from database (hot reload)"""
+        try:
+            # Stop all existing recorders
+            await self.stop()
+            
+            # Clear recorders dictionary
+            self.recorders.clear()
+            
+            # Restart with fresh camera list from database
+            await self.start()
+            
+            logger.info(f"Successfully reloaded cameras: {len(self.recorders)} active")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to reload cameras: {e}")
+            return False
+    
+    async def add_camera(self, camera_id: str) -> bool:
+        """Add a single camera to recording"""
+        try:
+            # Get camera from database
+            cameras = await self._get_enabled_cameras()
+            camera_config = None
+            
+            for camera in cameras:
+                if camera['camera_id'] == camera_id:
+                    camera_config = camera
+                    break
+            
+            if not camera_config:
+                logger.error(f"Camera {camera_id} not found or not active")
+                return False
+            
+            # Create and start recorder if not already exists
+            if camera_id not in self.recorders:
+                recorder = FFmpegCameraRecorder(camera_config, self.storage_path, self.db_service)
+                success = await recorder.start_recording()
+                
+                if success:
+                    self.recorders[camera_id] = recorder
+                    logger.info(f"Started recording for camera {camera_id}")
+                    return True
+                else:
+                    logger.error(f"Failed to start recording for camera {camera_id}")
+                    return False
+            else:
+                logger.info(f"Camera {camera_id} already recording")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Failed to add camera {camera_id}: {e}")
+            return False
+    
+    async def remove_camera(self, camera_id: str) -> bool:
+        """Remove a single camera from recording"""
+        try:
+            if camera_id in self.recorders:
+                recorder = self.recorders[camera_id]
+                await recorder.stop_recording()
+                del self.recorders[camera_id]
+                logger.info(f"Stopped recording for camera {camera_id}")
+                return True
+            else:
+                logger.warning(f"Camera {camera_id} not found in active recorders")
+                return True  # Return True since the desired state is achieved
+                
+        except Exception as e:
+            logger.error(f"Failed to remove camera {camera_id}: {e}")
+            return False

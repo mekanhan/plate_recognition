@@ -556,48 +556,62 @@
 
 .storage-metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.5rem;
     margin-bottom: 2rem;
+    max-width: 100%;
 }
 
 .storage-metric-card {
     background: var(--bg-light);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.5rem;
+    border-radius: 12px;
+    padding: 1.25rem;
     display: flex;
     align-items: center;
     gap: 1rem;
     transition: all 0.2s ease;
+    min-height: 120px;
+    position: relative;
+    overflow: hidden;
 }
 
 .storage-metric-card:hover {
     border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
 .metric-icon {
-    font-size: 2rem;
-    width: 60px;
-    height: 60px;
+    font-size: 2.2rem;
+    width: 70px;
+    height: 70px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 12px;
+    border-radius: 16px;
     background: var(--primary-bg);
+    flex-shrink: 0;
+}
+
+.metric-content {
+    flex: 1;
+    min-width: 0;
 }
 
 .metric-content h3 {
-    font-size: 1.8rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: 0.25rem;
+    line-height: 1.1;
 }
 
 .metric-content p {
     color: var(--text-secondary);
     margin-bottom: 0.25rem;
+    font-weight: 500;
+    font-size: 0.95rem;
 }
 
 .metric-detail {
@@ -609,19 +623,26 @@
 .recent-recordings-preview {
     background: var(--bg-light);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1.5rem;
+    border-radius: 12px;
+    padding: 1.75rem;
+    margin-top: 2rem;
+    min-height: 280px;
 }
 
 .preview-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .preview-header h3 {
     color: var(--text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
 }
 
 .preview-link {
@@ -629,17 +650,319 @@
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
 .preview-link:hover {
-    text-decoration: underline;
+    background: var(--primary-bg);
+    text-decoration: none;
 }
 
 .recordings-timeline {
-    min-height: 120px;
+    min-height: 180px;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Enhanced Recording Grid */
+.recordings-grid-enhanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+    padding: 0.5rem 0;
+}
+
+/* Enhanced Recording Cards */
+.recording-card-enhanced {
+    background: var(--bg-white);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.recording-card-enhanced:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.recording-thumbnail-container {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    background: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.recording-thumbnail-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.recording-card-enhanced:hover .recording-thumbnail-image {
+    transform: scale(1.05);
+}
+
+.recording-thumbnail-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+    color: var(--text-secondary);
+}
+
+.recording-thumbnail-placeholder i {
+    font-size: 3rem;
+    opacity: 0.6;
+}
+
+.recording-thumbnail-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.7), transparent);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.recording-card-enhanced:hover .recording-thumbnail-overlay {
+    opacity: 1;
+}
+
+.recording-time-badge,
+.recording-duration-badge {
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+}
+
+.recording-play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.recording-card-enhanced:hover .recording-play-overlay {
+    opacity: 1;
+}
+
+.recording-play-btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.recording-play-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    transform: scale(1.1);
+}
+
+.recording-play-btn i {
+    font-size: 1.5rem;
+    margin-left: 2px; /* Optical adjustment for play icon */
+}
+
+.recording-card-content {
+    padding: 1rem;
+}
+
+.recording-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.recording-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 0.5rem;
+}
+
+.recording-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.recording-status-badge.complete {
+    background: var(--success-bg);
+    color: var(--success-color);
+}
+
+.recording-status-badge.recording {
+    background: var(--danger-bg);
+    color: var(--danger-color);
+}
+
+.recording-status-badge i {
+    font-size: 0.5rem;
+}
+
+.recording-metadata {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.recording-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.recording-meta-item i {
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    width: 12px;
+    text-align: center;
+}
+
+.recording-card-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.recording-action-btn {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-white);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.recording-action-btn:hover:not(:disabled) {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.recording-action-btn.primary {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.recording-action-btn.primary:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+    color: white;
+}
+
+.recording-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.recording-action-btn:only-child {
+    flex: none;
+    min-width: 100px;
+}
+
+.recording-action-btn span {
+    display: none;
+}
+
+.recording-action-btn.primary span {
+    display: inline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .recordings-grid-enhanced {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .recording-thumbnail-container {
+        height: 160px;
+    }
+    
+    .recording-metadata {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .recording-card-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .recording-action-btn {
+        justify-content: center;
+    }
+}
+
+/* Animation for loading state */
+.recording-card-enhanced {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .timeline-loading {

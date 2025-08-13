@@ -759,30 +759,19 @@ class Dashboard {
                 timelineContainer.innerHTML = `
                     <div class="no-recordings">
                         <i class="fas fa-film"></i>
-                        <span>No recordings today</span>
+                        <h4>No recordings today</h4>
+                        <p>Recordings will appear here once captured</p>
                     </div>
                 `;
                 return;
             }
 
-            // Show recent recordings (last 5)
-            const recentRecordings = recordings.slice(-5);
+            // Show recent recordings (last 6 for better grid layout)
+            const recentRecordings = recordings.slice(-6);
             
             timelineContainer.innerHTML = `
-                <div class="recordings-list">
-                    ${recentRecordings.map(recording => `
-                        <div class="recording-item-mini">
-                            <div class="recording-time">
-                                ${new Date(recording.start_time).toLocaleTimeString()}
-                            </div>
-                            <div class="recording-duration">
-                                ${playbackService.formatDuration(recording.duration_seconds)}
-                            </div>
-                            <div class="recording-size">
-                                ${playbackService.formatFileSize(recording.file_size)}
-                            </div>
-                        </div>
-                    `).join('')}
+                <div class="recordings-grid-enhanced">
+                    ${recentRecordings.map(recording => this.createRecordingCard(recording)).join('')}
                 </div>
             `;
 
@@ -791,10 +780,94 @@ class Dashboard {
             timelineContainer.innerHTML = `
                 <div class="timeline-offline">
                     <i class="fas fa-server"></i>
-                    <span>Recording service offline</span>
+                    <h4>Recording Service Offline</h4>
+                    <p>Unable to load recent recordings</p>
                 </div>
             `;
         }
+    }
+
+    createRecordingCard(recording) {
+        const startTime = new Date(recording.start_time);
+        const timeStr = startTime.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit'
+        });
+        const dateStr = startTime.toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+        });
+        
+        // Generate a thumbnail placeholder or actual thumbnail URL
+        const thumbnailUrl = this.getRecordingThumbnail(recording);
+        
+        return `
+            <div class="recording-card-enhanced" data-recording-id="${recording.id || recording.filename}">
+                <div class="recording-thumbnail-container">
+                    ${thumbnailUrl ? 
+                        `<img src="${thumbnailUrl}" alt="Recording thumbnail" class="recording-thumbnail-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">` : 
+                        ''
+                    }
+                    <div class="recording-thumbnail-placeholder" ${thumbnailUrl ? 'style="display:none;"' : ''}>
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="recording-thumbnail-overlay">
+                        <div class="recording-time-badge">${timeStr}</div>
+                        <div class="recording-duration-badge">${playbackService.formatDuration(recording.duration_seconds)}</div>
+                    </div>
+                    <div class="recording-play-overlay">
+                        <button class="recording-play-btn" title="Play recording" onclick="window.location.hash='recordings'">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="recording-card-content">
+                    <div class="recording-card-header">
+                        <h4 class="recording-title">${recording.camera_name || 'Camera Recording'}</h4>
+                        <span class="recording-status-badge ${recording.status || 'complete'}">
+                            <i class="fas fa-circle"></i>
+                        </span>
+                    </div>
+                    <div class="recording-metadata">
+                        <div class="recording-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>${dateStr}</span>
+                        </div>
+                        <div class="recording-meta-item">
+                            <i class="fas fa-clock"></i>
+                            <span>${timeStr}</span>
+                        </div>
+                        <div class="recording-meta-item">
+                            <i class="fas fa-hdd"></i>
+                            <span>${playbackService.formatFileSize(recording.file_size)}</span>
+                        </div>
+                        <div class="recording-meta-item">
+                            <i class="fas fa-stopwatch"></i>
+                            <span>${playbackService.formatDuration(recording.duration_seconds)}</span>
+                        </div>
+                    </div>
+                    <div class="recording-card-actions">
+                        <button class="recording-action-btn primary" title="Play recording" onclick="window.location.hash='recordings'">
+                            <i class="fas fa-play"></i>
+                            <span>Play</span>
+                        </button>
+                        <button class="recording-action-btn" title="Download" disabled>
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="recording-action-btn" title="More options" disabled>
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    getRecordingThumbnail(recording) {
+        // In production, this would return actual thumbnail URL from the API
+        // For now, we'll return null to use placeholder
+        // Example: return `${config.API_BASE_URL}/api/recordings/thumbnails/${recording.filename}`;
+        return null;
     }
 }
 

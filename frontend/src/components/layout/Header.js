@@ -43,7 +43,9 @@ class Header {
     getTemplate() {
         return `
             <div class="header-left">
-               
+                <button class="mobile-menu-btn" id="mobile-menu-btn" title="Menu">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
             
             <div class="header-right">
@@ -120,6 +122,13 @@ class Header {
     }
 
     attachEventListeners() {
+        // Mobile menu toggle - use event delegation to prevent issues
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'mobile-menu-btn' || e.target.closest('#mobile-menu-btn')) {
+                this.toggleMobileMenu();
+            }
+        });
+
         // Sidebar toggle
         const sidebarToggle = document.querySelector('.sidebar-toggle');
         if (sidebarToggle) {
@@ -177,6 +186,23 @@ class Header {
                 const isExpanded = appLayout.getAttribute('data-nav-expanded') === 'true';
                 appLayout.setAttribute('data-nav-expanded', (!isExpanded).toString());
                 localStorage.setItem('sidebar-collapsed', isExpanded.toString());
+            }
+        }
+    }
+
+    toggleMobileMenu() {
+        const appLayout = document.querySelector('.app-layout');
+        const overlay = document.querySelector('.mobile-sidebar-overlay');
+        
+        if (appLayout) {
+            const isExpanded = appLayout.getAttribute('data-nav-expanded') === 'true';
+            appLayout.setAttribute('data-nav-expanded', (!isExpanded).toString());
+            
+            // Add click handler to overlay to close menu
+            if (!isExpanded && overlay) { // Menu is opening
+                overlay.onclick = () => {
+                    appLayout.setAttribute('data-nav-expanded', 'false');
+                };
             }
         }
     }

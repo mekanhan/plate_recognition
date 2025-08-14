@@ -282,10 +282,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS for frontend
+# CORS for frontend - allow all origins for mobile access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080"],
+    allow_origins=["*"],  # Allow all origins for cross-device access
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -92,7 +92,8 @@ class LPRApplication {
 
         // Create main application structure
         const appStructure = `
-            <div class="app-layout" data-nav-expanded="true">
+            <div class="app-layout" data-nav-expanded="false">
+                <div class="mobile-sidebar-overlay"></div>
                 <nav class="sidebar"></nav>
                 <main class="main-content">
                     <header class="top-header"></header>

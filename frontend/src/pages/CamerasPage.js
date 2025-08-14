@@ -25,6 +25,10 @@ class Cameras {
         this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
         document.addEventListener('visibilitychange', this.handleVisibilityChange);
         
+        // Auto-refresh mechanism
+        this.refreshInterval = null;
+        this.isPageActive = true;
+        
         console.log('SimpleCameraModal class:', SimpleCameraModal);
         this.simpleCameraModal = new SimpleCameraModal();
         console.log('SimpleCameraModal instance:', this.simpleCameraModal);
@@ -36,6 +40,7 @@ class Cameras {
         this.render();
         this.attachEventListeners();
         this.loadCameras();
+        this.startAutoRefresh();
     }
 
     render() {
@@ -186,7 +191,8 @@ class Cameras {
         
         try {
             // Get detailed recording status from recording service
-            const response = await fetch('http://localhost:8002/health/detailed');
+            const recordingUrl = config.buildRecordingUrl('/health/detailed');
+            const response = await fetch(recordingUrl);
             if (response.ok) {
                 const data = await response.json();
                 
@@ -230,14 +236,30 @@ class Cameras {
     }
 
     updateRecordingStatusDisplay(cameraId, recordingData) {
-        const camera = this.cameras.find(c => c.id === cameraId);
+        const recordingStatusElement = document.getElementById(`recording-status-${cameraId}`);
         
-        // Update all 8 standardized fields using the standard field processing
-        this.updateStandardFields(cameraId, camera, recordingData);
+        if (recordingStatusElement) {
+            if (recordingData.not_recording) {
+                recordingStatusElement.innerHTML = 'Not Recording';
+                recordingStatusElement.style.color = 'var(--text-muted)';
+            } else if (recordingData.is_recording || recordingData.recording_active) {
+                recordingStatusElement.innerHTML = 'Active';
+                recordingStatusElement.style.color = 'var(--success-color)';
+            } else if (recordingData.connection_status === 'error' || recordingData.error_count > 0) {
+                recordingStatusElement.innerHTML = 'Error';
+                recordingStatusElement.style.color = 'var(--danger-color)';
+            } else if (recordingData.connection_status === 'connected') {
+                recordingStatusElement.innerHTML = 'Connected';
+                recordingStatusElement.style.color = 'var(--success-color)';
+            } else {
+                recordingStatusElement.innerHTML = 'Inactive';
+                recordingStatusElement.style.color = 'var(--warning-color)';
+            }
+        }
         
-        // Show recording controls
+        // Show recording controls if recording is configured
         const controlsElement = document.getElementById(`recording-controls-${cameraId}`);
-        if (controlsElement) {
+        if (controlsElement && !recordingData.not_recording) {
             controlsElement.style.display = 'block';
             this.renderRecordingControls(cameraId, recordingData, controlsElement);
         }
@@ -305,6 +327,87 @@ class Cameras {
             case 'recording-uptime':
                 // These fields use default styling
                 break;
+        }
+    }
+
+    async loadSystemStorage(cameraId) {
+        const storageElement = document.getElementById(`camera-storage-${cameraId}`);
+        
+        try {
+            // Get storage info from recording service
+            const recordingUrl = config.buildRecordingUrl('/api/v1/storage/report');
+            const response = await fetch(recordingUrl);
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Debug: log available camera IDs
+                console.log('Storage API camera IDs:', Object.keys(data.cameras || {}));
+                console.log('Looking for camera ID:', cameraId);
+                
+                // Get camera-specific storage - try different ID formats
+                let cameraStorage = null;
+                
+                // Try exact match first
+                cameraStorage = data.cameras?.[cameraId];
+                
+                // Try without "camera_" prefix if ID starts with it
+                if (!cameraStorage && cameraId.startsWith('camera_')) {
+                    const shortId = cameraId.replace('camera_', '');
+                    cameraStorage = data.cameras?.[shortId];
+                }
+                
+                // Try with just the numeric part (last part after underscore)
+                if (!cameraStorage) {
+                    const parts = cameraId.split('_');
+                    const numericId = parts[parts.length - 1];
+                    cameraStorage = data.cameras?.[numericId];
+                }
+                
+                if (storageElement) {
+                    if (cameraStorage && cameraStorage.total_size) {
+                        // Convert bytes to appropriate unit
+                        const bytes = cameraStorage.total_size;
+                        let size, unit;
+                        
+                        if (bytes >= 1024 * 1024 * 1024) {
+                            size = (bytes / (1024 * 1024 * 1024)).toFixed(2);
+                            unit = 'GB';
+                        } else if (bytes >= 1024 * 1024) {
+                            size = (bytes / (1024 * 1024)).toFixed(2);
+                            unit = 'MB';
+                        } else if (bytes >= 1024) {
+                            size = (bytes / 1024).toFixed(2);
+                            unit = 'KB';
+                        } else {
+                            size = bytes;
+                            unit = 'B';
+                        }
+                        
+                        storageElement.innerHTML = `${size} ${unit}`;
+                        
+                        // Color based on size
+                        if (bytes > 10 * 1024 * 1024 * 1024) { // > 10GB
+                            storageElement.style.color = 'var(--danger-color)';
+                        } else if (bytes > 5 * 1024 * 1024 * 1024) { // > 5GB
+                            storageElement.style.color = 'var(--warning-color)';
+                        } else {
+                            storageElement.style.color = 'var(--text-primary)';
+                        }
+                    } else {
+                        storageElement.innerHTML = '0 MB';
+                        storageElement.style.color = 'var(--text-muted)';
+                    }
+                }
+            } else {
+                throw new Error('Storage service unavailable');
+            }
+        } catch (error) {
+            console.error('Failed to load camera storage:', error);
+            if (storageElement) {
+                storageElement.innerHTML = 'Unavailable';
+                storageElement.style.color = 'var(--text-muted)';
+            }
         }
     }
 
@@ -467,32 +570,92 @@ class Cameras {
         // Set all fields to proper defaults first
         this.setRecordingFieldsToDefaults(camera.id, camera);
         
-        // Then load actual recording status
+        // Then load actual recording status and system storage
         this.loadRecordingStatus(camera.id);
+        this.loadSystemStorage(camera.id);
     }
 
     async loadCameras() {
         try {
+            console.log('Starting camera load...');
+            console.log('Current location:', window.location.hostname);
+            console.log('Config API URL:', config.API_BASE_URL);
+            
             // In a real application, this would be an API call
             this.cameras = await this.fetchCameras();
-            this.filteredCameras = [...this.cameras];
+            console.log('Loaded cameras count:', this.cameras.length);
             
+            // If no cameras from API, show demo data for testing
+            if (this.cameras.length === 0) {
+                console.log('No cameras from API, loading demo data');
+                this.cameras = this.loadMockCameras();
+            }
+            
+            this.filteredCameras = [...this.cameras];
             this.renderCameraGrid();
         } catch (error) {
             console.error('Error loading cameras:', error);
-            this.showError('Failed to load cameras');
+            console.error('Error details:', error.message);
+            this.showError(`Failed to load cameras: ${error.message}`);
         }
+    }
+
+    loadMockCameras() {
+        // Mock camera data for demo/testing
+        return [
+            {
+                id: 'mock_cam_1',
+                camera_id: 'mock_cam_1',
+                name: 'Demo Camera 1',
+                location: 'entrance',
+                ipAddress: '192.168.1.100',
+                port: 554,
+                connectionType: 'rtsp',
+                streamPath: '/stream',
+                status: 'online',
+                manufacturer: 'Demo',
+                model: 'Test Camera',
+                resolution: '1920x1080',
+                fps: 30,
+                lastSeen: new Date(),
+                uptime: '1d 2h 30m',
+                username: 'admin',
+                enabled: true
+            },
+            {
+                id: 'mock_cam_2', 
+                camera_id: 'mock_cam_2',
+                name: 'Demo Camera 2',
+                location: 'parking',
+                ipAddress: '192.168.1.101',
+                port: 554,
+                connectionType: 'rtsp',
+                streamPath: '/stream',
+                status: 'offline',
+                manufacturer: 'Demo',
+                model: 'Test Camera',
+                resolution: '1920x1080',
+                fps: 30,
+                lastSeen: new Date(Date.now() - 5 * 60 * 1000),
+                uptime: '2d 5h 15m',
+                username: 'admin',
+                enabled: true
+            }
+        ];
     }
 
     async fetchCameras() {
         try {
             // Load cameras from API using config
             const url = config.buildApiUrl(config.API_ENDPOINTS.CAMERAS);
+            console.log('Fetching cameras from:', url);
             const response = await fetch(url);
             if (!response.ok) {
+                console.error('Camera fetch failed:', response.status, response.statusText);
                 throw new Error('Failed to fetch cameras');
             }
             const cameras = await response.json();
+            console.log('Fetched cameras:', cameras);
             
             // Transform API response to match frontend expectations
             return cameras.map(camera => ({
@@ -596,7 +759,7 @@ class Cameras {
                             <input type="checkbox" class="camera-select" data-camera-id="${camera.id}" ${this.selectedCameras.has(camera.id) ? 'checked' : ''}>
                         </div>
                         <h4 class="camera-card-title">${camera.display_name || camera.name}</h4>
-                        ${camera.short_id ? `<span class="camera-short-id">#${camera.short_id}</span>` : ''}
+                        ${camera.short_id ? '<span class="camera-short-id">#' + camera.short_id + '</span>' : ''}
                         <div class="camera-card-status ${statusClass}">
                             <i class="fas ${this.getStatusIcon(camera.status)}"></i>
                             <span>${this.capitalizeFirst(camera.status)}</span>
@@ -640,45 +803,49 @@ class Cameras {
                     </div>
                     
                     <div class="camera-card-info">
-                        <!-- 8 Standard Fields - Always displayed in exact order -->
+                        <!-- 8 User-Focused Fields -->
                         <div class="info-row">
                             <span class="info-label">Location:</span>
                             <span class="info-value" id="location-${camera.id}">${this.getStandardFieldValue('location', camera.location)}</span>
                         </div>
                         
                         <div class="info-row">
-                            <span class="info-label">Connection:</span>
-                            <span class="info-value" id="connection-${camera.id}">${this.getStandardFieldValue('connection', null, camera)}</span>
+                            <span class="info-label">IP Address:</span>
+                            <span class="info-value" id="ip-address-${camera.id}">
+                                <a href="http://${camera.ipAddress}:${camera.port}" target="_blank" class="ip-link">
+                                    ${camera.ipAddress}:${camera.port}
+                                </a>
+                            </span>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">Resolution & FPS:</span>
+                            <span class="info-value" id="resolution-fps-${camera.id}">${camera.resolution} @ ${camera.fps}fps</span>
+                        </div>
+                        
+                        <div class="info-row">
+                            <span class="info-label">Model/Brand:</span>
+                            <span class="info-value" id="model-brand-${camera.id}">${camera.manufacturer} ${camera.model}</span>
                         </div>
                         
                         <div class="info-row">
                             <span class="info-label">Recording Status:</span>
-                            <span class="info-value" id="recording-status-${camera.id}">Loading...</span>
+                            <span class="info-value" id="recording-status-${camera.id}">Checking...</span>
                         </div>
                         
                         <div class="info-row">
-                            <span class="info-label">Connection Status:</span>
-                            <span class="info-value" id="connection-status-${camera.id}">Loading...</span>
+                            <span class="info-label">Last Seen:</span>
+                            <span class="info-value" id="last-seen-${camera.id}">${this.getRelativeTime(camera.lastSeen)}</span>
                         </div>
                         
                         <div class="info-row">
-                            <span class="info-label">FFmpeg PID:</span>
-                            <span class="info-value" id="ffmpeg-pid-${camera.id}">Loading...</span>
+                            <span class="info-label">Connection Type:</span>
+                            <span class="info-value" id="connection-type-${camera.id}">${camera.connectionType.toUpperCase()}</span>
                         </div>
                         
                         <div class="info-row">
-                            <span class="info-label">Segments Created:</span>
-                            <span class="info-value" id="segments-created-${camera.id}">Loading...</span>
-                        </div>
-                        
-                        <div class="info-row">
-                            <span class="info-label">Storage Used:</span>
-                            <span class="info-value" id="storage-used-${camera.id}">Loading...</span>
-                        </div>
-                        
-                        <div class="info-row">
-                            <span class="info-label">Recording Uptime:</span>
-                            <span class="info-value" id="recording-uptime-${camera.id}">Loading...</span>
+                            <span class="info-label">Storage:</span>
+                            <span class="info-value" id="camera-storage-${camera.id}">Checking...</span>
                         </div>
                     </div>
                 </div>
@@ -701,8 +868,9 @@ class Cameras {
         
         // Clean up existing player first
         // Display snapshot instead of video player
+        const snapshotUrl = config.buildApiUrl(config.API_ENDPOINTS.CAMERA_SNAPSHOT(camera.id));
         container.innerHTML = `
-            <img src="http://localhost:8001/api/cameras/${camera.id}/snapshot" 
+            <img src="${snapshotUrl}" 
                  alt="${camera.display_name || camera.name} snapshot" 
                  class="camera-snapshot"
                  onerror="this.src='/images/camera-placeholder.jpg'"
@@ -711,6 +879,57 @@ class Cameras {
         
         // Set up navigation cleanup
         this.setupNavigationCleanup(camera.id);
+    }
+
+    startAutoRefresh() {
+        // Refresh camera data every 30 seconds
+        this.refreshInterval = setInterval(() => {
+            if (this.isPageActive) {
+                this.refreshCameraData();
+            }
+        }, 30000); // 30 seconds
+    }
+
+    stopAutoRefresh() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+    }
+
+    async refreshCameraData() {
+        // Refresh dynamic data for all cameras without full reload
+        this.cameras.forEach(camera => {
+            this.loadRecordingStatus(camera.id);
+            this.loadSystemStorage(camera.id);
+            
+            // Update last seen time
+            const lastSeenElement = document.getElementById(`last-seen-${camera.id}`);
+            if (lastSeenElement) {
+                lastSeenElement.innerHTML = this.getRelativeTime(camera.lastSeen);
+            }
+            
+            // Refresh snapshot image
+            const snapshotImg = document.querySelector(`#preview-container-${camera.id} img`);
+            if (snapshotImg) {
+                const snapshotUrl = config.buildApiUrl(config.API_ENDPOINTS.CAMERA_SNAPSHOT(camera.id));
+                snapshotImg.src = `${snapshotUrl}?t=${Date.now()}`; // Add timestamp to prevent caching
+            }
+        });
+    }
+
+    handleVisibilityChange() {
+        this.isPageActive = !document.hidden;
+        if (this.isPageActive) {
+            // Page became visible, refresh data immediately
+            this.refreshCameraData();
+        }
+    }
+
+    destroy() {
+        // Cleanup when page is destroyed
+        this.stopAutoRefresh();
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     }
 
     // Clean up camera snapshot refresh

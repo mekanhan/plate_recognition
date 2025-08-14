@@ -6,18 +6,29 @@
 // Determine environment - can be set via window.APP_ENV or defaults to development
 const environment = window.APP_ENV || 'development';
 
+// Get current host for mobile compatibility
+const getCurrentHost = () => {
+    // If we're accessing via IP (mobile), use current host
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        return window.location.hostname;
+    }
+    return 'localhost';
+};
+
+const currentHost = getCurrentHost();
+
 // Environment-specific configurations
 const configs = {
     development: {
-        API_BASE_URL: 'http://localhost:8001',
-        WS_BASE_URL: 'ws://localhost:8001',
-        RECORDING_API_URL: 'http://localhost:8002'
+        API_BASE_URL: `http://${currentHost}:8001`,
+        WS_BASE_URL: `ws://${currentHost}:8001`,
+        RECORDING_API_URL: `http://${currentHost}:8002`
     },
     production: {
-        // In production, use proper API ports
-        API_BASE_URL: 'http://localhost:8001',
-        WS_BASE_URL: 'ws://localhost:8001',
-        RECORDING_API_URL: 'http://localhost:8002'
+        // In production, use current host for cross-device access
+        API_BASE_URL: `http://${currentHost}:8001`,
+        WS_BASE_URL: `ws://${currentHost}:8001`,
+        RECORDING_API_URL: `http://${currentHost}:8002`
     },
     staging: {
         // Add staging configuration if needed

@@ -227,13 +227,22 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-        /* Removed width: 100% and max-width: 300px - let grid control width */
+    /* Sidebar transform is handled in main.css for mobile */
+    
+    /* Hide the sidebar collapse button on mobile */
+    .sidebar-collapse-btn {
+        display: none;
     }
     
-    .sidebar.show {
-        transform: translateX(0);
+    /* Ensure collapsed class doesn't affect mobile */
+    .sidebar.collapsed .menu-link span {
+        opacity: 1;
+        width: auto;
+    }
+    
+    .sidebar.collapsed .logo-text {
+        opacity: 1;
+        width: auto;
     }
         
     .sidebar-header {

@@ -19,6 +19,26 @@
     gap: var(--spacing-md);
 }
 
+.mobile-menu-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    font-size: var(--font-size-lg);
+    display: none; /* Hidden by default */
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.mobile-menu-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
 .sidebar-toggle {
     background: transparent;
     border: none;
@@ -379,6 +399,10 @@
 @media (max-width: 768px) {
     .top-header {
         padding: 0 var(--spacing-md);
+    }
+    
+    .mobile-menu-btn {
+        display: flex;
     }
     
     .system-status {

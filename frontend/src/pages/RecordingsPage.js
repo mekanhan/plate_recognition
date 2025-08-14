@@ -165,7 +165,7 @@ class RecordingsPage {
         script.textContent = `
         // Configuration with fallbacks
         const CONFIG = {
-            RECORDING_SERVICE_URL: window.RECORDING_SERVICE_URL || 'http://localhost:8002',
+            RECORDING_SERVICE_URL: window.RECORDING_SERVICE_URL || 'http://' + window.location.hostname + ':8002',
             API_TIMEOUT: 10000, // 10 seconds
             RETRY_ATTEMPTS: 3,
             RETRY_DELAY: 1000, // 1 second

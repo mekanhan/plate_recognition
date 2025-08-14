@@ -691,13 +691,21 @@
 @media (max-width: 768px) {
     .page-container {
         flex-direction: column;
+        height: calc(100vh - var(--header-height));
     }
 
     .sidebar {
         width: 100%;
-        height: 40vh;
+        height: 50vh;
+        min-height: 300px;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
+        overflow-y: auto;
+    }
+    
+    .recordings-content {
+        height: 50vh;
+        min-height: 300px;
     }
     
     /* Better mobile spacing */

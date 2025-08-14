@@ -2,7 +2,7 @@
 FastAPI Backend
 IMPORTANT: This serves data and snapshots, NOT video streams!
 """
-from fastapi import FastAPI, HTTPException, Query, Body, Depends
+from fastapi import FastAPI, HTTPException, Query, Body, Depends, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -15,6 +15,7 @@ import uuid
 from datetime import datetime, timedelta
 import asyncio
 import logging
+import json
 from typing import Optional, List, Dict, Any
 from difflib import SequenceMatcher
 from contextlib import asynccontextmanager
@@ -28,6 +29,12 @@ from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 from ai_features.vehicle.detection.pipeline import EnhancedProcessingPipeline
 from database.service import DatabaseService
 from utils.camera_utils import generate_camera_id, validate_camera_id, CameraValidation, CameraDisplayUtils
+try:
+    from .websocket_manager import websocket_manager, broadcast_camera_status, broadcast_recording_status
+    from .background_monitor import start_background_monitoring, stop_background_monitoring
+except ImportError:
+    from api.websocket_manager import websocket_manager, broadcast_camera_status, broadcast_recording_status
+    from api.background_monitor import start_background_monitoring, stop_background_monitoring
 try:
     from .camera_endpoints import router as camera_router, init_camera_api
 except ImportError:
@@ -265,11 +272,25 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logging.error(f"Failed to initialize monitoring: {e}")
     
+    # Start background monitoring for WebSocket updates
+    try:
+        await start_background_monitoring(db)
+        logging.info("Background monitoring started for WebSocket updates")
+    except Exception as e:
+        logging.error(f"Failed to start background monitoring: {e}")
+    
     logging.info("LPR System started successfully")
     
     yield
     
     # Shutdown
+    # Stop background monitoring
+    try:
+        await stop_background_monitoring()
+        logging.info("Background monitoring stopped")
+    except Exception as e:
+        logging.error(f"Error stopping background monitoring: {e}")
+    
     camera_manager.stop_all()
     # Enhanced pipeline doesn't need cleanup - resources are auto-managed
     await db.close()
@@ -293,6 +314,43 @@ app.add_middleware(
 
 # Setup monitoring middleware
 setup_monitoring_middleware(app)
+
+# WebSocket endpoint for real-time updates
+@app.websocket("/ws/camera-updates")
+async def websocket_endpoint(websocket: WebSocket):
+    """WebSocket endpoint for real-time camera updates"""
+    client_id = None
+    try:
+        # Accept connection and get client ID
+        client_id = await websocket_manager.connect(websocket)
+        
+        # Auto-subscribe to common events
+        await websocket_manager.subscribe(client_id, "camera_status")
+        await websocket_manager.subscribe(client_id, "recording_status")
+        await websocket_manager.subscribe(client_id, "motion_detection")
+        
+        # Listen for incoming messages
+        while True:
+            data = await websocket.receive_text()
+            try:
+                message_data = json.loads(data)
+                await websocket_manager.handle_client_message(client_id, message_data)
+            except json.JSONDecodeError:
+                logging.warning(f"Invalid JSON from client {client_id}: {data}")
+                
+    except WebSocketDisconnect:
+        logging.info(f"WebSocket client disconnected: {client_id}")
+    except Exception as e:
+        logging.error(f"WebSocket error for client {client_id}: {e}")
+    finally:
+        if client_id:
+            await websocket_manager.disconnect(client_id)
+
+# WebSocket status endpoint
+@app.get("/ws/status")
+async def websocket_status():
+    """Get WebSocket connection statistics"""
+    return websocket_manager.get_connection_stats()
 
 # Include routers
 app.include_router(auth_router, prefix="/api")

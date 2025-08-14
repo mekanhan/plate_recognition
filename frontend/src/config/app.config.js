@@ -106,6 +106,10 @@ const config = {
         VLC_INTEGRATION: true,         // VLC stream modal
         MODERN_SETTINGS_MODAL: false,  // 11-category settings modal
         
+        // Security Features
+        VLC_SHOW_PASSWORDS: false,     // Show real passwords in VLC URLs (security risk)
+        MASK_SENSITIVE_DATA: true,     // Mask passwords and sensitive data in UI
+        
         // Real-time Features
         WEBSOCKET_UPDATES: true,       // Live status updates
         LIVE_MOTION_DETECTION: false,  // Real-time motion alerts

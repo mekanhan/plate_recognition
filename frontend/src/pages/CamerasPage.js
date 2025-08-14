@@ -718,10 +718,14 @@ class Cameras {
                 camera_id: camera.camera_id || camera.id,
                 name: camera.name,
                 location: camera.location || 'unknown',
-                ipAddress: camera.ip_address,
+                // Provide both camelCase and snake_case for compatibility
+                ipAddress: camera.ip_address,        // For legacy components
+                ip_address: camera.ip_address,      // For VLC modal and other components
                 port: camera.port,
                 connectionType: camera.connection_type,
+                connection_type: camera.connection_type,  // For VLC modal
                 streamPath: camera.stream_path,
+                stream_path: camera.stream_path,          // For VLC modal
                 status: this.mapBackendStatus(camera.status),
                 manufacturer: camera.brand || 'Unknown',
                 model: camera.model || 'Unknown',
@@ -729,7 +733,9 @@ class Cameras {
                 fps: camera.max_fps || 30,
                 lastSeen: new Date(camera.updated_at || camera.created_at),
                 uptime: this.calculateUptime(new Date(camera.created_at)),
+                // Authentication credentials - CRITICAL for VLC modal
                 username: camera.username,
+                password: camera.password,              // THIS WAS MISSING!
                 enabled: camera.enabled
             }));
         } catch (error) {

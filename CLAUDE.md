@@ -450,6 +450,74 @@ curl http://localhost:8001/api/v1/cameras/
 # Check backend logs for connection errors
 ```
 
+## Feature Flag Best Practices
+
+### Implementation Guidelines
+
+1. **Naming Convention**:
+   - Use SCREAMING_SNAKE_CASE for flag names
+   - Be descriptive: `NEW_CAMERA_UI` not `CAMERA_FLAG`
+   - Include context: `ENABLE_WEBSOCKET_UPDATES`
+
+2. **Flag Structure**:
+   ```javascript
+   FEATURES: {
+       // UI Features
+       NEW_CAMERA_UI: false,
+       MODERN_SETTINGS_MODAL: false,
+       VLC_INTEGRATION: false,
+       
+       // Backend Features  
+       WEBSOCKET_UPDATES: false,
+       GLOBAL_SETTINGS: false,
+       ADVANCED_ANALYTICS: false,
+       
+       // Performance Features
+       GPU_ACCELERATION: true,
+       CACHING_LAYER: true
+   }
+   ```
+
+3. **Rollout Strategy**:
+   - **Development**: Enable for testing (false by default)
+   - **Staging**: A/B test with specific users
+   - **Production**: Gradual rollout (10% → 25% → 50% → 100%)
+   - **Cleanup**: Remove flags after full rollout
+
+4. **Usage Patterns**:
+   ```javascript
+   // Component-level feature flags
+   if (config.FEATURES.NEW_CAMERA_UI) {
+       return <ModernCameraCard />;
+   } else {
+       return <LegacyCameraCard />;
+   }
+   
+   // API endpoint feature flags
+   if (config.FEATURES.WEBSOCKET_UPDATES) {
+       this.connectWebSocket();
+   }
+   ```
+
+5. **Flag Management**:
+   - Document each flag's purpose and rollout plan
+   - Set expiration dates for temporary flags
+   - Monitor flag usage and performance impact
+   - Have rollback plan ready
+
+6. **Testing Strategy**:
+   - Test both enabled and disabled states
+   - Automated tests for each flag combination
+   - Gradual rollout with metrics monitoring
+
+### Flag Lifecycle
+
+1. **Introduction**: Flag off, feature development
+2. **Testing**: Flag on for developers/QA only
+3. **Rollout**: Gradual percentage-based rollout
+4. **Completion**: Flag on for 100% of users
+5. **Cleanup**: Remove flag and old code paths
+
 ## Development Guidelines
 
 ### Model Management

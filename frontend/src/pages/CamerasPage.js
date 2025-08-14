@@ -3,6 +3,8 @@
  * Manages camera list, configuration, and snapshot monitoring
  */
 import SimpleCameraModal from '../components/cameras/SimpleCameraModal.js';
+import VLCStreamModal from '../components/modals/VLCStreamModal.js';
+import WebSocketService from '../services/WebSocketService.js';
 import config from '../config/app.config.js';
 
 class Cameras {
@@ -32,6 +34,15 @@ class Cameras {
         console.log('SimpleCameraModal class:', SimpleCameraModal);
         this.simpleCameraModal = new SimpleCameraModal();
         console.log('SimpleCameraModal instance:', this.simpleCameraModal);
+        
+        // Initialize VLC modal if feature is enabled
+        if (config.FEATURES.VLC_INTEGRATION) {
+            this.vlcModal = new VLCStreamModal();
+        }
+        
+        // Initialize WebSocket service for real-time updates
+        this.webSocketSubscriptions = [];
+        this.setupWebSocketUpdates();
         
         this.init();
     }
@@ -341,27 +352,70 @@ class Cameras {
             if (response.ok) {
                 const data = await response.json();
                 
-                // Debug: log available camera IDs
+                // Debug: log available camera IDs and formats
                 console.log('Storage API camera IDs:', Object.keys(data.cameras || {}));
                 console.log('Looking for camera ID:', cameraId);
                 
-                // Get camera-specific storage - try different ID formats
+                // Get camera-specific storage - try multiple ID formats with more comprehensive matching
                 let cameraStorage = null;
+                const availableStorageKeys = Object.keys(data.cameras || {});
                 
-                // Try exact match first
+                // Strategy 1: Direct exact match
                 cameraStorage = data.cameras?.[cameraId];
+                if (cameraStorage) {
+                    console.log('✓ Found storage with exact match:', cameraId);
+                }
                 
-                // Try without "camera_" prefix if ID starts with it
+                // Strategy 2: Try without "camera_" prefix if ID starts with it
                 if (!cameraStorage && cameraId.startsWith('camera_')) {
                     const shortId = cameraId.replace('camera_', '');
                     cameraStorage = data.cameras?.[shortId];
+                    if (cameraStorage) {
+                        console.log('✓ Found storage by removing camera_ prefix:', shortId);
+                    }
                 }
                 
-                // Try with just the numeric part (last part after underscore)
-                if (!cameraStorage) {
+                // Strategy 3: Try with "camera_" prefix if ID doesn't have it
+                if (!cameraStorage && !cameraId.startsWith('camera_')) {
+                    const prefixedId = 'camera_' + cameraId;
+                    cameraStorage = data.cameras?.[prefixedId];
+                    if (cameraStorage) {
+                        console.log('✓ Found storage by adding camera_ prefix:', prefixedId);
+                    }
+                }
+                
+                // Strategy 4: Try matching the last part after underscore (for generated IDs)
+                if (!cameraStorage && cameraId.includes('_')) {
                     const parts = cameraId.split('_');
                     const numericId = parts[parts.length - 1];
                     cameraStorage = data.cameras?.[numericId];
+                    if (cameraStorage) {
+                        console.log('✓ Found storage with numeric part:', numericId);
+                    }
+                }
+                
+                // Strategy 5: Try partial UUID matching (first 8 chars) for UUID-type IDs
+                if (!cameraStorage && cameraId.includes('-') && cameraId.length > 8) {
+                    const shortUuid = cameraId.substring(0, 8);
+                    for (const storageKey of availableStorageKeys) {
+                        if (storageKey.startsWith(shortUuid) || storageKey === shortUuid) {
+                            cameraStorage = data.cameras[storageKey];
+                            console.log('✓ Found storage with partial UUID match:', storageKey);
+                            break;
+                        }
+                    }
+                }
+                
+                // Strategy 6: Reverse - try to match available storage keys against camera ID parts
+                if (!cameraStorage) {
+                    for (const storageKey of availableStorageKeys) {
+                        // Check if storage key is contained in camera ID or vice versa
+                        if (cameraId.includes(storageKey) || storageKey.includes(cameraId)) {
+                            cameraStorage = data.cameras[storageKey];
+                            console.log('✓ Found storage with substring match:', storageKey);
+                            break;
+                        }
+                    }
                 }
                 
                 if (storageElement) {
@@ -395,6 +449,7 @@ class Cameras {
                             storageElement.style.color = 'var(--text-primary)';
                         }
                     } else {
+                        console.log('⚠ No storage data found for camera:', cameraId);
                         storageElement.innerHTML = '0 MB';
                         storageElement.style.color = 'var(--text-muted)';
                     }
@@ -749,47 +804,63 @@ class Cameras {
     renderCameraCard(camera) {
         const statusClass = camera.status;
         const healthScore = this.calculateHealthScore(camera);
-        // Removed streaming state
+        
+        // Get resolution and FPS with fallbacks
+        const resolution = camera.resolution_width && camera.resolution_height 
+            ? `${camera.resolution_width}×${camera.resolution_height}` 
+            : camera.resolution || '1920×1080';
+        const fps = camera.max_fps || camera.fps || '25';
+        const modelBrand = [camera.brand, camera.model].filter(Boolean).join(' ') || 'Unknown';
         
         return `
-            <div class="camera-card" data-camera-id="${camera.id}">
+            <div class="camera-card modern-card" data-camera-id="${camera.id}">
                 <div class="camera-card-header">
                     <div class="camera-title-row">
-                        <div class="camera-checkbox" style="display: ${this.selectedCameras.size > 0 || this.bulkMode ? 'block' : 'none'}">
-                            <input type="checkbox" class="camera-select" data-camera-id="${camera.id}" ${this.selectedCameras.has(camera.id) ? 'checked' : ''}>
-                        </div>
+                        <div class="camera-status-indicator ${camera.status === 'online' ? 'online' : 'offline'}"></div>
                         <h4 class="camera-card-title">${camera.display_name || camera.name}</h4>
-                        ${camera.short_id ? '<span class="camera-short-id">#' + camera.short_id + '</span>' : ''}
-                        <div class="camera-card-status ${statusClass}">
-                            <i class="fas ${this.getStatusIcon(camera.status)}"></i>
-                            <span>${this.capitalizeFirst(camera.status)}</span>
-                        </div>
-                        <div class="action-dropdown">
-                            <button class="btn btn-secondary btn-small dropdown-toggle" data-camera-id="${camera.id}">
-                                <i class="fas fa-ellipsis-h"></i>
+                        <div class="header-actions">
+                            <!-- Direct Settings Access -->
+                            <button class="icon-btn settings-btn" title="Settings" data-action="settings" data-camera-id="${camera.id}">
+                                <i class="fas fa-cog"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-right">
-                                <button class="dropdown-item" data-action="edit" data-camera-id="${camera.id}">
-                                    <i class="fas fa-cog"></i>
-                                    Configure
+                            
+                            <!-- Horizontal Kebab Menu -->
+                            <div class="kebab-wrapper">
+                                <button class="icon-btn kebab-btn" title="More options" data-camera-id="${camera.id}">
+                                    <span class="kebab-horizontal">
+                                        <span class="kebab-dot"></span>
+                                        <span class="kebab-dot"></span>
+                                        <span class="kebab-dot"></span>
+                                    </span>
                                 </button>
-                                <button class="dropdown-item" data-action="test" data-camera-id="${camera.id}">
-                                    <i class="fas fa-plug"></i>
-                                    Test Connection
-                                </button>
-                                <button class="dropdown-item" data-action="details" data-camera-id="${camera.id}">
-                                    <i class="fas fa-info-circle"></i>
-                                    View Details
-                                </button>
-                                <button class="dropdown-item" data-action="reboot" data-camera-id="${camera.id}">
-                                    <i class="fas fa-redo"></i>
-                                    Reboot Camera
-                                </button>
-                                <div class="dropdown-divider"></div>
-                                <button class="dropdown-item text-danger" data-action="delete" data-camera-id="${camera.id}">
-                                    <i class="fas fa-trash"></i>
-                                    Delete Camera
-                                </button>
+                                <div class="kebab-menu" id="kebab-menu-${camera.id}">
+                                    <button class="menu-item" data-action="vlc" data-camera-id="${camera.id}">
+                                        <span class="menu-item-icon">▶</span>
+                                        <span>Open in VLC</span>
+                                    </button>
+                                    <button class="menu-item" data-action="playback" data-camera-id="${camera.id}">
+                                        <span class="menu-item-icon">⏮</span>
+                                        <span>Playback</span>
+                                    </button>
+                                    <button class="menu-item" data-action="snapshot" data-camera-id="${camera.id}">
+                                        <span class="menu-item-icon">📸</span>
+                                        <span>Take Snapshot</span>
+                                    </button>
+                                    <div class="menu-divider"></div>
+                                    <button class="menu-item" data-action="test" data-camera-id="${camera.id}">
+                                        <span class="menu-item-icon">🔌</span>
+                                        <span>Test Connection</span>
+                                    </button>
+                                    <button class="menu-item" data-action="restart" data-camera-id="${camera.id}">
+                                        <span class="menu-item-icon">↻</span>
+                                        <span>Restart Camera</span>
+                                    </button>
+                                    <div class="menu-divider"></div>
+                                    <button class="menu-item danger" data-action="delete" data-camera-id="${camera.id}">
+                                        <span class="menu-item-icon">🗑</span>
+                                        <span>Remove Camera</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -802,50 +873,83 @@ class Cameras {
                         </div>
                     </div>
                     
-                    <div class="camera-card-info">
-                        <!-- 8 User-Focused Fields -->
-                        <div class="info-row">
-                            <span class="info-label">Location:</span>
-                            <span class="info-value" id="location-${camera.id}">${this.getStandardFieldValue('location', camera.location)}</span>
+                        <!-- Status Grid Section -->
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-icon recording" id="recording-icon-${camera.id}">
+                                <span>●</span>
+                            </div>
+                            <div class="status-details">
+                                <div class="status-label">Recording</div>
+                                <div class="status-value" id="recording-status-${camera.id}">Checking...</div>
+                            </div>
                         </div>
-                        
+                        <div class="status-item">
+                            <div class="status-icon connection ${camera.status === 'online' ? 'online' : 'offline'}">
+                                <span>✓</span>
+                            </div>
+                            <div class="status-details">
+                                <div class="status-label">Connection</div>
+                                <div class="status-value">${camera.status === 'online' ? 'Stable' : 'Offline'}</div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon motion">
+                                <span>◉</span>
+                            </div>
+                            <div class="status-details">
+                                <div class="status-label">Motion</div>
+                                <div class="status-value" id="motion-status-${camera.id}">No Activity</div>
+                            </div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-icon analytics">
+                                <span>◈</span>
+                            </div>
+                            <div class="status-details">
+                                <div class="status-label">Analytics</div>
+                                <div class="status-value" id="analytics-status-${camera.id}">Ready</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Info Grid Section -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Resolution</span>
+                            <span class="info-value">${resolution}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">FPS</span>
+                            <span class="info-value">${fps}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Bitrate</span>
+                            <span class="info-value" id="bitrate-${camera.id}">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Storage</span>
+                            <span class="info-value" id="camera-storage-${camera.id}">Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Info Section -->
+                    <div class="camera-card-info">
                         <div class="info-row">
                             <span class="info-label">IP Address:</span>
-                            <span class="info-value" id="ip-address-${camera.id}">
+                            <span class="info-value">
                                 <a href="http://${camera.ipAddress}:${camera.port}" target="_blank" class="ip-link">
                                     ${camera.ipAddress}:${camera.port}
                                 </a>
                             </span>
                         </div>
-                        
                         <div class="info-row">
-                            <span class="info-label">Resolution & FPS:</span>
-                            <span class="info-value" id="resolution-fps-${camera.id}">${camera.resolution} @ ${camera.fps}fps</span>
+                            <span class="info-label">Model:</span>
+                            <span class="info-value">${modelBrand}</span>
                         </div>
-                        
                         <div class="info-row">
-                            <span class="info-label">Model/Brand:</span>
-                            <span class="info-value" id="model-brand-${camera.id}">${camera.manufacturer} ${camera.model}</span>
-                        </div>
-                        
-                        <div class="info-row">
-                            <span class="info-label">Recording Status:</span>
-                            <span class="info-value" id="recording-status-${camera.id}">Checking...</span>
-                        </div>
-                        
-                        <div class="info-row">
-                            <span class="info-label">Last Seen:</span>
-                            <span class="info-value" id="last-seen-${camera.id}">${this.getRelativeTime(camera.lastSeen)}</span>
-                        </div>
-                        
-                        <div class="info-row">
-                            <span class="info-label">Connection Type:</span>
-                            <span class="info-value" id="connection-type-${camera.id}">${camera.connectionType.toUpperCase()}</span>
-                        </div>
-                        
-                        <div class="info-row">
-                            <span class="info-label">Storage:</span>
-                            <span class="info-value" id="camera-storage-${camera.id}">Checking...</span>
+                            <span class="info-label">Location:</span>
+                            <span class="info-value">${this.capitalizeFirst(camera.location || 'Unknown')}</span>
                         </div>
                     </div>
                 </div>
@@ -1069,14 +1173,17 @@ class Cameras {
             checkbox.addEventListener('change', (e) => this.handleCameraSelection(e));
         });
 
-        // Camera action buttons
+        // Camera action buttons (including new kebab menu items)
         document.querySelectorAll('[data-action]').forEach(btn => {
             btn.addEventListener('click', (e) => this.handleCameraAction(e));
         });
 
-        // Preview buttons - removed as they're now handled by LiveVideoPlayer
+        // Kebab menu toggles
+        document.querySelectorAll('.kebab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.toggleKebabMenu(e));
+        });
 
-        // Dropdown toggles
+        // Dropdown toggles (legacy)
         document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
             toggle.addEventListener('click', (e) => this.toggleDropdown(e));
         });
@@ -1084,8 +1191,22 @@ class Cameras {
         // Add first camera button
         document.getElementById('add-first-camera')?.addEventListener('click', () => this.showAddCameraModal());
 
-        // Close dropdowns when clicking outside
+        // Close dropdowns and kebab menus when clicking outside
         document.addEventListener('click', (e) => this.handleOutsideClick(e));
+    }
+    
+    toggleKebabMenu(e) {
+        e.stopPropagation();
+        const cameraId = e.currentTarget.dataset.cameraId;
+        const menu = document.getElementById(`kebab-menu-${cameraId}`);
+        
+        // Close all other kebab menus
+        document.querySelectorAll('.kebab-menu').forEach(m => {
+            if (m !== menu) m.classList.remove('show');
+        });
+        
+        // Toggle current menu
+        menu.classList.toggle('show');
     }
 
     handleCameraSelection(e) {
@@ -1118,10 +1239,26 @@ class Cameras {
         const action = e.target.dataset.action || e.target.parentElement.dataset.action;
         const cameraId = e.target.dataset.cameraId || e.target.parentElement.dataset.cameraId;
         
-        // Close any open dropdowns
+        // Close any open dropdowns and kebab menus
         this.closeAllDropdowns();
+        document.querySelectorAll('.kebab-menu').forEach(m => m.classList.remove('show'));
         
         switch (action) {
+            case 'settings':
+                this.showCameraSettings(cameraId);
+                break;
+            case 'vlc':
+                this.openInVLC(cameraId);
+                break;
+            case 'playback':
+                this.openPlayback(cameraId);
+                break;
+            case 'snapshot':
+                this.takeSnapshot(cameraId);
+                break;
+            case 'restart':
+                this.restartCamera(cameraId);
+                break;
             case 'edit':
                 this.editCamera(cameraId);
                 break;
@@ -1169,8 +1306,14 @@ class Cameras {
     }
 
     handleOutsideClick(e) {
+        // Close dropdowns if clicking outside
         if (!e.target.closest('.action-dropdown')) {
             this.closeAllDropdowns();
+        }
+        
+        // Close kebab menus if clicking outside
+        if (!e.target.closest('.kebab-wrapper')) {
+            document.querySelectorAll('.kebab-menu').forEach(m => m.classList.remove('show'));
         }
     }
 
@@ -1400,6 +1543,79 @@ class Cameras {
             } catch (error) {
                 console.error('Error deleting camera:', error);
                 this.showToast(`Failed to delete camera "${camera.name}"`, 'error');
+            }
+        }
+    }
+    
+    // New Phase 2 methods for modern camera card
+    showCameraSettings(cameraId) {
+        const camera = this.cameras.find(c => c.id === cameraId);
+        if (!camera) return;
+        
+        // TODO: Open settings modal when component is ready
+        this.showToast('info', 'Settings modal coming soon!');
+    }
+    
+    openInVLC(cameraId) {
+        const camera = this.cameras.find(c => c.id === cameraId);
+        if (!camera) return;
+        
+        if (config.FEATURES.VLC_INTEGRATION && this.vlcModal) {
+            this.vlcModal.open(camera);
+        } else {
+            this.showToast('info', 'VLC integration not enabled');
+        }
+    }
+    
+    openPlayback(cameraId) {
+        const camera = this.cameras.find(c => c.id === cameraId);
+        if (!camera) return;
+        
+        // Navigate to recordings page with camera filter
+        window.location.href = `/recordings.html?camera=${cameraId}`;
+    }
+    
+    async takeSnapshot(cameraId) {
+        const camera = this.cameras.find(c => c.id === cameraId);
+        if (!camera) return;
+        
+        try {
+            const snapshotUrl = config.buildApiUrl(config.API_ENDPOINTS.CAMERA_SNAPSHOT(cameraId));
+            
+            // Create a link to download the snapshot
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const link = document.createElement('a');
+            link.href = snapshotUrl;
+            link.download = `${camera.name}_snapshot_${timestamp}.jpg`;
+            link.click();
+            
+            this.showToast('success', 'Snapshot saved!');
+        } catch (error) {
+            console.error('Snapshot error:', error);
+            this.showToast('error', 'Failed to take snapshot');
+        }
+    }
+    
+    async restartCamera(cameraId) {
+        const camera = this.cameras.find(c => c.id === cameraId);
+        if (!camera) return;
+        
+        if (confirm(`Restart "${camera.name}"? This may take a few moments.`)) {
+            try {
+                const apiUrl = config.buildApiUrl(`/api/cameras/${cameraId}/restart`);
+                const response = await fetch(apiUrl, { method: 'POST' });
+                
+                if (response.ok) {
+                    this.showToast('success', `${camera.name} is restarting...`);
+                    
+                    // Update status after a delay
+                    setTimeout(() => this.loadCameras(), 5000);
+                } else {
+                    throw new Error('Failed to restart camera');
+                }
+            } catch (error) {
+                console.error('Restart error:', error);
+                this.showToast('error', 'Failed to restart camera');
             }
         }
     }
@@ -1866,7 +2082,127 @@ class Cameras {
     }
 
     // Enhanced cleanup on page destroy
+    setupWebSocketUpdates() {
+        if (!config.FEATURES.WEBSOCKET_UPDATES) {
+            console.log('WebSocket updates disabled');
+            return;
+        }
+
+        // Connect to WebSocket service
+        WebSocketService.connect();
+
+        // Subscribe to camera status updates
+        const cameraStatusUnsubscribe = WebSocketService.subscribe('camera_status', (data) => {
+            this.handleCameraStatusUpdate(data);
+        });
+        this.webSocketSubscriptions.push(cameraStatusUnsubscribe);
+
+        // Subscribe to recording status updates
+        const recordingStatusUnsubscribe = WebSocketService.subscribe('recording_status', (data) => {
+            this.handleRecordingStatusUpdate(data);
+        });
+        this.webSocketSubscriptions.push(recordingStatusUnsubscribe);
+
+        // Subscribe to motion detection events
+        const motionDetectionUnsubscribe = WebSocketService.subscribe('motion_detection', (data) => {
+            this.handleMotionDetectionUpdate(data);
+        });
+        this.webSocketSubscriptions.push(motionDetectionUnsubscribe);
+
+        // Subscribe to connection status
+        const connectionUnsubscribe = WebSocketService.subscribe('connection', (data) => {
+            this.handleConnectionStatusUpdate(data);
+        });
+        this.webSocketSubscriptions.push(connectionUnsubscribe);
+
+        console.log('WebSocket subscriptions set up');
+    }
+
+    handleCameraStatusUpdate(data) {
+        const { cameraId, status, details } = data;
+        
+        // Update camera status in local array
+        const camera = this.cameras.find(c => c.id === cameraId);
+        if (camera) {
+            camera.status = status;
+            if (details) {
+                Object.assign(camera, details);
+            }
+            
+            // Update UI immediately
+            this.updateCameraStatusIndicator(cameraId, status);
+            
+            console.log(`Camera ${cameraId} status updated to: ${status}`);
+        }
+    }
+
+    handleRecordingStatusUpdate(data) {
+        const { cameraId, isRecording, details } = data;
+        
+        // Update recording status elements
+        const recordingStatusEl = document.getElementById(`recording-status-${cameraId}`);
+        const recordingIconEl = document.getElementById(`recording-icon-${cameraId}`);
+        
+        if (recordingStatusEl) {
+            recordingStatusEl.textContent = isRecording ? 'Active' : 'Inactive';
+        }
+        
+        if (recordingIconEl) {
+            recordingIconEl.classList.toggle('active', isRecording);
+        }
+        
+        console.log(`Camera ${cameraId} recording status: ${isRecording ? 'Active' : 'Inactive'}`);
+    }
+
+    handleMotionDetectionUpdate(data) {
+        const { cameraId, detected, zone, confidence } = data;
+        
+        // Update motion status element
+        const motionStatusEl = document.getElementById(`motion-status-${cameraId}`);
+        const motionIconEl = document.querySelector(`[data-camera-id="${cameraId}"] .status-icon.motion`);
+        
+        if (motionStatusEl) {
+            motionStatusEl.textContent = detected ? `Motion (${zone})` : 'No Activity';
+        }
+        
+        if (motionIconEl) {
+            motionIconEl.classList.toggle('active', detected);
+        }
+        
+        console.log(`Camera ${cameraId} motion: ${detected ? 'detected' : 'none'}`);
+    }
+
+    handleConnectionStatusUpdate(data) {
+        const { status } = data;
+        
+        console.log(`WebSocket connection status: ${status}`);
+        
+        // Show toast for connection changes
+        if (status === 'connected') {
+            this.showToast('success', 'Live updates connected');
+        } else if (status === 'disconnected') {
+            this.showToast('warning', 'Live updates disconnected');  
+        } else if (status === 'failed') {
+            this.showToast('error', 'Live updates failed to connect');
+        }
+    }
+
     destroy() {
+        // Clean up WebSocket subscriptions
+        if (this.webSocketSubscriptions) {
+            this.webSocketSubscriptions.forEach(unsubscribe => {
+                if (typeof unsubscribe === 'function') {
+                    unsubscribe();
+                }
+            });
+            this.webSocketSubscriptions = [];
+        }
+        
+        // Disconnect WebSocket service
+        if (config.FEATURES.WEBSOCKET_UPDATES) {
+            WebSocketService.disconnect();
+        }
+        
         // Remove visibility change listener
         document.removeEventListener('visibilitychange', this.handleVisibilityChange);
         

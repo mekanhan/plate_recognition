@@ -1,0 +1,380 @@
+/* VLC Stream Modal Styles */
+.vlc-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+.vlc-modal-backdrop.show {
+    display: flex;
+}
+
+.vlc-modal {
+    background: var(--card-bg, #1e1e2e);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    width: 90%;
+    max-width: 650px;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header */
+.vlc-header {
+    display: flex;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid var(--border-color, #3a3a4a);
+    background: linear-gradient(135deg, #ff6b00 0%, #ff8f00 100%);
+    color: white;
+}
+
+.vlc-icon-wrapper {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px;
+    margin-right: 16px;
+}
+
+.vlc-icon {
+    font-size: 24px;
+    font-weight: bold;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vlc-title-section {
+    flex: 1;
+}
+
+.vlc-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.vlc-subtitle {
+    margin: 4px 0 0 0;
+    opacity: 0.9;
+    font-size: 14px;
+}
+
+.vlc-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.vlc-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+/* Body */
+.vlc-body {
+    padding: 24px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+/* Stream URLs Section */
+.stream-urls-section {
+    margin-bottom: 24px;
+}
+
+.stream-url-group {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color, #3a3a4a);
+    border-radius: 8px;
+}
+
+.stream-url-group:last-child {
+    margin-bottom: 0;
+}
+
+.stream-label {
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.stream-input-wrapper {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.stream-url-input {
+    flex: 1;
+    background: var(--input-bg, #2a2a3a);
+    border: 1px solid var(--border-color, #3a3a4a);
+    border-radius: 6px;
+    padding: 12px;
+    color: var(--text-primary, #ffffff);
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+}
+
+.stream-url-input:focus {
+    outline: none;
+    border-color: #ff8f00;
+    box-shadow: 0 0 0 2px rgba(255, 143, 0, 0.2);
+}
+
+.copy-btn {
+    background: var(--accent-color, #ff8f00);
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.copy-btn:hover {
+    background: #ff6b00;
+    transform: translateY(-1px);
+}
+
+.copy-btn.success {
+    background: #10b981;
+}
+
+.stream-details {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.stream-detail {
+    font-size: 12px;
+    color: var(--text-secondary, #b0b0b0);
+}
+
+.stream-detail strong {
+    color: var(--text-primary, #ffffff);
+}
+
+/* Instructions */
+.vlc-instructions {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.instructions-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: #3b82f6;
+}
+
+.instructions-header h4 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.instructions-list {
+    margin: 12px 0;
+    padding-left: 20px;
+    color: var(--text-secondary, #b0b0b0);
+}
+
+.instructions-list li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.instructions-list strong {
+    color: var(--text-primary, #ffffff);
+}
+
+.instructions-list kbd {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.instructions-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 12px;
+    font-size: 13px;
+    color: #f59e0b;
+}
+
+/* Connection Info */
+.connection-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.connection-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.connection-label {
+    font-size: 12px;
+    color: var(--text-secondary, #b0b0b0);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.connection-value {
+    font-size: 14px;
+    color: var(--text-primary, #ffffff);
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
+/* Footer */
+.vlc-footer {
+    padding: 20px 24px;
+    border-top: 1px solid var(--border-color, #3a3a4a);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.vlc-footer-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    padding: 12px 20px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, #ff6b00 0%, #ff8f00 100%);
+    color: white;
+}
+
+.action-btn.primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
+}
+
+.action-btn.secondary {
+    background: var(--button-secondary-bg, #3a3a4a);
+    color: var(--text-primary, #ffffff);
+    border: 1px solid var(--border-color, #4a4a5a);
+}
+
+.action-btn.secondary:hover:not(:disabled) {
+    background: var(--button-secondary-hover, #4a4a5a);
+    transform: translateY(-1px);
+}
+
+.action-btn.success {
+    background: #10b981;
+    color: white;
+}
+
+.action-btn.error {
+    background: #ef4444;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .vlc-modal {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .vlc-header {
+        padding: 20px;
+    }
+    
+    .vlc-body {
+        padding: 20px;
+    }
+    
+    .vlc-footer-actions {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stream-input-wrapper {
+        flex-direction: column;
+    }
+    
+    .copy-btn {
+        width: 100%;
+    }
+    
+    .connection-info {
+        grid-template-columns: 1fr;
+    }
+}

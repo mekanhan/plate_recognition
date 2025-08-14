@@ -95,10 +95,29 @@ const config = {
     
     // Feature flags
     FEATURES: {
+        // Legacy features (always enabled)
         ENABLE_RECORDING: true,
         ENABLE_PLAYBACK: true,
         ENABLE_DETECTION: true,
-        ENABLE_ANALYTICS: true
+        ENABLE_ANALYTICS: true,
+        
+        // New UI Features (Phase 2)
+        NEW_CAMERA_UI: true,           // Modern camera card design
+        VLC_INTEGRATION: true,         // VLC stream modal
+        MODERN_SETTINGS_MODAL: false,  // 11-category settings modal
+        
+        // Real-time Features
+        WEBSOCKET_UPDATES: true,       // Live status updates
+        LIVE_MOTION_DETECTION: false,  // Real-time motion alerts
+        
+        // Advanced Features
+        GLOBAL_SETTINGS: false,        // Global vs camera-specific settings
+        ADVANCED_ANALYTICS: false,     // Enhanced AI features
+        BULK_OPERATIONS: false,        // Multi-camera actions
+        
+        // Performance Features
+        LAZY_LOADING: true,            // Component lazy loading
+        IMAGE_OPTIMIZATION: true       // Snapshot compression
     },
     
     // Timeouts and intervals (in milliseconds)

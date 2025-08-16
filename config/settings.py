@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     frame_buffer_size: int = 30
     detection_confidence_threshold: float = 0.5
     min_plate_text_length: int = 4
-    save_detection_frames: bool = True
+    save_detection_frames: bool = False
     
     # Storage
     detection_storage_path: str = "detections"

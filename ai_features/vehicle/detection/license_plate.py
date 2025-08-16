@@ -36,14 +36,13 @@ class LicensePlateModel(BaseAIModel):
         self.ocr_reader = None
         
         # Vehicle classes from COCO dataset (optimized for production)
-        self.vehicle_classes = [2, 3, 4, 5, 7]  # car, motorcycle, airplane (test), bus, truck
-        self.class_names = {2: 'car', 3: 'motorcycle', 4: 'airplane', 5: 'bus', 7: 'truck'}
+        self.vehicle_classes = [2, 3, 5, 7]  # car, motorcycle, bus, truck
+        self.class_names = {2: 'car', 3: 'motorcycle', 5: 'bus', 7: 'truck'}
         
         # Confidence thresholds by vehicle type
         self.vehicle_confidence_thresholds = {
             2: 0.4,   # car - higher confidence
             3: 0.3,   # motorcycle
-            4: 0.2,   # airplane (for test license plate) - lower threshold
             5: 0.4,   # bus
             7: 0.4    # truck
         }

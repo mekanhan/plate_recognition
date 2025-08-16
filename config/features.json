@@ -1,0 +1,24 @@
+{
+  "detection_features": {
+    "license_plate_detection": true,
+    "universal_detection": false,
+    "vehicle_detection": false,
+    "object_detection": false
+  },
+  "api_features": {
+    "universal_detection_endpoints": false,
+    "legacy_detection_endpoints": true
+  },
+  "processing_features": {
+    "smart_deduplication": true,
+    "storage_management": true,
+    "continuous_processing": true
+  },
+  "description": {
+    "license_plate_detection": "Original license plate detection system - saves to Detection table",
+    "universal_detection": "New universal detection system - saves to universal_detections table",
+    "vehicle_detection": "Vehicle detection without plates",
+    "object_detection": "General object detection (person, animals, etc)",
+    "note": "Enable only one detection type at a time to avoid confusion and database pollution"
+  }
+}

@@ -350,3 +350,27 @@ async def broadcast_system_health(health_data: Dict[str, Any]):
         "timestamp": datetime.now().isoformat()
     }
     return await websocket_manager.broadcast_to_subscribers("system_health", payload)
+
+async def broadcast_universal_detection(detection: Dict[str, Any]):
+    """Broadcast universal detection event"""
+    payload = {
+        "detection_id": detection["id"],
+        "camera_id": detection["camera_id"],
+        "object_type": detection["object_type"],
+        "confidence": detection["confidence"],
+        "detected_at": detection["detected_at"].isoformat() if hasattr(detection["detected_at"], 'isoformat') else detection["detected_at"],
+        "bbox": detection["bbox"],
+        "metadata": detection.get("metadata", {}),
+        "status": detection.get("status", "unverified"),
+        "processing_time_ms": detection.get("processing_time_ms", 0),
+        "timestamp": datetime.now().isoformat()
+    }
+    return await websocket_manager.broadcast_to_subscribers("universal_detection", payload)
+
+async def broadcast_object_type_stats(stats: Dict[str, Any]):
+    """Broadcast object type statistics update"""
+    payload = {
+        **stats,
+        "timestamp": datetime.now().isoformat()
+    }
+    return await websocket_manager.broadcast_to_subscribers("detection_stats", payload)

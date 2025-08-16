@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 from ai_pipeline.camera_manager import CameraManager, CameraConfig
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 from ai_features.vehicle.detection.pipeline import EnhancedProcessingPipeline
+from ai_features.core.universal_processor import UniversalDetectionPipeline
 from database.service import DatabaseService
 from utils.camera_utils import generate_camera_id, validate_camera_id, CameraValidation, CameraDisplayUtils
+from utils.feature_flags import feature_flags, is_license_plate_detection_enabled, is_universal_detection_enabled, is_continuous_processing_enabled
 try:
     from .websocket_manager import websocket_manager, broadcast_camera_status, broadcast_recording_status
     from .background_monitor import start_background_monitoring, stop_background_monitoring
@@ -37,8 +39,16 @@ except ImportError:
     from api.background_monitor import start_background_monitoring, stop_background_monitoring
 try:
     from .camera_endpoints import router as camera_router, init_camera_api
+    # Import universal detection router only if needed
+    universal_detection_router = None
+    if feature_flags.is_enabled('api_features.universal_detection_endpoints'):
+        from .universal_detection_endpoints import router as universal_detection_router
 except ImportError:
     from api.camera_endpoints import router as camera_router, init_camera_api
+    # Import universal detection router only if needed
+    universal_detection_router = None
+    if feature_flags.is_enabled('api_features.universal_detection_endpoints'):
+        from api.universal_detection_endpoints import router as universal_detection_router
 
 # Import authentication system  
 from auth.endpoints import auth_router, users_router
@@ -109,6 +119,7 @@ class CameraTestRequest(BaseModel):
 camera_manager = None
 detector = None
 pipeline = None
+universal_pipeline = None
 db = None
 
 # Recording service notification functions
@@ -209,7 +220,7 @@ async def notify_recording_service_camera_deleted(camera_id: str):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    global camera_manager, detector, pipeline, db
+    global camera_manager, detector, pipeline, universal_pipeline, db
     
     # Setup logging
     logging.basicConfig(
@@ -220,8 +231,24 @@ async def lifespan(app: FastAPI):
     # Initialize services
     camera_manager = CameraManager()
     detector = LicensePlateDetector()
-    # Use enhanced pipeline with smart deduplication
-    pipeline = EnhancedProcessingPipeline()
+    
+    # Initialize pipelines based on feature flags
+    pipeline = None
+    universal_pipeline = None
+    
+    if is_license_plate_detection_enabled():
+        # Use enhanced pipeline with smart deduplication for license plates
+        pipeline = EnhancedProcessingPipeline()
+        logging.info("License plate detection pipeline initialized")
+    
+    if is_universal_detection_enabled():
+        # Initialize universal detection pipeline
+        universal_pipeline = UniversalDetectionPipeline()
+        logging.info("Universal detection pipeline initialized")
+    
+    if not is_license_plate_detection_enabled() and not is_universal_detection_enabled():
+        logging.warning("No detection pipelines enabled - detection will not function")
+    
     db = DatabaseService()
     
     # Create database tables
@@ -328,6 +355,8 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket_manager.subscribe(client_id, "camera_status")
         await websocket_manager.subscribe(client_id, "recording_status")
         await websocket_manager.subscribe(client_id, "motion_detection")
+        await websocket_manager.subscribe(client_id, "universal_detection")
+        await websocket_manager.subscribe(client_id, "detection_stats")
         
         # Listen for incoming messages
         while True:
@@ -358,6 +387,13 @@ app.include_router(users_router, prefix="/api")
 app.include_router(monitoring_router)
 app.include_router(analytics_router)
 app.include_router(camera_router, prefix="/v2")
+
+# Only include universal detection endpoints if feature flag is enabled
+if feature_flags.is_enabled('api_features.universal_detection_endpoints') and universal_detection_router:
+    app.include_router(universal_detection_router)
+    logging.info("Universal detection API endpoints enabled")
+else:
+    logging.info("Universal detection API endpoints disabled by feature flag")
 
 # Mount static files for images
 app.mount("/images", StaticFiles(directory="detections"), name="images")
@@ -434,9 +470,71 @@ async def camera_recovery_task():
         except Exception as e:
             logging.error(f"Camera recovery task error: {e}")
 
+async def save_universal_detection(detection_data: Dict):
+    """Save detection to universal_detections table"""
+    try:
+        from sqlalchemy import text
+        
+        query = """
+            INSERT INTO universal_detections (
+                id, camera_id, object_type, confidence, detected_at,
+                bbox, frame_path, object_image_path, video_clip_id,
+                video_thumbnail_path, metadata, status, processing_time_ms,
+                model_version, created_at, updated_at
+            ) VALUES (
+                :id, :camera_id, :object_type, :confidence, :detected_at,
+                :bbox, :frame_path, :object_image_path, :video_clip_id,
+                :video_thumbnail_path, :metadata, :status, :processing_time_ms,
+                :model_version, :created_at, :updated_at
+            )
+        """
+        
+        params = {
+            'id': detection_data['id'],
+            'camera_id': detection_data['camera_id'],
+            'object_type': detection_data['object_type'],
+            'confidence': detection_data['confidence'],
+            'detected_at': detection_data['detected_at'],
+            'bbox': json.dumps(detection_data['bbox']),
+            'frame_path': detection_data.get('frame_path', ''),
+            'object_image_path': detection_data.get('object_image_path', ''),
+            'video_clip_id': detection_data.get('video_clip_id', ''),
+            'video_thumbnail_path': detection_data.get('video_thumbnail_path', ''),
+            'metadata': json.dumps(detection_data.get('metadata', {})),
+            'status': detection_data.get('status', 'unverified'),
+            'processing_time_ms': detection_data.get('processing_time_ms', 0),
+            'model_version': detection_data.get('model_version', '2.0'),
+            'created_at': datetime.now(),
+            'updated_at': datetime.now()
+        }
+        
+        async with db.engine.begin() as conn:
+            await conn.execute(text(query), params)
+            
+    except Exception as e:
+        logging.error(f"Error saving universal detection: {e}")
+
 async def processing_loop():
-    """Main processing loop - runs continuously"""
-    logging.info("Starting processing loop")
+    """Main processing loop - feature-flag aware detection processing"""
+    
+    # Check if continuous processing is enabled
+    if not is_continuous_processing_enabled():
+        logging.info("Continuous processing is disabled by feature flag - processing loop will not run")
+        return
+    
+    # Determine which detection system to use based on feature flags
+    license_plate_enabled = is_license_plate_detection_enabled()
+    universal_enabled = is_universal_detection_enabled()
+    
+    if license_plate_enabled and universal_enabled:
+        logging.warning("Both license plate and universal detection are enabled - this may cause confusion. Consider enabling only one.")
+    elif not license_plate_enabled and not universal_enabled:
+        logging.warning("No detection systems are enabled - processing loop will run but do nothing")
+    
+    if license_plate_enabled:
+        logging.info("Starting processing loop with LICENSE PLATE DETECTION enabled")
+    if universal_enabled:
+        logging.info("Starting processing loop with UNIVERSAL DETECTION enabled")
     
     while True:
         try:
@@ -447,43 +545,81 @@ async def processing_loop():
                     
                     frame = camera.get_frame()
                     if frame is not None:
-                        # Process for detections
                         start_time = time.time()
-                        detections = await pipeline.process_frame(camera_id, frame)
-                        processing_time = time.time() - start_time
                         
-                        # Record processing metrics
-                        for detection in detections:
-                            metrics.record_detection(
-                                camera_id=detection.camera_id,
-                                vehicle_type=detection.vehicle_type or "unknown",
-                                confidence=detection.confidence,
-                                ocr_confidence=detection.ocr_confidence or 0.0,
-                                processing_time=processing_time
-                            )
+                        # LICENSE PLATE DETECTION PROCESSING
+                        if license_plate_enabled and pipeline:
+                            try:
+                                # Use the original enhanced processing pipeline for license plates
+                                lp_detections = await pipeline.process_frame(camera_id, frame)
+                                processing_time = time.time() - start_time
+                                
+                                # Save license plate detections to the original Detection table
+                                for detection in lp_detections:
+                                    # Record metrics for license plate detections
+                                    metrics.record_detection(
+                                        camera_id=detection.camera_id,
+                                        vehicle_type=detection.vehicle_type,
+                                        confidence=detection.confidence,
+                                        ocr_confidence=detection.ocr_confidence,
+                                        processing_time=processing_time
+                                    )
+                                    
+                                    # Save to original detections table via database service
+                                    saved_detection = await db.save_detection(detection)
+                                    if saved_detection:
+                                        logging.debug(f"Saved license plate detection: {detection.plate_text}")
+                                    
+                                    # Broadcast license plate detection
+                                    try:
+                                        from api.websocket_manager import broadcast_detection
+                                        await broadcast_detection({
+                                            'id': detection.detection_id,
+                                            'camera_id': detection.camera_id,
+                                            'plate_text': detection.plate_text,
+                                            'confidence': detection.confidence,
+                                            'vehicle_type': detection.vehicle_type,
+                                            'detected_at': detection.timestamp.isoformat()
+                                        })
+                                    except Exception as e:
+                                        logging.debug(f"Failed to broadcast license plate detection: {e}")
+                                        
+                            except Exception as e:
+                                logging.error(f"License plate detection error for camera {camera_id}: {e}")
                         
-                        # Save detections to database with deduplication fields
-                        for detection in detections:
-                            detection_data = {
-                                'id': detection.detection_id,  # Fixed: database uses 'id', not 'detection_id'
-                                'camera_id': detection.camera_id,
-                                'detected_at': detection.timestamp,
-                                'plate_text': detection.plate_text,
-                                'confidence': detection.confidence,
-                                'vehicle_type': detection.vehicle_type,
-                                'vehicle_bbox': detection.vehicle_bbox,
-                                'plate_bbox': detection.plate_bbox,
-                                'frame_path': detection.frame_path,
-                                'plate_image_path': detection.plate_image_path,
-                                # Deduplication fields
-                                'group_id': detection.group_id,
-                                'track_id': detection.track_id,
-                                'is_best_shot': detection.is_best_shot,
-                                'image_saved': detection.image_saved,
-                                'ocr_confidence': detection.ocr_confidence,
-                                'meta_data': detection.detection_metadata
-                            }
-                            await db.save_detection(detection_data)
+                        # UNIVERSAL DETECTION PROCESSING (if enabled)
+                        if universal_enabled and universal_pipeline:
+                            try:
+                                # Process for universal detections
+                                start_time = time.time()
+                                universal_detections = await universal_pipeline.process_frame(camera_id, frame)
+                                processing_time = time.time() - start_time
+                                
+                                # Save universal detections to database
+                                for detection in universal_detections:
+                                    # Record processing metrics based on object type
+                                    if detection['object_type'] == 'vehicle' and 'plate_text' in detection.get('metadata', {}):
+                                        metrics.record_detection(
+                                            camera_id=detection['camera_id'],
+                                            vehicle_type=detection.get('metadata', {}).get('vehicle_type', 'unknown'),
+                                            confidence=detection['confidence'],
+                                            ocr_confidence=detection.get('metadata', {}).get('ocr_confidence', 0.0),
+                                            processing_time=processing_time
+                                        )
+                                    
+                                    # Save to universal detections table
+                                    await save_universal_detection(detection)
+                                    
+                                    # Broadcast to WebSocket clients
+                                    try:
+                                        from api.websocket_manager import broadcast_universal_detection
+                                        await broadcast_universal_detection(detection)
+                                    except Exception as e:
+                                        logging.debug(f"Failed to broadcast universal detection: {e}")
+                                        
+                            except Exception as e:
+                                logging.error(f"Universal detection error for camera {camera_id}: {e}")
+                        
                 else:
                     # Only attempt recovery if we haven't tried recently (throttle to prevent spam)
                     current_time = time.time()
@@ -523,6 +659,12 @@ async def health():
         "cameras": len(camera_manager.get_all_cameras()),
         "database": "connected"
     }
+
+@app.get("/api/config/features")
+async def get_feature_configuration():
+    """Get current feature flag configuration"""
+    from utils.feature_flags import get_detection_config_summary
+    return get_detection_config_summary()
 
 @app.get("/api/cameras")
 async def get_cameras():
@@ -1165,8 +1307,8 @@ async def get_recent_detections(
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
         "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"/images/plates/{os.path.basename(d.plate_image_path)}" if d.plate_image_path else None,
-        "frame_image": f"/images/frames/{os.path.basename(d.frame_path)}" if d.frame_path else None,
+        "plate_image": f"detections/plates/{d.id}_plate.jpg",
+        "frame_image": f"detections/frames/{d.id}_frame.jpg",
         "has_video": d.video_clip_id is not None,
         "video_clip_id": d.video_clip_id
     } for d in detections]
@@ -1203,8 +1345,8 @@ async def search_detections(
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
         "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"/images/plates/{os.path.basename(d.plate_image_path)}" if d.plate_image_path else None,
-        "frame_image": f"/images/frames/{os.path.basename(d.frame_path)}" if d.frame_path else None
+        "plate_image": f"detections/plates/{d.id}_plate.jpg",
+        "frame_image": f"detections/frames/{d.id}_frame.jpg"
     } for d in detections]
     
     if include_count:
@@ -1241,8 +1383,8 @@ async def get_similar_plates(plate_text: str, limit: int = Query(10, ge=1, le=50
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
         "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"/images/plates/{os.path.basename(d.plate_image_path)}" if d.plate_image_path else None,
-        "frame_image": f"/images/frames/{os.path.basename(d.frame_path)}" if d.frame_path else None,
+        "plate_image": f"detections/plates/{d.id}_plate.jpg",
+        "frame_image": f"detections/frames/{d.id}_frame.jpg",
         "similarity_score": _calculate_similarity_score(plate_text, d.plate_text)
     } for d in similar_detections]
 
@@ -1261,8 +1403,8 @@ async def get_plate_history(
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
         "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"/images/plates/{os.path.basename(d.plate_image_path)}" if d.plate_image_path else None,
-        "frame_image": f"/images/frames/{os.path.basename(d.frame_path)}" if d.frame_path else None
+        "plate_image": f"detections/plates/{d.id}_plate.jpg",
+        "frame_image": f"detections/frames/{d.id}_frame.jpg"
     } for d in history]
 
 @app.get("/api/detections/stats")
@@ -1318,8 +1460,8 @@ async def get_detection(detection_id: str):
         "detected_at": detection.detected_at.isoformat(),
         "vehicle_bbox": detection.vehicle_bbox,
         "plate_bbox": detection.plate_bbox,
-        "plate_image": f"/images/plates/{os.path.basename(detection.plate_image_path)}" if detection.plate_image_path else None,
-        "frame_image": f"/images/frames/{os.path.basename(detection.frame_path)}" if detection.frame_path else None,
+        "plate_image": f"detections/plates/{detection.id}_plate.jpg",
+        "frame_image": f"detections/frames/{detection.id}_frame.jpg",
         "video_clip_id": detection.video_clip_id
     }
 
@@ -1699,7 +1841,7 @@ async def get_system_health():
         "database_status": "connected",
         "camera_manager_status": "running",
         "total_cameras": len(camera_manager.get_all_cameras()),
-        "processing_loop_status": "running",
+        "processing_loop_status": "running" if is_continuous_processing_enabled() else "disabled",
         "ai_models_loaded": {
             "yolo_vehicle": hasattr(detector, 'vehicle_model'),
             "yolo_plate": hasattr(detector, 'plate_model'),
@@ -2001,8 +2143,8 @@ async def filter_detections_by_quality(
                 "confidence": detection.confidence,
                 "vehicle_type": detection.vehicle_type,
                 "detected_at": detection.detected_at.isoformat(),
-                "plate_image": f"/images/plates/{os.path.basename(detection.plate_image_path)}" if detection.plate_image_path else None,
-                "frame_image": f"/images/frames/{os.path.basename(detection.frame_path)}" if detection.frame_path else None,
+                "plate_image": f"detections/plates/{detection.id}_plate.jpg",
+                "frame_image": f"detections/frames/{detection.id}_frame.jpg",
                 "pop_metrics": {}
             }
             

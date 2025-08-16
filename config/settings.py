@@ -22,9 +22,10 @@ class Settings(BaseSettings):
     ai_device: str = "auto"  # auto, cpu, cuda
     
     # Processing
-    processing_fps: float = 10.0
+    processing_fps: float = 2.0
     frame_buffer_size: int = 30
-    detection_confidence_threshold: float = 0.5
+    frame_skip_interval: int = 3  # Process every 3rd frame to reduce load
+    detection_confidence_threshold: float = 0.6
     min_plate_text_length: int = 4
     save_detection_frames: bool = False
     

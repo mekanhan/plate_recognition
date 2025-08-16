@@ -87,7 +87,14 @@ class Sidebar {
         // Sidebar collapse toggle
         const collapseBtn = document.getElementById('sidebar-collapse-btn');
         if (collapseBtn) {
-            collapseBtn.addEventListener('click', () => this.toggleCollapse());
+            // Remove any existing listeners to prevent duplicates
+            collapseBtn.replaceWith(collapseBtn.cloneNode(true));
+            const newCollapseBtn = document.getElementById('sidebar-collapse-btn');
+            newCollapseBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleCollapse();
+            });
         }
 
         // Menu item navigation

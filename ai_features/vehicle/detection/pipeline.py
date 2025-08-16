@@ -251,11 +251,11 @@ class EnhancedProcessingPipeline:
             self.logger.info(f"Rejected due to poor POP quality: {pop_metrics.get('quality_score', 0):.1f}%")
             return False
         
-        # For very high quality plates, relax OCR confidence requirements
+        # Improved OCR confidence requirements for better accuracy
         if pop_metrics.get('recommended_for_ocr', False):
-            min_confidence = 0.15  # Lower threshold for high-quality plates
+            min_confidence = 0.5   # Higher threshold for high-quality plates
         else:
-            min_confidence = 0.3   # Higher threshold for lower-quality plates
+            min_confidence = 0.7   # Much higher threshold for lower-quality plates
         
         # State name detection (common US states)
         state_patterns = ['TEXAS', 'CALIFORNIA', 'FLORIDA', 'NEW YORK', 'ILLINOIS']

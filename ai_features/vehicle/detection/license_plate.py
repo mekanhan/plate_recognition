@@ -130,7 +130,7 @@ class LicensePlateModel(BaseAIModel):
                 all_detections.append((class_id, confidence))
                 
                 # Check if vehicle class is valid and meets confidence threshold
-                min_confidence = self.vehicle_confidence_thresholds.get(class_id, 0.5)
+                min_confidence = self.vehicle_confidence_thresholds.get(class_id, 0.6)
                 if class_id in self.vehicle_classes and confidence >= min_confidence:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     confidence = float(box.conf)
@@ -219,8 +219,8 @@ class LicensePlateModel(BaseAIModel):
             for box in r.boxes:
                 confidence = float(box.conf)
                 
-                # Adaptive confidence threshold for full-frame detection
-                min_confidence = 0.25  # Lower threshold for better detection in various conditions
+                # Improved confidence threshold for better accuracy
+                min_confidence = 0.6  # Higher threshold to reduce false positives
                 if confidence > min_confidence:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     

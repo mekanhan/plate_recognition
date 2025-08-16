@@ -22,6 +22,7 @@
     align-items: center;
     justify-content: space-between;
     min-height: var(--header-height);
+    font-size: var(--font-size-base);
 }
 
 .logo {
@@ -98,6 +99,7 @@
     position: relative;
     white-space: nowrap;
     overflow: hidden;
+    font-size: var(--font-size-base);
 }
 
 .menu-link:hover {
@@ -119,6 +121,7 @@
 
 .menu-link span {
     transition: opacity var(--transition-base);
+    font-size: var(--font-size-base);
 }
 
 .sidebar.collapsed .menu-link span {
@@ -186,14 +189,14 @@
 
 .user-name {
     font-weight: 600;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .user-role {
-    font-size: var(--font-size-xs);
+    font-size: var(--font-size-sm);
     color: rgba(255, 255, 255, 0.6);
     white-space: nowrap;
     overflow: hidden;

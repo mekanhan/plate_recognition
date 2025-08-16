@@ -357,6 +357,7 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket_manager.subscribe(client_id, "motion_detection")
         await websocket_manager.subscribe(client_id, "universal_detection")
         await websocket_manager.subscribe(client_id, "detection_stats")
+        await websocket_manager.subscribe(client_id, "detection_console")
         
         # Listen for incoming messages
         while True:
@@ -391,7 +392,7 @@ app.include_router(camera_router, prefix="/v2")
 # Only include universal detection endpoints if feature flag is enabled
 if feature_flags.is_enabled('api_features.universal_detection_endpoints') and universal_detection_router:
     app.include_router(universal_detection_router)
-    logging.info("Universal detection API endpoints enabled")
+    logging.info("Universal detection API endpoints enabled at /api/v2")
 else:
     logging.info("Universal detection API endpoints disabled by feature flag")
 

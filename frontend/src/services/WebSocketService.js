@@ -21,7 +21,8 @@ class WebSocketService {
             RECORDING_STATUS: 'recording_status',
             MOTION_DETECTION: 'motion_detection',
             SYSTEM_HEALTH: 'system_health',
-            ANALYTICS_EVENT: 'analytics_event'
+            ANALYTICS_EVENT: 'analytics_event',
+            DETECTION_CONSOLE: 'detection_console'
         };
     }
 
@@ -117,6 +118,9 @@ class WebSocketService {
             case this.EVENT_TYPES.ANALYTICS_EVENT:
                 this.handleAnalyticsEvent(payload);
                 break;
+            case this.EVENT_TYPES.DETECTION_CONSOLE:
+                this.handleDetectionConsole(payload);
+                break;
             default:
                 console.log('Unknown WebSocket message type:', type);
         }
@@ -177,6 +181,11 @@ class WebSocketService {
             data: data,
             timestamp: Date.now()
         });
+    }
+
+    handleDetectionConsole(payload) {
+        // Forward the entire payload to detection console subscribers
+        this.notifySubscribers('detection_console', payload);
     }
 
     // Subscription management

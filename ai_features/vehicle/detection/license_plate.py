@@ -130,7 +130,7 @@ class LicensePlateModel(BaseAIModel):
                 all_detections.append((class_id, confidence))
                 
                 # Check if vehicle class is valid and meets confidence threshold
-                min_confidence = self.vehicle_confidence_thresholds.get(class_id, 0.6)
+                min_confidence = self.vehicle_confidence_thresholds.get(class_id, 0.4)
                 if class_id in self.vehicle_classes and confidence >= min_confidence:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     confidence = float(box.conf)
@@ -219,8 +219,8 @@ class LicensePlateModel(BaseAIModel):
             for box in r.boxes:
                 confidence = float(box.conf)
                 
-                # Improved confidence threshold for better accuracy
-                min_confidence = 0.6  # Higher threshold to reduce false positives
+                # Relaxed confidence threshold for 4K testing
+                min_confidence = 0.4  # Lowered to capture more detections for analysis
                 if confidence > min_confidence:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     
@@ -236,18 +236,62 @@ class LicensePlateModel(BaseAIModel):
         
         return plates
     
+    def _enhance_4k_plate_image(self, plate_image: np.ndarray) -> np.ndarray:
+        """Enhanced image preprocessing specifically for 4K resolution plates"""
+        import cv2
+        
+        # Convert to grayscale if needed
+        if len(plate_image.shape) == 3:
+            gray = cv2.cvtColor(plate_image, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = plate_image.copy()
+        
+        # Apply CLAHE (Contrast Limited Adaptive Histogram Equalization)
+        clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
+        enhanced = clahe.apply(gray)
+        
+        # Apply Gaussian blur to reduce noise
+        blurred = cv2.GaussianBlur(enhanced, (3, 3), 0)
+        
+        # Apply sharpening kernel for better edge definition
+        kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+        sharpened = cv2.filter2D(blurred, -1, kernel)
+        
+        # Ensure minimum size for OCR (resize if too small)
+        height, width = sharpened.shape
+        min_height = 64  # Minimum height for good OCR
+        
+        if height < min_height:
+            scale_factor = min_height / height
+            new_width = int(width * scale_factor)
+            sharpened = cv2.resize(sharpened, (new_width, min_height), interpolation=cv2.INTER_CUBIC)
+        
+        # Convert back to BGR for compatibility
+        if len(plate_image.shape) == 3:
+            return cv2.cvtColor(sharpened, cv2.COLOR_GRAY2BGR)
+        else:
+            return sharpened
+    
     def read_plate(self, frame: np.ndarray, plate_bbox: List[int]) -> Tuple[str, float]:
         """Read license plate text using enhanced OCR with validation"""
         x1, y1, x2, y2 = plate_bbox
         
-        # Extract plate region with some padding
-        padding = 5
+        # Extract plate region with adaptive padding for 4K resolution
+        # Larger padding for high-resolution images
+        frame_height, frame_width = frame.shape[:2]
+        is_4k = frame_width >= 3840 or frame_height >= 2160
+        
+        padding = 15 if is_4k else 5  # More padding for 4K
         x1 = max(0, x1 - padding)
         y1 = max(0, y1 - padding)
         x2 = min(frame.shape[1], x2 + padding)
         y2 = min(frame.shape[0], y2 + padding)
         
         plate_image = frame[y1:y2, x1:x2]
+        
+        # Enhanced preprocessing for 4K images
+        if is_4k and plate_image.size > 0:
+            plate_image = self._enhance_4k_plate_image(plate_image)
         
         if plate_image.size == 0:
             return "", 0.0

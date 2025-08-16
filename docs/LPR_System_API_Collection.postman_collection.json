@@ -1,0 +1,1207 @@
+{
+	"info": {
+		"_postman_id": "lpr-system-api-collection",
+		"name": "LPR System API Collection",
+		"description": "Complete API collection for License Plate Recognition System with 97 endpoints across Main API (8001) and Recording Service (8002)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "lpr-system"
+	},
+	"item": [
+		{
+			"name": "🔐 Authentication & Users",
+			"item": [
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/login",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/me",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "auth", "me"]
+						}
+					}
+				},
+				{
+					"name": "Get Current Permissions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/permissions",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "auth", "permissions"]
+						}
+					}
+				},
+				{
+					"name": "Check Permission",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"permission\": \"cameras:read\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/auth/check-permission",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "auth", "check-permission"]
+						}
+					}
+				},
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/users/",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "users", ""]
+						}
+					}
+				},
+				{
+					"name": "Create User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"newuser\",\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"role\": \"operator\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/users/",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "users", ""]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📹 Camera Management (Legacy)",
+			"item": [
+				{
+					"name": "Get All Cameras",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras"]
+						}
+					}
+				},
+				{
+					"name": "Create Camera",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Front Gate Camera\",\n  \"ip_address\": \"192.168.1.100\",\n  \"port\": 80,\n  \"connection_type\": \"http\",\n  \"stream_path\": \"/mjpeg\",\n  \"username\": \"admin\",\n  \"password\": \"admin123\",\n  \"location\": \"Front Gate\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras"]
+						}
+					}
+				},
+				{
+					"name": "Get Camera Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Camera",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Camera Name\",\n  \"location\": \"Updated Location\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Camera",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}"]
+						}
+					}
+				},
+				{
+					"name": "Test Camera Connection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}/test",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}", "test"]
+						}
+					}
+				},
+				{
+					"name": "Start Camera Recording",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}/start",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}", "start"]
+						}
+					}
+				},
+				{
+					"name": "Stop Camera Recording",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}/stop",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}", "stop"]
+						}
+					}
+				},
+				{
+					"name": "Get Camera Snapshot",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}/snapshot?quality=high",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}", "snapshot"],
+							"query": [
+								{
+									"key": "quality",
+									"value": "high"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Camera Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}/health",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}", "health"]
+						}
+					}
+				},
+				{
+					"name": "Get Camera Diagnostics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}/diagnostics",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}", "diagnostics"]
+						}
+					}
+				},
+				{
+					"name": "Get VLC Stream URL",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/cameras/{{CAMERA_ID}}/open-vlc",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "cameras", "{{CAMERA_ID}}", "open-vlc"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🎯 Detection Management (Legacy)",
+			"item": [
+				{
+					"name": "Get Recent Detections",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/detections/recent?limit=10&offset=0",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "detections", "recent"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Search Detections",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/detections/search?plate_text=ABC123&camera_id={{CAMERA_ID}}&confidence=0.8",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "detections", "search"],
+							"query": [
+								{
+									"key": "plate_text",
+									"value": "ABC123"
+								},
+								{
+									"key": "camera_id",
+									"value": "{{CAMERA_ID}}"
+								},
+								{
+									"key": "confidence",
+									"value": "0.8"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Detection Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/detections/{{DETECTION_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "detections", "{{DETECTION_ID}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Similar Plates",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/detections/similar/ABC123",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "detections", "similar", "ABC123"]
+						}
+					}
+				},
+				{
+					"name": "Get Plate History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/detections/history/ABC123",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "detections", "history", "ABC123"]
+						}
+					}
+				},
+				{
+					"name": "Get Detection Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/detections/stats",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "detections", "stats"]
+						}
+					}
+				},
+				{
+					"name": "Get Detection Quality Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/detections/{{DETECTION_ID}}/quality",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "detections", "{{DETECTION_ID}}", "quality"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🎯 Universal Detection Management (V2)",
+			"item": [
+				{
+					"name": "Get Object Types",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v2/object-types",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v2", "object-types"]
+						}
+					}
+				},
+				{
+					"name": "Search Universal Detections",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v2/detections?object_types=vehicle&confidence=0.8&limit=10",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v2", "detections"],
+							"query": [
+								{
+									"key": "object_types",
+									"value": "vehicle"
+								},
+								{
+									"key": "confidence",
+									"value": "0.8"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Smart Search Detections",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"object_types\": [\"vehicle\"],\n  \"camera_ids\": [\"{{CAMERA_ID}}\"],\n  \"confidence_min\": 0.8,\n  \"date_from\": \"2025-08-01\",\n  \"date_to\": \"2025-08-31\",\n  \"metadata_filters\": {\n    \"plate_text\": \"ABC123\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/v2/detections/search",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v2", "detections", "search"]
+						}
+					}
+				},
+				{
+					"name": "Get Universal Detection Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v2/detections/{{DETECTION_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v2", "detections", "{{DETECTION_ID}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Detection",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"flagged\": true,\n  \"notes\": \"Suspicious vehicle\",\n  \"status\": \"reviewed\"\n}"
+						},
+						"url": {
+							"raw": "{{BASE_URL}}/api/v2/detections/{{DETECTION_ID}}",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v2", "detections", "{{DETECTION_ID}}"]
+						}
+					}
+				},
+				{
+					"name": "Get Universal Detection Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/v2/statistics",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "v2", "statistics"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Analytics & Reporting",
+			"item": [
+				{
+					"name": "Get Analytics Overview",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/analytics/overview",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "analytics", "overview"]
+						}
+					}
+				},
+				{
+					"name": "Get Dashboard Data",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/analytics/dashboard",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "analytics", "dashboard"]
+						}
+					}
+				},
+				{
+					"name": "Get Camera Analytics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/analytics/cameras?camera_id={{CAMERA_ID}}&date_from=2025-08-01&date_to=2025-08-31",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "analytics", "cameras"],
+							"query": [
+								{
+									"key": "camera_id",
+									"value": "{{CAMERA_ID}}"
+								},
+								{
+									"key": "date_from",
+									"value": "2025-08-01"
+								},
+								{
+									"key": "date_to",
+									"value": "2025-08-31"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Plate Analytics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/analytics/plates",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "analytics", "plates"]
+						}
+					}
+				},
+				{
+					"name": "Get Temporal Trends",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/analytics/trends",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "analytics", "trends"]
+						}
+					}
+				},
+				{
+					"name": "Export Analytics to CSV",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/analytics/export/csv?type=detections&date_from=2025-08-01&date_to=2025-08-31",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "analytics", "export", "csv"],
+							"query": [
+								{
+									"key": "type",
+									"value": "detections"
+								},
+								{
+									"key": "date_from",
+									"value": "2025-08-01"
+								},
+								{
+									"key": "date_to",
+									"value": "2025-08-31"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🖥️ System Monitoring",
+			"item": [
+				{
+					"name": "Basic Health Check",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{BASE_URL}}/health",
+							"host": ["{{BASE_URL}}"],
+							"path": ["health"]
+						}
+					}
+				},
+				{
+					"name": "System Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/system/health",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "system", "health"]
+						}
+					}
+				},
+				{
+					"name": "Detailed Health Monitoring",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/monitoring/health/detailed",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "monitoring", "health", "detailed"]
+						}
+					}
+				},
+				{
+					"name": "Get System Alerts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/monitoring/alerts",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "monitoring", "alerts"]
+						}
+					}
+				},
+				{
+					"name": "Get Prometheus Metrics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/monitoring/metrics",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "monitoring", "metrics"]
+						}
+					}
+				},
+				{
+					"name": "Performance Overview",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/monitoring/performance/overview",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "monitoring", "performance", "overview"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "💾 Storage Management",
+			"item": [
+				{
+					"name": "Get Storage Statistics",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/storage/stats",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "storage", "stats"]
+						}
+					}
+				},
+				{
+					"name": "Trigger Storage Cleanup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/storage/cleanup",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "storage", "cleanup"]
+						}
+					}
+				},
+				{
+					"name": "Emergency Cleanup",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/storage/emergency-cleanup",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "storage", "emergency-cleanup"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "⚙️ Configuration",
+			"item": [
+				{
+					"name": "Get Feature Configuration",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{JWT_TOKEN}}"
+							}
+						],
+						"url": {
+							"raw": "{{BASE_URL}}/api/config/features",
+							"host": ["{{BASE_URL}}"],
+							"path": ["api", "config", "features"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🎥 Recording Service (Port 8002)",
+			"item": [
+				{
+					"name": "Recording Health Check",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/health",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["health"]
+						}
+					}
+				},
+				{
+					"name": "Get All Recording Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/recordings/status",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["recordings", "status"]
+						}
+					}
+				},
+				{
+					"name": "Get Camera Recording Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/recordings/status/{{CAMERA_ID}}",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["recordings", "status", "{{CAMERA_ID}}"]
+						}
+					}
+				},
+				{
+					"name": "Start Camera Recording",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{RECORDING_URL}}/recordings/cameras/{{CAMERA_ID}}/start",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["recordings", "cameras", "{{CAMERA_ID}}", "start"]
+						}
+					}
+				},
+				{
+					"name": "Stop Camera Recording",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{RECORDING_URL}}/recordings/cameras/{{CAMERA_ID}}/stop",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["recordings", "cameras", "{{CAMERA_ID}}", "stop"]
+						}
+					}
+				},
+				{
+					"name": "Get Calendar Data",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/api/v1/recordings/cameras/{{CAMERA_ID}}/calendar?year=2025&month=8",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["api", "v1", "recordings", "cameras", "{{CAMERA_ID}}", "calendar"],
+							"query": [
+								{
+									"key": "year",
+									"value": "2025"
+								},
+								{
+									"key": "month",
+									"value": "8"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Timeline Segments",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/api/v1/recordings/cameras/{{CAMERA_ID}}/timeline?date=2025-08-15",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["api", "v1", "recordings", "cameras", "{{CAMERA_ID}}", "timeline"],
+							"query": [
+								{
+									"key": "date",
+									"value": "2025-08-15"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Recording Details",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/api/v1/recordings/cameras/{{CAMERA_ID}}/details",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["api", "v1", "recordings", "cameras", "{{CAMERA_ID}}", "details"]
+						}
+					}
+				},
+				{
+					"name": "Search Recording Segments",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"date_from\": \"2025-08-15T00:00:00\",\n  \"date_to\": \"2025-08-15T23:59:59\",\n  \"min_duration\": 300\n}"
+						},
+						"url": {
+							"raw": "{{RECORDING_URL}}/api/v1/recordings/cameras/{{CAMERA_ID}}/search",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["api", "v1", "recordings", "cameras", "{{CAMERA_ID}}", "search"]
+						}
+					}
+				},
+				{
+					"name": "Stream Video Segment",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/api/v1/recordings/stream/camera_{{CAMERA_ID}}_20250815_120000_600.avi",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["api", "v1", "recordings", "stream", "camera_{{CAMERA_ID}}_20250815_120000_600.avi"]
+						}
+					}
+				},
+				{
+					"name": "Get Storage Report",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{RECORDING_URL}}/api/v1/storage/report",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["api", "v1", "storage", "report"]
+						}
+					}
+				},
+				{
+					"name": "Trigger Recording Storage Cleanup",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{RECORDING_URL}}/api/v1/storage/cleanup",
+							"host": ["{{RECORDING_URL}}"],
+							"path": ["api", "v1", "storage", "cleanup"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-set common variables if not already set",
+					"if (!pm.environment.get('BASE_URL')) {",
+					"    pm.environment.set('BASE_URL', 'http://localhost:8001');",
+					"}",
+					"if (!pm.environment.get('RECORDING_URL')) {",
+					"    pm.environment.set('RECORDING_URL', 'http://localhost:8002');",
+					"}",
+					"if (!pm.environment.get('CAMERA_ID')) {",
+					"    pm.environment.set('CAMERA_ID', 'entrance_cam');",
+					"}",
+					"if (!pm.environment.get('DETECTION_ID')) {",
+					"    pm.environment.set('DETECTION_ID', 'example-detection-id');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Auto-extract JWT token from login response",
+					"if (pm.request.url.path.includes('login') && pm.response.code === 200) {",
+					"    const response = pm.response.json();",
+					"    if (response.access_token) {",
+					"        pm.environment.set('JWT_TOKEN', response.access_token);",
+					"        console.log('JWT token updated in environment');",
+					"    }",
+					"}",
+					"",
+					"// Log response time for performance monitoring",
+					"pm.test('Response time is reasonable', function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(5000);",
+					"});",
+					"",
+					"// Basic status code check",
+					"pm.test('Status code is successful', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]);",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "BASE_URL",
+			"value": "http://localhost:8001",
+			"type": "string"
+		},
+		{
+			"key": "RECORDING_URL",
+			"value": "http://localhost:8002",
+			"type": "string"
+		},
+		{
+			"key": "JWT_TOKEN",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "CAMERA_ID",
+			"value": "entrance_cam",
+			"type": "string"
+		},
+		{
+			"key": "DETECTION_ID",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

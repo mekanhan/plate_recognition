@@ -201,6 +201,9 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     margin-bottom: var(--spacing-xl);
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .metric-card {
@@ -295,6 +298,9 @@
     grid-template-columns: 1fr 1fr;
     gap: 2rem;
     margin-top: 2rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
     grid-template-areas: 
         "feeds detections"
         "analytics health";

@@ -9,7 +9,7 @@ import numpy as np
 import asyncio
 
 # Add project root to path for local imports
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 
@@ -131,7 +131,7 @@ async def test_full_pipeline(test_images):
             print(f"  Vehicle: {det.vehicle_type}")
             print(f"  Detection ID: {det.detection_id}")
     
-    pipeline.cleanup()
+    # pipeline.cleanup()
 
 # Test OCR capability
 def test_ocr_capability():

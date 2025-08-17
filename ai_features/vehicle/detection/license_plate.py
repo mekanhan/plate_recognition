@@ -4,6 +4,7 @@ Enhanced LPR with better OCR and confidence scoring
 """
 import os
 import logging
+import json
 from typing import List, Dict, Tuple
 import cv2
 import numpy as np
@@ -49,6 +50,10 @@ class LicensePlateModel(BaseAIModel):
         
         # US license plate pattern (basic)
         self.plate_pattern = re.compile(r'^[A-Z0-9\s\-]{4,8}$')
+        
+        # Configuration cache
+        self._config_cache = None
+        self._config_path = "config/detection_config.json"
     
     def _load_model(self):
         """Load YOLO models and enhanced OCR processor"""
@@ -83,6 +88,98 @@ class LicensePlateModel(BaseAIModel):
         
         return models
     
+    def _load_config(self) -> Dict:
+        """Load and cache YOLO processing configuration"""
+        if self._config_cache is not None:
+            return self._config_cache
+        
+        try:
+            with open(self._config_path, 'r') as f:
+                config = json.load(f)
+                self._config_cache = config.get('yolo_processing', {})
+                self.logger.info(f"Loaded YOLO processing config: {self._config_cache.keys()}")
+                return self._config_cache
+        except Exception as e:
+            self.logger.warning(f"Failed to load config from {self._config_path}: {e}")
+            # Return default configuration
+            return {
+                "resolution_settings": {
+                    "auto_detect": True,
+                    "4k_cameras": {"imgsz": 1280},
+                    "hd_cameras": {"imgsz": 640},
+                    "custom_thresholds": [
+                        {"min_resolution": 2000, "imgsz": 1280},
+                        {"min_resolution": 0, "imgsz": 640}
+                    ]
+                },
+                "performance_modes": {
+                    "current_mode": "balanced",
+                    "balanced": {"imgsz_multiplier": 1.0}
+                },
+                "experimental": {
+                    "max_imgsz": 2560,
+                    "roi_scaling": {
+                        "enabled": True,
+                        "large_roi_threshold": 500,
+                        "large_roi_imgsz": 1280,
+                        "small_roi_imgsz": 640
+                    }
+                }
+            }
+    
+    def _get_yolo_imgsz(self, frame_shape: Tuple[int, int], is_roi: bool = False, roi_size: Tuple[int, int] = None) -> int:
+        """Get appropriate YOLO input size based on configuration and frame properties"""
+        config = self._load_config()
+        
+        height, width = frame_shape[:2]
+        max_dimension = max(height, width)
+        
+        # Handle ROI scaling if enabled
+        if is_roi and roi_size and config.get('experimental', {}).get('roi_scaling', {}).get('enabled', True):
+            roi_height, roi_width = roi_size
+            roi_max = max(roi_height, roi_width)
+            large_roi_threshold = config['experimental']['roi_scaling'].get('large_roi_threshold', 500)
+            
+            if roi_max >= large_roi_threshold:
+                base_imgsz = config['experimental']['roi_scaling'].get('large_roi_imgsz', 1280)
+            else:
+                base_imgsz = config['experimental']['roi_scaling'].get('small_roi_imgsz', 640)
+        else:
+            # Use standard resolution settings
+            resolution_settings = config.get('resolution_settings', {})
+            
+            if resolution_settings.get('auto_detect', True):
+                # Use custom thresholds
+                custom_thresholds = resolution_settings.get('custom_thresholds', [])
+                base_imgsz = 640  # Default fallback
+                
+                for threshold in custom_thresholds:
+                    if max_dimension >= threshold.get('min_resolution', 0):
+                        base_imgsz = threshold.get('imgsz', 640)
+                        break
+            else:
+                # Use simple 4K/HD detection
+                if max_dimension >= 2000:
+                    base_imgsz = resolution_settings.get('4k_cameras', {}).get('imgsz', 1280)
+                else:
+                    base_imgsz = resolution_settings.get('hd_cameras', {}).get('imgsz', 640)
+        
+        # Apply performance mode multiplier
+        performance_modes = config.get('performance_modes', {})
+        current_mode = performance_modes.get('current_mode', 'balanced')
+        mode_config = performance_modes.get(current_mode, {})
+        multiplier = mode_config.get('imgsz_multiplier', 1.0)
+        
+        final_imgsz = int(base_imgsz * multiplier)
+        
+        # Enforce maximum limit
+        max_imgsz = config.get('experimental', {}).get('max_imgsz', 2560)
+        final_imgsz = min(final_imgsz, max_imgsz)
+        
+        self.logger.debug(f"YOLO imgsz calculation: frame {width}x{height} -> base {base_imgsz} -> multiplier {multiplier} -> final {final_imgsz}")
+        
+        return final_imgsz
+    
     def predict(self, frame: np.ndarray) -> Dict:
         """Main prediction method - detects vehicles and plates"""
         if not self.is_loaded:
@@ -115,7 +212,10 @@ class LicensePlateModel(BaseAIModel):
     
     def detect_vehicles(self, frame: np.ndarray) -> List[VehicleInfo]:
         """Detect vehicles in frame"""
-        results = self.vehicle_model(frame, device=self.device)
+        # Get appropriate YOLO resolution from configuration
+        imgsz = self._get_yolo_imgsz(frame.shape)
+        self.logger.debug(f"Vehicle detection using imgsz={imgsz} for frame {frame.shape[1]}x{frame.shape[0]}")
+        results = self.vehicle_model(frame, device=self.device, imgsz=imgsz)
         
         vehicles = []
         all_detections = []
@@ -164,8 +264,11 @@ class LicensePlateModel(BaseAIModel):
             
             # Use trained plate model if available, otherwise estimate plate location
             if self.plate_model != self.vehicle_model:
-                # Run plate detection on vehicle ROI
-                plate_results = self.plate_model(vehicle_roi, device=self.device)
+                # Run plate detection on vehicle ROI with configuration-based resolution
+                roi_height, roi_width = vehicle_roi.shape[:2]
+                imgsz = self._get_yolo_imgsz(vehicle_roi.shape, is_roi=True, roi_size=(roi_height, roi_width))
+                self.logger.debug(f"Plate detection (ROI) using imgsz={imgsz} for ROI {roi_width}x{roi_height}")
+                plate_results = self.plate_model(vehicle_roi, device=self.device, imgsz=imgsz)
                 
                 for r in plate_results:
                     if r.boxes is None:
@@ -209,8 +312,10 @@ class LicensePlateModel(BaseAIModel):
             # No dedicated plate model available, skip full-frame detection
             return plates
         
-        # Run plate detection on full frame
-        plate_results = self.plate_model(frame, device=self.device)
+        # Run plate detection on full frame with configuration-based resolution
+        imgsz = self._get_yolo_imgsz(frame.shape)
+        self.logger.debug(f"Full-frame plate detection using imgsz={imgsz} for frame {frame.shape[1]}x{frame.shape[0]}")
+        plate_results = self.plate_model(frame, device=self.device, imgsz=imgsz)
         
         for r in plate_results:
             if r.boxes is None:
@@ -219,8 +324,8 @@ class LicensePlateModel(BaseAIModel):
             for box in r.boxes:
                 confidence = float(box.conf)
                 
-                # Relaxed confidence threshold for 4K testing
-                min_confidence = 0.4  # Lowered to capture more detections for analysis
+                # Relaxed confidence threshold for 4K testing (matches detection_config.json)
+                min_confidence = 0.15  # Lowered to capture more detections for analysis
                 if confidence > min_confidence:
                     x1, y1, x2, y2 = box.xyxy[0].tolist()
                     

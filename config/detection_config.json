@@ -1,0 +1,123 @@
+{
+  "detection_modes": {
+    "require_vehicle": false,
+    "standalone_plate_detection": true, 
+    "detection_strategy": "plate_only" 
+  },
+  
+  "confidence_thresholds": {
+    "vehicle": {
+      "enabled": true,
+      "min_confidence": 0.15,
+      "classes": {
+        "car": 0.3,
+        "motorcycle": 0.25,
+        "bus": 0.3,
+        "truck": 0.3
+      }
+    },
+    "plate": {
+      "min_confidence": 0.15,
+      "min_confidence_standalone": 0.15, 
+      "size_constraints": {
+        "min_width": 40,
+        "min_height": 15,
+        "max_width": 500,
+        "max_height": 200
+      }
+    },
+    "ocr": {
+      "min_confidence": 0.15,
+      "min_text_length": 2,
+      "max_text_length": 15
+    }
+  },
+  
+  "processing_modes": {
+    "testing_mode": true,
+    "debug_logging": true,
+    "save_all_detections": true,  
+    "dry_run": false
+  },
+  
+  "quality_settings": {
+    "min_plate_pixels": 200,
+    "min_sharpness_score": 15,
+    "preferred_aspect_ratio": 2.0,
+    "max_angle_deviation": 45
+  },
+  
+  "deduplication": {
+    "enabled": true,
+    "cooldown_minutes": 30,
+    "min_quality_improvement": 0.25,
+    "max_saves_per_hour": 2
+  },
+  
+  "special_modes": {
+    "gate_mode": {
+      "enabled": false,
+      "quick_capture": true,
+      "lower_quality_acceptable": true
+    },
+    "parking_mode": {
+      "enabled": false,
+      "extended_cooldown": 360,
+      "require_high_confidence": true
+    },
+    "testing_lab_mode": {
+      "enabled": true,
+      "detect_standalone_plates": true,
+      "ignore_vehicle_requirement": true,
+      "log_all_attempts": true
+    }
+  },
+
+  "yolo_processing": {
+    "resolution_settings": {
+      "auto_detect": true,
+      "description": "Automatically select YOLO input resolution based on camera image size",
+      "4k_cameras": {
+        "imgsz": 1280,
+        "description": "For cameras >= 2000px on any side (4K, Ultra HD)"
+      },
+      "hd_cameras": {
+        "imgsz": 640,
+        "description": "For cameras < 2000px on any side (HD, Full HD)"
+      },
+      "custom_thresholds": [
+        {"min_resolution": 3000, "imgsz": 1920, "description": "Ultra high resolution (>3K)"},
+        {"min_resolution": 2000, "imgsz": 1600, "description": "4K resolution (2K-3K)"},
+        {"min_resolution": 1000, "imgsz": 640, "description": "HD resolution (1K-2K)"},
+        {"min_resolution": 0, "imgsz": 416, "description": "Low resolution (<1K)"}
+      ]
+    },
+    "performance_modes": {
+      "current_mode": "balanced",
+      "quality_priority": {
+        "imgsz_multiplier": 1.5,
+        "description": "Higher resolution for better detection accuracy"
+      },
+      "balanced": {
+        "imgsz_multiplier": 1.0,
+        "description": "Default balanced resolution"
+      },
+      "speed_priority": {
+        "imgsz_multiplier": 0.75,
+        "description": "Lower resolution for faster processing"
+      }
+    },
+    "experimental": {
+      "max_imgsz": 2560,
+      "description": "Maximum allowed YOLO input size",
+      "enable_dynamic_scaling": false,
+      "memory_limit_mb": 8192,
+      "roi_scaling": {
+        "enabled": true,
+        "large_roi_threshold": 500,
+        "large_roi_imgsz": 1280,
+        "small_roi_imgsz": 640
+      }
+    }
+  }
+}

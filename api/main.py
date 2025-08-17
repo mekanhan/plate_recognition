@@ -567,7 +567,24 @@ async def processing_loop():
                                     )
                                     
                                     # Save to original detections table via database service
-                                    saved_detection = await db.save_detection(detection)
+                                    # Convert dataclass to dict for database with field mapping
+                                    detection_dict = {
+                                        'id': detection.detection_id,
+                                        'camera_id': detection.camera_id,
+                                        'plate_text': detection.plate_text,
+                                        'confidence': detection.confidence,
+                                        'vehicle_type': detection.vehicle_type,
+                                        'detected_at': detection.timestamp,
+                                        'vehicle_bbox': detection.vehicle_bbox,
+                                        'plate_bbox': detection.plate_bbox,
+                                        'frame_path': detection.frame_path,
+                                        'plate_image_path': detection.plate_image_path,
+                                        'meta_data': detection.detection_metadata or {},
+                                        'group_id': detection.group_id,
+                                        'is_best_shot': detection.is_best_shot,
+                                        'track_id': detection.track_id
+                                    }
+                                    saved_detection = await db.save_detection(detection_dict)
                                     if saved_detection:
                                         logging.debug(f"Saved license plate detection: {detection.plate_text}")
                                     
@@ -1990,7 +2007,7 @@ async def get_quality_metrics(
         pixels_by_level = {"excellent": [], "good": [], "fair": [], "poor": [], "unusable": []}
         
         for detection in detections_with_pop:
-            pop_metrics = detection.get('pop_metrics', {})
+            pop_metrics = detection.get('pop_metrics', {}) if isinstance(detection, dict) else {}
             level = pop_metrics.get('quality_level', 'unusable')
             pixels = pop_metrics.get('total_pixels', 0)
             
@@ -2018,7 +2035,7 @@ async def get_quality_metrics(
                 }
             
             camera_stats[cam_id]["total_detections"] += 1
-            pop_metrics = detection.get('pop_metrics', {})
+            pop_metrics = detection.get('pop_metrics', {}) if isinstance(detection, dict) else {}
             
             # Accumulate for averages
             quality_score = pop_metrics.get('quality_score', 0)
@@ -2162,7 +2179,7 @@ async def filter_detections_by_quality(
         filtered_results = []
         
         for detection in detections_with_pop:
-            pop_metrics = detection.get('pop_metrics', {})
+            pop_metrics = detection.get('pop_metrics', {}) if isinstance(detection, dict) else {}
             
             # Check quality score threshold
             quality_score = pop_metrics.get('quality_score', 0)

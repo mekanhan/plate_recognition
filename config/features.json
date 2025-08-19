@@ -6,7 +6,7 @@
     "object_detection": false
   },
   "api_features": {
-    "universal_detection_endpoints": true,
+    "universal_detection_endpoints": false,
     "legacy_detection_endpoints": true
   },
   "processing_features": {

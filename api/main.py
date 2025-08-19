@@ -27,10 +27,9 @@ logger = logging.getLogger(__name__)
 from ai_pipeline.camera_manager import CameraManager, CameraConfig
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 from ai_features.vehicle.detection.pipeline import EnhancedProcessingPipeline
-from ai_features.core.universal_processor import UniversalDetectionPipeline
 from database.service import DatabaseService
 from utils.camera_utils import generate_camera_id, validate_camera_id, CameraValidation, CameraDisplayUtils
-from utils.feature_flags import feature_flags, is_license_plate_detection_enabled, is_universal_detection_enabled, is_continuous_processing_enabled
+from utils.feature_flags import feature_flags, is_license_plate_detection_enabled, is_continuous_processing_enabled
 try:
     from .websocket_manager import websocket_manager, broadcast_camera_status, broadcast_recording_status
     from .background_monitor import start_background_monitoring, stop_background_monitoring
@@ -119,7 +118,6 @@ class CameraTestRequest(BaseModel):
 camera_manager = None
 detector = None
 pipeline = None
-universal_pipeline = None
 db = None
 
 # Recording service notification functions
@@ -220,7 +218,7 @@ async def notify_recording_service_camera_deleted(camera_id: str):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    global camera_manager, detector, pipeline, universal_pipeline, db
+    global camera_manager, detector, pipeline, db
     
     # Setup logging
     logging.basicConfig(
@@ -232,22 +230,16 @@ async def lifespan(app: FastAPI):
     camera_manager = CameraManager()
     detector = LicensePlateDetector()
     
-    # Initialize pipelines based on feature flags
+    # Initialize license plate detection pipeline
     pipeline = None
-    universal_pipeline = None
     
     if is_license_plate_detection_enabled():
         # Use enhanced pipeline with smart deduplication for license plates
         pipeline = EnhancedProcessingPipeline()
         logging.info("License plate detection pipeline initialized")
     
-    if is_universal_detection_enabled():
-        # Initialize universal detection pipeline
-        universal_pipeline = UniversalDetectionPipeline()
-        logging.info("Universal detection pipeline initialized")
-    
-    if not is_license_plate_detection_enabled() and not is_universal_detection_enabled():
-        logging.warning("No detection pipelines enabled - detection will not function")
+    if not is_license_plate_detection_enabled():
+        logging.warning("License plate detection disabled - detection will not function")
     
     db = DatabaseService()
     
@@ -523,19 +515,13 @@ async def processing_loop():
         logging.info("Continuous processing is disabled by feature flag - processing loop will not run")
         return
     
-    # Determine which detection system to use based on feature flags
+    # Check if license plate detection is enabled
     license_plate_enabled = is_license_plate_detection_enabled()
-    universal_enabled = is_universal_detection_enabled()
     
-    if license_plate_enabled and universal_enabled:
-        logging.warning("Both license plate and universal detection are enabled - this may cause confusion. Consider enabling only one.")
-    elif not license_plate_enabled and not universal_enabled:
-        logging.warning("No detection systems are enabled - processing loop will run but do nothing")
-    
-    if license_plate_enabled:
+    if not license_plate_enabled:
+        logging.warning("License plate detection disabled - processing loop will run but do nothing")
+    else:
         logging.info("Starting processing loop with LICENSE PLATE DETECTION enabled")
-    if universal_enabled:
-        logging.info("Starting processing loop with UNIVERSAL DETECTION enabled")
     
     while True:
         try:
@@ -605,39 +591,6 @@ async def processing_loop():
                             except Exception as e:
                                 logging.error(f"License plate detection error for camera {camera_id}: {e}")
                         
-                        # UNIVERSAL DETECTION PROCESSING (if enabled)
-                        if universal_enabled and universal_pipeline:
-                            try:
-                                # Process for universal detections
-                                start_time = time.time()
-                                universal_detections = await universal_pipeline.process_frame(camera_id, frame)
-                                processing_time = time.time() - start_time
-                                
-                                # Save universal detections to database
-                                for detection in universal_detections:
-                                    # Record processing metrics based on object type
-                                    if detection['object_type'] == 'vehicle' and 'plate_text' in detection.get('metadata', {}):
-                                        metrics.record_detection(
-                                            camera_id=detection['camera_id'],
-                                            vehicle_type=detection.get('metadata', {}).get('vehicle_type', 'unknown'),
-                                            confidence=detection['confidence'],
-                                            ocr_confidence=detection.get('metadata', {}).get('ocr_confidence', 0.0),
-                                            processing_time=processing_time
-                                        )
-                                    
-                                    # Save to universal detections table
-                                    await save_universal_detection(detection)
-                                    
-                                    # Broadcast to WebSocket clients
-                                    try:
-                                        from api.websocket_manager import broadcast_universal_detection
-                                        await broadcast_universal_detection(detection)
-                                    except Exception as e:
-                                        logging.debug(f"Failed to broadcast universal detection: {e}")
-                                        
-                            except Exception as e:
-                                logging.error(f"Universal detection error for camera {camera_id}: {e}")
-                        
                 else:
                     # Only attempt recovery if we haven't tried recently (throttle to prevent spam)
                     current_time = time.time()
@@ -683,6 +636,74 @@ async def get_feature_configuration():
     """Get current feature flag configuration"""
     from utils.feature_flags import get_detection_config_summary
     return get_detection_config_summary()
+
+@app.get("/api/cameras/list")
+async def get_cameras_list():
+    """Get simplified camera list for dropdown filters and selection"""
+    try:
+        cameras = await db.get_all_cameras()
+        
+        camera_list = []
+        for c in cameras:
+            camera_list.append({
+                "id": c.camera_id,
+                "name": c.name,
+                "location": c.location or "",
+                "status": c.status or "unknown"
+            })
+        
+        return camera_list
+        
+    except Exception as e:
+        logger.error(f"Failed to get camera list: {e}")
+        raise HTTPException(500, f"Failed to get camera list: {str(e)}")
+
+@app.get("/api/detections/object-types")
+async def get_object_types():
+    """Get available object types for filtering (dynamic configuration)"""
+    try:
+        # Get unique object types from database
+        unique_types = await db.get_unique_vehicle_types()
+        
+        # Map to display-friendly format with icons and colors
+        type_mapping = {
+            "car": {"display_name": "Car", "icon": "fas fa-car", "color": "#4361ee"},
+            "truck": {"display_name": "Truck", "icon": "fas fa-truck", "color": "#f72585"},
+            "motorcycle": {"display_name": "Motorcycle", "icon": "fas fa-motorcycle", "color": "#4cc9f0"},
+            "bus": {"display_name": "Bus", "icon": "fas fa-bus", "color": "#7209b7"},
+            "van": {"display_name": "Van", "icon": "fas fa-shuttle-van", "color": "#560bad"},
+            "suv": {"display_name": "SUV", "icon": "fas fa-car-side", "color": "#277da1"},
+            "vehicle": {"display_name": "Vehicle", "icon": "fas fa-car", "color": "#6c757d"},
+            "unknown": {"display_name": "Unknown", "icon": "fas fa-question", "color": "#adb5bd"}
+        }
+        
+        object_types = []
+        for vehicle_type in unique_types:
+            type_code = vehicle_type.lower() if vehicle_type else "unknown"
+            config = type_mapping.get(type_code, type_mapping["unknown"])
+            
+            object_types.append({
+                "type_code": type_code,
+                "display_name": config["display_name"],
+                "icon": config["icon"],
+                "color": config["color"],
+                "count": await db.get_vehicle_type_count(vehicle_type)
+            })
+        
+        # Sort by count descending
+        object_types.sort(key=lambda x: x["count"], reverse=True)
+        
+        return object_types
+        
+    except Exception as e:
+        logger.error(f"Failed to get object types: {e}")
+        # Return default types if database query fails
+        return [
+            {"type_code": "car", "display_name": "Car", "icon": "fas fa-car", "color": "#4361ee", "count": 0},
+            {"type_code": "truck", "display_name": "Truck", "icon": "fas fa-truck", "color": "#f72585", "count": 0},
+            {"type_code": "motorcycle", "display_name": "Motorcycle", "icon": "fas fa-motorcycle", "color": "#4cc9f0", "count": 0},
+            {"type_code": "vehicle", "display_name": "Vehicle", "icon": "fas fa-car", "color": "#6c757d", "count": 0}
+        ]
 
 @app.get("/api/cameras")
 async def get_cameras():
@@ -1325,15 +1346,15 @@ async def get_recent_detections(
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
         "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"detections/plates/{d.id}_plate.jpg",
-        "frame_image": f"detections/frames/{d.id}_frame.jpg",
+        "plate_image": d.plate_image_path if d.plate_image_path else None,
+        "frame_image": d.frame_path if d.frame_path else None,
         "has_video": d.video_clip_id is not None,
         "video_clip_id": d.video_clip_id
     } for d in detections]
 
 @app.get("/api/detections/search")
 async def search_detections(
-    current_user: User = Depends(require_detection_view),
+    # Existing parameters (backward compatible)
     plate: Optional[str] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
@@ -1342,39 +1363,129 @@ async def search_detections(
     vehicle_type: Optional[str] = None,
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
-    include_count: bool = Query(False)
+    include_count: bool = Query(False),
+    
+    # Enhanced parameters for upgraded frontend
+    search: Optional[str] = Query(None, description="Full-text search across plate text, vehicle type, and camera"),
+    date_from: Optional[str] = Query(None, description="Start date in ISO format (YYYY-MM-DD)"),
+    date_to: Optional[str] = Query(None, description="End date in ISO format (YYYY-MM-DD)"),
+    object_type: Optional[str] = Query(None, description="Object type filter (maps to vehicle_type for compatibility)"),
+    status: Optional[str] = Query(None, description="Detection status filter"),
+    sort_by: Optional[str] = Query("detected_at", description="Field to sort by"),
+    sort_direction: Optional[str] = Query("desc", regex="^(asc|desc)$", description="Sort direction"),
+    confidence_min: Optional[float] = Query(None, ge=0.0, le=1.0, description="Minimum confidence threshold")
 ):
-    """Enhanced search detections with advanced filtering and pagination"""
+    """Enhanced search detections with advanced filtering and pagination
+    
+    Supports both legacy and new parameter formats for backward compatibility.
+    New parameters take precedence when both old and new are provided.
+    """
+    
+    # Handle parameter mapping for backward compatibility
+    # New parameters take precedence over legacy ones
+    final_plate = plate
+    final_start_date = start_date
+    final_end_date = end_date
+    final_camera_id = camera_id
+    final_min_confidence = min_confidence or confidence_min
+    final_vehicle_type = vehicle_type or object_type  # Map object_type to vehicle_type
+    
+    # Parse new date format if provided
+    if date_from:
+        try:
+            final_start_date = datetime.fromisoformat(date_from)
+        except ValueError:
+            # Try parsing date-only format
+            final_start_date = datetime.strptime(date_from, "%Y-%m-%d")
+    
+    if date_to:
+        try:
+            final_end_date = datetime.fromisoformat(date_to)
+            # If only date provided, set to end of day
+            if final_end_date.time() == datetime.min.time():
+                final_end_date = final_end_date.replace(hour=23, minute=59, second=59)
+        except ValueError:
+            # Try parsing date-only format and set to end of day
+            final_end_date = datetime.strptime(date_to, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+    
+    # Handle full-text search (search across multiple fields)
+    if search:
+        # If search is provided, it takes precedence over specific plate search
+        final_plate = search
+    
+    # Validate sort parameters
+    valid_sort_fields = ["detected_at", "confidence", "plate_text", "vehicle_type", "camera_id"]
+    if sort_by not in valid_sort_fields:
+        sort_by = "detected_at"
+    
+    # Get detections from database with enhanced parameters
     detections = await db.search_detections(
-        plate_text=plate,
-        start_date=start_date,
-        end_date=end_date,
-        camera_id=camera_id,
-        min_confidence=min_confidence,
-        vehicle_type=vehicle_type,
+        plate_text=final_plate,
+        start_date=final_start_date,
+        end_date=final_end_date,
+        camera_id=final_camera_id,
+        min_confidence=final_min_confidence,
+        vehicle_type=final_vehicle_type,
         limit=limit,
         offset=offset
     )
     
-    results = [{
-        "id": d.id,
-        "camera_id": d.camera_id,
-        "plate_text": d.plate_text,
-        "confidence": d.confidence,
-        "vehicle_type": d.vehicle_type,
-        "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"detections/plates/{d.id}_plate.jpg",
-        "frame_image": f"detections/frames/{d.id}_frame.jpg"
-    } for d in detections]
+    # Load camera names for enhanced response
+    camera_names = {}
+    try:
+        cameras = await db.get_all_cameras()
+        camera_names = {c.camera_id: c.name for c in cameras}
+    except Exception as e:
+        logger.warning(f"Could not load camera names: {e}")
+    
+    # Build enhanced results with camera names and additional metadata
+    results = []
+    for d in detections:
+        detection_result = {
+            "id": d.id,
+            "camera_id": d.camera_id,
+            "camera_name": camera_names.get(d.camera_id, d.camera_id),
+            "plate_text": d.plate_text,
+            "confidence": d.confidence,
+            "vehicle_type": d.vehicle_type,
+            "object_type": d.vehicle_type,  # Alias for generic object support
+            "detected_at": d.detected_at.isoformat(),
+            "plate_image": d.plate_image_path if d.plate_image_path else None,
+            "frame_image": d.frame_path if d.frame_path else None,
+            "status": getattr(d, 'status', 'unverified'),  # Default status for legacy records
+            "has_video": d.video_clip_id is not None,
+            "video_clip_id": d.video_clip_id
+        }
+        
+        # Add metadata if available
+        if hasattr(d, 'meta_data') and d.meta_data:
+            detection_result["metadata"] = d.meta_data
+        
+        results.append(detection_result)
+    
+    # Apply client-side sorting if needed (database should handle this, but fallback)
+    if sort_by and results:
+        reverse_sort = sort_direction.lower() == "desc"
+        try:
+            if sort_by == "detected_at":
+                results.sort(key=lambda x: x["detected_at"], reverse=reverse_sort)
+            elif sort_by in ["confidence", "plate_text", "vehicle_type", "camera_id"]:
+                results.sort(key=lambda x: x.get(sort_by, ""), reverse=reverse_sort)
+        except Exception as e:
+            logger.warning(f"Could not sort results by {sort_by}: {e}")
+    
+    # Apply status filter if specified (client-side since DB might not have this column yet)
+    if status and results:
+        results = [r for r in results if r.get("status", "unverified") == status]
     
     if include_count:
         total_count = await db.get_search_count(
-            plate_text=plate,
-            start_date=start_date,
-            end_date=end_date,
-            camera_id=camera_id,
-            min_confidence=min_confidence,
-            vehicle_type=vehicle_type
+            plate_text=final_plate,
+            start_date=final_start_date,
+            end_date=final_end_date,
+            camera_id=final_camera_id,
+            min_confidence=final_min_confidence,
+            vehicle_type=final_vehicle_type
         )
         
         return {
@@ -1383,11 +1494,26 @@ async def search_detections(
                 "total_count": total_count,
                 "limit": limit,
                 "offset": offset,
-                "has_more": (offset + len(results)) < total_count
+                "has_more": (offset + len(results)) < total_count,
+                "page": (offset // limit) + 1,
+                "total_pages": (total_count + limit - 1) // limit
+            },
+            "filters_applied": {
+                "search": search,
+                "plate": final_plate,
+                "date_range": {
+                    "from": final_start_date.isoformat() if final_start_date else None,
+                    "to": final_end_date.isoformat() if final_end_date else None
+                },
+                "camera_id": final_camera_id,
+                "object_type": final_vehicle_type,
+                "min_confidence": final_min_confidence,
+                "status": status,
+                "sort": f"{sort_by} {sort_direction}"
             }
         }
     
-    return results
+    return {"results": results}
 
 @app.get("/api/detections/similar/{plate_text}")
 async def get_similar_plates(plate_text: str, limit: int = Query(10, ge=1, le=50)):
@@ -1401,8 +1527,8 @@ async def get_similar_plates(plate_text: str, limit: int = Query(10, ge=1, le=50
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
         "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"detections/plates/{d.id}_plate.jpg",
-        "frame_image": f"detections/frames/{d.id}_frame.jpg",
+        "plate_image": d.plate_image_path if d.plate_image_path else None,
+        "frame_image": d.frame_path if d.frame_path else None,
         "similarity_score": _calculate_similarity_score(plate_text, d.plate_text)
     } for d in similar_detections]
 
@@ -1421,8 +1547,8 @@ async def get_plate_history(
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
         "detected_at": d.detected_at.isoformat(),
-        "plate_image": f"detections/plates/{d.id}_plate.jpg",
-        "frame_image": f"detections/frames/{d.id}_frame.jpg"
+        "plate_image": d.plate_image_path if d.plate_image_path else None,
+        "frame_image": d.frame_path if d.frame_path else None
     } for d in history]
 
 @app.get("/api/detections/stats")
@@ -1478,8 +1604,8 @@ async def get_detection(detection_id: str):
         "detected_at": detection.detected_at.isoformat(),
         "vehicle_bbox": detection.vehicle_bbox,
         "plate_bbox": detection.plate_bbox,
-        "plate_image": f"detections/plates/{detection.id}_plate.jpg",
-        "frame_image": f"detections/frames/{detection.id}_frame.jpg",
+        "plate_image": detection.plate_image_path if detection.plate_image_path else None,
+        "frame_image": detection.frame_path if detection.frame_path else None,
         "video_clip_id": detection.video_clip_id
     }
 
@@ -2161,8 +2287,8 @@ async def filter_detections_by_quality(
                 "confidence": detection.confidence,
                 "vehicle_type": detection.vehicle_type,
                 "detected_at": detection.detected_at.isoformat(),
-                "plate_image": f"detections/plates/{detection.id}_plate.jpg",
-                "frame_image": f"detections/frames/{detection.id}_frame.jpg",
+                "plate_image": detection.plate_image_path if detection.plate_image_path else None,
+                "frame_image": detection.frame_path if detection.frame_path else None,
                 "pop_metrics": {}
             }
             

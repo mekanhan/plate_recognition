@@ -7,7 +7,7 @@ import Header from './components/layout/Header.js';
 import Dashboard from './pages/Dashboard.js';
 import Cameras from './pages/CamerasPage.js';
 import RecordingsPage from './pages/RecordingsPage.js';
-import UniversalDetectionsPage from './pages/UniversalDetectionsPage.js';
+import DetectionConsole from './components/detection/DetectionConsole.js';
 import AnalyticsPage from './pages/AnalyticsPage.js';
 import AlertsPage from './pages/AlertsPage.js';
 import ReportsPage from './pages/ReportsPage.js';
@@ -130,7 +130,7 @@ class LPRApplication {
             dashboard: new Dashboard(),
             cameras: new Cameras(),
             recordings: new RecordingsPage(),
-            detections: new UniversalDetectionsPage(),
+            detections: new DetectionConsole(document.getElementById('detections')),
             analytics: new AnalyticsPage(),
             alerts: new AlertsPage(),
             reports: new ReportsPage(),
@@ -233,7 +233,7 @@ class LPRApplication {
             if (!this.components.pages[pageId]) {
                 switch (pageId) {
                     case 'detections':
-                        this.components.pages[pageId] = new UniversalDetectionsPage();
+                        this.components.pages[pageId] = new DetectionConsole(document.getElementById('detections'));
                         break;
                     case 'analytics':
                         this.components.pages[pageId] = new AnalyticsPage();

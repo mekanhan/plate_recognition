@@ -111,14 +111,18 @@ def api_client():
 @pytest.fixture(scope='function')
 def auth_headers():
     """Generate authentication headers for API tests"""
-    from auth.auth_service import AuthService
-    
-    auth_service = AuthService()
-    token = auth_service.create_access_token(
-        data={"sub": "test_user", "role": "admin"}
-    )
-    
-    return {"Authorization": f"Bearer {token}"}
+    try:
+        from auth.jwt_handler import JWTHandler
+        
+        jwt_handler = JWTHandler()
+        token = jwt_handler.create_access_token(
+            data={"sub": "test_user", "role": "admin"}
+        )
+        
+        return {"Authorization": f"Bearer {token}"}
+    except ImportError:
+        # Fallback for tests that don't need real auth
+        return {"Authorization": "Bearer test_token"}
 
 # ================== Mock Fixtures ==================
 
@@ -158,6 +162,54 @@ def mock_yolo_model(monkeypatch):
     import sys
     if 'ultralytics' in sys.modules:
         monkeypatch.setattr('ultralytics.YOLO', MockYOLO)
+
+# ================== AI Testing Fixtures ==================
+
+@pytest.fixture(scope='function')
+def detector(mock_yolo_model):
+    """Create a license plate detector for testing"""
+    # Mock detector for tests without loading real YOLO models
+    class MockDetector:
+        def __init__(self):
+            self.device = 'cpu'
+            
+        def detect_vehicles(self, frame):
+            # Return mock vehicle detection
+            return [{
+                'bbox': [100, 100, 300, 300],
+                'confidence': 0.95,
+                'class': 'car'
+            }]
+            
+        def detect_plates(self, frame, vehicles=None):
+            # Return mock plate detection
+            return [{
+                'bbox': [150, 150, 250, 200],
+                'confidence': 0.92,
+                'text': 'ABC1234'
+            }]
+            
+        def detect(self, frame):
+            vehicles = self.detect_vehicles(frame)
+            plates = self.detect_plates(frame, vehicles)
+            return vehicles, plates
+            
+    return MockDetector()
+
+@pytest.fixture(scope='function')
+def test_images(test_image_path):
+    """List of test images for detection testing"""
+    return [test_image_path]
+
+@pytest.fixture(scope='function')
+def rtsp_url():
+    """Mock RTSP URL for testing"""
+    return "rtsp://admin:password@192.168.1.100:554/stream"
+
+@pytest.fixture(scope='function')
+def url():
+    """Generic URL fixture for testing"""
+    return "http://localhost:8001/api/test"
 
 # ================== Performance Fixtures ==================
 

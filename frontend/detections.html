@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>License Plate Detections - Security Dashboard</title>
+    
+    <!-- Detection Console Styles -->
+    <link rel="stylesheet" href="src/styles/base/variables.css">
+    <link rel="stylesheet" href="src/styles/components/detection-console.css">
+    
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Base Styles -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f6f8fa;
+            color: #24292f;
+            line-height: 1.5;
+        }
+        
+        .page-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e1e4e8;
+            padding: 20px 0;
+            margin-bottom: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .page-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #24292f;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: #e8f5e9;
+            color: #388e3c;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-indicator.online::before {
+            content: "●";
+            color: #4caf50;
+        }
+        
+        .page-description {
+            color: #656d76;
+            font-size: 14px;
+        }
+        
+        .main-content {
+            min-height: 600px;
+        }
+        
+        /* Icon replacements (using text symbols) */
+        .icon-detections::before { content: "📊"; }
+        .icon-plates::before { content: "🚗"; }
+        .icon-confidence::before { content: "📈"; }
+        .icon-new::before { content: "🆕"; }
+        .icon-check::before { content: "✓"; }
+        .icon-export::before { content: "📤"; }
+        .icon-flag::before { content: "🚩"; }
+        .icon-search::before { content: "🔍"; }
+        .icon-reset::before { content: "🔄"; }
+        .icon-view::before { content: "👁"; }
+        .icon-menu::before { content: "⋮"; }
+        .icon-prev::before { content: "←"; }
+        .icon-next::before { content: "→"; }
+        
+        /* Notification System */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            color: #ffffff;
+            font-weight: 500;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background: #28a745;
+        }
+        
+        .notification.info {
+            background: #17a2b8;
+        }
+        
+        .notification.warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .notification.error {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <header class="page-header">
+        <div class="container">
+            <div class="page-title">
+                <h1>License Plate Detections</h1>
+                <div class="status-indicator online">
+                    System Online
+                </div>
+            </div>
+            <p class="page-description">
+                Real-time license plate detection monitoring with 4K camera support and configurable YOLO processing
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Detection Console Container -->
+            <div id="detection-console-container">
+                <!-- DetectionConsole component will be rendered here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Detection Console Component (ES6 Module) -->
+    <script type="module">
+        import DetectionConsole from './src/components/detection/DetectionConsole.js';
+        window.DetectionConsole = DetectionConsole;
+    </script>
+    
+    <!-- Page Script -->
+    <script>
+        // Global notification system
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Hide and remove notification
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, duration);
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Detection Table...');
+            
+            // Get container
+            const container = document.getElementById('detection-console-container');
+            if (!container) {
+                console.error('Detection console container not found');
+                return;
+            }
+            
+            // Initialize detection console (wait for module to load)
+            setTimeout(() => {
+                try {
+                    if (window.DetectionConsole) {
+                        window.detectionConsole = new window.DetectionConsole(container);
+                        console.log('Detection console initialized successfully');
+                        
+                        // Show success notification
+                        showNotification('Detection console loaded successfully', 'success');
+                    } else {
+                        throw new Error('DetectionConsole class not available');
+                    }
+                } catch (error) {
+                    console.error('Failed to initialize detection console:', error);
+                    showNotification('Failed to load detection console', 'error');
+                    
+                    // Show error state
+                    container.innerHTML = `
+                        <div class="detection-console">
+                            <div class="console-header">
+                                <div class="console-title">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Error Loading Detection Console
+                                </div>
+                                <div class="console-subtitle">Failed to initialize the detection console component</div>
+                            </div>
+                            <div style="padding: 40px; text-align: center;">
+                                <p>Please check the browser console for error details and try refreshing the page.</p>
+                                <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 16px;">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Refresh Page
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }, 100); // Small delay to ensure module loads
+                
+        });
+
+        // Global error handler
+        window.addEventListener('error', function(event) {
+            console.error('Global error:', event.error);
+            showNotification('An unexpected error occurred', 'error');
+        });
+
+        // Monitor detection system status
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch('/api/detections/stats');
+                if (response.ok) {
+                    const stats = await response.json();
+                    document.querySelector('.status-indicator').className = 'status-indicator online';
+                    document.querySelector('.status-indicator').textContent = 'System Online';
+                } else {
+                    throw new Error('API not responding');
+                }
+            } catch (error) {
+                document.querySelector('.status-indicator').className = 'status-indicator offline';
+                document.querySelector('.status-indicator').textContent = 'System Offline';
+                console.warn('Detection system offline:', error);
+            }
+        }
+
+        // Check system status periodically
+        setInterval(checkSystemStatus, 30000);
+        
+        // Initial status check
+        setTimeout(checkSystemStatus, 1000);
+    </script>
+    
+    <style>
+        .status-indicator.offline {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .status-indicator.offline::before {
+            content: "●";
+            color: #f44336;
+        }
+    </style>
+</body>
+</html>

@@ -38,12 +38,12 @@ class DeduplicationManager:
     def __init__(self, config: Dict = None):
         self.logger = logging.getLogger("DeduplicationManager")
         
-        # Default configuration - EXTREMELY AGGRESSIVE to reduce 63K detections
+        # Optimized configuration - Balanced approach for better thumbnails while preventing spam
         self.config = {
             'window_seconds': 600,  # 10-minute grouping window (reduced from 30min)
-            'cooldown_minutes': 10,  # Don't save same plate for 10 minutes (reduced from 30)
-            'min_confidence_improvement': 0.15,  # 15% improvement required (reduced from 25%)
-            'max_per_plate_per_hour': 1,  # Max 1 detection per unique plate per hour (reduced from 2)
+            'cooldown_minutes': 2,  # Don't save same plate for 2 minutes (reduced from 10 for more thumbnails)
+            'min_confidence_improvement': 0.05,  # 5% improvement required (reduced from 15% for more saves)
+            'max_per_plate_per_hour': 3,  # Max 3 detections per unique plate per hour (increased from 1)
             'min_bbox_distance': 50,  # Minimum pixel distance for "different" position (reduced from 100)
             'quality_factors': {
                 'confidence': 0.5,  # Increased importance of confidence

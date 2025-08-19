@@ -19,6 +19,7 @@
 @import './components/streaming.css';
 @import './components/playback.css';
 @import './components/recordings-page.css';
+@import './components/detection-console.css';
 
 /* Layout Styles */
 .app-layout {

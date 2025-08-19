@@ -44,7 +44,19 @@ class DatabaseService:
             elif 'timestamp' in detection_data:
                 detection_data['detected_at'] = detection_data.pop('timestamp')
             
-            detection = Detection(**detection_data)
+            # Ensure we use the provided ID instead of generating a new one
+            provided_id = detection_data.get('id')
+            if provided_id:
+                # Create detection with explicit ID to prevent auto-generation
+                detection = Detection()
+                # Set all fields from detection_data
+                for key, value in detection_data.items():
+                    if hasattr(detection, key):
+                        setattr(detection, key, value)
+            else:
+                # Let SQLAlchemy generate ID if none provided
+                detection = Detection(**detection_data)
+            
             session.add(detection)
             await session.commit()
             await session.refresh(detection)

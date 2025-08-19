@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     frame_skip_interval: int = 3  # Process every 3rd frame to reduce load
     detection_confidence_threshold: float = 0.4
     min_plate_text_length: int = 4
-    save_detection_frames: bool = False
+    save_detection_frames: bool = True
     
     # Storage
     detection_storage_path: str = "detections"

@@ -54,6 +54,8 @@
 .sidebar.collapsed .logo-text {
     opacity: 0;
     width: 0;
+    overflow: hidden;
+    visibility: hidden;
 }
 
 .sidebar.collapsed .logo-icon {
@@ -99,7 +101,7 @@
     position: relative;
     white-space: nowrap;
     overflow: hidden;
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
 }
 
 .menu-link:hover {
@@ -120,13 +122,17 @@
 }
 
 .menu-link span {
-    transition: opacity var(--transition-base);
-    font-size: var(--font-size-base);
+    transition: opacity var(--transition-base), width var(--transition-base);
+    font-size: var(--font-size-lg);
+    display: inline-block;
+    overflow: hidden;
 }
 
 .sidebar.collapsed .menu-link span {
     opacity: 0;
     width: 0;
+    overflow: hidden;
+    visibility: hidden;
 }
 
 .badge {
@@ -156,6 +162,10 @@
 .sidebar.collapsed .badge {
     opacity: 0;
     width: 0;
+    overflow: hidden;
+    visibility: hidden;
+    padding: 0;
+    margin: 0;
 }
 
 .sidebar-footer {
@@ -206,6 +216,8 @@
 .sidebar.collapsed .user-details {
     opacity: 0;
     width: 0;
+    overflow: hidden;
+    visibility: hidden;
 }
 
 .logout-btn {

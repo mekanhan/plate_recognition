@@ -90,11 +90,15 @@ class LPRApplication {
             return;
         }
 
+        // Get sidebar preference from localStorage
+        const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+        const navExpanded = !isCollapsed;
+
         // Create main application structure
         const appStructure = `
-            <div class="app-layout" data-nav-expanded="false">
+            <div class="app-layout" data-nav-expanded="${navExpanded}">
                 <div class="mobile-sidebar-overlay"></div>
-                <nav class="sidebar"></nav>
+                <nav class="sidebar${isCollapsed ? ' collapsed' : ''}"></nav>
                 <main class="main-content">
                     <header class="top-header"></header>
                     

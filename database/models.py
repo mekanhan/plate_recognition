@@ -31,6 +31,15 @@ class Camera(Base):
     max_fps = Column(Integer, default=30)
     video_quality = Column(String(20), default='medium')  # high, medium, low
     low_latency = Column(Boolean, default=True)
+    # ONVIF Discovery fields
+    onvif_service_url = Column(String(500))  # ONVIF service endpoint URL
+    onvif_port = Column(Integer, default=80)  # ONVIF service port
+    manufacturer = Column(String(100))  # Camera manufacturer from discovery
+    model = Column(String(100))  # Camera model from discovery
+    discovered_via = Column(String(20), default='manual')  # manual, onvif, scan
+    discovery_timestamp = Column(DateTime)  # When camera was discovered
+    hardware_id = Column(String(200))  # Unique hardware identifier
+    onvif_scopes = Column(JSON, default=[])  # ONVIF scopes list
     # Status and metadata
     status = Column(String(20), default='active')  # active, inactive, error
     last_test_at = Column(DateTime)

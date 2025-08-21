@@ -40,7 +40,15 @@ def update_schema():
             ("video_quality", "VARCHAR(20) DEFAULT 'medium'"),
             ("low_latency", "BOOLEAN DEFAULT 1"),
             ("last_test_at", "DATETIME"),
-            ("last_test_result", "TEXT")
+            ("last_test_result", "TEXT"),
+            # ONVIF Discovery fields
+            ("onvif_service_url", "VARCHAR(500)"),
+            ("onvif_port", "INTEGER DEFAULT 80"),
+            ("manufacturer", "VARCHAR(100)"),
+            ("discovered_via", "VARCHAR(20) DEFAULT 'manual'"),
+            ("discovery_timestamp", "DATETIME"),
+            ("hardware_id", "VARCHAR(200)"),
+            ("onvif_scopes", "TEXT DEFAULT '[]'")
         ]
         
         # Add missing columns

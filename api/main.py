@@ -1202,6 +1202,210 @@ async def test_camera_connection(test_data: CameraTestRequest):
     """Test camera connection without saving"""
     return await _test_camera_connection_internal(test_data)
 
+# ONVIF Discovery Endpoints
+@app.post("/api/onvif/discover")
+async def discover_onvif_cameras(
+    method: str = Query("both", description="Discovery method: multicast, unicast, or both"),
+    subnets: Optional[List[str]] = Query(None, description="Subnets to scan (e.g., 192.168.1.0/24)"),
+    show_existing: bool = Query(False, description="Show cameras already in system (for testing)"),
+    username: Optional[str] = Query(None, description="ONVIF username for authenticated discovery"),
+    password: Optional[str] = Query(None, description="ONVIF password for authenticated discovery")
+):
+    """
+    Discover ONVIF cameras on the network
+    Methods:
+    - multicast: Quick discovery using UDP multicast
+    - unicast: Scan specific subnets (slower but more thorough)
+    - both: Use both methods
+    """
+    try:
+        from services.onvif_discovery_service import discover_onvif_cameras as discover
+        
+        # Discover cameras with optional credentials
+        discovered_configs = await discover(
+            method=method, 
+            subnets=subnets,
+            username=username,
+            password=password
+        )
+        
+        # Get existing cameras for filtering/marking
+        existing_cameras = await db.get_all_cameras()
+        existing_ips = {cam.ip_address for cam in existing_cameras}
+        
+        if show_existing:
+            # Testing mode: show all discovered cameras with status indicators
+            result_cameras = []
+            for config in discovered_configs:
+                config['already_exists'] = config['ip_address'] in existing_ips
+                config['status'] = 'existing' if config['already_exists'] else 'new'
+                result_cameras.append(config)
+            
+            new_count = len([c for c in result_cameras if not c['already_exists']])
+            existing_count = len([c for c in result_cameras if c['already_exists']])
+            
+            return {
+                "success": True,
+                "method": method,
+                "show_existing": True,
+                "total_discovered": len(discovered_configs),
+                "new_cameras": new_count,
+                "existing_cameras": existing_count,
+                "cameras": result_cameras
+            }
+        else:
+            # Normal mode: filter out existing cameras
+            new_cameras = [
+                config for config in discovered_configs 
+                if config['ip_address'] not in existing_ips
+            ]
+            
+            return {
+                "success": True,
+                "method": method,
+                "show_existing": False,
+                "total_discovered": len(discovered_configs),
+                "new_cameras": len(new_cameras),
+                "cameras": new_cameras
+            }
+        
+    except Exception as e:
+        logger.error(f"ONVIF discovery failed: {str(e)}")
+        raise HTTPException(500, f"Discovery failed: {str(e)}")
+
+@app.get("/api/onvif/discovered")
+async def get_discovered_cameras():
+    """Get cached discovered cameras"""
+    try:
+        from services.onvif_discovery_service import ONVIFDiscoveryService
+        
+        discovery = ONVIFDiscoveryService()
+        cached_cameras = discovery.load_cache()
+        
+        configs = [discovery.get_camera_config(cam) for cam in cached_cameras]
+        
+        return {
+            "success": True,
+            "cached": True,
+            "cameras": configs
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get cached cameras: {str(e)}")
+        return {"success": False, "cameras": [], "error": str(e)}
+
+@app.post("/api/onvif/add/{camera_ip}")
+async def add_onvif_camera(
+    camera_ip: str,
+    credentials: Dict[str, str] = Body(..., description="Camera credentials")
+):
+    """Add a discovered ONVIF camera to the system"""
+    try:
+        from services.onvif_discovery_service import ONVIFDiscoveryService
+        
+        # Load cached discoveries
+        discovery = ONVIFDiscoveryService()
+        cached_cameras = discovery.load_cache()
+        
+        # Find the camera by IP
+        camera = None
+        for cam in cached_cameras:
+            if cam.ip == camera_ip:
+                camera = cam
+                break
+        
+        if not camera:
+            raise HTTPException(404, f"Camera {camera_ip} not found in discoveries")
+        
+        # Get camera configuration
+        config = discovery.get_camera_config(camera)
+        
+        # Update with provided credentials
+        config['username'] = credentials.get('username', config['username'])
+        config['password'] = credentials.get('password', '')
+        
+        # Create camera using existing endpoint logic
+        camera_data = CameraCreate(
+            name=config['name'],
+            ip_address=config['ip_address'],
+            port=config['port'],
+            connection_type=config['connection_type'],
+            stream_path=config['stream_path'],
+            username=config['username'],
+            password=config['password'],
+            brand=config.get('manufacturer'),
+            model=config.get('model')
+        )
+        
+        # Generate camera ID
+        camera_id = generate_camera_id(config['name'])
+        
+        # Create camera dict with ONVIF metadata
+        camera_dict = camera_data.dict()
+        camera_dict['camera_id'] = camera_id
+        camera_dict['onvif_service_url'] = config.get('onvif_service_url')
+        camera_dict['onvif_port'] = config.get('onvif_port')
+        camera_dict['manufacturer'] = config.get('manufacturer')
+        camera_dict['discovered_via'] = 'onvif'
+        camera_dict['discovery_timestamp'] = datetime.utcnow()
+        camera_dict['hardware_id'] = config.get('hardware_id')
+        camera_dict['onvif_scopes'] = json.dumps(config.get('onvif_scopes', []))
+        
+        # Test connection
+        test_data = CameraTestRequest(
+            ip_address=camera_data.ip_address,
+            port=camera_data.port,
+            connection_type=camera_data.connection_type,
+            stream_path=camera_data.stream_path,
+            username=camera_data.username,
+            password=camera_data.password,
+            timeout=10
+        )
+        
+        connection_test = await _test_camera_connection_internal(test_data)
+        
+        if not connection_test.get('success'):
+            return {
+                "success": False,
+                "error": "Connection test failed",
+                "details": connection_test
+            }
+        
+        # Save to database
+        await db.add_camera(camera_dict)
+        
+        # Reload cameras
+        await reload_cameras()
+        
+        return {
+            "success": True,
+            "camera_id": camera_id,
+            "message": f"Camera {config['name']} added successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add ONVIF camera: {str(e)}")
+        raise HTTPException(500, f"Failed to add camera: {str(e)}")
+
+@app.get("/api/onvif/brands")
+async def get_supported_brands():
+    """Get list of supported camera brands with their configurations"""
+    from services.onvif_discovery_service import ONVIFDiscoveryService
+    
+    brands = []
+    for brand, config in ONVIFDiscoveryService.BRAND_CONFIGS.items():
+        brands.append({
+            "brand": brand,
+            "default_username": config.get('default_username'),
+            "default_port": config.get('default_port'),
+            "onvif_port": config.get('onvif_port'),
+            "stream_paths": config.get('default_paths', {})
+        })
+    
+    return {"brands": brands}
+
 @app.post("/api/cameras/test-all-paths")
 async def test_all_camera_paths(test_data: CameraTestRequest):
     """Test camera connection with multiple stream path options"""

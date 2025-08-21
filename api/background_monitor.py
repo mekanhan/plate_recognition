@@ -84,7 +84,8 @@ class BackgroundMonitor:
                 cameras = await self.db.get_all_cameras()
                 
                 for camera in cameras:
-                    if not camera.enabled:
+                    # Check if camera should be monitored (default to True if no enabled attribute)
+                    if not getattr(camera, 'enabled', True):
                         continue
                     
                     # Check camera status

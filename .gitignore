@@ -189,6 +189,7 @@ app.log
 *.log.*
 *.out
 *.err
+*Zone.Identifier
 
 # System monitoring
 prometheus_data/

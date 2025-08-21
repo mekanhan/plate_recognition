@@ -4,6 +4,7 @@
  */
 import SimpleCameraModal from '../components/cameras/SimpleCameraModal.js';
 import VLCStreamModal from '../components/modals/VLCStreamModal.js';
+import ONVIFDiscoveryModal from '../components/modals/ONVIFDiscoveryModal.js';
 import WebSocketService from '../services/WebSocketService.js';
 import config from '../config/app.config.js';
 
@@ -34,6 +35,9 @@ class Cameras {
         console.log('SimpleCameraModal class:', SimpleCameraModal);
         this.simpleCameraModal = new SimpleCameraModal();
         console.log('SimpleCameraModal instance:', this.simpleCameraModal);
+        
+        // Initialize ONVIF discovery modal
+        this.onvifDiscoveryModal = new ONVIFDiscoveryModal();
         
         // Initialize VLC modal if feature is enabled
         if (config.FEATURES.VLC_INTEGRATION) {
@@ -74,6 +78,10 @@ class Cameras {
                 <button class="quick-action-btn" id="add-camera-btn">
                     <i class="fas fa-plus"></i>
                     <span>Add Camera</span>
+                </button>
+                <button class="quick-action-btn" id="discover-cameras-btn">
+                    <i class="fas fa-search"></i>
+                    <span>Discover Cameras</span>
                 </button>
                 <button class="quick-action-btn" id="bulk-actions-btn">
                     <i class="fas fa-cog"></i>
@@ -161,6 +169,12 @@ class Cameras {
             this.showAddCameraModal();
         });
 
+        // Discover cameras button
+        document.getElementById('discover-cameras-btn')?.addEventListener('click', () => {
+            console.log('Discover cameras button clicked');
+            this.showDiscoveryCamerasModal();
+        });
+
         // Bulk actions
         document.getElementById('bulk-actions-btn')?.addEventListener('click', () => this.toggleBulkMode());
         document.getElementById('bulk-close')?.addEventListener('click', () => this.closeBulkMode());
@@ -190,6 +204,7 @@ class Cameras {
         // Camera update listeners
         window.addEventListener('cameraAdded', () => this.loadCameras());
         window.addEventListener('cameraUpdated', () => this.loadCameras());
+        window.addEventListener('camerasAdded', () => this.loadCameras());
     }
 
     // Recording status management
@@ -1558,8 +1573,8 @@ class Cameras {
         const camera = this.cameras.find(c => c.id === cameraId);
         if (!camera) return;
         
-        // TODO: Open settings modal when component is ready
-        this.showToast('info', 'Settings modal coming soon!');
+        // Show camera settings modal with pre-filled data
+        this.simpleCameraModal.show(camera);
     }
     
     openInVLC(cameraId) {
@@ -1949,6 +1964,10 @@ class Cameras {
     // Modal methods
     showAddCameraModal() {
         this.simpleCameraModal.show();
+    }
+
+    showDiscoveryCamerasModal() {
+        this.onvifDiscoveryModal.show();
     }
 
     openCameraLiveView(cameraId) {

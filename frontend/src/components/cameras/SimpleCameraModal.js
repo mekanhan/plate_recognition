@@ -30,6 +30,10 @@ class SimpleCameraModal {
             low_latency: true
         };
         this.testResult = null;
+        
+        // ONVIF discovery state
+        this.discoveredCameras = [];
+        this.isDiscovering = false;
     }
 
     show(camera = null) {
@@ -125,12 +129,78 @@ class SimpleCameraModal {
                             </div>
                         
                         <div class="form-row">
-                            <div class="form-group">
+                            <!-- IP Address Field (hidden when ONVIF mode) -->
+                            <div class="form-group" id="ip-address-group" style="${this.formData.connection_type === 'onvif' ? 'display: none;' : ''}">
                                 <label for="camera-ip-input" class="required">IP Address</label>
                                 <input type="text" id="camera-ip-input" class="form-input" 
                                        placeholder="192.168.1.100" 
                                        value="${this.formData.ip_address}" 
-                                       pattern="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$" required>
+                                       pattern="^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$" 
+                                       ${this.formData.connection_type === 'onvif' ? '' : 'required'}>
+                            </div>
+                            
+                            <!-- ONVIF Discovery Widget (shown when ONVIF mode) -->
+                            <div class="form-group" id="onvif-discovery-group" style="${this.formData.connection_type === 'onvif' ? '' : 'display: none;'}">
+                                <label>ONVIF Camera Discovery</label>
+                                <div class="onvif-discovery-widget" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; background: #f8fafc;">
+                                    <!-- Subnet Selection -->
+                                    <div class="form-row" style="margin-bottom: 12px;">
+                                        <div class="form-group" style="margin: 0; flex: 1;">
+                                            <label for="discovery-subnet" style="font-size: 0.875rem; margin-bottom: 4px;">Network to scan:</label>
+                                            <select id="discovery-subnet" class="form-select" style="font-size: 0.875rem;">
+                                                <option value="auto">Auto-detect local networks</option>
+                                                <option value="192.168.1.0/24">192.168.1.0/24 (most common)</option>
+                                                <option value="192.168.0.0/24">192.168.0.0/24</option>
+                                                <option value="10.0.0.0/24" selected>10.0.0.0/24</option>
+                                                <option value="custom">Custom subnet...</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <!-- Custom subnet input (hidden by default) -->
+                                    <div id="custom-subnet-group" style="display: none; margin-bottom: 12px;">
+                                        <input type="text" id="custom-subnet-input" class="form-input" 
+                                               placeholder="e.g., 10.0.0.0/24 or 172.16.1.0/24" 
+                                               style="font-size: 0.875rem; width: 100%;">
+                                        <small class="form-help">Enter subnet in CIDR notation (e.g., 10.0.0.0/24)</small>
+                                    </div>
+                                    
+                                    <!-- ONVIF Credentials Section -->
+                                    <div style="border-top: 1px solid #e5e7eb; margin: 12px 0; padding-top: 12px;">
+                                        <label style="font-size: 0.875rem; margin-bottom: 8px; display: block; color: #4b5563;">
+                                            ONVIF Credentials (optional - for camera details):
+                                        </label>
+                                        <div class="form-row" style="gap: 8px;">
+                                            <div class="form-group" style="margin: 0; flex: 1;">
+                                                <input type="text" id="onvif-username" class="form-input" 
+                                                       placeholder="Username" 
+                                                       style="font-size: 0.875rem; width: 100%;">
+                                            </div>
+                                            <div class="form-group" style="margin: 0; flex: 1;">
+                                                <input type="password" id="onvif-password" class="form-input" 
+                                                       placeholder="Password" 
+                                                       style="font-size: 0.875rem; width: 100%;">
+                                            </div>
+                                        </div>
+                                        <small class="form-help" style="margin-top: 4px; display: block;">
+                                            <i class="fas fa-info-circle"></i> Provide credentials to see camera manufacturer, model, and other details
+                                        </small>
+                                    </div>
+                                    
+                                    <button type="button" class="btn btn-primary" id="onvif-discover-btn" style="margin-top: 12px;">
+                                        <i class="fas fa-search"></i>
+                                        Discover ONVIF Camera
+                                    </button>
+                                    <div class="discovery-status" id="onvif-discovery-status" style="display: none; margin-top: 12px; text-align: center; color: #64748b;">
+                                        <div class="discovery-progress">
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <span>Discovering cameras...</span>
+                                        </div>
+                                    </div>
+                                    <div class="discovered-cameras-list" id="discovered-cameras-list" style="display: none; margin-top: 12px;">
+                                        <!-- Discovered cameras will be populated here -->
+                                    </div>
+                                </div>
+                                <small class="form-help">Select your camera's network and click discover to find ONVIF cameras automatically</small>
                             </div>
                             
                             <div class="form-group">
@@ -140,7 +210,7 @@ class SimpleCameraModal {
                                     <option value="https" ${this.formData.connection_type === 'https' ? 'selected' : ''}>HTTPS</option>
                                     <option value="rtsp" ${this.formData.connection_type === 'rtsp' ? 'selected' : ''}>RTSP</option>
                                     <option value="rtsps" ${this.formData.connection_type === 'rtsps' ? 'selected' : ''}>RTSPS (Secure)</option>
-                                    <option value="onvif" ${this.formData.connection_type === 'onvif' ? 'selected' : ''}>ONVIF</option>
+                                    <option value="onvif" ${this.formData.connection_type === 'onvif' ? 'selected' : ''}>ONVIF (Auto-Discover)</option>
                                 </select>
                             </div>
                         </div>
@@ -394,8 +464,13 @@ class SimpleCameraModal {
             this.formData.connection_type = e.target.value;
             this.updateDefaultPort();
             this.updateDefaultStreamPath();
+            this.toggleONVIFMode();
             this.validateForm();
         });
+        
+        // ONVIF discovery listeners
+        document.getElementById('onvif-discover-btn')?.addEventListener('click', () => this.startONVIFDiscovery());
+        document.getElementById('discovery-subnet')?.addEventListener('change', () => this.handleSubnetChange());
         
         document.getElementById('camera-port-input')?.addEventListener('input', (e) => {
             this.formData.port = parseInt(e.target.value) || 80;
@@ -1015,6 +1090,306 @@ class SimpleCameraModal {
                 toast.remove();
             }
         }, 3000);
+    }
+
+    // ONVIF Discovery Methods
+    handleSubnetChange() {
+        const subnetSelect = document.getElementById('discovery-subnet');
+        const customGroup = document.getElementById('custom-subnet-group');
+        
+        if (subnetSelect && customGroup) {
+            if (subnetSelect.value === 'custom') {
+                customGroup.style.display = 'block';
+            } else {
+                customGroup.style.display = 'none';
+            }
+        }
+    }
+
+    getSelectedSubnet() {
+        const subnetSelect = document.getElementById('discovery-subnet');
+        const customInput = document.getElementById('custom-subnet-input');
+        
+        if (!subnetSelect) return null;
+        
+        if (subnetSelect.value === 'custom') {
+            return customInput?.value?.trim() || null;
+        } else if (subnetSelect.value === 'auto') {
+            return null; // Use API auto-detection
+        } else {
+            return subnetSelect.value;
+        }
+    }
+
+    toggleONVIFMode() {
+        const isONVIF = this.formData.connection_type === 'onvif';
+        const ipGroup = document.getElementById('ip-address-group');
+        const onvifGroup = document.getElementById('onvif-discovery-group');
+        const ipInput = document.getElementById('camera-ip-input');
+        
+        if (ipGroup && onvifGroup && ipInput) {
+            if (isONVIF) {
+                // Hide IP field, show ONVIF discovery
+                ipGroup.style.display = 'none';
+                onvifGroup.style.display = 'block';
+                ipInput.removeAttribute('required');
+                
+                // Update port to ONVIF default
+                this.formData.port = 80;
+                const portInput = document.getElementById('camera-port-input');
+                if (portInput) portInput.value = 80;
+            } else {
+                // Show IP field, hide ONVIF discovery
+                ipGroup.style.display = 'block';
+                onvifGroup.style.display = 'none';
+                ipInput.setAttribute('required', '');
+                
+                // Clear any discovered camera data
+                this.clearDiscoveredCameras();
+            }
+        }
+    }
+
+    async startONVIFDiscovery() {
+        if (this.isDiscovering) return;
+
+        this.isDiscovering = true;
+        
+        const discoverBtn = document.getElementById('onvif-discover-btn');
+        const statusDiv = document.getElementById('onvif-discovery-status');
+        const listDiv = document.getElementById('discovered-cameras-list');
+        
+        // Update UI to show discovering state
+        if (discoverBtn) {
+            discoverBtn.disabled = true;
+            discoverBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Discovering...';
+        }
+        
+        if (statusDiv) statusDiv.style.display = 'block';
+        if (listDiv) listDiv.style.display = 'none';
+
+        try {
+            // Get selected subnet
+            const selectedSubnet = this.getSelectedSubnet();
+            const subnetParam = selectedSubnet ? `&subnets=${encodeURIComponent(selectedSubnet)}` : '';
+            
+            // Get ONVIF credentials if provided
+            const onvifUsername = document.getElementById('onvif-username')?.value?.trim() || '';
+            const onvifPassword = document.getElementById('onvif-password')?.value || '';
+            const credentialParams = (onvifUsername || onvifPassword) ? 
+                `&username=${encodeURIComponent(onvifUsername)}&password=${encodeURIComponent(onvifPassword)}` : '';
+            
+            console.log('Starting ONVIF discovery...', { 
+                selectedSubnet, 
+                hasCredentials: !!(onvifUsername || onvifPassword) 
+            });
+            
+            // Smart discovery strategy: try multicast first (fast), then unicast if needed
+            console.log('Trying multicast discovery first...');
+            
+            // Step 1: Try multicast discovery (fast)
+            let response = await fetch(`http://localhost:8001/api/onvif/discover?method=multicast${subnetParam}${credentialParams}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            let result = await response.json();
+
+            if (result.success && result.cameras && result.cameras.length > 0) {
+                console.log(`Found ${result.cameras.length} cameras via multicast`);
+                this.discoveredCameras = result.cameras;
+                this.displayDiscoveredCameras();
+                return; // Success with multicast
+            }
+
+            // Step 2: No cameras found with multicast, try comprehensive discovery
+            console.log(`No cameras found with multicast on ${selectedSubnet || 'auto-detected networks'}, trying unicast...`);
+            
+            if (discoverBtn) {
+                discoverBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Scanning network...';
+            }
+            
+            // For unicast, show existing cameras too (for better UX)
+            response = await fetch(`http://localhost:8001/api/onvif/discover?method=unicast${subnetParam}${credentialParams}&show_existing=true`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            result = await response.json();
+
+            if (result.success && result.total_discovered > 0) {
+                console.log(`Found ${result.total_discovered} total cameras via unicast (${result.new_cameras} new, ${result.existing_cameras || 0} existing)`);
+                this.discoveredCameras = result.cameras;
+                this.displayDiscoveredCameras();
+            } else {
+                console.log('No ONVIF cameras found');
+                this.showNoConnections();
+            }
+
+        } catch (error) {
+            console.error('ONVIF discovery failed:', error);
+            this.showToast('Discovery failed. Please check your network connection.', 'error');
+        } finally {
+            this.isDiscovering = false;
+            
+            // Reset discover button
+            if (discoverBtn) {
+                discoverBtn.disabled = false;
+                discoverBtn.innerHTML = '<i class="fas fa-search"></i> Discover ONVIF Camera';
+            }
+            
+            if (statusDiv) statusDiv.style.display = 'none';
+        }
+    }
+
+    displayDiscoveredCameras() {
+        const listDiv = document.getElementById('discovered-cameras-list');
+        if (!listDiv) return;
+
+        let camerasHTML = '<div style="font-weight: 600; margin-bottom: 8px; color: #374151;">Found ONVIF Cameras:</div>';
+        
+        this.discoveredCameras.forEach((camera, index) => {
+            const isExisting = camera.already_exists || camera.status === 'existing';
+            const bgColor = isExisting ? '#fef3c7' : 'white';  // Light yellow for existing
+            const buttonText = isExisting ? 'Already Added' : 'Select';
+            const buttonClass = isExisting ? 'btn-secondary' : 'btn-primary';
+            const buttonDisabled = isExisting ? 'disabled' : '';
+            
+            camerasHTML += `
+                <div style="border: 1px solid #d1d5db; border-radius: 6px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; background: ${bgColor};" data-camera-index="${index}">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">
+                            ${camera.name}
+                            ${isExisting ? '<span style="margin-left: 8px; font-size: 12px; color: #f59e0b; font-weight: normal;">(Already in system)</span>' : ''}
+                        </div>
+                        <div style="font-size: 13px; color: #6b7280;">
+                            ${camera.ip_address} • ${camera.manufacturer || 'Unknown'} ${camera.model || ''}
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm ${buttonClass}" 
+                            style="margin-left: 12px;"
+                            onclick="window.simpleCameraModal?.selectDiscoveredCamera(${index})"
+                            ${buttonDisabled}>
+                        ${buttonText}
+                    </button>
+                </div>
+            `;
+        });
+
+        listDiv.innerHTML = camerasHTML;
+        listDiv.style.display = 'block';
+        
+        // Make this instance available globally for onclick handlers
+        window.simpleCameraModal = this;
+    }
+
+    selectDiscoveredCamera(index) {
+        const camera = this.discoveredCameras[index];
+        if (!camera) return;
+
+        // IMPORTANT: Switch from ONVIF to RTSP for actual streaming
+        // ONVIF is only for discovery, streaming uses RTSP/HTTP/HTTPS
+        this.formData.connection_type = camera.connection_type || 'rtsp';
+        
+        // Auto-populate form fields
+        this.formData.ip_address = camera.ip_address;
+        this.formData.port = camera.port || 554;
+        this.formData.stream_path = camera.stream_path || '/stream1';
+        
+        // Use ONVIF credentials if they were provided and worked
+        const onvifUsername = document.getElementById('onvif-username')?.value?.trim();
+        const onvifPassword = document.getElementById('onvif-password')?.value;
+        
+        // Use ONVIF credentials if provided, otherwise use defaults
+        this.formData.username = onvifUsername || camera.username || 'admin';
+        this.formData.password = onvifPassword || '';  // Pre-fill password if provided
+        
+        this.formData.brand = camera.manufacturer || '';
+        this.formData.model = camera.model || '';
+        
+        // Update connection type dropdown
+        const connectionTypeInput = document.getElementById('connection-type-input');
+        if (connectionTypeInput) {
+            connectionTypeInput.value = this.formData.connection_type;
+        }
+        
+        // Show IP field and hide ONVIF discovery widget
+        const ipGroup = document.getElementById('ip-address-group');
+        const onvifGroup = document.getElementById('onvif-discovery-group');
+        const ipInput = document.getElementById('camera-ip-input');
+        
+        if (ipGroup) ipGroup.style.display = 'block';
+        if (onvifGroup) onvifGroup.style.display = 'none';
+        if (ipInput) {
+            ipInput.value = this.formData.ip_address;
+            ipInput.setAttribute('required', 'required');
+        }
+        
+        // Update other form fields
+        const nameInput = document.getElementById('camera-name-input');
+        const portInput = document.getElementById('camera-port-input');
+        const streamInput = document.getElementById('stream-path-input');
+        const usernameInput = document.getElementById('camera-username-input');
+        
+        if (nameInput && !nameInput.value) {
+            nameInput.value = camera.name;
+            this.formData.name = camera.name;
+        }
+        
+        if (portInput) portInput.value = this.formData.port;
+        if (streamInput) streamInput.value = this.formData.stream_path;
+        if (usernameInput) usernameInput.value = this.formData.username;
+
+        // Pre-fill password if ONVIF credentials were provided
+        const passwordInput = document.getElementById('camera-password-input');
+        if (passwordInput && this.formData.password) {
+            passwordInput.value = this.formData.password;
+        }
+
+        // Hide discovery results and show success message
+        this.clearDiscoveredCameras();
+        
+        // Different message based on whether password was pre-filled
+        if (this.formData.password) {
+            this.showToast(`Selected ${camera.name} at ${camera.ip_address}. Credentials pre-filled. Click test connection.`, 'success');
+        } else {
+            this.showToast(`Selected ${camera.name} at ${camera.ip_address}. Please enter password and test connection.`, 'success');
+        }
+        
+        // Focus on password field only if not pre-filled
+        if (passwordInput && !this.formData.password) {
+            passwordInput.focus();
+        }
+        
+        // Validate form with new data
+        this.validateForm();
+    }
+
+    showNoConnections() {
+        const listDiv = document.getElementById('discovered-cameras-list');
+        if (!listDiv) return;
+
+        listDiv.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; background: white;">
+                <i class="fas fa-exclamation-circle" style="font-size: 24px; color: #f59e0b; margin-bottom: 8px;"></i>
+                <p style="margin: 8px 0; font-weight: 600;">No ONVIF cameras found on your network</p>
+                <small style="color: #9ca3af;">Make sure cameras are ONVIF-enabled and on the same network</small>
+            </div>
+        `;
+        listDiv.style.display = 'block';
+    }
+
+    clearDiscoveredCameras() {
+        this.discoveredCameras = [];
+        const listDiv = document.getElementById('discovered-cameras-list');
+        if (listDiv) {
+            listDiv.innerHTML = '';
+            listDiv.style.display = 'none';
+        }
     }
 }
 

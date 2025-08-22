@@ -11,6 +11,9 @@ class SettingsPage {
         this.users = [];
         this.roles = [];
         this.unsavedChanges = false;
+        this.searchTerm = '';
+        this.roleFilter = '';
+        this.statusFilter = '';
         this.init();
     }
 
@@ -163,6 +166,25 @@ class SettingsPage {
                 permissions: ['cameras.view', 'detections.view', 'alerts.view']
             }
         ];
+    }
+    
+    getFilteredUsers() {
+        return this.users.filter(user => {
+            // Search term filter
+            const matchesSearch = !this.searchTerm || 
+                user.firstName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                user.lastName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                user.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+                user.username.toLowerCase().includes(this.searchTerm.toLowerCase());
+            
+            // Role filter
+            const matchesRole = !this.roleFilter || user.role === this.roleFilter;
+            
+            // Status filter
+            const matchesStatus = !this.statusFilter || user.status === this.statusFilter;
+            
+            return matchesSearch && matchesRole && matchesStatus;
+        });
     }
 
     render() {
@@ -981,7 +1003,32 @@ class SettingsPage {
                     </button>
                 </div>
                 
-                <div class="users-table">
+                <!-- Search and Filters -->
+                <div class="user-controls">
+                    <div class="search-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="user-search" placeholder="Search users by name, email, or username..." class="search-input">
+                    </div>
+                    <div class="user-filters">
+                        <select id="role-filter" class="filter-select">
+                            <option value="">All Roles</option>
+                            <option value="admin">Administrator</option>
+                            <option value="operator">Operator</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                        <select id="status-filter" class="filter-select">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                        <button class="btn btn-secondary" id="clear-filters-btn">
+                            <i class="fas fa-times"></i>
+                            Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="users-table" id="users-table">
                     <div class="table-header">
                         <div class="header-cell">User</div>
                         <div class="header-cell">Role</div>
@@ -990,7 +1037,7 @@ class SettingsPage {
                         <div class="header-cell">Actions</div>
                     </div>
                     
-                    ${this.users.map(user => `
+                    ${this.getFilteredUsers().map(user => `
                         <div class="table-row ${user.status}">
                             <div class="table-cell user-info">
                                 <div class="user-avatar">
@@ -1025,6 +1072,65 @@ class SettingsPage {
                             </div>
                         </div>
                     `).join('')}
+                </div>
+                
+                <!-- Add User Modal -->
+                <div class="modal" id="add-user-modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 id="user-modal-title">Add New User</h4>
+                            <button class="modal-close" id="close-user-modal">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="user-form">
+                                <input type="hidden" id="user-id">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="user-first-name">First Name</label>
+                                        <input type="text" id="user-first-name" class="form-input" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user-last-name">Last Name</label>
+                                        <input type="text" id="user-last-name" class="form-input" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="user-username">Username</label>
+                                    <input type="text" id="user-username" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="user-email">Email Address</label>
+                                    <input type="email" id="user-email" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="user-role">Role</label>
+                                    <select id="user-role" class="form-select" required>
+                                        <option value="">Select Role</option>
+                                        <option value="admin">Administrator</option>
+                                        <option value="operator">Operator</option>
+                                        <option value="viewer">Viewer</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="user-password">Password</label>
+                                    <input type="password" id="user-password" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="user-two-factor">
+                                        <span class="checkbox-custom"></span>
+                                        Enable Two-Factor Authentication
+                                    </label>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="cancel-user">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="save-user">Add User</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -1244,6 +1350,17 @@ class SettingsPage {
         document.querySelectorAll('[data-action^="edit-user"], [data-action^="toggle-status"], [data-action^="delete-user"]').forEach(btn => {
             btn.addEventListener('click', (e) => this.handleUserAction(e));
         });
+        
+        // User modal event listeners
+        document.getElementById('close-user-modal')?.addEventListener('click', () => this.closeUserModal());
+        document.getElementById('cancel-user')?.addEventListener('click', () => this.closeUserModal());
+        document.getElementById('save-user')?.addEventListener('click', () => this.saveUser());
+        
+        // User search and filters
+        document.getElementById('user-search')?.addEventListener('input', (e) => this.handleUserSearch(e));
+        document.getElementById('role-filter')?.addEventListener('change', (e) => this.handleRoleFilter(e));
+        document.getElementById('status-filter')?.addEventListener('change', (e) => this.handleStatusFilter(e));
+        document.getElementById('clear-filters-btn')?.addEventListener('click', () => this.clearFilters());
 
         // Role management
         document.getElementById('add-role-btn')?.addEventListener('click', () => this.addRole());
@@ -1406,13 +1523,115 @@ class SettingsPage {
     }
 
     addUser() {
-        console.log('Add new user');
-        // This would open a user creation modal
+        this.openUserModal();
+    }
+    
+    openUserModal(user = null) {
+        const modal = document.getElementById('add-user-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100%';
+            modal.style.height = '100%';
+            modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            modal.style.zIndex = '9999';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+        }
+    }
+    
+    closeUserModal() {
+        const modal = document.getElementById('add-user-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+    
+    saveUser() {
+        const userId = document.getElementById('user-id')?.value;
+        const isEdit = userId && userId !== '';
+        
+        // Get form data
+        const formData = {
+            firstName: document.getElementById('user-first-name')?.value,
+            lastName: document.getElementById('user-last-name')?.value,
+            username: document.getElementById('user-username')?.value,
+            email: document.getElementById('user-email')?.value,
+            role: document.getElementById('user-role')?.value,
+            password: document.getElementById('user-password')?.value,
+            twoFactorEnabled: document.getElementById('user-two-factor')?.checked || false
+        };
+        
+        // Basic validation (password not required for edit)
+        const requiredFields = ['firstName', 'lastName', 'username', 'email', 'role'];
+        if (!isEdit) requiredFields.push('password');
+        
+        for (const field of requiredFields) {
+            if (!formData[field]) {
+                this.showToast('Please fill in all required fields', 'error');
+                return;
+            }
+        }
+        
+        if (isEdit) {
+            // Update existing user
+            const userIndex = this.users.findIndex(u => u.id === userId);
+            if (userIndex !== -1) {
+                this.users[userIndex] = {
+                    ...this.users[userIndex],
+                    username: formData.username,
+                    email: formData.email,
+                    firstName: formData.firstName,
+                    lastName: formData.lastName,
+                    role: formData.role,
+                    twoFactorEnabled: formData.twoFactorEnabled
+                };
+                // Only update password if provided
+                if (formData.password) {
+                    // In real app, this would be hashed
+                }
+                this.showToast('User updated successfully', 'success');
+            }
+        } else {
+            // Create new user
+            const newUser = {
+                id: (Math.max(...this.users.map(u => parseInt(u.id))) + 1).toString(),
+                username: formData.username,
+                email: formData.email,
+                firstName: formData.firstName,
+                lastName: formData.lastName,
+                role: formData.role,
+                status: 'active',
+                lastLogin: new Date(),
+                createdAt: new Date(),
+                twoFactorEnabled: formData.twoFactorEnabled
+            };
+            
+            this.users.push(newUser);
+            this.showToast('User created successfully', 'success');
+        }
+        
+        // Close modal and refresh view
+        this.closeUserModal();
+        this.renderCurrentSection();
+        
+        // Clear form
+        document.getElementById('user-form')?.reset();
+        // Reset modal state
+        document.getElementById('user-modal-title').textContent = 'Add New User';
+        document.getElementById('save-user').textContent = 'Add User';
+        document.getElementById('user-password').required = true;
+        document.getElementById('user-password').placeholder = '';
     }
 
     handleUserAction(e) {
-        const action = e.target.dataset.action;
-        const userId = e.target.dataset.userId;
+        const button = e.target.closest('button');
+        const action = button.dataset.action;
+        const userId = button.dataset.userId;
+        
+        console.log('User action:', action, 'User ID:', userId);
         
         switch (action) {
             case 'edit-user':
@@ -1428,8 +1647,28 @@ class SettingsPage {
     }
 
     editUser(userId) {
-        console.log('Edit user:', userId);
-        // This would open a user edit modal
+        const user = this.users.find(u => u.id === userId);
+        if (user) {
+            // Populate form with user data
+            document.getElementById('user-id').value = user.id;
+            document.getElementById('user-first-name').value = user.firstName;
+            document.getElementById('user-last-name').value = user.lastName;
+            document.getElementById('user-username').value = user.username;
+            document.getElementById('user-email').value = user.email;
+            document.getElementById('user-role').value = user.role;
+            document.getElementById('user-password').value = '';
+            document.getElementById('user-two-factor').checked = user.twoFactorEnabled;
+            
+            // Update modal title and button text
+            document.getElementById('user-modal-title').textContent = 'Edit User';
+            document.getElementById('save-user').textContent = 'Update User';
+            
+            // Make password optional for editing
+            document.getElementById('user-password').required = false;
+            document.getElementById('user-password').placeholder = 'Leave blank to keep current password';
+            
+            this.openUserModal(user);
+        }
     }
 
     toggleUserStatus(userId) {
@@ -1443,10 +1682,123 @@ class SettingsPage {
 
     deleteUser(userId) {
         const user = this.users.find(u => u.id === userId);
-        if (user && confirm(`Are you sure you want to delete user "${user.username}"?`)) {
+        if (!user) {
+            this.showToast('User not found', 'error');
+            return;
+        }
+        
+        // Prevent deleting admin user
+        if (user.role === 'admin' && this.users.filter(u => u.role === 'admin').length === 1) {
+            this.showToast('Cannot delete the last administrator user', 'error');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to delete user "${user.username}"?\n\nThis action cannot be undone.`)) {
             this.users = this.users.filter(u => u.id !== userId);
             this.renderCurrentSection();
-            this.showToast('User deleted', 'success');
+            this.showToast(`User "${user.username}" deleted successfully`, 'success');
+        }
+    }
+    
+    handleUserSearch(e) {
+        this.searchTerm = e.target.value;
+        this.refreshUserTable();
+    }
+    
+    handleRoleFilter(e) {
+        this.roleFilter = e.target.value;
+        this.refreshUserTable();
+    }
+    
+    handleStatusFilter(e) {
+        this.statusFilter = e.target.value;
+        this.refreshUserTable();
+    }
+    
+    clearFilters() {
+        this.searchTerm = '';
+        this.roleFilter = '';
+        this.statusFilter = '';
+        
+        // Reset UI
+        document.getElementById('user-search').value = '';
+        document.getElementById('role-filter').value = '';
+        document.getElementById('status-filter').value = '';
+        
+        this.refreshUserTable();
+    }
+    
+    refreshUserTable() {
+        const tableContainer = document.getElementById('users-table');
+        if (tableContainer && this.currentSection === 'users') {
+            const filteredUsers = this.getFilteredUsers();
+            const tableRows = tableContainer.querySelector('.table-header').nextElementSibling;
+            
+            // Update table content
+            const newContent = filteredUsers.map(user => `
+                <div class="table-row ${user.status}">
+                    <div class="table-cell user-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <div class="user-name">${user.firstName} ${user.lastName}</div>
+                            <div class="user-email">${user.email}</div>
+                            <div class="user-username">@${user.username}</div>
+                        </div>
+                    </div>
+                    <div class="table-cell">
+                        <span class="role-badge ${user.role}">${this.capitalizeFirst(user.role)}</span>
+                    </div>
+                    <div class="table-cell">
+                        <span class="status-badge ${user.status}">${this.capitalizeFirst(user.status)}</span>
+                        ${user.twoFactorEnabled ? '<i class="fas fa-shield-alt" title="2FA Enabled"></i>' : ''}
+                    </div>
+                    <div class="table-cell">
+                        <span class="last-login">${this.getRelativeTime(user.lastLogin)}</span>
+                    </div>
+                    <div class="table-cell actions">
+                        <button class="action-btn edit" data-action="edit-user" data-user-id="${user.id}" title="Edit User">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn ${user.status === 'active' ? 'warning' : 'success'}" data-action="toggle-status" data-user-id="${user.id}" title="${user.status === 'active' ? 'Deactivate' : 'Activate'} User">
+                            <i class="fas ${user.status === 'active' ? 'fa-pause' : 'fa-play'}"></i>
+                        </button>
+                        <button class="action-btn danger" data-action="delete-user" data-user-id="${user.id}" title="Delete User">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Remove existing rows and add new ones
+            const existingRows = tableContainer.querySelectorAll('.table-row');
+            existingRows.forEach(row => row.remove());
+            
+            const header = tableContainer.querySelector('.table-header');
+            header.insertAdjacentHTML('afterend', newContent);
+            
+            // Re-attach event listeners for new buttons
+            document.querySelectorAll('[data-action^="edit-user"], [data-action^="toggle-status"], [data-action^="delete-user"]').forEach(btn => {
+                btn.removeEventListener('click', this.handleUserAction);
+                btn.addEventListener('click', (e) => this.handleUserAction(e));
+            });
+            
+            // Show "no results" message if filtered list is empty
+            if (filteredUsers.length === 0) {
+                const noResults = `
+                    <div class="table-row no-results">
+                        <div class="table-cell" colspan="5">
+                            <div class="no-results-message">
+                                <i class="fas fa-search"></i>
+                                <p>No users found matching your search criteria</p>
+                                <button class="btn btn-secondary" onclick="this.clearFilters()">Clear Filters</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                header.insertAdjacentHTML('afterend', noResults);
+            }
         }
     }
 

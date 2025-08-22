@@ -235,7 +235,7 @@ class VideoPlaybackPlayer {
             
         } catch (error) {
             console.error('Failed to load time range:', error);
-            this.showError('Failed to load recordings');
+            this.showError();
         } finally {
             this.showLoading(false);
         }
@@ -283,7 +283,7 @@ class VideoPlaybackPlayer {
             
         } catch (error) {
             console.error('Failed to load recordings for date:', error);
-            this.showError('Failed to load recordings');
+            this.showError();
         } finally {
             this.showLoading(false);
         }
@@ -331,7 +331,7 @@ class VideoPlaybackPlayer {
         // Check if segment is browser-compatible
         if (!this.isBrowserCompatible(segment)) {
             console.warn('Segment not browser compatible:', segment.filename);
-            this.showError('Video format not supported by browser. Please try a different segment.');
+            this.showError();
             return;
         }
         
@@ -365,7 +365,7 @@ class VideoPlaybackPlayer {
             
         } catch (error) {
             console.error('Failed to load segment:', error);
-            this.showError('Failed to load video segment');
+            this.showError();
         } finally {
             this.loadingSegment = false;
             this.showLoading(false);
@@ -522,7 +522,7 @@ class VideoPlaybackPlayer {
     
     onVideoError(error) {
         console.error('Video error:', error);
-        this.showError('Video playback error');
+        this.showError();
     }
     
     // UI updates
@@ -624,10 +624,10 @@ class VideoPlaybackPlayer {
         }
     }
     
-    showError(message) {
+    showError(message = 'Unable to play video') {
         console.error('Playback error:', message);
         
-        // Show error overlay
+        // Show simplified error overlay
         const videoContainer = this.container.querySelector('.video-container');
         if (videoContainer) {
             const existingError = videoContainer.querySelector('.error-overlay');
@@ -639,19 +639,11 @@ class VideoPlaybackPlayer {
             errorOverlay.className = 'error-overlay';
             errorOverlay.innerHTML = `
                 <div class="error-content">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Playback Error</h3>
-                    <p>${message}</p>
-                    <button class="btn btn-primary retry-btn">Retry</button>
+                    <i class="fas fa-exclamation-circle"></i>
+                    <h3>Unable to Play Video</h3>
+                    <p>Please try a different recording or check your connection.</p>
                 </div>
             `;
-            
-            errorOverlay.querySelector('.retry-btn').addEventListener('click', () => {
-                errorOverlay.remove();
-                if (this.currentSegment) {
-                    this.loadSegment(this.currentSegment);
-                }
-            });
             
             videoContainer.appendChild(errorOverlay);
         }

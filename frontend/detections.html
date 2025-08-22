@@ -274,5 +274,14 @@
             color: #f44336;
         }
     </style>
+    
+    <!-- Authentication Check -->
+    <script type="module">
+        import AuthService from './src/services/AuthService.js';
+        const authService = new AuthService();
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/login.html';
+        }
+    </script>
 </body>
 </html>

@@ -241,7 +241,7 @@ class FFmpegCameraRecorder:
             # Find MP4 files that aren't in database yet
             mp4_files = list(self.storage_path.rglob("*.mp4"))
             
-            async with self.db_service.async_session() as session:
+            async with self.db_service.get_session() as session:
                 for mp4_file in mp4_files:
                     # Parse filename to extract metadata
                     metadata = self._parse_filename(mp4_file.name)
@@ -519,7 +519,7 @@ class FFmpegRecordingManager:
         cameras = []
         
         try:
-            async with self.db_service.async_session() as session:
+            async with self.db_service.get_session() as session:
                 # Load ALL cameras except those explicitly marked as 'inactive'
                 # This allows offline cameras to be recovered automatically
                 result = await session.execute(

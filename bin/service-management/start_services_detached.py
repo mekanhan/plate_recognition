@@ -70,7 +70,7 @@ def main():
         },
         {
             'name': 'recording_service',
-            'command': ['python3', 'start_recording_service.py'],
+            'command': ['python3', 'bin/service-management/start_recording_service.py'],
             'cwd': '.'
         },
         {
@@ -97,8 +97,8 @@ def main():
         print("   Main API:      http://localhost:8001/docs")
         print("   Recording API: http://localhost:8002/docs")
         print()
-        print("🔍 Check status: python3 check_services.py")
-        print("🛑 Stop all:     python3 stop_all_services.py")
+        print("🔍 Check status: python3 bin/check_services.py")
+        print("🛑 Stop all:     python3 bin/stop_all_services.py")
     else:
         print(f"⚠️  Only {success_count}/{len(services)} services started")
         print("Check logs/ directory for error details")

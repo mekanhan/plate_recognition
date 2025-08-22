@@ -17,8 +17,17 @@ class ServiceManager:
     def __init__(self):
         self.services = {}
         self.running = True
-        self.log_dir = Path("logs")
-        self.log_dir.mkdir(exist_ok=True)
+        
+        # Import log manager
+        try:
+            from utils.log_manager import get_service_logger
+            self.logger = get_service_logger('service_manager')
+            self.use_log_manager = True
+        except ImportError:
+            # Fallback to basic logging
+            self.log_dir = Path("logs")
+            self.log_dir.mkdir(exist_ok=True)
+            self.use_log_manager = False
         
         # Use venv Python if available
         venv_python = Path(".venv/bin/python3")
@@ -39,7 +48,7 @@ class ServiceManager:
             },
             'recording_service': {
                 'name': '24/7 Recording Service (Port 8002)',
-                'command': [python_exe, 'start_recording_service.py'],
+                'command': [python_exe, 'bin/service-management/start_recording_service.py'],
                 'port': 8002,
                 'cwd': '.',
                 'health_url': 'http://localhost:8002/health',
@@ -52,6 +61,15 @@ class ServiceManager:
                 'cwd': 'frontend',
                 'health_url': 'http://localhost:8080/',
                 'startup_delay': 2
+            },
+            'media_retention': {
+                'name': 'Media Retention Service',
+                'command': [python_exe, 'tools/maintenance/media_retention_service.py'],
+                'port': None,  # No port - background service
+                'cwd': '.',
+                'health_url': None,  # No HTTP health check
+                'startup_delay': 3,
+                'optional': True  # Optional service - don't fail if it can't start
             }
         }
         
@@ -77,18 +95,30 @@ class ServiceManager:
             return False
 
     def create_log_file(self, service_name):
-        """Create log file for service"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_file = self.log_dir / f"{service_name}_{timestamp}.log"
-        return str(log_file)
+        """Create log file for service using log manager if available"""
+        if self.use_log_manager:
+            # New log manager handles rotation automatically
+            from utils.log_manager import log_manager
+            log_file = log_manager.log_dir / f"{service_name}.log"
+            return str(log_file)
+        else:
+            # Fallback to timestamped files
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            log_file = self.log_dir / f"{service_name}_{timestamp}.log"
+            return str(log_file)
 
     def start_service(self, service_key, config):
         """Start a single service"""
         try:
-            # Check if port is available
-            if not self.check_port_available(config['port']):
-                print(f"❌ Port {config['port']} is already in use for {config['name']}")
-                return False
+            # Check if port is available (skip for services without ports)
+            if config['port'] is not None:
+                if not self.check_port_available(config['port']):
+                    print(f"❌ Port {config['port']} is already in use for {config['name']}")
+                    if not config.get('optional', False):
+                        return False
+                    else:
+                        print(f"⚠️  Skipping optional service {config['name']}")
+                        return True
             
             # Create log file
             log_file = self.create_log_file(service_key)
@@ -134,7 +164,7 @@ class ServiceManager:
             return False
         
         # For services with health URLs, check HTTP response
-        if 'health_url' in config:
+        if config.get('health_url'):
             try:
                 import urllib.request
                 with urllib.request.urlopen(config['health_url'], timeout=5) as response:
@@ -143,6 +173,10 @@ class ServiceManager:
                 # If health check fails, still consider running if process is alive
                 uptime = time.time() - service['start_time']
                 return uptime > config.get('startup_delay', 5)
+        else:
+            # For services without health URLs, just check if process is running and past startup delay
+            uptime = time.time() - service['start_time']
+            return uptime > config.get('startup_delay', 3)
         
         return True
 

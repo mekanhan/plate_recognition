@@ -1,8 +1,7 @@
 """
-Database service for async SQLite operations
+Database service for async SQLite operations with enhanced configuration
 """
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func, desc
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
@@ -10,34 +9,43 @@ import json
 import logging
 from .models import (Base, Camera, Detection, VideoRecording, VideoClip, HourlyStatistics,
                      CameraNew, CameraConnection, CameraRecordingConfig, CameraSetting, CameraStatus)
+from .db_config import db_config
 
 class DatabaseService:
-    def __init__(self, database_url: str = "sqlite+aiosqlite:///data/license_plates.db"):
-        self.engine = create_async_engine(database_url, echo=False)
-        self.async_session = sessionmaker(
-            self.engine, class_=AsyncSession, expire_on_commit=False
-        )
+    def __init__(self, database_url: Optional[str] = None):
+        # Use hardened database configuration
+        self.db_config = db_config
         self.logger = logging.getLogger("DatabaseService")
         
     async def init_db(self):
         """Initialize database and create tables"""
-        async with self.engine.begin() as conn:
+        engine = await self.db_config.init_engine()
+        async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         self.logger.info("Database initialized and tables created")
     
     async def create_tables(self):
         """Create all database tables"""
-        async with self.engine.begin() as conn:
+        engine = await self.db_config.init_engine()
+        async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         self.logger.info("Database tables created")
     
     def get_session(self):
-        """Get async database session"""
-        return self.async_session()
+        """Get async database session (returns context manager)"""
+        return self.db_config.get_session()
+    
+    async def get_async_session(self):
+        """Get async database session (for backwards compatibility)"""
+        return self.db_config.get_session()
+    
+    def async_session(self):
+        """Get async database session (backwards compatibility property)"""
+        return self.db_config.get_session()
     
     async def save_detection(self, detection_data: Dict) -> str:
         """Save detection to database"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             # Convert datetime if it's a string
             if isinstance(detection_data.get('detected_at'), str):
                 detection_data['detected_at'] = datetime.fromisoformat(detection_data['detected_at'])
@@ -64,7 +72,7 @@ class DatabaseService:
     
     async def get_recent_detections(self, limit: int = 100, camera_id: Optional[str] = None) -> List[Detection]:
         """Get recent detections"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             query = select(Detection).order_by(desc(Detection.detected_at)).limit(limit)
             
             if camera_id:
@@ -75,7 +83,7 @@ class DatabaseService:
     
     async def get_detection_by_id(self, detection_id: str) -> Optional[Detection]:
         """Get detection by ID"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Detection).where(Detection.id == detection_id)
             )
@@ -91,7 +99,7 @@ class DatabaseService:
                                limit: int = 100,
                                offset: int = 0) -> List[Detection]:
         """Search detections by criteria with enhanced filtering"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             query = select(Detection).order_by(desc(Detection.detected_at))
             
             conditions = []
@@ -130,7 +138,7 @@ class DatabaseService:
                               min_confidence: Optional[float] = None,
                               vehicle_type: Optional[str] = None) -> int:
         """Get count of detections matching search criteria"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             query = select(func.count(Detection.id))
             
             conditions = []
@@ -159,7 +167,7 @@ class DatabaseService:
     
     async def get_similar_plates(self, plate_text: str, limit: int = 10) -> List[Detection]:
         """Find plates similar to the given text using fuzzy matching"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             # Simple similarity: plates that share most characters
             similar_conditions = []
             
@@ -195,7 +203,7 @@ class DatabaseService:
     
     async def get_plate_history(self, plate_text: str, days: int = 30) -> List[Detection]:
         """Get complete history for a specific plate"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             start_date = datetime.now() - timedelta(days=days)
             
             query = select(Detection).where(
@@ -212,7 +220,7 @@ class DatabaseService:
                                  start_date: Optional[datetime] = None,
                                  end_date: Optional[datetime] = None) -> Dict[str, Any]:
         """Get detection statistics for the given time period"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             query = select(Detection)
             
             conditions = []
@@ -291,7 +299,7 @@ class DatabaseService:
     
     async def add_camera(self, camera_data: Dict) -> str:
         """Add a new camera"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             camera = Camera(**camera_data)
             session.add(camera)
             await session.commit()
@@ -300,13 +308,13 @@ class DatabaseService:
     
     async def get_all_cameras(self) -> List[Camera]:
         """Get all cameras"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(select(Camera))
             return result.scalars().all()
     
     async def get_camera(self, camera_id: str) -> Optional[Camera]:
         """Get camera by ID"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
             )
@@ -314,7 +322,7 @@ class DatabaseService:
     
     async def update_camera(self, camera_id: str, camera_data: Dict) -> bool:
         """Update camera configuration"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
             )
@@ -331,7 +339,7 @@ class DatabaseService:
     
     async def delete_camera(self, camera_id: str) -> bool:
         """Delete camera"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
             )
@@ -344,7 +352,7 @@ class DatabaseService:
     
     async def update_camera_status(self, camera_id: str, status: str):
         """Update camera status"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
             )
@@ -356,7 +364,7 @@ class DatabaseService:
 
     async def get_cameras_by_status(self, status: str) -> List[Camera]:
         """Get all cameras with a specific status"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.status == status)
             )
@@ -364,7 +372,7 @@ class DatabaseService:
     
     async def update_camera_test_result(self, camera_id: str, test_result: str):
         """Update camera test result"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
             )
@@ -376,7 +384,7 @@ class DatabaseService:
     
     async def save_video_recording(self, recording_data: Dict) -> str:
         """Save video recording meta_data"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             recording = VideoRecording(**recording_data)
             session.add(recording)
             await session.commit()
@@ -385,7 +393,7 @@ class DatabaseService:
     
     async def get_video_recording(self, recording_id: str) -> Optional[VideoRecording]:
         """Get video recording by ID"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(VideoRecording).where(VideoRecording.id == recording_id)
             )
@@ -393,7 +401,7 @@ class DatabaseService:
     
     async def create_video_clip(self, clip_data: Dict) -> str:
         """Create video clip for detection"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             clip = VideoClip(**clip_data)
             session.add(clip)
             
@@ -412,7 +420,7 @@ class DatabaseService:
     
     async def get_video_clip(self, clip_id: str) -> Optional[VideoClip]:
         """Get video clip by ID"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(VideoClip).where(VideoClip.id == clip_id)
             )
@@ -420,7 +428,7 @@ class DatabaseService:
     
     async def get_analytics_overview(self) -> Dict[str, Any]:
         """Get dashboard analytics overview"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             now = datetime.now()
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             
@@ -498,7 +506,7 @@ class DatabaseService:
     
     async def get_last_detection_time(self, camera_id: str) -> Optional[str]:
         """Get last detection time for a camera"""
-        async with self.async_session() as session:
+        async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(func.max(Detection.detected_at)).where(
                     Detection.camera_id == camera_id
@@ -509,4 +517,4 @@ class DatabaseService:
     
     async def close(self):
         """Close database connection"""
-        await self.engine.dispose()
+        await self.db_config.close()

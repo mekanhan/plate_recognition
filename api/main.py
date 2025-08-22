@@ -66,6 +66,14 @@ from monitoring.health import health_monitor
 
 # Import analytics system
 from analytics.endpoints import analytics_router
+
+# Storage management endpoints
+try:
+    from api.storage_endpoints import storage_router
+    HAS_STORAGE_ENDPOINTS = True
+except ImportError:
+    HAS_STORAGE_ENDPOINTS = False
+    storage_router = None
 from analytics import initialize_analytics_system
 
 # Pydantic models for API requests
@@ -254,7 +262,9 @@ async def lifespan(app: FastAPI):
     os.makedirs("config", exist_ok=True)
     
     # Load camera configurations
+    print("DEBUG: About to call load_cameras()")
     await load_cameras()
+    print("DEBUG: load_cameras() completed")
     
     # Initialize authentication system
     try:
@@ -381,6 +391,38 @@ app.include_router(monitoring_router)
 app.include_router(analytics_router)
 app.include_router(camera_router, prefix="/v2")
 
+# Include health monitoring endpoints
+try:
+    from api.health_endpoints import router as health_router
+    app.include_router(health_router)
+except ImportError:
+    logger.warning("Health endpoints not available")
+
+# Include authentication endpoints
+try:
+    from api.simple_auth import router as simple_auth_router
+    app.include_router(simple_auth_router)
+    logger.info("Simple Authentication API endpoints enabled")
+except ImportError:
+    logger.warning("Authentication endpoints not available")
+
+# Add basic security middleware
+@app.middleware("http")
+async def security_headers_middleware(request, call_next):
+    """Add basic security headers to all responses"""
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    return response
+
+# Include storage management endpoints if available
+if HAS_STORAGE_ENDPOINTS and storage_router:
+    app.include_router(storage_router)
+    logging.info("Storage management API endpoints enabled at /api/v1/storage")
+else:
+    logging.info("Storage management API endpoints not available")
+
 # Only include universal detection endpoints if feature flag is enabled
 if feature_flags.is_enabled('api_features.universal_detection_endpoints') and universal_detection_router:
     app.include_router(universal_detection_router)
@@ -395,11 +437,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def load_cameras():
     """Load camera configurations from database"""
     try:
+        logging.info("Loading cameras from database...")
         # Get all active cameras from database
         cameras = await db.get_all_cameras()
+        logging.info(f"Found {len(cameras)} cameras in database")
         
         for camera in cameras:
-            if camera.status == 'active':
+            if camera.status in ['active', 'online']:
                 # Create CameraConfig from database data
                 config = CameraConfig(
                     camera_id=camera.camera_id,
@@ -417,10 +461,12 @@ async def load_cameras():
                 camera_manager.add_camera(config)
                 logging.info(f"Loaded camera from database: {camera.name} ({camera.camera_id})")
         
-        logging.info(f"Loaded {len([c for c in cameras if c.status == 'active'])} active cameras from database")
+        logging.info(f"Loaded {len([c for c in cameras if c.status in ['active', 'online']])} active cameras from database")
         
     except Exception as e:
         logging.error(f"Failed to load cameras from database: {e}")
+        import traceback
+        logging.error(f"Traceback: {traceback.format_exc()}")
         logging.info("No cameras loaded - system will rely on database CRUD operations")
 
 async def reload_cameras():
@@ -620,6 +666,23 @@ async def processing_loop():
             await asyncio.sleep(1)  # Brief pause on error
 
 # API ENDPOINTS - NO VIDEO STREAMING!
+
+@app.get("/debug/cameras")
+async def debug_cameras():
+    """Debug endpoint to check camera manager state"""
+    return {
+        "camera_count": len(camera_manager.cameras),
+        "cameras": {
+            cam_id: {
+                "name": cam.config.name,
+                "is_running": cam.is_running,
+                "is_healthy": cam.is_healthy(),
+                "last_frame_time": cam.last_frame_time,
+                "has_last_frame": cam.last_frame is not None
+            }
+            for cam_id, cam in camera_manager.cameras.items()
+        }
+    }
 
 @app.get("/health")
 async def health():
@@ -848,7 +911,7 @@ async def create_camera(camera_data: CameraCreate):
             "username": created_camera.username,
             "password": created_camera.password,
             "status": created_camera.status,
-            "enabled": created_camera.status == 'active',
+            "enabled": created_camera.status in ['active', 'online'],
             "brand": created_camera.brand,
             "model": created_camera.model,
             "resolution_width": created_camera.resolution_width,
@@ -930,7 +993,7 @@ async def get_camera(camera_id: str):
             "username": camera.username,
             "password": camera.password,
             "status": camera.status,
-            "enabled": camera.status == 'active',
+            "enabled": camera.status in ['active', 'online'],
             "brand": camera.brand,
             "model": camera.model,
             "resolution_width": camera.resolution_width,
@@ -1014,7 +1077,7 @@ async def start_camera_recording(camera_id: str):
             raise HTTPException(404, f"Camera {camera_id} not found")
         
         # Check if camera is already active
-        if camera.status == 'active':
+        if camera.status in ['active', 'online']:
             return {"message": f"Camera {camera_id} is already recording", "status": "active"}
         
         # Update camera status to active
@@ -1905,7 +1968,7 @@ async def restart_all_cameras():
         cameras = await db.get_all_cameras()
         
         for camera in cameras:
-            if camera.status == 'active':
+            if camera.status in ['active', 'online']:
                 success = camera_manager.restart_camera(camera.camera_id)
                 results[camera.camera_id] = {
                     "name": camera.name,

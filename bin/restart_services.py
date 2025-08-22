@@ -59,7 +59,7 @@ def main():
     print("=" * 70)
     
     # Check if required scripts exist
-    required_scripts = ['stop_all_services.py', 'start_all_services.py']
+    required_scripts = ['bin/stop_all_services.py', 'bin/start_all_services.py']
     for script in required_scripts:
         if not check_script_exists(script):
             print(f"❌ Cannot proceed without {script}")
@@ -73,7 +73,7 @@ def main():
     print()
     
     # Step 1: Stop services
-    if not run_script('stop_all_services.py', 'Stopping all services'):
+    if not run_script('bin/stop_all_services.py', 'Stopping all services'):
         print("⚠️  Stop operation had issues, but continuing with restart...")
     
     # Step 2: Wait for cleanup
@@ -83,7 +83,7 @@ def main():
     # Step 3: Start services
     print("\n" + "=" * 50)
     # Use detached start script for restart
-    if not run_script('start_services_detached.py', 'Starting all services'):
+    if not run_script('bin/service-management/start_services_detached.py', 'Starting all services'):
         print("❌ Failed to start services")
         return 1
     
@@ -92,10 +92,10 @@ def main():
     time.sleep(10)
     
     # Optional: Check if check_services.py exists and run it
-    if check_script_exists('check_services.py'):
+    if check_script_exists('bin/check_services.py'):
         print("\n" + "=" * 50)
         print("🔍 Verifying service health...")
-        run_script('check_services.py', 'Health check')
+        run_script('bin/check_services.py', 'Health check')
     
     print("\n" + "=" * 70)
     print("✅ RESTART SEQUENCE COMPLETED")

@@ -72,7 +72,7 @@ class ServiceChecker:
                         status = 'unhealthy'
                     elif missing_keys:
                         status = 'partial'
-                    elif data.get('status') != 'healthy':
+                    elif data.get('status') not in ['healthy', 'running']:
                         status = 'unhealthy'
                     
                     return {

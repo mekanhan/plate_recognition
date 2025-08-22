@@ -49,7 +49,7 @@ class Sidebar {
             <div class="sidebar-header">
                 <div class="logo">
                     <img src="vision_port_text.png" alt="Vision Port" class="logo-text">
-                    <img src="logo.png" alt="LPR System Logo" class="logo-icon">
+                    <img src="logo.png" alt="Vision Port Logo" class="logo-icon">
                 </div>
                 <button class="sidebar-collapse-btn" id="sidebar-collapse-btn">
                     <i class="fas fa-bars"></i>
@@ -61,16 +61,15 @@ class Sidebar {
             </ul>
             
             <div class="sidebar-footer">
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <div class="user-details">
-                        <span class="user-name">Security Admin</span>
-                        <span class="user-role">Administrator</span>
+                <div class="system-info">
+                    <div class="system-status">
+                        <span class="status-indicator online"></span>
+                        <span class="status-text">System Online</span>
+                    </div>
+                    <div class="version-info">
+                        <small>Vision Port v2.1.0</small>
                     </div>
                 </div>
-                <button class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
             </div>
         `;
     }
@@ -109,12 +108,6 @@ class Sidebar {
         menuLinks.forEach(link => {
             link.addEventListener('click', (e) => this.handleMenuClick(e));
         });
-
-        // Logout button
-        const logoutBtn = document.querySelector('.logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => this.handleLogout());
-        }
     }
 
     toggleCollapse() {
@@ -202,16 +195,6 @@ class Sidebar {
         }
     }
 
-    handleLogout() {
-        if (confirm('Are you sure you want to logout?')) {
-            // Clear any stored data
-            localStorage.clear();
-            sessionStorage.clear();
-            
-            // Redirect to login page
-            window.location.href = '/login';
-        }
-    }
 
     // Public methods for external control
     setActiveItem(pageId) {

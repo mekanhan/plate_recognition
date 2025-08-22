@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="src/styles/camera-modern.css">
     <link rel="stylesheet" href="src/styles/vlc-modal.css">
     <link rel="stylesheet" href="src/styles/universal-detections.css">
+    <link rel="stylesheet" href="src/styles/auth.css">
+    <link rel="stylesheet" href="src/styles/sidebar-improvements.css">
     
     <!-- FontAwesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -54,6 +56,19 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
+    <!-- Authentication Check -->
+    <script type="module">
+        import AuthService from './src/services/AuthService.js';
+        
+        // Check authentication before loading dashboard
+        const authService = new AuthService();
+        
+        // Redirect to login if not authenticated
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/login.html';
+        }
+    </script>
+    
     <!-- Main Application Script -->
     <script type="module" src="src/app.js"></script>
     

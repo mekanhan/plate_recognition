@@ -1,0 +1,111 @@
+/**
+ * Sidebar Improvements
+ * Enhanced styling for sidebar footer with system info
+ */
+
+/* Sidebar footer improvements */
+.sidebar-footer {
+    padding: 1rem;
+    border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+    margin-top: auto;
+}
+
+.system-info {
+    text-align: center;
+}
+
+.system-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.8));
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-indicator.online {
+    background: var(--success-color, #28a745);
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.offline {
+    background: var(--danger-color, #dc3545);
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.3);
+}
+
+.status-text {
+    font-weight: 500;
+}
+
+.version-info {
+    color: var(--text-muted, rgba(255, 255, 255, 0.6));
+}
+
+.version-info small {
+    font-size: 0.75rem;
+    font-weight: 400;
+}
+
+/* Animation for online status */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(40, 167, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+/* Dark theme support */
+[data-theme="dark"] .sidebar-footer {
+    border-top-color: var(--border-color, rgba(255, 255, 255, 0.2));
+}
+
+[data-theme="dark"] .system-status {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+[data-theme="dark"] .version-info {
+    color: var(--text-muted, rgba(255, 255, 255, 0.5));
+}
+
+/* Collapsed sidebar adjustments */
+.sidebar.collapsed .system-status .status-text {
+    display: none;
+}
+
+.sidebar.collapsed .version-info {
+    display: none;
+}
+
+.sidebar.collapsed .system-status {
+    justify-content: center;
+    margin-bottom: 0;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .sidebar-footer {
+        padding: 0.75rem;
+    }
+    
+    .system-status {
+        font-size: 0.8rem;
+    }
+    
+    .version-info small {
+        font-size: 0.7rem;
+    }
+}

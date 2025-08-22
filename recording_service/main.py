@@ -282,6 +282,97 @@ async def reload_all_cameras():
     else:
         raise HTTPException(status_code=500, detail="Failed to reload cameras")
 
+# Camera discovery endpoint for playback UI
+@app.get("/api/v1/recordings/cameras/available")
+async def get_available_cameras():
+    """Get all cameras that have recordings (both active and orphaned)"""
+    if not playback_service:
+        raise HTTPException(status_code=503, detail="Playback service not initialized")
+    
+    try:
+        # Scan recording directories to find all cameras with recordings
+        recordings_path = Path("recordings")
+        cameras = []
+        
+        if recordings_path.exists():
+            for camera_dir in recordings_path.glob("camera_*"):
+                if not camera_dir.is_dir():
+                    continue
+                
+                camera_id = camera_dir.name.replace("camera_", "")
+                
+                # Get camera info from database if available
+                camera_name = None
+                is_active = False
+                
+                try:
+                    if db_service:
+                        async with db_service.get_session() as session:
+                            result = await session.execute(
+                                text("SELECT name FROM cameras WHERE camera_id = :camera_id"),
+                                {"camera_id": camera_id}
+                            )
+                            row = result.fetchone()
+                            if row:
+                                camera_name = row[0]
+                                is_active = True
+                except Exception as e:
+                    logger.warning(f"Could not check database for camera {camera_id}: {e}")
+                
+                # Scan for recording stats
+                total_recordings = 0
+                total_size = 0
+                oldest_recording = None
+                newest_recording = None
+                
+                for year_dir in camera_dir.glob("*"):
+                    if not year_dir.is_dir():
+                        continue
+                    for month_dir in year_dir.glob("*"):
+                        if not month_dir.is_dir():
+                            continue
+                        for day_dir in month_dir.glob("*"):
+                            if not day_dir.is_dir():
+                                continue
+                            for hour_dir in day_dir.glob("*"):
+                                if not hour_dir.is_dir():
+                                    continue
+                                
+                                # Count video files
+                                video_files = list(hour_dir.glob("*.mp4")) + list(hour_dir.glob("*.avi"))
+                                for video_file in video_files:
+                                    total_recordings += 1
+                                    file_stat = video_file.stat()
+                                    total_size += file_stat.st_size
+                                    
+                                    # Track oldest/newest based on filename timestamps
+                                    if not oldest_recording or file_stat.st_ctime < oldest_recording:
+                                        oldest_recording = file_stat.st_ctime
+                                    if not newest_recording or file_stat.st_ctime > newest_recording:
+                                        newest_recording = file_stat.st_ctime
+                
+                if total_recordings > 0:
+                    cameras.append({
+                        "camera_id": camera_id,
+                        "name": camera_name or f"Camera {camera_id[-6:]}",
+                        "status": "active" if is_active else "orphaned",
+                        "total_recordings": total_recordings,
+                        "total_size": total_size,
+                        "oldest_recording": datetime.fromtimestamp(oldest_recording).isoformat() if oldest_recording else None,
+                        "newest_recording": datetime.fromtimestamp(newest_recording).isoformat() if newest_recording else None
+                    })
+        
+        return {
+            "cameras": cameras,
+            "total_cameras": len(cameras),
+            "active_cameras": len([c for c in cameras if c["status"] == "active"]),
+            "orphaned_cameras": len([c for c in cameras if c["status"] == "orphaned"])
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting available cameras: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get available cameras")
+
 # Playback API endpoints (from documentation)
 @app.get("/api/v1/recordings/cameras/{camera_id}/calendar")
 async def get_calendar_data(

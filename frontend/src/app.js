@@ -46,15 +46,77 @@ class LPRApplication {
         try {
             // Wait for DOM to be ready
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => this.initializeComponents());
+                document.addEventListener('DOMContentLoaded', () => this.initializeApplication());
             } else {
-                this.initializeComponents();
+                this.initializeApplication();
             }
 
             this.isInitialized = true;
         } catch (error) {
             console.error('Failed to initialize application:', error);
             this.showError('Application failed to initialize. Please refresh the page.');
+        }
+    }
+
+    async initializeApplication() {
+        // Check if we have a token
+        const token = localStorage.getItem('lpr_auth_token');
+        
+        if (!token) {
+            // No token, redirect to homepage
+            console.log('No authentication token found, redirecting to homepage');
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        // We have a token, proceed with initialization
+        console.log('Token found, initializing dashboard...');
+        
+        // Initialize authentication service
+        const isAuthenticated = await this.initializeAuth();
+        
+        // Only initialize components if user is authenticated
+        if (isAuthenticated) {
+            this.initializeComponents();
+        }
+        // If not authenticated, user will be redirected to homepage
+    }
+
+    async initializeAuth() {
+        console.log('Initializing authentication...');
+        try {
+            // Dynamically import AuthService
+            const { default: AuthService } = await import('./services/AuthService.js');
+            this.authService = new AuthService();
+            
+            console.log('AuthService loaded, checking authentication...');
+            console.log('Token exists:', !!this.authService.token);
+            
+            // Check if user has a token
+            if (this.authService.isAuthenticated()) {
+                console.log('Token found, validating with API...');
+                try {
+                    // Try to get user info to validate the token
+                    await this.authService.getCurrentUser();
+                    console.log('User authenticated successfully:', this.authService.getUser());
+                    return true;
+                } catch (error) {
+                    console.error('Token validation failed:', error);
+                    // Token is invalid, clear it and redirect
+                    this.authService.logout();
+                    return false;
+                }
+            } else {
+                // Redirect to homepage for authentication
+                console.log('User not authenticated, redirecting to homepage');
+                window.location.href = 'index.html';
+                return false;
+            }
+        } catch (error) {
+            console.error('Failed to initialize authentication:', error);
+            // Redirect to homepage on auth error
+            window.location.href = 'index.html';
+            return false;
         }
     }
 
@@ -65,6 +127,16 @@ class LPRApplication {
         // Initialize layout components
         this.components.sidebar = new Sidebar();
         this.components.header = new Header();
+        
+        console.log('Header component:', this.components.header);
+        console.log('setAuthService method:', typeof this.components.header.setAuthService);
+        
+        // Pass auth service to header if available
+        if (this.authService && typeof this.components.header.setAuthService === 'function') {
+            this.components.header.setAuthService(this.authService);
+        } else if (this.authService) {
+            console.warn('Header component does not have setAuthService method');
+        }
 
         // Initialize page components
         this.initializePages();

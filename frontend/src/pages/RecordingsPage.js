@@ -106,12 +106,9 @@ class RecordingsPage {
                         </div>
                         
                         <div class="video-error" id="videoError" style="display: none;">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <h3>Video Playback Error</h3>
-                            <p id="videoErrorMessage">Unable to load video</p>
-                            <button class="control-btn" onclick="recordingsPage.retryVideo()">
-                                <i class="fas fa-redo"></i> Retry
-                            </button>
+                            <i class="fas fa-exclamation-circle"></i>
+                            <h3>Unable to Play Video</h3>
+                            <p>Please try a different recording or check your connection.</p>
                         </div>
                     </div>
 
@@ -170,7 +167,7 @@ class RecordingsPage {
             RETRY_ATTEMPTS: 3,
             RETRY_DELAY: 1000, // 1 second
             HEALTH_CHECK_INTERVAL: 30000, // 30 seconds
-            DEFAULT_CAMERA: 'camera_946701d3'
+            DEFAULT_CAMERA: null  // Will be set to first available camera
         };
         
         // Utility class for API communication with error handling
@@ -489,11 +486,19 @@ class RecordingsPage {
             
             async loadCameras() {
                 try {
-                    // For now, use default camera configuration
-                    // In production, this would fetch from an API endpoint
-                    this.state.cameras = [
-                        { id: CONFIG.DEFAULT_CAMERA, name: 'Reolink Main Entrance' }
-                    ];
+                    // Fetch cameras from the API
+                    const response = await fetch('http://localhost:8001/api/cameras');
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch cameras: ' + response.status);
+                    }
+                    
+                    const cameras = await response.json();
+                    
+                    // Convert camera data to expected format
+                    this.state.cameras = cameras.map(camera => ({
+                        id: camera.camera_id,
+                        name: camera.name
+                    }));
                     
                     this.renderCameraSelector();
                     
@@ -879,7 +884,7 @@ class RecordingsPage {
                 } catch (error) {
                     console.error('Failed to play recording:', error);
                     this.showStatus('Failed to play recording', 'error');
-                    this.showVideoError('Failed to load video');
+                    this.showVideoError();
                 }
             }
             
@@ -903,9 +908,8 @@ class RecordingsPage {
                 this.videoLoading.style.display = 'none';
             }
             
-            showVideoError(message) {
+            showVideoError() {
                 this.videoError.style.display = 'flex';
-                this.videoErrorMessage.textContent = message;
                 this.videoLoading.style.display = 'none';
                 this.videoPlayer.style.display = 'none';
                 this.disableControls();
@@ -917,54 +921,24 @@ class RecordingsPage {
                 const video = e.target;
                 
                 // Ignore errors if no valid video source
-                if (!video.src || video.src === '' || video.src === window.location.href) {
+                if (!video.src || video.src === '' || video.src === window.location.href || video.src.endsWith('8080/')) {
                     console.log('Ignoring video error - no valid source set');
                     return;
                 }
                 
-                let errorMessage = 'Unable to play video';
-                let debugInfo = {};
+                // Log debug information for troubleshooting
+                console.error('Video debug info:', {
+                    videoSrc: video.src,
+                    networkState: video.networkState,
+                    readyState: video.readyState,
+                    errorCode: video.error ? video.error.code : 'No error code',
+                    errorMessage: video.error ? video.error.message : 'No error message'
+                });
                 
-                // Collect detailed debug information
-                debugInfo.videoSrc = video.src;
-                debugInfo.networkState = video.networkState;
-                debugInfo.readyState = video.readyState;
-                debugInfo.errorCode = video.error ? video.error.code : 'No error code';
-                debugInfo.errorMessage = video.error ? video.error.message : 'No error message';
-                
-                console.error('Video debug info:', debugInfo);
-                
-                if (video.error) {
-                    switch (video.error.code) {
-                        case video.error.MEDIA_ERR_ABORTED:
-                            errorMessage = 'Video playback was aborted';
-                            break;
-                        case video.error.MEDIA_ERR_NETWORK:
-                            errorMessage = 'Network error while loading video';
-                            break;
-                        case video.error.MEDIA_ERR_DECODE:
-                            errorMessage = 'Video format not supported';
-                            break;
-                        case video.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-                            errorMessage = 'Video source not found or not supported';
-                            break;
-                        default:
-                            errorMessage = \`Video error code: \${video.error.code}\`;
-                    }
-                }
-                
-                this.showVideoError(errorMessage);
-                this.showStatus(errorMessage, 'error');
+                this.showVideoError();
+                this.showStatus('Unable to play video', 'error');
             }
             
-            async retryVideo() {
-                if (this.state.currentRecording && this.videoRetryCount < CONFIG.RETRY_ATTEMPTS) {
-                    this.videoRetryCount++;
-                    await this.playRecording(this.state.currentRecording);
-                } else {
-                    this.showStatus('Maximum retry attempts reached', 'error');
-                }
-            }
             
             togglePlayPause() {
                 if (!this.videoPlayer.src || this.videoPlayer.readyState < 2) return;

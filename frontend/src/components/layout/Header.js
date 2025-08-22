@@ -10,9 +10,12 @@ class Header {
             lastUpdate: new Date()
         };
         this.notifications = [];
+        this.authService = null;
+        this.currentUser = null;
         
         this.init();
         this.loadTheme();
+        this.initAuth();
     }
 
     init() {
@@ -84,14 +87,22 @@ class Header {
                         <i class="fas fa-expand"></i>
                     </button>
                     <div class="user-menu">
-                        <button class="header-btn user-avatar">
+                        <button class="header-btn user-avatar" title="${this.getUserDisplayName()}">
                             <i class="fas fa-user"></i>
+                            <span class="user-name">${this.getUserDisplayName()}</span>
                         </button>
                         <div class="user-dropdown">
-                            <a href="#profile">Profile</a>
-                            <a href="#preferences">Preferences</a>
+                            <div class="user-info">
+                                <div class="user-details">
+                                    <strong>${this.getUserDisplayName()}</strong>
+                                    <small>${this.getUserRole()}</small>
+                                </div>
+                            </div>
                             <hr>
-                            <a href="#logout">Logout</a>
+                            <a href="#profile" onclick="event.preventDefault(); alert('Profile settings coming soon!')"><i class="fas fa-user-circle"></i> Profile</a>
+                            <a href="#preferences" onclick="event.preventDefault(); alert('Preferences coming soon!')"><i class="fas fa-cog"></i> Preferences</a>
+                            <hr>
+                            <a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
                         </div>
                     </div>
                 </div>
@@ -165,10 +176,25 @@ class Header {
             fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
         }
 
-        // User menu
-        const userAvatar = document.querySelector('.user-avatar');
-        if (userAvatar) {
-            userAvatar.addEventListener('click', () => this.toggleUserMenu());
+        // User menu - simplified targeting
+        document.addEventListener('click', (e) => {
+            // Check if click is on user avatar button or its children
+            const userAvatarButton = e.target.closest('.user-avatar');
+            if (userAvatarButton) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleUserMenu();
+                return;
+            }
+        });
+
+        // Logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.logout();
+            });
         }
 
         // Close dropdowns when clicking outside
@@ -208,7 +234,14 @@ class Header {
     }
 
     refreshData() {
+        console.log('Refreshing data...');
         const refreshBtn = document.getElementById('refresh-btn');
+        
+        if (!refreshBtn) {
+            console.error('Refresh button not found');
+            return;
+        }
+        
         const icon = refreshBtn.querySelector('i');
         
         // Add spinning animation
@@ -242,6 +275,7 @@ class Header {
 
     toggleDarkMode() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
+        console.log('Toggling dark mode, current theme:', currentTheme);
         
         if (currentTheme === 'dark') {
             this.enableLightMode();
@@ -282,9 +316,29 @@ class Header {
 
     toggleFullscreen() {
         if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
+            document.documentElement.requestFullscreen().catch(err => {
+                console.error('Failed to enter fullscreen:', err);
+            });
+            // Update button icon
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            if (fullscreenBtn) {
+                const icon = fullscreenBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-compress';
+                }
+            }
         } else {
-            document.exitFullscreen();
+            document.exitFullscreen().catch(err => {
+                console.error('Failed to exit fullscreen:', err);
+            });
+            // Update button icon
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            if (fullscreenBtn) {
+                const icon = fullscreenBtn.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-expand';
+                }
+            }
         }
     }
 
@@ -445,6 +499,108 @@ class Header {
             this.enableDarkMode();
         } else {
             this.enableLightMode();
+        }
+    }
+
+    // Authentication methods
+    async initAuth() {
+        try {
+            // Dynamically import AuthService
+            const { default: AuthService } = await import('../../services/AuthService.js');
+            this.authService = new AuthService();
+            
+            // Listen for auth events
+            window.addEventListener('userLogin', (e) => this.onUserLogin(e.detail.user));
+            window.addEventListener('userLogout', () => this.onUserLogout());
+            
+            // Get current user if already authenticated
+            if (this.authService.isAuthenticated()) {
+                this.currentUser = this.authService.getUser();
+                this.render(); // Re-render with user info
+            }
+        } catch (error) {
+            console.error('Failed to initialize authentication:', error);
+        }
+    }
+
+    onUserLogin(user) {
+        this.currentUser = user;
+        this.render(); // Re-render with user info
+        this.showToast(`Welcome back, ${user.username}!`, 'success');
+    }
+
+    onUserLogout() {
+        this.currentUser = null;
+        this.render(); // Re-render without user info
+    }
+
+    logout() {
+        if (confirm('Are you sure you want to logout?')) {
+            // Clear any stored session data
+            localStorage.removeItem('user-session');
+            localStorage.removeItem('auth-token');
+            
+            // Show logout message
+            this.showLogoutToast();
+            
+            // If AuthService exists, use it
+            if (this.authService) {
+                this.authService.logout();
+            }
+            
+            // In a real application, this would redirect to login page
+            // For now, we'll just refresh the page
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        }
+    }
+    
+    showLogoutToast() {
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-info logout-toast';
+        toast.innerHTML = `
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logging out...</span>
+        `;
+        
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'toast-container';
+            document.body.appendChild(container);
+        }
+        
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 2000);
+    }
+
+    getUserDisplayName() {
+        if (this.currentUser) {
+            return this.currentUser.username || this.currentUser.email || 'User';
+        }
+        return 'Guest';
+    }
+
+    getUserRole() {
+        if (this.currentUser) {
+            return this.currentUser.role || 'guest';
+        }
+        return 'guest';
+    }
+
+    // Set auth service (for external access)
+    setAuthService(authService) {
+        this.authService = authService;
+        if (authService && authService.isAuthenticated()) {
+            this.currentUser = authService.getUser();
+            this.render();
         }
     }
 }

@@ -296,3 +296,6 @@ Index('idx_camera_settings_camera_id', CameraSetting.camera_id)
 Index('idx_camera_settings_key', CameraSetting.camera_id, CameraSetting.setting_key)
 Index('idx_camera_status_camera_id', CameraStatus.camera_id)
 Index('idx_camera_status_heartbeat', CameraStatus.last_heartbeat)
+
+# Authentication models are imported separately to avoid circular imports
+# Import them directly in files that need them

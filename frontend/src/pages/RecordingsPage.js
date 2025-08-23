@@ -343,12 +343,20 @@ class RecordingsPage {
                     this.loadCalendarData();
                 });
                 
-                this.todayBtn.addEventListener('click', () => {
-                    this.state.currentDate = new Date();
-                    this.state.selectedDate = new Date();
+                this.todayBtn.addEventListener('click', async () => {
+                    const today = new Date();
+                    this.state.currentDate = new Date(today);
+                    this.state.selectedDate = new Date(today);
                     this.renderCalendar();
-                    this.loadCalendarData();
-                    this.loadRecordingsForDate();
+                    
+                    // Clear current selection to force re-selection
+                    this.state.selectedCameras = [];
+                    this.state.currentCamera = null;
+                    this.state.isInitialLoad = true;
+                    
+                    console.log('Navigating to today, loading cameras and auto-selecting active ones...');
+                    await this.loadCalendarData();
+                    await this.loadCamerasForDate(); // This will auto-select active cameras for today
                 });
                 
                 // Video player controls
@@ -416,9 +424,17 @@ class RecordingsPage {
                     
                     // Load initial data if service is online
                     if (this.state.serviceOnline) {
+                        // Ensure we start with today's date
+                        const today = new Date();
+                        this.state.currentDate = new Date(today);
+                        this.state.selectedDate = new Date(today);
+                        
                         this.renderCalendar();
                         await this.loadCalendarData();
-                        // Note: Cameras and recordings now load when user selects a date
+                        
+                        // Automatically load cameras for today's date and select active ones
+                        console.log('Auto-loading cameras for today:', this.formatDate(today));
+                        await this.loadCamerasForDate();
                     }
                 } catch (error) {
                     console.error('Initialization error:', error);
@@ -614,10 +630,17 @@ class RecordingsPage {
                     if (date > today) {
                         dayElement.classList.add('disabled');
                     } else {
-                        dayElement.addEventListener('click', () => {
+                        dayElement.addEventListener('click', async () => {
                             this.state.selectedDate = date;
                             this.renderCalendar();
-                            this.loadCamerasForDate();
+                            
+                            // Clear current selection to force re-selection for new date
+                            this.state.selectedCameras = [];
+                            this.state.currentCamera = null;
+                            this.state.isInitialLoad = true;
+                            
+                            console.log('Date selected:', this.formatDate(date), '- loading cameras and auto-selecting...');
+                            await this.loadCamerasForDate(); // This will auto-select appropriate cameras for the date
                         });
                     }
                     
@@ -772,31 +795,46 @@ class RecordingsPage {
                     return;
                 }
                 
-                // Auto-select only active cameras (not archived/deleted ones)
+                // Smart auto-selection for cameras with recordings on selected date
                 if (!this.state.selectedCameras || this.state.selectedCameras.length === 0) {
-                    // Only auto-select cameras that are truly active (currently recording)
-                    const activeCameras = this.state.availableCameras.filter(c => 
-                        c.isActive === true && c.status !== 'archived'
-                    );
+                    // Check if we're on today's date for smart auto-selection
+                    const today = new Date();
+                    const isToday = this.isSameDay(this.state.selectedDate, today);
                     
-                    if (activeCameras.length > 0) {
-                        // Auto-select the first active camera
-                        this.state.selectedCameras = [activeCameras[0].id];
-                        this.state.currentCamera = activeCameras[0].id;
-                        console.log('Auto-selected active camera:', activeCameras[0].location);
+                    if (isToday) {
+                        // For today's date, prioritize active cameras
+                        const activeCameras = this.state.availableCameras.filter(c => 
+                            c.isActive === true && c.status !== 'archived'
+                        );
                         
-                        // Schedule delayed loading to ensure UI is ready
-                        setTimeout(() => {
-                            console.log('Loading recordings for auto-selected camera...');
-                            this.loadRecordingsForDate();
-                            // Clear initial load flag after first auto-selection
-                            this.state.isInitialLoad = false;
-                        }, 250); // Small delay to ensure UI elements are ready
+                        if (activeCameras.length > 0) {
+                            this.state.selectedCameras = [activeCameras[0].id];
+                            this.state.currentCamera = activeCameras[0].id;
+                            console.log('Auto-selected active camera for today:', activeCameras[0].location);
+                        } else {
+                            // If no active cameras today, select the first camera with recordings
+                            const camerasWithRecordings = this.state.availableCameras.filter(c => c.hasRecordings);
+                            if (camerasWithRecordings.length > 0) {
+                                this.state.selectedCameras = [camerasWithRecordings[0].id];
+                                this.state.currentCamera = camerasWithRecordings[0].id;
+                                console.log('Auto-selected camera with recordings for today:', camerasWithRecordings[0].location);
+                            }
+                        }
                     } else {
-                        // No active cameras - don't auto-select any (user must manually select)
-                        console.log('No active cameras found for auto-selection');
-                        this.state.selectedCameras = [];
-                        this.state.currentCamera = null;
+                        // For historical dates, just select the first camera with recordings
+                        const camerasWithRecordings = this.state.availableCameras.filter(c => c.hasRecordings);
+                        if (camerasWithRecordings.length > 0) {
+                            this.state.selectedCameras = [camerasWithRecordings[0].id];
+                            this.state.currentCamera = camerasWithRecordings[0].id;
+                            console.log('Auto-selected camera with recordings for date:', this.formatDate(this.state.selectedDate), camerasWithRecordings[0].location);
+                        }
+                    }
+                    
+                    // Don't load recordings here - wait until after UI is rendered
+                    if (this.state.selectedCameras.length > 0) {
+                        console.log('Camera auto-selected, will load recordings after UI renders...');
+                    } else {
+                        console.log('No cameras with recordings found for auto-selection on', this.formatDate(this.state.selectedDate));
                         this.state.isInitialLoad = false; // Clear flag even when no cameras found
                     }
                 }
@@ -847,6 +885,17 @@ class RecordingsPage {
                         }
                     });
                 });
+                
+                // NOW load recordings for auto-selected camera after UI is fully rendered
+                if (this.state.isInitialLoad && this.state.selectedCameras.length > 0 && this.state.currentCamera) {
+                    console.log('UI rendered, now loading recordings for auto-selected camera:', this.state.currentCamera);
+                    // Use a small delay to ensure DOM is fully updated
+                    setTimeout(() => {
+                        // Force load recordings for the auto-selected camera
+                        this.loadRecordingsForDate();
+                        this.state.isInitialLoad = false;
+                    }, 100);
+                }
             }
             
             handleCameraSelection(cameraId, isSelected) {
@@ -883,8 +932,8 @@ class RecordingsPage {
                 // Update header
                 this.updateCameraListHeader();
                 
-                // Load recordings for manually selected cameras (not auto-selected ones)
-                if (this.state.selectedCameras.length > 0 && !this.isInitialLoad) {
+                // Load recordings for manually selected cameras 
+                if (this.state.selectedCameras.length > 0 && !this.state.isInitialLoad) {
                     this.loadRecordingsForDate();
                 }
             }
@@ -916,12 +965,15 @@ class RecordingsPage {
             
             async loadRecordingsForDate() {
                 if (!this.state.serviceOnline || !this.state.currentCamera) {
-                    console.log('Cannot load recordings - service offline or no camera selected');
+                    console.log('Cannot load recordings - service offline or no camera selected', {
+                        serviceOnline: this.state.serviceOnline,
+                        currentCamera: this.state.currentCamera
+                    });
                     this.renderEmptyRecordingsList('Service offline');
                     return;
                 }
                 
-                console.log('Loading recordings for camera:', this.state.currentCamera);
+                console.log('Loading recordings for camera:', this.state.currentCamera, 'on date:', this.formatDate(this.state.selectedDate));
                 this.showRecordingsLoading();
                 
                 try {

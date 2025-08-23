@@ -22,6 +22,7 @@ from database.service import DatabaseService
 from recording_service.services.ffmpeg_recording_manager import FFmpegRecordingManager
 from recording_service.services.playback_service import PlaybackService
 from recording_service.services.storage_manager import StorageManager
+from recording_service.services.recording_discovery_service import RecordingDiscoveryService
 
 # Configure logging
 logging.basicConfig(
@@ -40,11 +41,12 @@ recording_manager = None
 playback_service = None
 storage_manager = None
 db_service = None
+discovery_service = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup and shutdown events"""
-    global recording_manager, playback_service, storage_manager, db_service
+    global recording_manager, playback_service, storage_manager, db_service, discovery_service
     
     logger.info("Starting 24/7 Recording Service...")
     
@@ -65,6 +67,11 @@ async def lifespan(app: FastAPI):
     playback_service = PlaybackService(
         db_service=db_service,
         recordings_path="recordings"
+    )
+    
+    discovery_service = RecordingDiscoveryService(
+        recordings_dir="recordings",
+        db_service=db_service
     )
     
     # Start background recording
@@ -441,6 +448,87 @@ async def search_segments(camera_id: str, search_params: dict):
         raise HTTPException(status_code=503, detail="Playback service not initialized")
     
     return await playback_service.search_segments(camera_id, search_params)
+
+# ============= New Recording Discovery Endpoints =============
+
+@app.get("/api/v1/recordings/sources")
+async def get_recording_sources(
+    include_deleted: bool = Query(True, description="Include cameras not in database"),
+    include_empty: bool = Query(False, description="Include cameras with no recordings")
+):
+    """
+    Get all cameras that have recordings (recordings-first approach)
+    This endpoint scans the filesystem to discover all recordings,
+    regardless of whether the camera exists in the database.
+    """
+    if not discovery_service:
+        raise HTTPException(status_code=503, detail="Discovery service not initialized")
+    
+    sources = await discovery_service.get_all_recording_sources(
+        include_deleted=include_deleted,
+        include_empty=include_empty
+    )
+    
+    return {
+        "sources": sources,
+        "total_count": len(sources),
+        "active_count": len([s for s in sources if s['is_active']]),
+        "deleted_count": len([s for s in sources if not s['is_active']]),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/v1/recordings/orphaned")
+async def get_orphaned_recordings():
+    """Get recordings from cameras that no longer exist in the database"""
+    if not discovery_service:
+        raise HTTPException(status_code=503, detail="Discovery service not initialized")
+    
+    orphaned = await discovery_service.get_orphaned_recordings()
+    
+    return {
+        "orphaned_sources": orphaned,
+        "count": len(orphaned),
+        "total_storage_mb": sum(s['storage_used_mb'] for s in orphaned),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/v1/recordings/storage/usage")
+async def get_storage_usage(camera_id: Optional[str] = Query(None)):
+    """
+    Calculate storage usage for a specific camera or all cameras
+    """
+    if not discovery_service:
+        raise HTTPException(status_code=503, detail="Discovery service not initialized")
+    
+    usage = await discovery_service.calculate_storage_usage(camera_id)
+    
+    return {
+        "usage": usage,
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.delete("/api/v1/recordings/orphaned")
+async def cleanup_orphaned_recordings(
+    older_than_days: int = Query(30, ge=1, le=365),
+    dry_run: bool = Query(True, description="Simulate deletion without actually deleting")
+):
+    """
+    Clean up recordings from deleted cameras older than specified days
+    """
+    if not discovery_service:
+        raise HTTPException(status_code=503, detail="Discovery service not initialized")
+    
+    results = await discovery_service.cleanup_orphaned_recordings(
+        older_than_days=older_than_days,
+        dry_run=dry_run
+    )
+    
+    return {
+        "cleanup_results": results,
+        "timestamp": datetime.now().isoformat()
+    }
+
+# ============= Original Storage Management Endpoints =============
 
 # Storage management endpoints
 @app.get("/api/v1/storage/report")

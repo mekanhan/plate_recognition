@@ -27,16 +27,25 @@ class PlaybackService:
         """Get recording availability for calendar display - File-based approach"""
         try:
             # Scan filesystem for recordings instead of using database
-            camera_path = self.recordings_path / f"camera_{camera_id}"
+            # Handle both formats: direct camera_id and prefixed camera_camera_id
+            if camera_id.startswith('camera_'):
+                camera_path = self.recordings_path / camera_id
+            else:
+                camera_path = self.recordings_path / f"camera_{camera_id}"
+                
             if not camera_path.exists():
-                logger.warning(f"No recordings directory for camera {camera_id}")
+                logger.warning(f"No recordings directory for camera {camera_id} at path {camera_path}")
                 return {"days": {}, "total_size": 0, "total_duration": 0}
+                
+            logger.info(f"Found camera directory at {camera_path}")
             
             # Build month path
             month_path = camera_path / str(year) / str(month).zfill(2)
             if not month_path.exists():
-                logger.info(f"No recordings for {camera_id} in {year}-{month:02d}")
+                logger.info(f"No recordings for {camera_id} in {year}-{month:02d} at path {month_path}")
                 return {"days": {}, "total_size": 0, "total_duration": 0}
+                
+            logger.info(f"Found month directory at {month_path}")
             
             days = {}
             total_size = 0
@@ -103,9 +112,14 @@ class PlaybackService:
             year, month, day = date_str.split('-')
             
             # Build path to recordings for this date
-            date_path = self.recordings_path / f"camera_{camera_id}" / year / month / day
+            # Handle both formats: direct camera_id and prefixed camera_camera_id
+            if camera_id.startswith('camera_'):
+                date_path = self.recordings_path / camera_id / year / month / day
+            else:
+                date_path = self.recordings_path / f"camera_{camera_id}" / year / month / day
+            
             if not date_path.exists():
-                logger.info(f"No recordings for {camera_id} on {date_str}")
+                logger.info(f"No recordings for {camera_id} on {date_str} at {date_path}")
                 return {
                     "segments": [],
                     "total_duration": 0,

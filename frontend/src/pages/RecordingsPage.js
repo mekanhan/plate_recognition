@@ -486,37 +486,64 @@ class RecordingsPage {
             
             async loadCameras() {
                 try {
-                    // Fetch cameras from the API
-                    const response = await fetch('http://localhost:8001/api/cameras');
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch cameras: ' + response.status);
+                    // Fetch recording sources from the recording service (recordings-first approach)
+                    const response = await this.api.fetchWithRetry('/api/v1/recordings/sources');
+                    
+                    if (!response.sources) {
+                        throw new Error('Invalid response format from recording sources');
                     }
                     
-                    const cameras = await response.json();
-                    
-                    // Convert camera data to expected format
-                    this.state.cameras = cameras.map(camera => ({
-                        id: camera.camera_id,
-                        name: camera.name
+                    // Convert recording sources to camera format for UI
+                    this.state.cameras = response.sources.map(source => ({
+                        id: source.camera_id,
+                        name: source.display_name,
+                        isActive: source.is_active,
+                        status: source.status,
+                        recordingCount: source.recording_count,
+                        storageUsedMb: source.storage_used_mb,
+                        hasRecordings: source.has_recordings
                     }));
+                    
+                    // Sort: active cameras first, then by name
+                    this.state.cameras.sort((a, b) => {
+                        if (a.isActive && !b.isActive) return -1;
+                        if (!a.isActive && b.isActive) return 1;
+                        return a.name.localeCompare(b.name);
+                    });
                     
                     this.renderCameraSelector();
                     
-                    // Set default camera
+                    // Set default camera to first one with recordings
                     if (!this.state.currentCamera && this.state.cameras.length > 0) {
-                        this.state.currentCamera = this.state.cameras[0].id;
+                        const defaultCamera = this.state.cameras.find(cam => cam.hasRecordings) || this.state.cameras[0];
+                        this.state.currentCamera = defaultCamera.id;
                         this.cameraSelect.value = this.state.currentCamera;
                     }
+                    
+                    console.log('Loaded recording sources:', {
+                        total: response.total_count,
+                        active: response.active_count,
+                        deleted: response.deleted_count,
+                        cameras: this.state.cameras
+                    });
+                    
                 } catch (error) {
-                    console.error('Failed to load cameras:', error);
-                    this.showStatus('Failed to load cameras', 'error');
+                    console.error('Failed to load recording sources:', error);
+                    this.showStatus('Failed to load recording sources', 'error');
+                    
+                    // Fallback: show error state but don't break the UI
+                    this.state.cameras = [];
+                    this.renderCameraSelector();
                 }
             }
             
             renderCameraSelector() {
-                this.cameraSelect.innerHTML = this.state.cameras.map(camera => 
-                    \`<option value="\${camera.id}">\${camera.name}</option>\`
-                ).join('');
+                this.cameraSelect.innerHTML = this.state.cameras.map(camera => {
+                    const statusIndicator = camera.isActive ? '✅' : '⚠️';
+                    const storageInfo = camera.storageUsedMb ? 
+                        \` (\${(camera.storageUsedMb / 1024).toFixed(1)}GB • \${camera.recordingCount} clips)\` : '';
+                    return \`<option value="\${camera.id}">\${statusIndicator} \${camera.name}\${storageInfo}</option>\`;
+                }).join('');
                 
                 if (this.state.currentCamera) {
                     this.cameraSelect.value = this.state.currentCamera;

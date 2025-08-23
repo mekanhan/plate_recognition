@@ -17,6 +17,14 @@ class RecordingsPage {
         const container = document.getElementById('recordings');
         if (!container) return;
         
+        // Add camera list CSS
+        if (!document.querySelector('link[href*="recordings-camera-list.css"]')) {
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'src/styles/recordings-camera-list.css';
+            document.head.appendChild(link);
+        }
+        
         // Insert the complete working HTML from standalone recordings.html
         container.innerHTML = `
             <div class="page-container">
@@ -34,10 +42,18 @@ class RecordingsPage {
                             <span id="serviceStatusText">Checking service...</span>
                         </div>
                         
-                        <div class="camera-selector">
-                            <select id="cameraSelect" disabled>
-                                <option value="">Loading cameras...</option>
-                            </select>
+                        <!-- Camera List (Date-based) -->
+                        <div class="camera-list-container">
+                            <div class="camera-list-header">
+                                <h3>Cameras</h3>
+                                <span id="cameraCount">Select a date</span>
+                            </div>
+                            <div class="camera-list" id="cameraList">
+                                <div class="camera-list-placeholder">
+                                    <i class="fas fa-calendar"></i>
+                                    <p>Select a date to see available cameras</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -231,6 +247,8 @@ class RecordingsPage {
                     serviceOnline: false,
                     currentCamera: null,
                     cameras: [],
+                    selectedCameras: [],  // Array of selected camera IDs
+                    availableCameras: [], // Cameras available for the selected date
                     currentDate: new Date(),
                     selectedDate: new Date(),
                     recordings: [],
@@ -280,7 +298,8 @@ class RecordingsPage {
                 this.serviceStatusText = document.getElementById('serviceStatusText');
                 
                 // Sidebar elements
-                this.cameraSelect = document.getElementById('cameraSelect');
+                this.cameraList = document.getElementById('cameraList');
+                this.cameraCount = document.getElementById('cameraCount');
                 this.calendarGrid = document.getElementById('calendarGrid');
                 this.calendarMonth = document.getElementById('calendarMonth');
                 this.recordingsList = document.getElementById('recordingsList');
@@ -308,11 +327,7 @@ class RecordingsPage {
             }
             
             attachEventListeners() {
-                // Camera selection
-                this.cameraSelect.addEventListener('change', (e) => {
-                    this.state.currentCamera = e.target.value;
-                    this.loadRecordingsForDate();
-                });
+                // Camera list will have click event listeners added dynamically
                 
                 // Calendar navigation
                 this.prevMonthBtn.addEventListener('click', () => {
@@ -400,10 +415,9 @@ class RecordingsPage {
                     
                     // Load initial data if service is online
                     if (this.state.serviceOnline) {
-                        await this.loadCameras();
                         this.renderCalendar();
                         await this.loadCalendarData();
-                        await this.loadRecordingsForDate();
+                        // Note: Cameras and recordings now load when user selects a date
                     }
                 } catch (error) {
                     console.error('Initialization error:', error);
@@ -413,19 +427,12 @@ class RecordingsPage {
             
             async checkServiceHealth() {
                 try {
-                    // Try to fetch from a simple endpoint
+                    // Try to fetch from the recording service health endpoint
                     await this.api.fetch('/health', { method: 'GET' });
                     this.setServiceStatus(true);
                 } catch (error) {
                     console.warn('Service health check failed:', error);
-                    
-                    // Try alternate endpoint
-                    try {
-                        await this.api.fetch('/api/v1/status', { method: 'GET' });
-                        this.setServiceStatus(true);
-                    } catch (altError) {
-                        this.setServiceStatus(false);
-                    }
+                    this.setServiceStatus(false);
                 }
             }
             
@@ -456,18 +463,21 @@ class RecordingsPage {
             }
             
             enableInterface() {
-                this.cameraSelect.disabled = false;
+                // Enable calendar navigation
                 this.prevMonthBtn.disabled = false;
                 this.nextMonthBtn.disabled = false;
                 this.todayBtn.disabled = false;
+                // Camera list is always enabled when service is online
             }
             
             disableInterface() {
-                this.cameraSelect.disabled = true;
+                // Disable calendar navigation
                 this.prevMonthBtn.disabled = true;
                 this.nextMonthBtn.disabled = true;
                 this.todayBtn.disabled = true;
                 this.disableControls();
+                // Show offline message in camera list
+                this.renderEmptyCameraList('Service offline');
             }
             
             enableControls() {
@@ -606,7 +616,7 @@ class RecordingsPage {
                         dayElement.addEventListener('click', () => {
                             this.state.selectedDate = date;
                             this.renderCalendar();
-                            this.loadRecordingsForDate();
+                            this.loadCamerasForDate();
                         });
                     }
                     
@@ -615,18 +625,24 @@ class RecordingsPage {
             }
             
             async loadCalendarData() {
-                if (!this.state.serviceOnline || !this.state.currentCamera) return;
+                if (!this.state.serviceOnline) return;
                 
                 try {
-                    const year = this.state.currentDate.getFullYear();
-                    const month = this.state.currentDate.getMonth() + 1;
+                    // Get all dates with recordings from any camera
+                    const response = await this.api.fetchWithRetry('/api/v1/recordings/calendar/dates');
                     
-                    // For now, mark current date as having recordings
-                    const today = new Date();
-                    const todayKey = this.formatDate(today);
-                    this.state.calendarData = {
-                        [todayKey]: { has_recordings: true }
-                    };
+                    if (!response.dates) {
+                        console.warn('No dates returned from calendar endpoint');
+                        return;
+                    }
+                    
+                    // Build calendar data object
+                    this.state.calendarData = {};
+                    response.dates.forEach(date => {
+                        this.state.calendarData[date] = { has_recordings: true };
+                    });
+                    
+                    console.log('Loaded calendar data for', response.dates.length, 'dates:', response.dates);
                     
                     // Re-render calendar to show recording indicators
                     this.renderCalendar();
@@ -634,6 +650,257 @@ class RecordingsPage {
                 } catch (error) {
                     console.warn('Failed to load calendar data:', error);
                     // Don't show error to user, calendar will still function
+                }
+            }
+            
+            async loadCamerasForDateForced() {
+                // Force load cameras regardless of service status - for initial page load
+                if (!this.state.selectedDate) {
+                    this.state.selectedDate = new Date();
+                }
+                
+                try {
+                    const dateStr = this.formatDate(this.state.selectedDate);
+                    console.log('Force loading cameras for date:', dateStr);
+                    
+                    const response = await this.api.fetchWithRetry('/api/v1/recordings/date/' + dateStr + '/cameras');
+                    
+                    if (!response.cameras) {
+                        console.warn('No cameras in response:', response);
+                        return;
+                    }
+                    
+                    // Convert camera sources to UI format
+                    this.state.availableCameras = response.cameras.map(camera => ({
+                        id: camera.camera_id,
+                        name: camera.display_name,
+                        location: camera.display_name || 'Unknown Location',  // Use display_name as location
+                        isActive: camera.is_active,
+                        status: camera.status === 'deleted' ? 'archived' : camera.status,  // Map deleted to archived
+                        status: camera.status,
+                        recordingCount: camera.recording_count,
+                        storageUsedMb: camera.storage_used_mb,
+                        hasRecordings: camera.has_recordings
+                    }));
+                    
+                    console.log('Force loaded', this.state.availableCameras.length, 'cameras for', dateStr);
+                    this.state.serviceOnline = true; // Set service online once we successfully load cameras
+                    
+                    // Auto-select default camera (priority: active > archived)
+                    if (!this.state.currentCamera && this.state.availableCameras.length > 0) {
+                        const activeCamera = this.state.availableCameras.find(cam => cam.isActive);
+                        const defaultCamera = activeCamera || this.state.availableCameras[0];
+                        this.state.currentCamera = defaultCamera.id;
+                        console.log('Auto-selected camera:', defaultCamera.name);
+                    }
+                    
+                    this.renderCameraList();
+                    
+                } catch (error) {
+                    console.error('Failed to force load cameras:', error);
+                    this.renderEmptyCameraList('Failed to load cameras');
+                }
+            }
+            
+            async loadCamerasForDate() {
+                if (!this.state.serviceOnline || !this.state.selectedDate) {
+                    this.renderEmptyCameraList('No date selected');
+                    return;
+                }
+                
+                this.showCameraListLoading();
+                
+                try {
+                    const dateStr = this.formatDate(this.state.selectedDate);
+                    const response = await this.api.fetchWithRetry('/api/v1/recordings/date/' + dateStr + '/cameras');
+                    
+                    if (!response.cameras) {
+                        throw new Error('Invalid response format from cameras endpoint');
+                    }
+                    
+                    // Convert camera sources to UI format
+                    this.state.availableCameras = response.cameras.map(camera => ({
+                        id: camera.camera_id,
+                        name: camera.display_name,
+                        location: camera.display_name || 'Unknown Location',  // Use display_name as location
+                        isActive: camera.is_active,
+                        status: camera.status === 'deleted' ? 'archived' : camera.status,  // Map deleted to archived
+                        status: camera.status,
+                        recordingCount: camera.recording_count,
+                        storageUsedMb: camera.storage_used_mb,
+                        hasRecordings: camera.has_recordings
+                    }));
+                    
+                    console.log('Found', this.state.availableCameras.length, 'cameras for', dateStr);
+                    
+                    // Auto-select default camera (priority: active > archived)
+                    if (!this.state.currentCamera && this.state.availableCameras.length > 0) {
+                        const activeCamera = this.state.availableCameras.find(cam => cam.isActive);
+                        const defaultCamera = activeCamera || this.state.availableCameras[0];
+                        this.state.currentCamera = defaultCamera.id;
+                        console.log('Auto-selected camera:', defaultCamera.name);
+                    }
+                    
+                    this.renderCameraList();
+                    
+                } catch (error) {
+                    console.error('Failed to load cameras for date:', error);
+                    this.renderEmptyCameraList('Failed to load cameras');
+                }
+            }
+            
+            showCameraListLoading() {
+                this.cameraList.innerHTML = '<div class="camera-list-loading"><div class="skeleton skeleton-camera-item"></div><div class="skeleton skeleton-camera-item"></div></div>';
+                this.cameraCount.textContent = 'Loading...';
+            }
+            
+            renderEmptyCameraList(message) {
+                this.cameraList.innerHTML = '<div class="camera-list-empty"><i class="fas fa-video-slash"></i><p>' + message + '</p></div>';
+                this.cameraCount.textContent = 'No cameras';
+            }
+            
+            renderCameraList() {
+                if (!this.state.availableCameras || this.state.availableCameras.length === 0) {
+                    // If cameras aren't loaded yet, try loading them for today
+                    if (!this.state.selectedDate) {
+                        this.state.selectedDate = new Date();
+                    }
+                    // Force load cameras regardless of service status for initial display
+                    this.loadCamerasForDateForced();
+                    this.renderEmptyCameraList('Loading cameras...');
+                    return;
+                }
+                
+                // Auto-select only active cameras (not archived/deleted ones)
+                if (!this.state.selectedCameras || this.state.selectedCameras.length === 0) {
+                    // Only auto-select cameras that are truly active (currently recording)
+                    const activeCameras = this.state.availableCameras.filter(c => 
+                        c.isActive === true && c.status !== 'archived'
+                    );
+                    
+                    if (activeCameras.length > 0) {
+                        // Auto-select the first active camera
+                        this.state.selectedCameras = [activeCameras[0].id];
+                        this.state.currentCamera = activeCameras[0].id;
+                        console.log('Auto-selected active camera:', activeCameras[0].location);
+                    } else {
+                        // No active cameras - don't auto-select any (user must manually select)
+                        console.log('No active cameras found for auto-selection');
+                        this.state.selectedCameras = [];
+                        this.state.currentCamera = null;
+                    }
+                }
+                
+                // Update header with selected camera locations
+                this.updateCameraListHeader();
+                
+                // Build camera list with checkboxes and status indicators
+                this.cameraList.innerHTML = this.state.availableCameras.map(camera => {
+                    // Determine if camera is currently recording (active) or archived (deleted/inactive)
+                    const isActive = camera.isActive === true && camera.status !== 'archived';
+                    const statusClass = isActive ? 'recording' : 'archived';
+                    const statusText = isActive ? 'Recording' : 'Archived';
+                    const isSelected = this.state.selectedCameras && this.state.selectedCameras.includes(camera.id);
+                    const location = camera.location || camera.name || 'Unknown Location';
+                    
+                    return '<div class="camera-list-item ' + statusClass + (isSelected ? ' selected' : '') + '" ' +
+                        'data-camera-id="' + camera.id + '">' +
+                        '<label class="camera-item-label">' +
+                        '<input type="checkbox" class="camera-checkbox" ' +
+                        'data-camera-id="' + camera.id + '" ' +
+                        (isSelected ? 'checked' : '') + '>' +
+                        '<span class="camera-location">' + location + '</span>' +
+                        '<div class="camera-status">' +
+                        '<span class="status-dot ' + statusClass + '"></span>' +
+                        '<span class="status-text ' + statusClass + '">' + statusText + '</span>' +
+                        '</div>' +
+                        '</label>' +
+                        '</div>';
+                }).join('');
+                
+                // Add change handlers to checkboxes
+                this.cameraList.querySelectorAll('.camera-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => {
+                        e.stopPropagation();
+                        this.handleCameraSelection(checkbox.dataset.cameraId, checkbox.checked);
+                    });
+                });
+                
+                // Add click handlers for the camera item (excluding checkbox)
+                this.cameraList.querySelectorAll('.camera-list-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        // Only handle if not clicking the checkbox
+                        if (e.target.type !== 'checkbox') {
+                            const checkbox = item.querySelector('.camera-checkbox');
+                            checkbox.checked = !checkbox.checked;
+                            this.handleCameraSelection(checkbox.dataset.cameraId, checkbox.checked);
+                        }
+                    });
+                });
+            }
+            
+            handleCameraSelection(cameraId, isSelected) {
+                if (!this.state.selectedCameras) {
+                    this.state.selectedCameras = [];
+                }
+                
+                if (isSelected) {
+                    if (!this.state.selectedCameras.includes(cameraId)) {
+                        this.state.selectedCameras.push(cameraId);
+                    }
+                    // Set as current camera for playback
+                    this.state.currentCamera = cameraId;
+                } else {
+                    const index = this.state.selectedCameras.indexOf(cameraId);
+                    if (index > -1) {
+                        this.state.selectedCameras.splice(index, 1);
+                    }
+                    // If deselecting current camera, select another
+                    if (this.state.currentCamera === cameraId && this.state.selectedCameras.length > 0) {
+                        this.state.currentCamera = this.state.selectedCameras[0];
+                    }
+                }
+                
+                // Update visual selection
+                this.cameraList.querySelectorAll('.camera-list-item').forEach(item => {
+                    if (this.state.selectedCameras.includes(item.dataset.cameraId)) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+                
+                // Update header
+                this.updateCameraListHeader();
+                
+                // Load recordings for selected cameras
+                if (this.state.selectedCameras.length > 0) {
+                    this.loadRecordingsForDate();
+                }
+            }
+            
+            updateCameraListHeader() {
+                if (!this.state.selectedCameras || this.state.selectedCameras.length === 0) {
+                    this.cameraCount.textContent = 'No cameras selected';
+                    return;
+                }
+                
+                const selectedCameraObjects = this.state.availableCameras.filter(c => 
+                    this.state.selectedCameras.includes(c.id)
+                );
+                
+                if (selectedCameraObjects.length === this.state.availableCameras.length) {
+                    this.cameraCount.textContent = 'All Cameras';
+                } else if (selectedCameraObjects.length === 1) {
+                    const location = selectedCameraObjects[0].location || selectedCameraObjects[0].name;
+                    this.cameraCount.textContent = location;
+                } else if (selectedCameraObjects.length <= 3) {
+                    const locations = selectedCameraObjects.map(c => c.location || c.name);
+                    this.cameraCount.textContent = locations.join(', ');
+                } else {
+                    const firstCamera = selectedCameraObjects[0].location || selectedCameraObjects[0].name;
+                    const moreCount = selectedCameraObjects.length - 1;
+                    this.cameraCount.textContent = firstCamera + ' + ' + moreCount + ' more';
                 }
             }
             
@@ -1105,6 +1372,13 @@ class RecordingsPage {
         
         // Initialize the page immediately
         recordingsPage = new RecordingsPageApp();
+        
+        // Force load cameras for today's date on page startup
+        setTimeout(() => {
+            if (recordingsPage && recordingsPage.renderCameraList) {
+                recordingsPage.renderCameraList();
+            }
+        }, 500);
         
         // Make it globally accessible
         window.recordingsPage = recordingsPage;

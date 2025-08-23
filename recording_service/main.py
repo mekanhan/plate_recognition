@@ -2,7 +2,7 @@
 24/7 Recording Service - Port 8002
 Handles continuous camera recording and playback API
 """
-from fastapi import FastAPI, HTTPException, Query, Header
+from fastapi import FastAPI, HTTPException, Query, Header, Path as FastAPIPath
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from contextlib import asynccontextmanager
@@ -29,7 +29,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('recording_service/logs/recording_service.log'),
+        logging.FileHandler('logs/recording_service.log'),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -489,6 +489,44 @@ async def get_orphaned_recordings():
         "orphaned_sources": orphaned,
         "count": len(orphaned),
         "total_storage_mb": sum(s['storage_used_mb'] for s in orphaned),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/v1/recordings/calendar/dates")
+async def get_recording_dates():
+    """
+    Get all dates that have recordings from any camera.
+    Returns dates with recording activity for calendar dot indicators.
+    """
+    if not discovery_service:
+        raise HTTPException(status_code=503, detail="Discovery service not initialized")
+    
+    dates = await discovery_service.get_all_recording_dates()
+    
+    return {
+        "dates": dates,
+        "count": len(dates),
+        "timestamp": datetime.now().isoformat()
+    }
+
+@app.get("/api/v1/recordings/date/{date}/cameras")
+async def get_cameras_for_date(
+    date: str = FastAPIPath(..., pattern="^\\d{4}-\\d{2}-\\d{2}$", description="Date in YYYY-MM-DD format")
+):
+    """
+    Get all cameras that have recordings on a specific date.
+    Used for date-based camera listing in recordings page.
+    """
+    if not discovery_service:
+        raise HTTPException(status_code=503, detail="Discovery service not initialized")
+    
+    cameras = await discovery_service.get_cameras_for_date(date)
+    
+    return {
+        "date": date,
+        "cameras": cameras,
+        "count": len(cameras),
+        "total_storage_mb": sum(c.get('storage_used_mb', 0) for c in cameras),
         "timestamp": datetime.now().isoformat()
     }
 

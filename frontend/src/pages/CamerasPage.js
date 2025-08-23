@@ -651,13 +651,25 @@ class Cameras {
             console.log('Current location:', window.location.hostname);
             console.log('Config API URL:', config.API_BASE_URL);
             
-            // In a real application, this would be an API call
-            this.cameras = await this.fetchCameras();
+            // Load cameras from database AND recording sources for complete visibility
+            const [dbCameras, recordingSources] = await Promise.all([
+                this.fetchCameras().catch(err => {
+                    console.warn('Failed to load database cameras:', err);
+                    return [];
+                }),
+                this.fetchRecordingSources().catch(err => {
+                    console.warn('Failed to load recording sources:', err);
+                    return [];
+                })
+            ]);
+            
+            // Merge cameras with recording sources for complete picture
+            this.cameras = this.mergeCameraData(dbCameras, recordingSources);
             console.log('Loaded cameras count:', this.cameras.length);
             
-            // If no cameras from API, show demo data for testing
+            // If no cameras from either source, show demo data for testing
             if (this.cameras.length === 0) {
-                console.log('No cameras from API, loading demo data');
+                console.log('No cameras from API or recordings, loading demo data');
                 this.cameras = this.loadMockCameras();
             }
             
@@ -712,6 +724,101 @@ class Cameras {
                 enabled: true
             }
         ];
+    }
+
+    async fetchRecordingSources() {
+        try {
+            // Fetch recording sources from the recording service (recordings-first approach)
+            const url = 'http://localhost:8002/api/v1/recordings/sources';
+            console.log('Fetching recording sources from:', url);
+            const response = await fetch(url);
+            if (!response.ok) {
+                console.error('Recording sources fetch failed:', response.status, response.statusText);
+                throw new Error('Failed to fetch recording sources');
+            }
+            const data = await response.json();
+            return data.sources || [];
+        } catch (error) {
+            console.error('Error fetching recording sources:', error);
+            return [];
+        }
+    }
+    
+    mergeCameraData(dbCameras, recordingSources) {
+        // Create a map of recording sources by camera_id for quick lookup
+        const sourceMap = new Map();
+        recordingSources.forEach(source => {
+            sourceMap.set(source.camera_id, source);
+        });
+        
+        // Start with database cameras and enrich with recording info
+        const mergedCameras = dbCameras.map(camera => {
+            const recordingSource = sourceMap.get(camera.camera_id) || 
+                                   sourceMap.get(`camera_${camera.camera_id}`);
+            
+            if (recordingSource) {
+                // Mark this source as processed
+                sourceMap.delete(recordingSource.camera_id);
+                
+                return {
+                    ...camera,
+                    hasRecordings: true,
+                    recordingCount: recordingSource.recording_count || 0,
+                    storageUsedMb: recordingSource.storage_used_mb || 0,
+                    recordingStatus: 'active',
+                    isFromDatabase: true
+                };
+            }
+            
+            return {
+                ...camera,
+                hasRecordings: false,
+                recordingCount: 0,
+                storageUsedMb: 0,
+                recordingStatus: 'no_recordings',
+                isFromDatabase: true
+            };
+        });
+        
+        // Add orphaned recording sources (not in database)
+        sourceMap.forEach(source => {
+            if (source.has_recordings) {
+                mergedCameras.push({
+                    id: source.camera_id,
+                    camera_id: source.camera_id,
+                    name: source.display_name || `Camera ${source.camera_id}`,
+                    location: 'unknown',
+                    ipAddress: source.ip_address || 'N/A',
+                    port: 0,
+                    connectionType: 'unknown',
+                    streamPath: '',
+                    status: 'orphaned', // Special status for orphaned recordings
+                    manufacturer: 'Unknown',
+                    model: 'Unknown',
+                    resolution: 'Unknown',
+                    fps: 0,
+                    lastSeen: null,
+                    uptime: 'N/A',
+                    username: '',
+                    enabled: false,
+                    hasRecordings: true,
+                    recordingCount: source.recording_count || 0,
+                    storageUsedMb: source.storage_used_mb || 0,
+                    recordingStatus: 'orphaned',
+                    isFromDatabase: false,
+                    isOrphaned: true
+                });
+            }
+        });
+        
+        // Sort: active cameras first, then orphaned
+        mergedCameras.sort((a, b) => {
+            if (a.status === 'orphaned' && b.status !== 'orphaned') return 1;
+            if (a.status !== 'orphaned' && b.status === 'orphaned') return -1;
+            return a.name.localeCompare(b.name);
+        });
+        
+        return mergedCameras;
     }
 
     async fetchCameras() {
@@ -833,12 +940,36 @@ class Cameras {
         const fps = camera.max_fps || camera.fps || '25';
         const modelBrand = [camera.brand, camera.model].filter(Boolean).join(' ') || 'Unknown';
         
+        // Determine camera status class and icon
+        let statusIndicatorClass = 'offline';
+        let statusTitle = 'Offline';
+        if (camera.status === 'online') {
+            statusIndicatorClass = 'online';
+            statusTitle = 'Online';
+        } else if (camera.status === 'orphaned') {
+            statusIndicatorClass = 'orphaned';
+            statusTitle = 'Orphaned (Recordings Only)';
+        }
+        
+        // Build recording info badge
+        let recordingBadge = '';
+        if (camera.hasRecordings) {
+            const storageGB = (camera.storageUsedMb / 1024).toFixed(1);
+            recordingBadge = `
+                <div class="recording-badge ${camera.isOrphaned ? 'orphaned' : 'active'}">
+                    <i class="fas fa-video"></i>
+                    <span>${camera.recordingCount} clips • ${storageGB}GB</span>
+                </div>
+            `;
+        }
+        
         return `
-            <div class="camera-card modern-card" data-camera-id="${camera.id}">
+            <div class="camera-card modern-card ${camera.isOrphaned ? 'orphaned-card' : ''}" data-camera-id="${camera.id}">
                 <div class="camera-card-header">
                     <div class="camera-title-row">
-                        <div class="camera-status-indicator ${camera.status === 'online' ? 'online' : 'offline'}"></div>
+                        <div class="camera-status-indicator ${statusIndicatorClass}" title="${statusTitle}"></div>
                         <h4 class="camera-card-title">${camera.display_name || camera.name}</h4>
+                        ${recordingBadge}
                         <div class="header-actions">
                             <!-- Direct Settings Access -->
                             <button class="icon-btn settings-btn" title="Settings" data-action="settings" data-camera-id="${camera.id}">

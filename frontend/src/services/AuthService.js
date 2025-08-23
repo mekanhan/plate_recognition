@@ -109,6 +109,22 @@ class AuthService {
     }
 
     /**
+     * Test if auth endpoints are available
+     */
+    async testConnection() {
+        try {
+            const response = await fetch(`${this.apiBase}/health`, {
+                method: 'GET',
+                timeout: 5000
+            });
+            return response.ok;
+        } catch (error) {
+            console.warn('Auth service connection test failed:', error);
+            return false;
+        }
+    }
+
+    /**
      * Get current user
      */
     getUser() {

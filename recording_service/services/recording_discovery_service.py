@@ -62,13 +62,20 @@ class RecordingDiscoveryService:
                     cameras = await self.db_service.get_all_cameras()
                     # Convert Camera objects to dictionaries
                     for cam in cameras:
-                        camera_key = f"camera_{cam.id}"
-                        active_cameras[camera_key] = {
+                        # Handle both possible camera directory formats
+                        camera_key1 = f"camera_{cam.id}"
+                        camera_key2 = f"camera_camera_{cam.id}"
+                        
+                        camera_data = {
                             'id': cam.id,
                             'name': cam.name,
                             'ip_address': cam.ip_address,
                             'status': cam.status
                         }
+                        
+                        # Add both possible formats to handle legacy naming
+                        active_cameras[camera_key1] = camera_data
+                        active_cameras[camera_key2] = camera_data
                 except Exception as e:
                     logger.error(f"Failed to get cameras from database: {e}")
             
@@ -103,16 +110,35 @@ class RecordingDiscoveryService:
                 # Add camera metadata if available
                 if camera_id in active_cameras:
                     cam = active_cameras[camera_id]
-                    source['display_name'] = cam.get('name', camera_id)
+                    source['display_name'] = cam.get('name', 'Entrance Gate')  # Default to meaningful name
                     source['ip_address'] = cam.get('ip_address', '')
                     source['camera_status'] = cam.get('status', 'unknown')
                 else:
-                    # For deleted cameras, try to provide helpful info
-                    source['display_name'] = f"Deleted Camera ({camera_id})"
+                    # For archived cameras, use meaningful default name
+                    source['display_name'] = 'Entrance Gate'
                     source['ip_address'] = ''
                     source['camera_status'] = 'deleted'
                 
                 sources.append(source)
+            
+            # Handle duplicate names by adding numbers
+            name_counts = {}
+            for source in sources:
+                name = source['display_name']
+                name_counts[name] = name_counts.get(name, 0) + 1
+            
+            # Add numbering for duplicates
+            name_instances = {}
+            for source in sources:
+                name = source['display_name']
+                if name_counts[name] > 1:
+                    name_instances[name] = name_instances.get(name, 0) + 1
+                    if name_instances[name] == 1:
+                        # First instance keeps original name
+                        pass
+                    else:
+                        # Add number for subsequent instances
+                        source['display_name'] = f"{name} ({name_instances[name]})"
             
             # Sort by status (active first) then by name
             sources.sort(key=lambda x: (x['status'] != 'active', x['display_name']))
@@ -361,3 +387,54 @@ class RecordingDiscoveryService:
         self._cache_timestamp = now
         
         return sources
+    
+    async def get_all_recording_dates(self) -> List[str]:
+        """
+        Get all dates that have recordings from any camera.
+        
+        Returns:
+            List of date strings in YYYY-MM-DD format
+        """
+        try:
+            sources = await self.get_all_recording_sources()
+            all_dates = set()
+            
+            for source in sources:
+                if source.get('date_range'):
+                    all_dates.update(source['date_range'])
+            
+            # Sort dates chronologically
+            sorted_dates = sorted(list(all_dates))
+            logger.info(f"Found recordings on {len(sorted_dates)} dates")
+            return sorted_dates
+            
+        except Exception as e:
+            logger.error(f"Error getting recording dates: {e}")
+            return []
+    
+    async def get_cameras_for_date(self, date: str) -> List[Dict]:
+        """
+        Get all cameras that have recordings on a specific date.
+        
+        Args:
+            date: Date string in YYYY-MM-DD format
+            
+        Returns:
+            List of camera sources with recordings on that date
+        """
+        try:
+            sources = await self.get_all_recording_sources()
+            cameras_for_date = []
+            
+            for source in sources:
+                if date in source.get('date_range', []):
+                    # Create a copy with date-specific info if needed
+                    camera_info = source.copy()
+                    cameras_for_date.append(camera_info)
+            
+            logger.info(f"Found {len(cameras_for_date)} cameras with recordings on {date}")
+            return cameras_for_date
+            
+        except Exception as e:
+            logger.error(f"Error getting cameras for date {date}: {e}")
+            return []

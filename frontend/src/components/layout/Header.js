@@ -509,14 +509,26 @@ class Header {
             const { default: AuthService } = await import('../../services/AuthService.js');
             this.authService = new AuthService();
             
+            // Test if auth endpoints are available
+            const authAvailable = await this.authService.testConnection();
+            if (!authAvailable) {
+                console.warn('Authentication endpoints not available, running in anonymous mode');
+                return;
+            }
+            
             // Listen for auth events
             window.addEventListener('userLogin', (e) => this.onUserLogin(e.detail.user));
             window.addEventListener('userLogout', () => this.onUserLogout());
             
             // Get current user if already authenticated
             if (this.authService.isAuthenticated()) {
-                this.currentUser = this.authService.getUser();
-                this.render(); // Re-render with user info
+                try {
+                    this.currentUser = this.authService.getUser();
+                    this.render(); // Re-render with user info
+                } catch (error) {
+                    console.warn('Failed to get current user, clearing invalid token');
+                    this.authService.logout();
+                }
             }
         } catch (error) {
             console.error('Failed to initialize authentication:', error);

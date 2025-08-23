@@ -120,10 +120,12 @@ class Dashboard {
                     <div class="metric-content">
                         <h3 id="active-cameras-count">${this.metrics.activeCameras}</h3>
                         <p>Active Cameras</p>
-                        <span class="metric-change positive">+2 this week</span>
+                        <span class="metric-change" id="orphaned-cameras-info">
+                            ${this.metrics.orphanedCameras || 0} orphaned
+                        </span>
                     </div>
                     <div class="metric-trend">
-                        <i class="fas fa-arrow-up"></i>
+                        <i class="fas fa-database"></i>
                     </div>
                 </div>
                 
@@ -406,34 +408,92 @@ class Dashboard {
 
     async loadCameraStatus() {
         try {
-            // Simplified camera status loading without streaming
-            const url = config.buildApiUrl(config.API_ENDPOINTS.CAMERAS);
-            const response = await fetch(url);
+            // Load cameras from both database AND recording sources for complete visibility
+            const [dbResponse, recordingResponse] = await Promise.all([
+                fetch(config.buildApiUrl(config.API_ENDPOINTS.CAMERAS)).catch(err => {
+                    console.warn('Failed to load database cameras:', err);
+                    return null;
+                }),
+                fetch('http://localhost:8002/api/v1/recordings/sources').catch(err => {
+                    console.warn('Failed to load recording sources:', err);
+                    return null;
+                })
+            ]);
             
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            // Process database cameras
+            let dbCameras = [];
+            if (dbResponse && dbResponse.ok) {
+                const data = await dbResponse.json();
+                if (Array.isArray(data)) {
+                    dbCameras = data;
+                } else if (data.cameras && Array.isArray(data.cameras)) {
+                    dbCameras = data.cameras;
+                }
             }
             
-            const data = await response.json();
-            
-            // Handle different response formats
-            let cameras = [];
-            if (Array.isArray(data)) {
-                cameras = data;
-            } else if (data.cameras && Array.isArray(data.cameras)) {
-                cameras = data.cameras;
-            } else if (data.data && Array.isArray(data.data)) {
-                cameras = data.data;
-            } else {
-                console.warn('Unexpected API response format:', data);
-                cameras = [];
+            // Process recording sources
+            let recordingSources = [];
+            if (recordingResponse && recordingResponse.ok) {
+                const data = await recordingResponse.json();
+                recordingSources = data.sources || [];
             }
             
-            this.renderCameraStatus(cameras.filter(camera => camera.enabled));
+            // Merge camera data with recording info
+            const cameras = this.mergeCameraDataForDashboard(dbCameras, recordingSources);
+            
+            // Update metrics based on actual data
+            this.metrics.activeCameras = cameras.filter(c => c.status === 'online').length;
+            this.metrics.orphanedCameras = cameras.filter(c => c.status === 'orphaned').length;
+            this.metrics.totalRecordings = cameras.reduce((sum, c) => sum + (c.recordingCount || 0), 0);
+            this.metrics.totalStorageGB = cameras.reduce((sum, c) => sum + (c.storageUsedMb || 0), 0) / 1024;
+            
+            this.renderCameraStatus(cameras);
         } catch (error) {
             console.error('Failed to load camera status:', error);
             this.renderCameraStatusError();
         }
+    }
+    
+    mergeCameraDataForDashboard(dbCameras, recordingSources) {
+        // Create a map of recording sources for quick lookup
+        const sourceMap = new Map();
+        recordingSources.forEach(source => {
+            sourceMap.set(source.camera_id, source);
+        });
+        
+        // Start with database cameras
+        const cameras = dbCameras.map(camera => {
+            const source = sourceMap.get(camera.camera_id) || sourceMap.get(`camera_${camera.camera_id}`);
+            if (source) {
+                sourceMap.delete(source.camera_id);
+                return {
+                    ...camera,
+                    enabled: true,
+                    recordingCount: source.recording_count || 0,
+                    storageUsedMb: source.storage_used_mb || 0,
+                    hasRecordings: true
+                };
+            }
+            return { ...camera, enabled: true, recordingCount: 0, storageUsedMb: 0, hasRecordings: false };
+        });
+        
+        // Add orphaned recording sources
+        sourceMap.forEach(source => {
+            if (source.has_recordings) {
+                cameras.push({
+                    id: source.camera_id,
+                    name: source.display_name || `Camera ${source.camera_id}`,
+                    status: 'orphaned',
+                    enabled: false,
+                    recordingCount: source.recording_count || 0,
+                    storageUsedMb: source.storage_used_mb || 0,
+                    hasRecordings: true,
+                    isOrphaned: true
+                });
+            }
+        });
+        
+        return cameras;
     }
 
     renderCameraStatus(cameras) {
@@ -449,11 +509,16 @@ class Dashboard {
     }
 
     renderCameraStatusItem(camera) {
+        const statusClass = camera.status === 'orphaned' ? 'orphaned' : camera.status;
+        const recordingInfo = camera.hasRecordings 
+            ? `<span class="recording-info">${camera.recordingCount} clips • ${(camera.storageUsedMb / 1024).toFixed(1)}GB</span>`
+            : '<span class="recording-info">No recordings</span>';
+            
         return `
-            <div class="camera-status-item ${camera.status}" data-camera-id="${camera.id}">
+            <div class="camera-status-item ${statusClass}" data-camera-id="${camera.id}">
                 <div class="camera-status-header">
                     <span class="camera-name">${camera.name}</span>
-                    <div class="camera-status-indicator ${camera.status}">
+                    <div class="camera-status-indicator ${statusClass}">
                         <i class="fas ${this.getStatusIcon(camera.status)}"></i>
                         <span class="status-text">${this.capitalizeFirst(camera.status)}</span>
                     </div>
@@ -465,8 +530,8 @@ class Dashboard {
                         <span class="value">${camera.location || 'Unknown'}</span>
                     </div>
                     <div class="camera-detail">
-                        <span class="label">IP:</span>
-                        <span class="value">${camera.ip_address}:${camera.port}</span>
+                        <span class="label">Recordings:</span>
+                        ${recordingInfo}
                     </div>
                 </div>
             </div>

@@ -105,23 +105,226 @@
         }
 
         /* Camera Selector */
-        .camera-selector {
-            margin-bottom: 1rem;
+        /* Camera List (Date-based) */
+        .camera-list-container {
+            margin-bottom: 1.5rem;
         }
-
-        .camera-selector select {
-            width: 100%;
-            padding: 0.5rem;
-            background-color: var(--dark-bg);
+        
+        .camera-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            padding: 0 0.25rem;
+        }
+        
+        .camera-list-header h3 {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .camera-list-header span {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .camera-list {
+            max-height: 220px;
+            overflow-y: auto;
+            background: transparent;
+        }
+        
+        .camera-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .camera-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+        
+        .camera-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        .camera-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .camera-list-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
             border: 1px solid var(--border-color);
             border-radius: 6px;
-            color: var(--text-primary);
-            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            background: var(--card-bg);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-
-        .camera-selector select:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        
+        .camera-list-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        
+        .camera-list-item:hover {
+            background: rgba(59, 130, 246, 0.04);
+            border-color: rgba(59, 130, 246, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .camera-list-item:hover .camera-selection-indicator {
+            border-color: var(--primary-color);
+            transform: scale(1.05);
+        }
+        
+        .camera-list-item.selected {
+            background: rgba(59, 130, 246, 0.08);
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25), 0 0 0 1px var(--primary-color);
+        }
+        
+        .camera-list-item.archived {
+            border-left: 4px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.02);
+        }
+        
+        .camera-list-item.archived:hover {
+            border-left-color: #d97706;
+            background: rgba(245, 158, 11, 0.05);
+        }
+        
+        .camera-list-item.active {
+            border-left: 4px solid #10b981;
+            background: rgba(16, 185, 129, 0.02);
+        }
+        
+        .camera-list-item.active:hover {
+            border-left-color: #059669;
+            background: rgba(16, 185, 129, 0.05);
+        }
+        
+        .camera-selection-indicator {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 3px;
+            margin-right: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+        
+        .camera-list-item.selected .camera-selection-indicator {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+        
+        .camera-selection-indicator i {
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        
+        .camera-list-item.selected .camera-selection-indicator i {
+            opacity: 1;
+        }
+        
+        .camera-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.25rem;
+        }
+        
+        .camera-name {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: 1.3;
+            margin: 0;
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
+            font-family: inherit;
+        }
+        
+        .camera-status-badge {
+            font-size: 0.65rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 0.5rem;
+            flex-shrink: 0;
+        }
+        
+        .camera-status-badge.archived {
+            background: rgba(245, 158, 11, 0.15);
+            color: #d97706;
+        }
+        
+        .camera-status-badge.active {
+            background: rgba(16, 185, 129, 0.15);
+            color: #059669;
+        }
+        
+        
+        .camera-list-placeholder,
+        .camera-list-empty {
+            padding: 2.5rem 1rem;
+            text-align: center;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+        
+        .camera-list-placeholder i,
+        .camera-list-empty i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+            opacity: 0.4;
+            color: var(--text-secondary);
+        }
+        
+        .camera-list-placeholder p,
+        .camera-list-empty p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .camera-list-loading {
+            padding: 0.5rem;
+        }
+        
+        .skeleton-camera-item {
+            height: 3.5rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .skeleton-camera-item:last-child {
+            margin-bottom: 0;
         }
 
         /* Calendar */

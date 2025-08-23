@@ -257,7 +257,8 @@ class RecordingsPage {
                     calendarData: {},
                     isLoading: false,
                     playableRecordings: [],
-                    unplayableRecordings: []
+                    unplayableRecordings: [],
+                    isInitialLoad: true  // Flag to track initial auto-selection
                 };
                 
                 this.healthCheckInterval = null;
@@ -783,11 +784,20 @@ class RecordingsPage {
                         this.state.selectedCameras = [activeCameras[0].id];
                         this.state.currentCamera = activeCameras[0].id;
                         console.log('Auto-selected active camera:', activeCameras[0].location);
+                        
+                        // Schedule delayed loading to ensure UI is ready
+                        setTimeout(() => {
+                            console.log('Loading recordings for auto-selected camera...');
+                            this.loadRecordingsForDate();
+                            // Clear initial load flag after first auto-selection
+                            this.state.isInitialLoad = false;
+                        }, 250); // Small delay to ensure UI elements are ready
                     } else {
                         // No active cameras - don't auto-select any (user must manually select)
                         console.log('No active cameras found for auto-selection');
                         this.state.selectedCameras = [];
                         this.state.currentCamera = null;
+                        this.state.isInitialLoad = false; // Clear flag even when no cameras found
                     }
                 }
                 
@@ -873,8 +883,8 @@ class RecordingsPage {
                 // Update header
                 this.updateCameraListHeader();
                 
-                // Load recordings for selected cameras
-                if (this.state.selectedCameras.length > 0) {
+                // Load recordings for manually selected cameras (not auto-selected ones)
+                if (this.state.selectedCameras.length > 0 && !this.isInitialLoad) {
                     this.loadRecordingsForDate();
                 }
             }
@@ -906,10 +916,12 @@ class RecordingsPage {
             
             async loadRecordingsForDate() {
                 if (!this.state.serviceOnline || !this.state.currentCamera) {
+                    console.log('Cannot load recordings - service offline or no camera selected');
                     this.renderEmptyRecordingsList('Service offline');
                     return;
                 }
                 
+                console.log('Loading recordings for camera:', this.state.currentCamera);
                 this.showRecordingsLoading();
                 
                 try {

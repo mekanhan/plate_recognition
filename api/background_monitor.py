@@ -80,8 +80,14 @@ class BackgroundMonitor:
         """Monitor camera connection status and broadcast changes"""
         while self.is_running:
             try:
-                # Get all cameras from database
-                cameras = await self.db.get_all_cameras()
+                # Get all cameras from database with proper session management
+                try:
+                    cameras = await self.db.get_all_cameras()
+                except Exception as db_error:
+                    logger.error(f"Database error in camera status monitoring: {db_error}")
+                    # Wait before retrying
+                    await asyncio.sleep(5)
+                    continue
                 
                 for camera in cameras:
                     # Check if camera should be monitored (default to True if no enabled attribute)
@@ -192,27 +198,39 @@ class BackgroundMonitor:
             return 'error'
     
     async def _get_recording_statuses(self) -> Dict[str, Any]:
-        """Get recording status from recording service"""
-        try:
-            if not self.session:
-                return {}
-            
-            # Call recording service API
-            async with self.session.get('http://localhost:8002/recordings/status', timeout=5) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    # Extract camera statuses from response
-                    return data.get('cameras', {}) if isinstance(data, dict) else {}
-                else:
-                    logger.warning(f"Recording service returned status {response.status}")
+        """Get recording status from recording service with retry logic"""
+        max_retries = 3
+        retry_delay = 1.0
+        
+        for attempt in range(max_retries):
+            try:
+                if not self.session:
+                    logger.debug("No HTTP session available for recording status check")
                     return {}
-                    
-        except asyncio.TimeoutError:
-            logger.warning("Timeout getting recording status")
-            return {}
-        except Exception as e:
-            logger.error(f"Error getting recording statuses: {e}")
-            return {}
+                
+                # Call recording service API with shorter timeout
+                async with self.session.get('http://localhost:8002/recordings/status', timeout=3) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        # Extract camera statuses from response
+                        return data.get('cameras', {}) if isinstance(data, dict) else {}
+                    else:
+                        logger.warning(f"Recording service returned status {response.status}")
+                        return {}
+                        
+            except (asyncio.TimeoutError, aiohttp.ClientError, ConnectionError) as e:
+                logger.warning(f"Recording service connection error (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                    continue
+                else:
+                    logger.error("Recording service unavailable after all retry attempts")
+                    return {}
+            except Exception as e:
+                logger.error(f"Unexpected error getting recording statuses: {e}")
+                return {}
+        
+        return {}
     
     async def _get_system_health(self) -> Dict[str, Any]:
         """Get overall system health metrics"""

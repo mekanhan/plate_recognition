@@ -16,10 +16,12 @@ class APIService {
     }
 
     /**
-     * Generic request method
+     * Generic request method with retry logic
      */
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${this.apiPrefix}${endpoint}`;
+        const maxRetries = options.retries || 3;
+        const retryDelay = options.retryDelay || 1000;
         
         const config = {
             timeout: this.requestTimeout,
@@ -30,37 +32,74 @@ class APIService {
             ...options
         };
 
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), config.timeout);
-            
-            const response = await fetch(url, {
-                ...config,
-                signal: controller.signal
-            });
+        for (let attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+                
+                const response = await fetch(url, {
+                    ...config,
+                    signal: controller.signal
+                });
 
-            clearTimeout(timeoutId);
+                clearTimeout(timeoutId);
 
-            if (!response.ok) {
-                throw new APIError(
-                    `HTTP ${response.status}: ${response.statusText}`,
-                    response.status,
-                    await this.parseErrorResponse(response)
-                );
-            }
+                if (!response.ok) {
+                    // Don't retry for client errors (4xx), only server errors (5xx) and network errors
+                    if (response.status >= 400 && response.status < 500) {
+                        throw new APIError(
+                            `HTTP ${response.status}: ${response.statusText}`,
+                            response.status,
+                            await this.parseErrorResponse(response)
+                        );
+                    }
+                    
+                    // Server error - retry if attempts remaining
+                    if (attempt === maxRetries - 1) {
+                        throw new APIError(
+                            `HTTP ${response.status}: ${response.statusText}`,
+                            response.status,
+                            await this.parseErrorResponse(response)
+                        );
+                    }
+                    
+                    console.warn(`API request failed (attempt ${attempt + 1}/${maxRetries}): ${response.status} ${response.statusText}`);
+                    await this.delay(retryDelay * Math.pow(2, attempt)); // Exponential backoff
+                    continue;
+                }
 
-            return await this.parseResponse(response);
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                throw new APIError('Request timeout', 408, { timeout: true });
+                return await this.parseResponse(response);
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    if (attempt === maxRetries - 1) {
+                        throw new APIError('Request timeout', 408, { timeout: true });
+                    }
+                    console.warn(`Request timeout (attempt ${attempt + 1}/${maxRetries})`);
+                    await this.delay(retryDelay * Math.pow(2, attempt));
+                    continue;
+                }
+                
+                if (error instanceof APIError) {
+                    throw error;
+                }
+                
+                // Network error - retry if attempts remaining
+                if (attempt === maxRetries - 1) {
+                    throw new APIError('Network error', 0, { network: true, original: error });
+                }
+                
+                console.warn(`Network error (attempt ${attempt + 1}/${maxRetries}):`, error.message);
+                await this.delay(retryDelay * Math.pow(2, attempt)); // Exponential backoff
             }
-            
-            if (error instanceof APIError) {
-                throw error;
-            }
-            
-            throw new APIError('Network error', 0, { network: true, original: error });
         }
+    }
+
+    /**
+     * Delay helper for retry logic
+     */
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     /**

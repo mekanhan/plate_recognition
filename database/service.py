@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import json
 import logging
+import asyncio
 from .models import (Base, Camera, Detection, VideoRecording, VideoClip, HourlyStatistics,
                      CameraNew, CameraConnection, CameraRecordingConfig, CameraSetting, CameraStatus)
 from .db_config import db_config
@@ -307,10 +308,24 @@ class DatabaseService:
             return camera.id
     
     async def get_all_cameras(self) -> List[Camera]:
-        """Get all cameras"""
-        async with self.db_config.get_session() as session:
-            result = await session.execute(select(Camera))
-            return result.scalars().all()
+        """Get all cameras with connection validation"""
+        max_retries = 3
+        retry_delay = 0.5
+        
+        for attempt in range(max_retries):
+            try:
+                async with self.db_config.get_session() as session:
+                    result = await session.execute(select(Camera))
+                    return result.scalars().all()
+            except Exception as e:
+                self.logger.error(f"Database error getting cameras (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(retry_delay * (attempt + 1))
+                    continue
+                else:
+                    # Return empty list if all attempts fail
+                    self.logger.error("Failed to get cameras after all retry attempts")
+                    return []
     
     async def get_camera(self, camera_id: str) -> Optional[Camera]:
         """Get camera by ID"""

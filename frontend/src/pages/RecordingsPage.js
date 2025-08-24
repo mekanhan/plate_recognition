@@ -851,14 +851,14 @@ class RecordingsPage {
                     const isSelected = this.state.selectedCameras && this.state.selectedCameras.includes(camera.id);
                     const location = camera.location || camera.name || 'Unknown Location';
                     
-                    return '<div class="camera-list-item ' + statusClass + (isSelected ? ' selected' : '') + '" ' +
+                    return '<div ' +
                         'data-camera-id="' + camera.id + '">' +
                         '<label class="camera-item-label">' +
                         '<input type="checkbox" class="camera-checkbox" ' +
                         'data-camera-id="' + camera.id + '" ' +
                         (isSelected ? 'checked' : '') + '>' +
                         '<span class="camera-location">' + location + '</span>' +
-                        '<div class="camera-status">' +
+                        '<div>' +
                         '<span class="status-dot ' + statusClass + '"></span>' +
                         '<span class="status-text ' + statusClass + '">' + statusText + '</span>' +
                         '</div>' +

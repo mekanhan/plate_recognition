@@ -63,9 +63,9 @@ class LPRApplication {
         const token = localStorage.getItem('lpr_auth_token');
         
         if (!token) {
-            // No token, redirect to homepage
-            console.log('No authentication token found, redirecting to homepage');
-            window.location.href = 'index.html';
+            // No token, redirect to login page
+            console.log('No authentication token found, redirecting to login page');
+            window.location.href = 'login.html';
             return;
         }
         
@@ -107,15 +107,15 @@ class LPRApplication {
                     return false;
                 }
             } else {
-                // Redirect to homepage for authentication
-                console.log('User not authenticated, redirecting to homepage');
-                window.location.href = 'index.html';
+                // Redirect to login page for authentication
+                console.log('User not authenticated, redirecting to login page');
+                window.location.href = 'login.html';
                 return false;
             }
         } catch (error) {
             console.error('Failed to initialize authentication:', error);
-            // Redirect to homepage on auth error
-            window.location.href = 'index.html';
+            // Redirect to login page on auth error
+            window.location.href = 'login.html';
             return false;
         }
     }

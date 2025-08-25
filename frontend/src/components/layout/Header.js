@@ -31,6 +31,11 @@ class Header {
         
         // Update theme button after rendering
         this.updateThemeButton();
+        
+        // Ensure logout listener is attached after DOM update
+        setTimeout(() => {
+            this.attachLogoutListener();
+        }, 10);
     }
 
     createHeaderContainer() {
@@ -188,17 +193,175 @@ class Header {
             }
         });
 
-        // Logout button
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.logout();
-            });
-        }
+        // Logout button with DOM ready check
+        this.attachLogoutListener();
 
         // Close dropdowns when clicking outside
         document.addEventListener('click', (e) => this.closeDropdowns(e));
+    }
+
+    /**
+     * Robust logout button event listener attachment with retry mechanism
+     */
+    attachLogoutListener(retryCount = 0) {
+        const maxRetries = 10;
+        
+        const logoutBtn = document.getElementById('logout-btn');
+        // console.log(`Logout button attachment attempt ${retryCount + 1}: ${!!logoutBtn}`);
+        
+        if (logoutBtn && !logoutBtn.hasAttribute('data-logout-attached')) {
+            // Mark as attached to prevent duplicate listeners
+            logoutBtn.setAttribute('data-logout-attached', 'true');
+            
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Logout button clicked!');
+                this.handleLogoutClick();
+            });
+            
+            console.log('✅ Logout event listener attached successfully');
+            return true;
+        }
+        
+        // Retry if button not found and under retry limit
+        if (!logoutBtn && retryCount < maxRetries) {
+            // console.log(`⏳ Retrying logout button attachment in 100ms (attempt ${retryCount + 1}/${maxRetries})`);
+            setTimeout(() => {
+                this.attachLogoutListener(retryCount + 1);
+            }, 100);
+            return false;
+        }
+        
+        if (!logoutBtn) {
+            console.error('❌ Logout button not found after maximum retries');
+        }
+        
+        return !!logoutBtn;
+    }
+
+    /**
+     * Handle logout button click with proper async flow
+     */
+    async handleLogoutClick() {
+        console.log('🚪 Logout process initiated');
+        
+        // Show confirmation modal (non-blocking)
+        const shouldLogout = await this.showLogoutConfirmation();
+        
+        if (!shouldLogout) {
+            console.log('❌ Logout cancelled by user');
+            return;
+        }
+
+        // Show loading state
+        this.setLogoutLoading(true);
+        
+        try {
+            console.log('🔄 Processing logout...');
+            
+            // Use AuthService if available, otherwise fallback
+            if (this.authService) {
+                await this.authService.logout();
+            } else {
+                await this.fallbackLogout();
+            }
+            
+            console.log('✅ Logout completed successfully');
+            
+        } catch (error) {
+            console.error('❌ Logout error:', error);
+            this.showLogoutError(error);
+        } finally {
+            this.setLogoutLoading(false);
+        }
+    }
+
+    /**
+     * Show modern logout confirmation dialog
+     */
+    async showLogoutConfirmation() {
+        return new Promise((resolve) => {
+            // For now, use confirm() but this will be replaced with a modal
+            // TODO: Replace with custom modal in Phase 2
+            const result = confirm('Are you sure you want to logout?');
+            resolve(result);
+        });
+    }
+
+    /**
+     * Set logout loading state
+     */
+    setLogoutLoading(loading) {
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            if (loading) {
+                logoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging out...';
+                logoutBtn.style.opacity = '0.7';
+                logoutBtn.disabled = true;
+            } else {
+                logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+                logoutBtn.style.opacity = '1';
+                logoutBtn.disabled = false;
+            }
+        }
+    }
+
+    /**
+     * Fallback logout when AuthService is not available
+     */
+    async fallbackLogout() {
+        console.log('🔄 Using fallback logout...');
+        
+        // Clear all authentication data
+        this.clearAllAuthData();
+        
+        // Show logout message
+        this.showLogoutToast();
+        
+        // Wait a moment for user to see the toast
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Redirect to login page
+        const baseUrl = window.location.origin;
+        const loginUrl = baseUrl + '/login.html';
+        window.location.replace(loginUrl);
+    }
+
+    /**
+     * Clear all authentication data thoroughly
+     */
+    clearAllAuthData() {
+        // Clear all possible token storage locations
+        const keysToRemove = [
+            'lpr_auth_token',
+            'user-session', 
+            'auth-token',
+            'access_token',
+            'refresh_token',
+            'user_data',
+            'auth_state'
+        ];
+        
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+        
+        console.log('🧹 All authentication data cleared');
+    }
+
+    /**
+     * Show logout error to user
+     */
+    showLogoutError(error) {
+        const toast = document.createElement('div');
+        toast.className = 'toast toast-error';
+        toast.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Logout failed. Please try again.</span>
+        `;
+        this.showToast(toast);
     }
 
     toggleSidebar() {
@@ -541,32 +704,22 @@ class Header {
         this.showToast(`Welcome back, ${user.username}!`, 'success');
     }
 
-    onUserLogout() {
+    onUserLogout(event) {
+        console.log('🔄 Header received logout event:', event?.detail);
+        
+        // Clear user state
         this.currentUser = null;
-        this.render(); // Re-render without user info
+        this.authService = null;
+        
+        // Reset logout button if it's in loading state
+        this.setLogoutLoading(false);
+        
+        // Re-render header without user info
+        this.render();
+        
+        console.log('✅ Header logout cleanup completed');
     }
 
-    logout() {
-        if (confirm('Are you sure you want to logout?')) {
-            // Clear any stored session data
-            localStorage.removeItem('user-session');
-            localStorage.removeItem('auth-token');
-            
-            // Show logout message
-            this.showLogoutToast();
-            
-            // If AuthService exists, use it
-            if (this.authService) {
-                this.authService.logout();
-            }
-            
-            // In a real application, this would redirect to login page
-            // For now, we'll just refresh the page
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        }
-    }
     
     showLogoutToast() {
         const toast = document.createElement('div');

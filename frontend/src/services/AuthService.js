@@ -53,25 +53,169 @@ class AuthService {
     }
 
     /**
-     * Logout and clear session
+     * Enhanced logout with comprehensive state cleanup
      */
-    logout() {
-        // Clear token and user data
+    async logout() {
+        console.log('🔄 Logout initiated');
+        
+        try {
+            // Attempt server-side logout if we have a token
+            await this.performServerLogout();
+            
+        } catch (error) {
+            console.warn('Server logout encountered issues:', error);
+            // Continue with client-side cleanup regardless
+        }
+        
+        // Comprehensive client-side cleanup
+        await this.performClientLogout();
+        
+        console.log('✅ AuthService logout completed');
+    }
+
+    /**
+     * Perform server-side logout
+     */
+    async performServerLogout() {
+        if (!this.token) {
+            console.log('⏩ No token available for server logout');
+            return;
+        }
+
+        console.log('📡 Attempting server-side logout...');
+        
+        try {
+            const response = await fetch(`${this.apiBase}/api/auth/logout`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                timeout: 5000 // 5 second timeout
+            });
+
+            if (response.ok) {
+                console.log('✅ Server logout successful');
+            } else {
+                console.warn(`⚠️ Server logout returned ${response.status}`);
+            }
+            
+        } catch (error) {
+            console.warn('❌ Server logout failed:', error);
+            throw error; // Re-throw to be caught by main logout method
+        }
+    }
+
+    /**
+     * Perform comprehensive client-side logout
+     */
+    async performClientLogout() {
+        console.log('🧹 Performing client-side cleanup...');
+        
+        // Reset AuthService state
+        this.resetAuthServiceState();
+        
+        // Clear all storage
+        this.clearAllStorageData();
+        
+        // Stop background processes
+        this.stopBackgroundProcesses();
+        
+        // Notify components
+        this.notifyLogoutComplete();
+        
+        // Show user feedback
+        this.showToast('Logged out successfully', 'success');
+        
+        // Small delay to ensure user sees the toast
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Redirect to login page
+        this.redirectToHomepage();
+    }
+
+    /**
+     * Reset AuthService internal state
+     */
+    resetAuthServiceState() {
         this.token = null;
         this.user = null;
-        localStorage.removeItem('lpr_auth_token');
-        
-        // Stop token refresh
+        console.log('🔄 AuthService state reset');
+    }
+
+    /**
+     * Clear all possible storage locations
+     */
+    clearAllStorageData() {
+        const storageKeys = [
+            // Current system keys
+            'lpr_auth_token',
+            'user-session',
+            'auth-token',
+            
+            // Potential future keys
+            'access_token',
+            'refresh_token',
+            'user_data',
+            'auth_state',
+            'login_timestamp',
+            'session_id',
+            
+            // Legacy keys that might exist
+            'authToken',
+            'userSession',
+            'currentUser'
+        ];
+
+        // Clear from both localStorage and sessionStorage
+        storageKeys.forEach(key => {
+            localStorage.removeItem(key);
+            sessionStorage.removeItem(key);
+        });
+
+        console.log('🗑️ All storage data cleared');
+    }
+
+    /**
+     * Stop all background processes
+     */
+    stopBackgroundProcesses() {
+        // Stop token refresh interval
         if (this.refreshInterval) {
             clearInterval(this.refreshInterval);
             this.refreshInterval = null;
+            console.log('⏹️ Token refresh stopped');
         }
         
-        // Dispatch logout event
-        window.dispatchEvent(new CustomEvent('userLogout'));
+        // Stop any other timers or intervals that might exist
+        // (extensible for future background processes)
+    }
+
+    /**
+     * Notify all components that logout is complete
+     */
+    notifyLogoutComplete() {
+        // Dispatch logout event for components to react
+        window.dispatchEvent(new CustomEvent('userLogout', {
+            detail: { 
+                timestamp: new Date().toISOString(),
+                source: 'AuthService'
+            }
+        }));
         
-        // Redirect to login or reload page
-        this.showLoginForm();
+        console.log('📢 Logout event dispatched');
+    }
+
+    /**
+     * Redirect to homepage after logout
+     */
+    redirectToHomepage() {
+        // Redirect to login page (the actual homepage)
+        const baseUrl = window.location.origin;
+        const loginUrl = baseUrl + '/login.html';
+        
+        // Use replace to prevent going back to authenticated page
+        window.location.replace(loginUrl);
     }
 
     /**
@@ -172,14 +316,14 @@ class AuthService {
      * Show login form or redirect to homepage
      */
     showLoginForm() {
-        // Check if we're on the homepage
-        if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-            // We're already on homepage, let it handle authentication
+        // Check if we're on the login page
+        if (window.location.pathname.includes('login.html')) {
+            // We're already on login page, let it handle authentication
             return;
         }
         
-        // Redirect to homepage for authentication
-        window.location.href = 'index.html';
+        // Redirect to login page for authentication
+        window.location.href = 'login.html';
     }
 
     /**

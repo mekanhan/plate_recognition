@@ -234,3 +234,37 @@ async def list_users(request: Request):
     except Exception as e:
         logger.error(f"List users error: {e}")
         raise HTTPException(status_code=500, detail="User service error")
+
+@router.post("/logout")
+async def logout(request: Request):
+    """Logout user - invalidate session"""
+    try:
+        # Get token from header
+        auth_header = request.headers.get('authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header[7:]
+            
+            # Verify token is valid
+            try:
+                payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+                user_id = payload.get('user_id')
+                username = payload.get('sub')
+                
+                # Log successful logout
+                logger.info(f"User logged out successfully: {username}")
+                
+            except jwt.ExpiredSignatureError:
+                # Token already expired, that's fine
+                logger.info("Expired token logout attempt")
+            except jwt.InvalidTokenError:
+                # Invalid token, still allow logout
+                logger.info("Invalid token logout attempt")
+        
+        # For simple auth, we don't maintain server-side sessions
+        # Client will handle token removal
+        return {"message": "Logged out successfully"}
+        
+    except Exception as e:
+        logger.error(f"Logout error: {e}")
+        # Return success even on error to not leak information
+        return {"message": "Logged out successfully"}

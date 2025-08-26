@@ -1,0 +1,40 @@
+{
+  "logging": {
+    "defaultLevel": "INFO",
+    "levels": {
+      "OFF": 0,
+      "ERROR": 1,
+      "WARNING": 2,
+      "INFO": 3,
+      "DEBUG": 4,
+      "VERBOSE": 5
+    },
+    "verboseOnlyEvents": [
+      "detection_console",
+      "heartbeat",
+      "analytics_event"
+    ],
+    "description": {
+      "OFF": "No WebSocket logs",
+      "ERROR": "Only critical errors",
+      "WARNING": "Errors and warnings",
+      "INFO": "Important events only (default)",
+      "DEBUG": "Debugging info without detection spam",
+      "VERBOSE": "All events including detection console"
+    }
+  },
+  "connection": {
+    "reconnectEnabled": true,
+    "maxReconnectAttempts": 10,
+    "initialReconnectDelay": 1000,
+    "maxReconnectDelay": 30000,
+    "heartbeatInterval": 30000,
+    "heartbeatTimeout": 60000
+  },
+  "features": {
+    "enableHeartbeat": true,
+    "enableAutoReconnect": true,
+    "enableLoggingControls": true,
+    "persistLogLevel": true
+  }
+}

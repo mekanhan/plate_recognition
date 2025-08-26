@@ -8,8 +8,6 @@ class WebSocketService {
     constructor() {
         this.ws = null;
         this.reconnectAttempts = 0;
-        this.maxReconnectAttempts = 5;
-        this.reconnectDelay = 1000; // Start with 1 second
         this.subscribers = new Map();
         this.isConnected = false;
         this.heartbeatInterval = null;
@@ -24,22 +22,187 @@ class WebSocketService {
             ANALYTICS_EVENT: 'analytics_event',
             DETECTION_CONSOLE: 'detection_console'
         };
+        
+        // Load configuration (async, but don't block constructor)
+        this.loadConfiguration();
+        
+        // Set defaults (will be overridden by config)
+        this.setDefaults();
+    }
+    
+    /**
+     * Set default values (used before config loads)
+     */
+    setDefaults() {
+        this.LOG_LEVELS = {
+            OFF: 0,
+            ERROR: 1,
+            WARNING: 2,
+            INFO: 3,
+            DEBUG: 4,
+            VERBOSE: 5
+        };
+        
+        this.logLevel = 'INFO';
+        this.VERBOSE_ONLY_EVENTS = ['detection_console', 'heartbeat', 'analytics_event'];
+        this.maxReconnectAttempts = 5;
+        this.reconnectDelay = 1000;
+        this.maxReconnectDelay = 30000;
+        this.heartbeatIntervalMs = 30000;
+        this.heartbeatTimeoutMs = 60000;
+        this.enableHeartbeat = true;
+        this.enableAutoReconnect = true;
+        this.persistLogLevel = true;
+        
+        this.setupGlobalLoggingControls();
+    }
+    
+    /**
+     * Load configuration from centralized config file
+     */
+    async loadConfiguration() {
+        try {
+            const response = await fetch('/config/websocket_config.json');
+            if (!response.ok) {
+                throw new Error('Failed to load WebSocket config');
+            }
+            
+            const config = await response.json();
+            
+            // Apply logging configuration
+            this.LOG_LEVELS = config.logging.levels;
+            this.VERBOSE_ONLY_EVENTS = config.logging.verboseOnlyEvents;
+            
+            // Load saved log level or use default from config
+            const savedLevel = localStorage.getItem('ws_log_level');
+            this.logLevel = savedLevel || config.logging.defaultLevel;
+            
+            // Apply connection configuration
+            this.maxReconnectAttempts = config.connection.maxReconnectAttempts;
+            this.reconnectDelay = config.connection.initialReconnectDelay;
+            this.maxReconnectDelay = config.connection.maxReconnectDelay;
+            this.heartbeatIntervalMs = config.connection.heartbeatInterval;
+            this.heartbeatTimeoutMs = config.connection.heartbeatTimeout;
+            
+            // Apply feature flags
+            this.enableHeartbeat = config.features.enableHeartbeat;
+            this.enableAutoReconnect = config.features.enableAutoReconnect;
+            this.persistLogLevel = config.features.persistLogLevel;
+            
+            // Re-setup logging controls with new config
+            if (config.features.enableLoggingControls) {
+                this.setupGlobalLoggingControls();
+            }
+            
+            console.log('✅ WebSocket configuration loaded from /config/websocket_config.json');
+        } catch (error) {
+            console.warn('Using default WebSocket configuration:', error.message);
+        }
+    }
+
+    /**
+     * Setup global logging controls for easy access from browser console
+     */
+    setupGlobalLoggingControls() {
+        if (typeof window !== 'undefined') {
+            window.wsLogging = {
+                setLevel: (level) => this.setLogLevel(level),
+                getLevel: () => this.logLevel,
+                levels: () => Object.keys(this.LOG_LEVELS),
+                enable: () => this.setLogLevel('VERBOSE'),
+                disable: () => this.setLogLevel('OFF'),
+                info: () => this.setLogLevel('INFO'),
+                debug: () => this.setLogLevel('DEBUG'),
+                help: () => {
+                    console.log(`
+🔧 WebSocket Logging Controls:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• wsLogging.disable()     - Turn off all WebSocket logs
+• wsLogging.enable()      - Show all logs (including detections)
+• wsLogging.info()        - Show important events only (default)
+• wsLogging.debug()       - Show debug info (no detections)
+• wsLogging.setLevel(lvl) - Set specific level: ${Object.keys(this.LOG_LEVELS).join(', ')}
+• wsLogging.getLevel()    - Current level: ${this.logLevel}
+• wsLogging.levels()      - List all available levels
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Current level: ${this.logLevel}
+                    `);
+                }
+            };
+            
+            // Show help on initialization
+            console.log('📡 WebSocket logging controls ready. Type "wsLogging.help()" for options.');
+        }
+    }
+    
+    /**
+     * Set logging level
+     */
+    setLogLevel(level) {
+        if (!this.LOG_LEVELS.hasOwnProperty(level)) {
+            console.error(`Invalid log level: ${level}. Valid levels:`, Object.keys(this.LOG_LEVELS));
+            return false;
+        }
+        
+        this.logLevel = level;
+        localStorage.setItem('ws_log_level', level);
+        console.log(`✅ WebSocket log level set to: ${level}`);
+        return true;
+    }
+    
+    /**
+     * Conditional logging based on level and event type
+     */
+    log(level, message, ...args) {
+        const currentLevel = this.LOG_LEVELS[this.logLevel];
+        const messageLevel = this.LOG_LEVELS[level];
+        
+        if (currentLevel === 0) return; // OFF
+        
+        if (messageLevel <= currentLevel) {
+            const prefix = `[WS:${level}]`;
+            
+            switch(level) {
+                case 'ERROR':
+                    console.error(prefix, message, ...args);
+                    break;
+                case 'WARNING':
+                    console.warn(prefix, message, ...args);
+                    break;
+                default:
+                    console.log(prefix, message, ...args);
+            }
+        }
+    }
+    
+    /**
+     * Check if event should be logged based on current settings
+     */
+    shouldLogEvent(eventType) {
+        // If verbose mode, log everything
+        if (this.logLevel === 'VERBOSE') return true;
+        
+        // If event is in verbose-only list, don't log unless in verbose mode
+        if (this.VERBOSE_ONLY_EVENTS.includes(eventType)) return false;
+        
+        // Otherwise, follow normal log level rules
+        return this.LOG_LEVELS[this.logLevel] >= this.LOG_LEVELS.INFO;
     }
 
     connect() {
         if (!config.FEATURES.WEBSOCKET_UPDATES) {
-            console.log('WebSocket updates disabled by feature flag');
+            this.log('INFO', 'WebSocket updates disabled by feature flag');
             return;
         }
 
         if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
-            console.log('WebSocket already connected or connecting');
+            this.log('DEBUG', 'WebSocket already connected or connecting');
             return;
         }
 
         try {
             const wsUrl = config.buildWsUrl('/ws/camera-updates');
-            console.log('Connecting to WebSocket:', wsUrl);
+            this.log('INFO', 'Connecting to WebSocket:', wsUrl);
             
             this.ws = new WebSocket(wsUrl);
             this.setupEventListeners();
@@ -51,7 +214,7 @@ class WebSocketService {
 
     setupEventListeners() {
         this.ws.onopen = (event) => {
-            console.log('WebSocket connected successfully');
+            this.log('INFO', 'WebSocket connected successfully');
             this.isConnected = true;
             this.reconnectAttempts = 0;
             this.reconnectDelay = 1000;
@@ -71,7 +234,7 @@ class WebSocketService {
         };
 
         this.ws.onclose = (event) => {
-            console.log('WebSocket connection closed:', event.code, event.reason);
+            this.log('WARNING', 'WebSocket connection closed:', event.code, event.reason);
             this.isConnected = false;
             this.stopHeartbeat();
             
@@ -99,7 +262,10 @@ class WebSocketService {
             return;
         }
 
-        console.log('WebSocket message received:', type, payload);
+        // Use smart logging based on event type and log level
+        if (this.shouldLogEvent(type)) {
+            this.log('DEBUG', `Message received: ${type}`, payload);
+        }
 
         // Route message to appropriate subscribers
         switch (type) {
@@ -122,7 +288,7 @@ class WebSocketService {
                 this.handleDetectionConsole(payload);
                 break;
             default:
-                console.log('Unknown WebSocket message type:', type);
+                this.log('WARNING', 'Unknown WebSocket message type:', type);
         }
     }
 
@@ -256,7 +422,7 @@ class WebSocketService {
         }
 
         this.reconnectAttempts++;
-        console.log(`Scheduling WebSocket reconnect attempt ${this.reconnectAttempts} in ${this.reconnectDelay}ms`);
+        this.log('INFO', `Scheduling WebSocket reconnect attempt ${this.reconnectAttempts} in ${this.reconnectDelay}ms`);
         
         setTimeout(() => {
             this.connect();

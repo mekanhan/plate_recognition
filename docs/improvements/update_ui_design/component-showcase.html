@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LPR Design System - Component Showcase</title>
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Import the same design system from demo-dashboard */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            /* ===== SPACING SYSTEM (8px Grid) ===== */
+            --spacing-xs: 0.5rem;    /* 8px */
+            --spacing-sm: 1rem;      /* 16px */
+            --spacing-md: 1.5rem;    /* 24px */
+            --spacing-lg: 2rem;      /* 32px */
+            --spacing-xl: 3rem;      /* 48px */
+            --spacing-2xl: 4rem;     /* 64px */
+            
+            /* ===== TYPOGRAPHY SYSTEM ===== */
+            --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            --text-display: 2.5rem;
+            --text-h1: 2rem;
+            --text-h2: 1.5rem;
+            --text-h3: 1.25rem;
+            --text-body-lg: 1rem;
+            --text-body: 0.875rem;
+            --text-small: 0.75rem;
+            --font-normal: 400;
+            --font-medium: 500;
+            --font-semibold: 600;
+            --font-bold: 700;
+            --leading-tight: 1.2;
+            --leading-normal: 1.5;
+            
+            /* ===== UNIFIED COLOR SYSTEM ===== */
+            /* Primary */
+            --primary: #2b7cd7;
+            --primary-hover: #2563c2;
+            --primary-active: #1e4ba8;
+            --primary-bg: #e6f2ff;
+            
+            /* Success */
+            --success: #22c55e;
+            --success-hover: #16a34a;
+            --success-bg: #dcfce7;
+            
+            /* Warning */
+            --warning: #f59e0b;
+            --warning-hover: #d97706;
+            --warning-bg: #fef3c7;
+            
+            /* Error */
+            --error: #ef4444;
+            --error-hover: #dc2626;
+            --error-bg: #fee2e2;
+            
+            /* Info */
+            --info: #3b82f6;
+            --info-hover: #2563eb;
+            --info-bg: #dbeafe;
+            
+            /* Grays */
+            --gray-50: #fafafa;
+            --gray-100: #f4f4f5;
+            --gray-200: #e4e4e7;
+            --gray-300: #d4d4d8;
+            --gray-400: #a1a1aa;
+            --gray-500: #71717a;
+            --gray-600: #52525b;
+            --gray-700: #3f3f46;
+            --gray-800: #27272a;
+            --gray-900: #18181b;
+            
+            /* Surfaces */
+            --bg-base: #ffffff;
+            --bg-subtle: #fafafa;
+            --bg-muted: #f4f4f5;
+            
+            /* Text */
+            --text-primary: #18181b;
+            --text-secondary: #52525b;
+            --text-tertiary: #71717a;
+            --text-inverse: #ffffff;
+            
+            /* Borders */
+            --border-subtle: #e4e4e7;
+            --border-default: #d4d4d8;
+            --border-hover: #a1a1aa;
+            --border-focus: var(--primary);
+            
+            /* Shadows */
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.12);
+            
+            /* Radius */
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 9999px;
+            
+            /* Transitions */
+            --transition-fast: 100ms ease;
+            --transition-base: 200ms ease;
+            --transition-slow: 300ms ease;
+        }
+        
+        /* Dark theme */
+        [data-theme="dark"] {
+            --bg-base: #18181b;
+            --bg-subtle: #27272a;
+            --bg-muted: #3f3f46;
+            --text-primary: #fafafa;
+            --text-secondary: #d4d4d8;
+            --text-tertiary: #a1a1aa;
+            --border-subtle: #3f3f46;
+            --border-default: #52525b;
+            --primary: #60a5fa;
+            --primary-hover: #3b82f6;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --info: #60a5fa;
+        }
+        
+        /* Base styles */
+        body {
+            font-family: var(--font-primary);
+            font-size: var(--text-body);
+            line-height: var(--leading-normal);
+            color: var(--text-primary);
+            background: var(--bg-subtle);
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+        
+        .page-header {
+            text-align: center;
+            padding: var(--spacing-2xl) 0;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .page-title {
+            font-size: var(--text-display);
+            font-weight: var(--font-bold);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .page-subtitle {
+            font-size: var(--text-h3);
+            color: var(--text-secondary);
+        }
+        
+        /* Section styles */
+        .section {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .section-title {
+            font-size: var(--text-h2);
+            font-weight: var(--font-semibold);
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        
+        .subsection {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .subsection-title {
+            font-size: var(--text-h3);
+            font-weight: var(--font-medium);
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-secondary);
+        }
+        
+        /* Component styles (from demo) */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            height: 36px;
+            padding: 0 16px;
+            margin: 4px;
+            font-family: var(--font-primary);
+            font-size: var(--text-body);
+            font-weight: var(--font-medium);
+            border: none;
+            border-radius: 18px;
+            background: var(--bg-muted);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        
+        .btn:hover:not(:disabled) {
+            background: var(--gray-200);
+            transform: translateY(-1px);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--text-inverse);
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: var(--text-inverse);
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: var(--success-hover);
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--gray-900);
+        }
+        
+        .btn-warning:hover:not(:disabled) {
+            background: var(--warning-hover);
+        }
+        
+        .btn-error {
+            background: var(--error);
+            color: var(--text-inverse);
+        }
+        
+        .btn-error:hover:not(:disabled) {
+            background: var(--error-hover);
+        }
+        
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-primary);
+        }
+        
+        .btn-ghost:hover:not(:disabled) {
+            background: var(--bg-muted);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border-default);
+            color: var(--text-primary);
+        }
+        
+        .btn-outline:hover:not(:disabled) {
+            background: var(--bg-muted);
+            border-color: var(--border-hover);
+        }
+        
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border-radius: 50%;
+        }
+        
+        .btn-sm {
+            height: 32px;
+            padding: 0 12px;
+            font-size: var(--text-small);
+        }
+        
+        .btn-lg {
+            height: 40px;
+            padding: 0 20px;
+            font-size: var(--text-body-lg);
+        }
+        
+        /* Forms */
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: var(--spacing-xs);
+            font-weight: var(--font-medium);
+            color: var(--text-primary);
+        }
+        
+        .form-label-required::after {
+            content: " *";
+            color: var(--error);
+        }
+        
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 0 var(--spacing-sm);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            font-family: var(--font-primary);
+            font-size: var(--text-body);
+            background: var(--bg-base);
+            color: var(--text-primary);
+            transition: all var(--transition-base);
+        }
+        
+        .form-input,
+        .form-select {
+            height: 40px;
+        }
+        
+        .form-textarea {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px var(--primary-bg);
+        }
+        
+        .form-input:disabled,
+        .form-select:disabled,
+        .form-textarea:disabled {
+            background: var(--bg-muted);
+            color: var(--text-tertiary);
+            cursor: not-allowed;
+        }
+        
+        .form-hint {
+            font-size: var(--text-small);
+            color: var(--text-tertiary);
+            margin-top: var(--spacing-xs);
+        }
+        
+        .form-error {
+            border-color: var(--error);
+        }
+        
+        .form-error:focus {
+            box-shadow: 0 0 0 3px var(--error-bg);
+        }
+        
+        .form-error-message {
+            font-size: var(--text-small);
+            color: var(--error);
+            margin-top: var(--spacing-xs);
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            margin: 2px;
+            border-radius: var(--radius-sm);
+            font-size: var(--text-small);
+            font-weight: var(--font-medium);
+        }
+        
+        .badge-primary {
+            background: var(--primary-bg);
+            color: var(--primary);
+        }
+        
+        .badge-success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        
+        .badge-warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        
+        .badge-error {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+        
+        .badge-info {
+            background: var(--info-bg);
+            color: var(--info);
+        }
+        
+        .badge-gray {
+            background: var(--bg-muted);
+            color: var(--text-secondary);
+        }
+        
+        /* Status dots */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 4px;
+        }
+        
+        .status-dot.online { background: var(--success); }
+        .status-dot.offline { background: var(--gray-500); }
+        .status-dot.error { background: var(--error); }
+        .status-dot.warning { background: var(--warning); }
+        
+        /* Cards */
+        .card-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-md);
+        }
+        
+        .card {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            transition: all var(--transition-base);
+        }
+        
+        .card:hover {
+            border-color: var(--border-hover);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .card-title {
+            font-size: var(--text-h3);
+            font-weight: var(--font-medium);
+        }
+        
+        .card-body {
+            color: var(--text-secondary);
+        }
+        
+        /* Alerts */
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .alert-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .alert-content {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: var(--font-medium);
+            margin-bottom: 2px;
+        }
+        
+        .alert-description {
+            font-size: var(--text-small);
+            opacity: 0.9;
+        }
+        
+        .alert-info {
+            background: var(--info-bg);
+            color: var(--info);
+        }
+        
+        .alert-success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+        
+        .alert-warning {
+            background: var(--warning-bg);
+            color: var(--warning);
+        }
+        
+        .alert-error {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+        
+        /* Typography showcase */
+        .typography-example {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .typography-example > * {
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        /* Color swatches */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-sm);
+        }
+        
+        .color-swatch {
+            text-align: center;
+        }
+        
+        .color-box {
+            height: 80px;
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-xs);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: var(--font-medium);
+            border: 1px solid var(--border-subtle);
+        }
+        
+        .color-name {
+            font-size: var(--text-small);
+            color: var(--text-secondary);
+        }
+        
+        /* Theme toggle */
+        .theme-toggle {
+            position: fixed;
+            bottom: var(--spacing-lg);
+            right: var(--spacing-lg);
+            z-index: 100;
+        }
+        
+        /* Spacing examples */
+        .spacing-example {
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .spacing-box {
+            background: var(--primary-bg);
+            border: 1px solid var(--primary);
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: var(--text-small);
+            font-weight: var(--font-medium);
+        }
+        
+        .spacing-label {
+            width: 100px;
+            font-size: var(--text-small);
+            color: var(--text-tertiary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">LPR Design System</h1>
+            <p class="page-subtitle">YouTube-Inspired Component Library</p>
+        </div>
+        
+        <!-- Colors Section -->
+        <section class="section">
+            <h2 class="section-title">Color System</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Primary Colors</h3>
+                <div class="color-grid">
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--primary);">Primary</div>
+                        <div class="color-name">--primary</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--success);">Success</div>
+                        <div class="color-name">--success</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--warning); color: var(--gray-900);">Warning</div>
+                        <div class="color-name">--warning</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--error);">Error</div>
+                        <div class="color-name">--error</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--info);">Info</div>
+                        <div class="color-name">--info</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Neutral Colors</h3>
+                <div class="color-grid">
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--gray-50); color: var(--gray-900);">Gray 50</div>
+                        <div class="color-name">--gray-50</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--gray-200); color: var(--gray-900);">Gray 200</div>
+                        <div class="color-name">--gray-200</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--gray-500);">Gray 500</div>
+                        <div class="color-name">--gray-500</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--gray-700);">Gray 700</div>
+                        <div class="color-name">--gray-700</div>
+                    </div>
+                    <div class="color-swatch">
+                        <div class="color-box" style="background: var(--gray-900);">Gray 900</div>
+                        <div class="color-name">--gray-900</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Typography Section -->
+        <section class="section">
+            <h2 class="section-title">Typography</h2>
+            
+            <div class="typography-example">
+                <h1 style="font-size: var(--text-display); font-weight: var(--font-bold);">Display Text (2.5rem)</h1>
+                <h1 style="font-size: var(--text-h1); font-weight: var(--font-semibold);">Heading 1 (2rem)</h1>
+                <h2 style="font-size: var(--text-h2); font-weight: var(--font-semibold);">Heading 2 (1.5rem)</h2>
+                <h3 style="font-size: var(--text-h3); font-weight: var(--font-medium);">Heading 3 (1.25rem)</h3>
+                <p style="font-size: var(--text-body-lg);">Body Large (1rem) - Lorem ipsum dolor sit amet</p>
+                <p style="font-size: var(--text-body);">Body (0.875rem) - Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
+                <p style="font-size: var(--text-small); color: var(--text-secondary);">Small Text (0.75rem) - Lorem ipsum dolor sit amet</p>
+            </div>
+        </section>
+        
+        <!-- Spacing Section -->
+        <section class="section">
+            <h2 class="section-title">Spacing System (8px Grid)</h2>
+            
+            <div class="subsection">
+                <div class="spacing-example">
+                    <span class="spacing-label">--spacing-xs</span>
+                    <div class="spacing-box" style="width: var(--spacing-xs);">8px</div>
+                </div>
+                <div class="spacing-example">
+                    <span class="spacing-label">--spacing-sm</span>
+                    <div class="spacing-box" style="width: var(--spacing-sm);">16px</div>
+                </div>
+                <div class="spacing-example">
+                    <span class="spacing-label">--spacing-md</span>
+                    <div class="spacing-box" style="width: var(--spacing-md);">24px</div>
+                </div>
+                <div class="spacing-example">
+                    <span class="spacing-label">--spacing-lg</span>
+                    <div class="spacing-box" style="width: var(--spacing-lg);">32px</div>
+                </div>
+                <div class="spacing-example">
+                    <span class="spacing-label">--spacing-xl</span>
+                    <div class="spacing-box" style="width: var(--spacing-xl);">48px</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Buttons Section -->
+        <section class="section">
+            <h2 class="section-title">Buttons</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Button Variants</h3>
+                <div>
+                    <button class="btn">Default</button>
+                    <button class="btn btn-primary">Primary</button>
+                    <button class="btn btn-success">Success</button>
+                    <button class="btn btn-warning">Warning</button>
+                    <button class="btn btn-error">Error</button>
+                    <button class="btn btn-ghost">Ghost</button>
+                    <button class="btn btn-outline">Outline</button>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Button Sizes</h3>
+                <div>
+                    <button class="btn btn-sm">Small</button>
+                    <button class="btn">Medium</button>
+                    <button class="btn btn-lg">Large</button>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Button States</h3>
+                <div>
+                    <button class="btn btn-primary">Normal</button>
+                    <button class="btn btn-primary" disabled>Disabled</button>
+                    <button class="btn btn-icon btn-primary">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-download"></i>
+                        With Icon
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Forms Section -->
+        <section class="section">
+            <h2 class="section-title">Forms</h2>
+            
+            <div class="subsection">
+                <div style="max-width: 400px;">
+                    <div class="form-group">
+                        <label class="form-label">Text Input</label>
+                        <input type="text" class="form-input" placeholder="Enter text...">
+                        <div class="form-hint">This is a hint text to help user.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label form-label-required">Required Field</label>
+                        <input type="email" class="form-input" placeholder="email@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Select Input</label>
+                        <select class="form-select">
+                            <option>Select an option...</option>
+                            <option>Option 1</option>
+                            <option>Option 2</option>
+                            <option>Option 3</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Textarea</label>
+                        <textarea class="form-textarea" placeholder="Enter description..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Error State</label>
+                        <input type="text" class="form-input form-error" value="Invalid input">
+                        <div class="form-error-message">This field is required.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Disabled State</label>
+                        <input type="text" class="form-input" disabled value="Disabled input">
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Badges & Status Section -->
+        <section class="section">
+            <h2 class="section-title">Badges & Status Indicators</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Badges</h3>
+                <div>
+                    <span class="badge badge-primary">Primary</span>
+                    <span class="badge badge-success">Success</span>
+                    <span class="badge badge-warning">Warning</span>
+                    <span class="badge badge-error">Error</span>
+                    <span class="badge badge-info">Info</span>
+                    <span class="badge badge-gray">Gray</span>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Status Dots</h3>
+                <div>
+                    <span class="status-dot online"></span> Online
+                    <span class="status-dot offline"></span> Offline
+                    <span class="status-dot error"></span> Error
+                    <span class="status-dot warning"></span> Warning
+                </div>
+            </div>
+        </section>
+        
+        <!-- Cards Section -->
+        <section class="section">
+            <h2 class="section-title">Cards</h2>
+            
+            <div class="card-examples">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Basic Card</h3>
+                        <button class="btn btn-sm">Action</button>
+                    </div>
+                    <div class="card-body">
+                        This is a basic card with header and body content. Cards are used to group related information.
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Camera Status</h3>
+                        <span class="badge badge-success">Online</span>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: flex; align-items: center; gap: var(--spacing-xs);">
+                            <span class="status-dot online"></span>
+                            Main Entrance Camera
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Metric Card</h3>
+                    </div>
+                    <div class="card-body">
+                        <div style="font-size: var(--text-h1); font-weight: var(--font-semibold); margin-bottom: 4px;">1,234</div>
+                        <div style="font-size: var(--text-small); color: var(--text-secondary);">Total Detections</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Alerts Section -->
+        <section class="section">
+            <h2 class="section-title">Alerts</h2>
+            
+            <div class="subsection">
+                <div class="alert alert-info">
+                    <div class="alert-icon">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">Information</div>
+                        <div class="alert-description">This is an informational alert message.</div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-success">
+                    <div class="alert-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">Success</div>
+                        <div class="alert-description">Your changes have been saved successfully.</div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <div class="alert-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">Warning</div>
+                        <div class="alert-description">Please review your configuration settings.</div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-error">
+                    <div class="alert-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                        <div class="alert-title">Error</div>
+                        <div class="alert-description">Failed to connect to camera. Please check the connection.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Tables Section -->
+        <section class="section">
+            <h2 class="section-title">Tables</h2>
+            
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding: 12px 16px; background: var(--bg-subtle); font-size: var(--text-small); font-weight: var(--font-medium); text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);">Camera</th>
+                            <th style="text-align: left; padding: 12px 16px; background: var(--bg-subtle); font-size: var(--text-small); font-weight: var(--font-medium); text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);">Location</th>
+                            <th style="text-align: left; padding: 12px 16px; background: var(--bg-subtle); font-size: var(--text-small); font-weight: var(--font-medium); text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);">Status</th>
+                            <th style="text-align: left; padding: 12px 16px; background: var(--bg-subtle); font-size: var(--text-small); font-weight: var(--font-medium); text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);">Detections</th>
+                            <th style="text-align: left; padding: 12px 16px; background: var(--bg-subtle); font-size: var(--text-small); font-weight: var(--font-medium); text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); border-bottom: 1px solid var(--border-subtle);">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid var(--border-subtle);">
+                            <td style="padding: 12px 16px;">CAM-001</td>
+                            <td style="padding: 12px 16px;">Main Entrance</td>
+                            <td style="padding: 12px 16px;"><span class="badge badge-success">Online</span></td>
+                            <td style="padding: 12px 16px;">234</td>
+                            <td style="padding: 12px 16px;"><button class="btn btn-sm">View</button></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-subtle);">
+                            <td style="padding: 12px 16px;">CAM-002</td>
+                            <td style="padding: 12px 16px;">Parking Lot A</td>
+                            <td style="padding: 12px 16px;"><span class="badge badge-success">Online</span></td>
+                            <td style="padding: 12px 16px;">189</td>
+                            <td style="padding: 12px 16px;"><button class="btn btn-sm">View</button></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-subtle);">
+                            <td style="padding: 12px 16px;">CAM-003</td>
+                            <td style="padding: 12px 16px;">Side Gate</td>
+                            <td style="padding: 12px 16px;"><span class="badge badge-gray">Offline</span></td>
+                            <td style="padding: 12px 16px;">0</td>
+                            <td style="padding: 12px 16px;"><button class="btn btn-sm">View</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Modal Example -->
+        <section class="section">
+            <h2 class="section-title">Modal Example</h2>
+            
+            <button class="btn btn-primary" onclick="showModal()">Open Modal</button>
+            
+            <div id="modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center;">
+                <div style="background: var(--bg-base); border-radius: var(--radius-lg); width: 90%; max-width: 500px; max-height: 90vh; overflow: hidden; box-shadow: var(--shadow-xl);">
+                    <div style="padding: var(--spacing-md); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between;">
+                        <h3 style="font-size: var(--text-h3); font-weight: var(--font-medium);">Modal Title</h3>
+                        <button class="btn btn-icon btn-ghost" onclick="hideModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div style="padding: var(--spacing-md);">
+                        <p>This is a modal dialog following YouTube's clean design principles. It has a subtle shadow, rounded corners, and proper spacing.</p>
+                        <div class="form-group" style="margin-top: var(--spacing-md);">
+                            <label class="form-label">Example Input</label>
+                            <input type="text" class="form-input" placeholder="Enter something...">
+                        </div>
+                    </div>
+                    <div style="padding: var(--spacing-md); border-top: 1px solid var(--border-subtle); display: flex; gap: var(--spacing-sm); justify-content: flex-end;">
+                        <button class="btn" onclick="hideModal()">Cancel</button>
+                        <button class="btn btn-primary">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Loading States -->
+        <section class="section">
+            <h2 class="section-title">Loading States</h2>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Skeleton Loaders</h3>
+                <div class="card" style="max-width: 400px;">
+                    <div style="height: 20px; background: var(--bg-muted); border-radius: var(--radius-sm); margin-bottom: var(--spacing-xs); width: 60%; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 1.5s infinite;"></div>
+                    </div>
+                    <div style="height: 16px; background: var(--bg-muted); border-radius: var(--radius-sm); margin-bottom: var(--spacing-xs); width: 100%; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 1.5s infinite;"></div>
+                    </div>
+                    <div style="height: 16px; background: var(--bg-muted); border-radius: var(--radius-sm); width: 80%; position: relative; overflow: hidden;">
+                        <div style="position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shimmer 1.5s infinite;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="subsection">
+                <h3 class="subsection-title">Spinners</h3>
+                <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                    <div style="width: 20px; height: 20px; border: 2px solid var(--border-subtle); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite;"></div>
+                    <div style="width: 32px; height: 32px; border: 3px solid var(--border-subtle); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite;"></div>
+                    <div style="width: 48px; height: 48px; border: 4px solid var(--border-subtle); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.6s linear infinite;"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Theme Toggle Button -->
+    <button class="btn btn-icon btn-primary theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-moon"></i>
+    </button>
+    
+    <style>
+        @keyframes shimmer {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(200%); }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+            
+            // Update icon
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        
+        function showModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = 'flex';
+        }
+        
+        function hideModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+        }
+        
+        // Click outside to close modal
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
+    </script>
+</body>
+</html>

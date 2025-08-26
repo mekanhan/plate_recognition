@@ -1,0 +1,30 @@
+/* Enhanced CSS Variables - Preserving Your Current Colors */
+:root {
+    /* ===== YOUR EXISTING COLORS - PRESERVED ===== */
+    /* Primary Colors */
+    --primary: #4299e1;          /* Your current blue - keeping it! */
+    --primary-hover: #3182ce;
+    --primary-bg: rgba(66, 153, 225, 0.1);
+    
+    /* Semantic Colors - Your current palette */
+    --success: #48bb78;          /* Your green */
+    --success-hover: #38a169;
+    --success-bg: rgba(72, 187, 120, 0.1);
+    
+    --warning: #ed8936;          /* Your orange */
+    --warning-hover: #dd6b20;
+    --warning-bg: rgba(237, 137, 54, 0.1);
+    
+    --error: #f56565;            /* Your red */
+    --error-hover: #e53e3e;
+    --error-bg: rgba(245, 101, 101, 0.1);
+    
+    /* ===== ENHANCED BACKGROUNDS - YouTube-style but matching your theme ===== */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f7fafc;     /* Your current - kept */
+    --bg-tertiary: #edf2f7;      /* Your current - kept */
+    --bg-hover: rgba(66, 153, 225, 0.04);    /* Subtle blue tint on hover */
+    --bg-active: rgba(66, 153, 225, 0.08);   /* Matches your primary */
+    
+    /* ===== REFINED TEXT COLORS - Better contrast ===== */
+    --text-primary: #2d3748;     /* Your current -

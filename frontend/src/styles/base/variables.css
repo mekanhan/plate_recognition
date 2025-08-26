@@ -1,47 +1,161 @@
-/* CSS Custom Properties for Theme - Standardized Design System */
+/* Enhanced CSS Variables - Preserving Your Current Colors with Better Structure */
 :root {
-    /* Standardized Color Palette - Light Theme */
-    --primary: #4299e1;
-    --primary-hover: #3182ce;
-    --primary-bg: rgba(66, 153, 225, 0.1);
-    --success: #48bb78;
-    --success-hover: #38a169;
-    --success-bg: rgba(72, 187, 120, 0.1);
-    --warning: #ed8936;
-    --warning-hover: #dd6b20;
-    --warning-bg: rgba(237, 137, 54, 0.1);
-    --error: #f56565;
-    --error-hover: #e53e3e;
-    --error-bg: rgba(245, 101, 101, 0.1);
+    /* ===== YOUR EXISTING COLORS - PRESERVED ===== */
+    /* Primary Colors */
+    --primary-50: #e6f2ff;
+    --primary-100: #bae0ff;
+    --primary-200: #8cc8f7;
+    --primary-300: #5eadef;
+    --primary-400: #3d96e7;
+    --primary-500: #4299e1;        /* Your current blue - keeping it! */
+    --primary-600: #3182ce;
+    --primary-700: #2563c2;
+    --primary-800: #1e4ba8;
+    --primary-900: #0f2554;
     
-    /* Background Colors */
+    /* Semantic Colors - Your current palette enhanced */
+    --success-50: #f0fdf4;
+    --success-100: #dcfce7;
+    --success-200: #bbf7d0;
+    --success-300: #86efac;
+    --success-400: #4ade80;
+    --success-500: #48bb78;        /* Your green */
+    --success-600: #38a169;
+    --success-700: #2f855a;
+    --success-800: #276749;
+    --success-900: #22543d;
+    
+    --warning-50: #fffbeb;
+    --warning-100: #fef3c7;
+    --warning-200: #fde68a;
+    --warning-300: #fcd34d;
+    --warning-400: #fbbf24;
+    --warning-500: #ed8936;        /* Your orange */
+    --warning-600: #dd6b20;
+    --warning-700: #c05621;
+    --warning-800: #9c4221;
+    --warning-900: #78350f;
+    
+    --error-50: #fef2f2;
+    --error-100: #fee2e2;
+    --error-200: #fecaca;
+    --error-300: #fca5a5;
+    --error-400: #f87171;
+    --error-500: #f56565;          /* Your red */
+    --error-600: #e53e3e;
+    --error-700: #c53030;
+    --error-800: #9b2c2c;
+    --error-900: #742a2a;
+    
+    /* Neutral Grays - Professional scale */
+    --gray-50: #fafafa;
+    --gray-100: #f4f4f5;
+    --gray-200: #e4e4e7;
+    --gray-300: #d4d4d8;
+    --gray-400: #a1a1aa;
+    --gray-500: #71717a;
+    --gray-600: #52525b;
+    --gray-700: #3f3f46;
+    --gray-800: #27272a;
+    --gray-900: #18181b;
+    
+    /* ===== ENHANCED BACKGROUNDS - YouTube-style but matching your theme ===== */
     --bg-primary: #ffffff;
-    --bg-secondary: #f7fafc;
-    --bg-tertiary: #edf2f7;
-    --bg-light: #f7f9fc;
-    --bg-white: #ffffff;
-    --bg-dark: #1a1d23;
-    --bg-darker: #141518;
-    --surface-color: #ffffff;
-    --card-bg: #ffffff;
+    --bg-secondary: #f7fafc;       /* Your current - kept */
+    --bg-tertiary: #edf2f7;        /* Your current - kept */
+    --bg-hover: rgba(66, 153, 225, 0.04);    /* Subtle blue tint on hover */
+    --bg-active: rgba(66, 153, 225, 0.08);   /* Matches your primary */
+    --bg-selected: rgba(66, 153, 225, 0.1);  /* Selected state */
     
-    /* Text Colors */
-    --text-primary: #2d3748;
-    --text-secondary: #718096;
-    --text-muted: #a0aec0;
-    --text-light: #e2e8f0;
+    /* Surface colors for depth */
+    --surface-primary: var(--bg-primary);
+    --surface-secondary: var(--bg-secondary);
+    --surface-tertiary: var(--bg-tertiary);
+    --surface-overlay: rgba(0, 0, 0, 0.5);
+    
+    /* ===== REFINED TEXT COLORS - Better contrast ===== */
+    --text-primary: #2d3748;       /* Your current - darker for better contrast */
+    --text-secondary: #4a5568;     /* Improved from #718096 */
+    --text-tertiary: #718096;      /* Your current muted */
+    --text-disabled: #a0aec0;      /* Your current */
     --text-inverse: #ffffff;
+    --text-link: var(--primary-500);
+    --text-link-hover: var(--primary-600);
     
-    /* Border Colors */
-    --border-color: #e2e8f0;
-    --border-light: #f7fafc;
-    --border-dark: #cbd5e0;
+    /* ===== STATUS COLORS - CONSISTENT EVERYWHERE ===== */
+    --status-online: var(--success-500);     /* Green for online */
+    --status-offline: var(--gray-500);       /* Gray for offline */
+    --status-error: var(--error-500);        /* Red for error */
+    --status-warning: var(--warning-500);    /* Orange for warning */
+    --status-maintenance: var(--warning-400);
     
-    /* Component Specific */
+    /* Status backgrounds */
+    --status-online-bg: var(--success-50);
+    --status-offline-bg: var(--gray-100);
+    --status-error-bg: var(--error-50);
+    --status-warning-bg: var(--warning-50);
+    
+    /* ===== FUNCTIONAL COLORS - Easy to use ===== */
+    --primary: var(--primary-500);
+    --primary-hover: var(--primary-600);
+    --primary-active: var(--primary-700);
+    --primary-bg: var(--primary-50);
+    
+    --success: var(--success-500);
+    --success-hover: var(--success-600);
+    --success-bg: var(--success-50);
+    
+    --warning: var(--warning-500);
+    --warning-hover: var(--warning-600);
+    --warning-bg: var(--warning-50);
+    
+    --error: var(--error-500);
+    --error-hover: var(--error-600);
+    --error-bg: var(--error-50);
+    
+    /* ===== BORDER COLORS - Consistent hierarchy ===== */
+    --border-subtle: #e2e8f0;      /* Your current - kept */
+    --border-default: #cbd5e0;     /* Slightly darker */
+    --border-strong: #a0aec0;      /* For emphasis */
+    --border-hover: var(--gray-400);
+    --border-focus: var(--primary-500);
+    
+    /* Legacy support */
+    --border-color: var(--border-subtle);
+    --border-light: var(--border-subtle);
+    --border-dark: var(--border-default);
+    
+    /* ===== COMPONENT-SPECIFIC COLORS ===== */
+    /* Sidebar - Your current dark theme */
     --sidebar-bg: #1a202c;
+    --sidebar-hover: rgba(255, 255, 255, 0.08);
+    --sidebar-active: rgba(255, 255, 255, 0.12);
     --sidebar-border: #2d3748;
+    --sidebar-text: rgba(255, 255, 255, 0.9);
+    --sidebar-text-muted: rgba(255, 255, 255, 0.6);
     
-    /* Legacy Support - Mapped to new system */
+    /* Cards and surfaces */
+    --card-bg: var(--surface-primary);
+    --card-border: var(--border-subtle);
+    --card-hover: var(--surface-secondary);
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    
+    /* Tables */
+    --table-header-bg: var(--bg-secondary);
+    --table-row-hover: var(--bg-hover);
+    --table-row-selected: var(--bg-selected);
+    
+    /* Badges - Consistent with your colors */
+    --badge-primary-bg: var(--primary-bg);
+    --badge-primary-text: var(--primary-700);
+    --badge-success-bg: var(--success-bg);
+    --badge-success-text: var(--success-700);
+    --badge-warning-bg: var(--warning-bg);
+    --badge-warning-text: var(--warning-700);
+    --badge-error-bg: var(--error-bg);
+    --badge-error-text: var(--error-700);
+    
+    /* ===== LEGACY SUPPORT - Maintained for compatibility ===== */
     --primary-color: var(--primary);
     --accent-color: var(--primary);
     --success-color: var(--success);
@@ -49,14 +163,29 @@
     --error-color: var(--error);
     --danger-color: var(--error);
     
-    /* Standardized Shadows */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
-    --card-shadow: var(--shadow-md);
+    /* Keep your existing background mappings */
+    --bg-light: var(--bg-secondary);
+    --bg-white: var(--bg-primary);
+    --bg-dark: #1a1d23;
+    --bg-darker: #141518;
+    --surface-color: var(--surface-primary);
     
-    /* Typography - Standardized Scale */
+    /* Your existing text mappings */
+    --text-muted: var(--text-tertiary);
+    --text-light: #e2e8f0;
+    
+    /* ===== SHADOWS - Enhanced for depth ===== */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.12);
+    
+    /* Component shadows */
+    --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.16);
+    
+    /* ===== TYPOGRAPHY - Your current system preserved ===== */
     --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     --font-family-mono: 'Courier New', Consolas, 'Liberation Mono', monospace;
     
@@ -70,7 +199,7 @@
     --text-3xl: 1.875rem;    /* 30px */
     --text-4xl: 2.25rem;     /* 36px */
     
-    /* Legacy Support */
+    /* Legacy font size support */
     --font-size-xs: var(--text-xs);
     --font-size-sm: var(--text-sm);
     --font-size-base: var(--text-base);
@@ -97,7 +226,7 @@
     --font-extrabold: 800;
     --font-black: 900;
     
-    /* Spacing */
+    /* ===== SPACING - Your current system ===== */
     --spacing-xs: 0.25rem;
     --spacing-sm: 0.5rem;
     --spacing-md: 1rem;
@@ -105,18 +234,21 @@
     --spacing-xl: 2rem;
     --spacing-2xl: 3rem;
     
-    /* Border Radius */
-    --radius-sm: 0.25rem;
+    /* ===== BORDER RADIUS - Rectangle buttons preserved ===== */
+    --radius-none: 0;
+    --radius-sm: 0.25rem;          /* Your current button radius - KEPT! */
     --radius-md: 0.375rem;
     --radius-lg: 0.5rem;
     --radius-xl: 0.75rem;
+    --radius-card: var(--radius-md);
+    --radius-button: var(--radius-sm);  /* Rectangle buttons maintained */
     
-    /* Transitions */
+    /* ===== TRANSITIONS - Your current system ===== */
     --transition-fast: 0.15s ease;
     --transition-base: 0.3s ease;
     --transition-slow: 0.5s ease;
     
-    /* Z-Index Scale */
+    /* ===== Z-INDEX SCALE ===== */
     --z-dropdown: 1000;
     --z-sticky: 1020;
     --z-fixed: 1030;
@@ -125,7 +257,7 @@
     --z-popover: 1060;
     --z-tooltip: 1070;
     
-    /* Layout */
+    /* ===== LAYOUT - Your current system ===== */
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 90px;
     --header-height: 60px;
@@ -133,64 +265,107 @@
     --layout-transition: 300ms ease;
 }
 
-/* Dark Theme Colors - Standardized */
+/* ===== DARK THEME - Enhanced version of your current theme ===== */
 [data-theme="dark"] {
-    /* Standardized Color Palette - Dark Theme */
-    --primary: #63b3ed;
+    /* Invert the gray scale for dark mode */
+    --gray-50: #18181b;
+    --gray-100: #27272a;
+    --gray-200: #3f3f46;
+    --gray-300: #52525b;
+    --gray-400: #71717a;
+    --gray-500: #a1a1aa;
+    --gray-600: #d4d4d8;
+    --gray-700: #e4e4e7;
+    --gray-800: #f4f4f5;
+    --gray-900: #fafafa;
+    
+    /* Adjust primary colors for dark mode - brighter */
+    --primary: #63b3ed;              /* Brighter blue for dark */
     --primary-hover: #4299e1;
+    --primary-active: #3182ce;
     --primary-bg: rgba(99, 179, 237, 0.15);
+    
+    /* Adjust semantic colors for dark mode */
     --success: #68d391;
     --success-hover: #48bb78;
     --success-bg: rgba(104, 211, 145, 0.15);
+    
     --warning: #fbb040;
     --warning-hover: #ed8936;
     --warning-bg: rgba(251, 176, 64, 0.15);
+    
     --error: #fc8181;
     --error-hover: #f56565;
     --error-bg: rgba(252, 129, 129, 0.15);
     
-    /* Background Colors */
+    /* Dark mode backgrounds - your current system enhanced */
     --bg-primary: #1a202c;
     --bg-secondary: #2d3748;
     --bg-tertiary: #4a5568;
-    --bg-light: #2d3748;
-    --bg-white: #1a202c;
-    --bg-dark: #111827;
-    --bg-darker: #0f172a;
-    --surface-color: #1a202c;
-    --card-bg: #1a202c;
+    --bg-hover: rgba(255, 255, 255, 0.05);
+    --bg-active: rgba(255, 255, 255, 0.08);
+    --bg-selected: rgba(99, 179, 237, 0.15);
     
-    /* Text Colors */
+    /* Dark mode surfaces */
+    --surface-primary: var(--bg-primary);
+    --surface-secondary: var(--bg-secondary);
+    --surface-tertiary: var(--bg-tertiary);
+    
+    /* Dark mode text - your current system */
     --text-primary: #f7fafc;
     --text-secondary: #e2e8f0;
-    --text-muted: #a0aec0;
-    --text-light: #cbd5e0;
+    --text-tertiary: #a0aec0;
+    --text-disabled: #718096;
     --text-inverse: #2d3748;
     
-    /* Border Colors */
-    --border-color: #4a5568;
+    /* Dark mode borders */
+    --border-subtle: #4a5568;
+    --border-default: #2d3748;
+    --border-strong: #718096;
+    --border-hover: var(--gray-400);
+    --border-focus: var(--primary);
+    
+    /* Legacy border support */
+    --border-color: var(--border-subtle);
     --border-light: #374151;
-    --border-dark: #2d3748;
+    --border-dark: var(--border-default);
     
-    /* Component Specific */
-    --sidebar-bg: #0f1419;
-    --sidebar-border: #1a202c;
+    /* Dark mode component colors */
+    --card-bg: var(--surface-primary);
+    --table-header-bg: var(--bg-secondary);
     
-    /* Legacy Support - Mapped to new system */
-    --primary-color: var(--primary);
-    --accent-color: var(--primary);
-    --success-color: var(--success);
-    --warning-color: var(--warning);
-    --error-color: var(--error);
-    --danger-color: var(--error);
-    
-    /* Standardized Shadows - Enhanced for dark theme */
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    /* Enhanced shadows for dark theme */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
-    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.5);
     --card-shadow: var(--shadow-md);
+    
+    /* Dark mode specific overrides */
+    --sidebar-bg: #0f1419;
+    --sidebar-border: var(--bg-primary);
 }
+
+/* ===== UTILITY CLASSES FOR CONSISTENT USAGE ===== */
+/* Status indicators */
+.status-online { color: var(--status-online) !important; }
+.status-offline { color: var(--status-offline) !important; }
+.status-error { color: var(--status-error) !important; }
+.status-warning { color: var(--status-warning) !important; }
+
+/* Background utilities */
+.bg-online { background-color: var(--status-online-bg) !important; }
+.bg-offline { background-color: var(--status-offline-bg) !important; }
+.bg-error { background-color: var(--status-error-bg) !important; }
+.bg-warning { background-color: var(--status-warning-bg) !important; }
+
+/* Text color utilities */
+.text-success { color: var(--success) !important; }
+.text-warning { color: var(--warning) !important; }
+.text-error { color: var(--error) !important; }
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
 
 /* Responsive Breakpoints */
 @media (max-width: 768px) {

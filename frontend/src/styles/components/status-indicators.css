@@ -29,41 +29,50 @@
     100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-/* Standardized Status Colors */
+/* Standardized Status Colors - Updated for new variable system */
 .status-online {
-    color: var(--success) !important;
+    color: var(--status-online) !important;
 }
 
 .status-online .status-dot {
-    background-color: var(--success);
-    box-shadow: 0 0 0 2px rgba(72, 187, 120, 0.3);
+    background-color: var(--status-online);
+    box-shadow: 0 0 0 2px var(--status-online-bg);
 }
 
 .status-offline {
-    color: var(--error) !important;
+    color: var(--status-offline) !important;
 }
 
 .status-offline .status-dot {
-    background-color: var(--error);
-    box-shadow: 0 0 0 2px rgba(245, 101, 101, 0.3);
+    background-color: var(--status-offline);
+    box-shadow: 0 0 0 2px var(--status-offline-bg);
+}
+
+.status-error {
+    color: var(--status-error) !important;
+}
+
+.status-error .status-dot {
+    background-color: var(--status-error);
+    box-shadow: 0 0 0 2px var(--status-error-bg);
 }
 
 .status-warning {
-    color: var(--warning) !important;
+    color: var(--status-warning) !important;
 }
 
 .status-warning .status-dot {
-    background-color: var(--warning);
-    box-shadow: 0 0 0 2px rgba(237, 137, 54, 0.3);
+    background-color: var(--status-warning);
+    box-shadow: 0 0 0 2px var(--status-warning-bg);
 }
 
 .status-maintenance {
-    color: var(--text-muted) !important;
+    color: var(--status-maintenance) !important;
 }
 
 .status-maintenance .status-dot {
-    background-color: var(--text-muted);
-    box-shadow: 0 0 0 2px rgba(160, 174, 192, 0.3);
+    background-color: var(--status-maintenance);
+    box-shadow: 0 0 0 2px var(--status-warning-bg);
 }
 
 .status-loading {
@@ -336,21 +345,31 @@
 }
 
 .connection-status-online {
-    background: var(--success-bg);
-    color: var(--success);
-    border: 1px solid rgba(72, 187, 120, 0.2);
+    background: var(--status-online-bg);
+    color: var(--status-online);
+    border: 1px solid var(--status-online);
+    border-opacity: 0.2;
 }
 
 .connection-status-offline {
-    background: var(--error-bg);
-    color: var(--error);
-    border: 1px solid rgba(245, 101, 101, 0.2);
+    background: var(--status-offline-bg);
+    color: var(--status-offline);
+    border: 1px solid var(--status-offline);
+    border-opacity: 0.2;
+}
+
+.connection-status-error {
+    background: var(--status-error-bg);
+    color: var(--status-error);
+    border: 1px solid var(--status-error);
+    border-opacity: 0.2;
 }
 
 .connection-status-checking {
-    background: var(--warning-bg);
-    color: var(--warning);
-    border: 1px solid rgba(237, 137, 54, 0.2);
+    background: var(--status-warning-bg);
+    color: var(--status-warning);
+    border: 1px solid var(--status-warning);
+    border-opacity: 0.2;
 }
 
 /* Health Status Cards */
@@ -382,18 +401,23 @@
 }
 
 .health-status-icon.online {
-    background: var(--success-bg);
-    color: var(--success);
+    background: var(--status-online-bg);
+    color: var(--status-online);
 }
 
 .health-status-icon.offline {
-    background: var(--error-bg);
-    color: var(--error);
+    background: var(--status-offline-bg);
+    color: var(--status-offline);
+}
+
+.health-status-icon.error {
+    background: var(--status-error-bg);
+    color: var(--status-error);
 }
 
 .health-status-icon.warning {
-    background: var(--warning-bg);
-    color: var(--warning);
+    background: var(--status-warning-bg);
+    color: var(--status-warning);
 }
 
 .health-status-content {

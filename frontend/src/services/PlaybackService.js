@@ -153,7 +153,134 @@ class PlaybackService {
     }
 
     /**
-     * Get comprehensive storage statistics
+     * RECORDINGS-FIRST API ENDPOINTS
+     * These methods use the new recordings-first approach
+     */
+
+    /**
+     * Get all recording sources (active and deleted cameras with recordings)
+     * This is the primary method for the recordings-first approach
+     */
+    async getRecordingSources(includeDeleted = true, includeEmpty = false) {
+        try {
+            const params = new URLSearchParams();
+            params.append('include_deleted', includeDeleted);
+            params.append('include_empty', includeEmpty);
+            
+            const response = await fetch(`${this.baseUrl}/api/v1/recordings/sources?${params}`);
+            
+            if (!response.ok) {
+                throw new Error(`Recording sources request failed: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get recording sources:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get orphaned recordings (from deleted cameras)
+     */
+    async getOrphanedRecordings() {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/v1/recordings/orphaned`);
+            
+            if (!response.ok) {
+                throw new Error(`Orphaned recordings request failed: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get orphaned recordings:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get all dates that have recordings from any camera
+     */
+    async getRecordingDates() {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/v1/recordings/calendar/dates`);
+            
+            if (!response.ok) {
+                throw new Error(`Recording dates request failed: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get recording dates:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get all cameras that have recordings on a specific date
+     */
+    async getCamerasForDate(date) {
+        try {
+            const response = await fetch(`${this.baseUrl}/api/v1/recordings/date/${date}/cameras`);
+            
+            if (!response.ok) {
+                throw new Error(`Cameras for date request failed: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get cameras for date:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get storage usage statistics (recordings-first approach)
+     */
+    async getStorageUsage(cameraId = null) {
+        try {
+            const params = new URLSearchParams();
+            if (cameraId) params.append('camera_id', cameraId);
+            
+            const response = await fetch(`${this.baseUrl}/api/v1/recordings/storage/usage?${params}`);
+            
+            if (!response.ok) {
+                throw new Error(`Storage usage request failed: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to get storage usage:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Cleanup orphaned recordings
+     */
+    async cleanupOrphanedRecordings(olderThanDays = 30, dryRun = true) {
+        try {
+            const params = new URLSearchParams();
+            params.append('older_than_days', olderThanDays);
+            params.append('dry_run', dryRun);
+            
+            const response = await fetch(`${this.baseUrl}/api/v1/recordings/orphaned?${params}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Cleanup request failed: ${response.status}`);
+            }
+            
+            return await response.json();
+        } catch (error) {
+            console.error('Failed to cleanup orphaned recordings:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get comprehensive storage statistics (legacy method)
      */
     async getStorageReport() {
         try {

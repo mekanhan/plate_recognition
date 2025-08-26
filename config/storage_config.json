@@ -46,5 +46,46 @@
         "window_seconds": "Time window for grouping related detections",
         "min_confidence_improvement": "Minimum quality improvement to replace existing image",
         "dramatic_improvement_threshold": "Quality improvement needed during cooldown period"
+    },
+    "enhanced_storage_optimization": {
+        "retention_policies": {
+            "detection_images": {
+                "max_age_days": 7,
+                "max_count": 10000,
+                "cleanup_batch_size": 1000,
+                "enabled": true
+            },
+            "detection_records": {
+                "max_age_days": 30,
+                "archive_threshold_days": 90,
+                "enabled": true
+            },
+            "log_files": {
+                "max_age_days": 30,
+                "max_size_mb": 100,
+                "enabled": true
+            },
+            "database": {
+                "wal_checkpoint_interval": 3600,
+                "vacuum_threshold_mb": 100,
+                "auto_optimize": true
+            }
+        },
+        "storage_limits": {
+            "warning_threshold": 80.0,
+            "critical_threshold": 90.0,
+            "emergency_cleanup_threshold": 95.0
+        },
+        "cleanup_schedule": {
+            "daily_cleanup_hour": 2,
+            "deep_cleanup_day": 0,
+            "emergency_cleanup_enabled": true,
+            "auto_cleanup_enabled": true
+        },
+        "monitoring": {
+            "health_check_interval": 300,
+            "alert_cooldown": 3600,
+            "dashboard_refresh_interval": 30
+        }
     }
 }

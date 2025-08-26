@@ -9,7 +9,7 @@
     justify-content: center;
     gap: var(--spacing-sm);
     border: 1px solid transparent;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-button); /* Rectangle buttons - 0.25rem */
     font-family: var(--font-family);
     font-weight: var(--font-medium);
     text-decoration: none;
@@ -260,7 +260,7 @@
 /* Button Groups */
 .btn-group {
     display: inline-flex;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-button); /* Rectangle buttons - 0.25rem */
     overflow: hidden;
     box-shadow: var(--shadow-sm);
 }
@@ -273,13 +273,13 @@
 }
 
 .btn-group .btn:first-child {
-    border-top-left-radius: var(--radius-md);
-    border-bottom-left-radius: var(--radius-md);
+    border-top-left-radius: var(--radius-button);
+    border-bottom-left-radius: var(--radius-button);
 }
 
 .btn-group .btn:last-child {
-    border-top-right-radius: var(--radius-md);
-    border-bottom-right-radius: var(--radius-md);
+    border-top-right-radius: var(--radius-button);
+    border-bottom-right-radius: var(--radius-button);
     border-right-width: 1px;
 }
 
@@ -325,11 +325,12 @@
     border-color: var(--border-light);
 }
 
-/* Status Button Colors - Standardized */
-.status-online { color: var(--success) !important; }
-.status-offline { color: var(--error) !important; }
-.status-warning { color: var(--warning) !important; }
-.status-maintenance { color: var(--text-muted) !important; }
+/* Status Button Colors - Standardized with new variables */
+.status-online { color: var(--status-online) !important; }
+.status-offline { color: var(--status-offline) !important; }
+.status-error { color: var(--status-error) !important; }
+.status-warning { color: var(--status-warning) !important; }
+.status-maintenance { color: var(--status-maintenance) !important; }
 
 /* Animation Performance Optimizations */
 .btn {

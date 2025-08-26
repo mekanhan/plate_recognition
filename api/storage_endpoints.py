@@ -2,9 +2,15 @@
 Storage Management API Endpoints
 Provides REST API for storage monitoring and cleanup operations
 """
-from fastapi import APIRouter, HTTPException, Query
-from typing import Optional, Dict, Any
+from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from typing import Optional, Dict, Any, List
+from pydantic import BaseModel
+from datetime import datetime, timedelta
+from pathlib import Path
 import logging
+import os
+import sqlite3
+import json
 
 try:
     from core.storage.media_retention_manager import MediaRetentionManager
@@ -257,3 +263,233 @@ async def get_storage_health():
             "health": "critical",
             "message": f"Health check error: {str(e)}"
         }
+
+
+# Enhanced Storage Monitoring Endpoints
+
+class StorageStatsResponse(BaseModel):
+    total_gb: float
+    used_gb: float
+    available_gb: float
+    usage_percentage: float
+    health_status: str
+    cleanup_potential_gb: float
+
+class CleanupPreviewResponse(BaseModel):
+    old_images_count: int
+    old_images_size_mb: float
+    database_wal_size_mb: float
+    total_cleanup_potential_gb: float
+
+
+def get_disk_stats() -> Dict:
+    """Get disk usage statistics using df command"""
+    try:
+        import subprocess
+        result = subprocess.run(['df', '.'], capture_output=True, text=True)
+        lines = result.stdout.strip().split('\n')
+        
+        if len(lines) >= 2:
+            parts = lines[1].split()
+            total_kb = int(parts[1])
+            used_kb = int(parts[2])
+            available_kb = int(parts[3])
+            
+            total_gb = total_kb / (1024**2)
+            used_gb = used_kb / (1024**2)
+            available_gb = available_kb / (1024**2)
+            usage_pct = (used_kb / total_kb) * 100
+            
+            return {
+                "total_gb": total_gb,
+                "used_gb": used_gb,
+                "available_gb": available_gb,
+                "usage_percentage": usage_pct
+            }
+    except Exception as e:
+        logger.error(f"Failed to get disk stats: {e}")
+    
+    return {"total_gb": 0, "used_gb": 0, "available_gb": 0, "usage_percentage": 0}
+
+
+def get_cleanup_potential() -> float:
+    """Calculate potential storage savings from cleanup"""
+    potential_gb = 0.0
+    
+    # Old detection images (>1 day)
+    cutoff = (datetime.now() - timedelta(days=1)).timestamp()
+    detection_path = Path("detections")
+    
+    try:
+        for img_type in ['frames', 'plates']:
+            img_dir = detection_path / img_type
+            if img_dir.exists():
+                for img_file in img_dir.glob('*.jpg'):
+                    try:
+                        if img_file.stat().st_mtime < cutoff:
+                            potential_gb += img_file.stat().st_size / (1024**3)
+                    except:
+                        continue
+    except Exception as e:
+        logger.error(f"Error calculating image cleanup potential: {e}")
+    
+    # Database WAL file
+    try:
+        wal_path = "data/license_plates.db-wal"
+        if os.path.exists(wal_path):
+            potential_gb += os.path.getsize(wal_path) / (1024**3)
+    except Exception as e:
+        logger.error(f"Error calculating WAL cleanup potential: {e}")
+    
+    return potential_gb
+
+
+def count_old_images(max_age_days: int = 1) -> Dict:
+    """Count old detection images for cleanup preview"""
+    cutoff = (datetime.now() - timedelta(days=max_age_days)).timestamp()
+    
+    old_count = 0
+    old_size_mb = 0.0
+    
+    detection_path = Path("detections")
+    try:
+        for img_type in ['frames', 'plates']:
+            img_dir = detection_path / img_type
+            if img_dir.exists():
+                for img_file in img_dir.glob('*.jpg'):
+                    try:
+                        if img_file.stat().st_mtime < cutoff:
+                            old_count += 1
+                            old_size_mb += img_file.stat().st_size / (1024**2)
+                    except:
+                        continue
+    except Exception as e:
+        logger.error(f"Error counting old images: {e}")
+    
+    return {"count": old_count, "size_mb": old_size_mb}
+
+
+@storage_router.get("/stats/enhanced", response_model=StorageStatsResponse)
+async def get_enhanced_storage_stats():
+    """Get enhanced storage statistics with cleanup potential"""
+    disk_stats = get_disk_stats()
+    cleanup_potential = get_cleanup_potential()
+    
+    # Determine health status
+    usage_pct = disk_stats["usage_percentage"]
+    if usage_pct < 80:
+        health_status = "healthy"
+    elif usage_pct < 90:
+        health_status = "warning"
+    elif usage_pct < 95:
+        health_status = "critical"
+    else:
+        health_status = "emergency"
+    
+    return StorageStatsResponse(
+        total_gb=disk_stats["total_gb"],
+        used_gb=disk_stats["used_gb"],
+        available_gb=disk_stats["available_gb"],
+        usage_percentage=usage_pct,
+        health_status=health_status,
+        cleanup_potential_gb=cleanup_potential
+    )
+
+
+@storage_router.get("/cleanup/preview", response_model=CleanupPreviewResponse)
+async def preview_storage_cleanup(image_age_days: int = 1):
+    """Preview what would be cleaned up"""
+    # Count old images
+    old_images = count_old_images(image_age_days)
+    
+    # Get WAL file size
+    wal_path = "data/license_plates.db-wal"
+    wal_size_mb = 0.0
+    try:
+        if os.path.exists(wal_path):
+            wal_size_mb = os.path.getsize(wal_path) / (1024**2)
+    except Exception as e:
+        logger.error(f"Error getting WAL size: {e}")
+    
+    total_cleanup_gb = (old_images["size_mb"] + wal_size_mb) / 1024
+    
+    return CleanupPreviewResponse(
+        old_images_count=old_images["count"],
+        old_images_size_mb=old_images["size_mb"],
+        database_wal_size_mb=wal_size_mb,
+        total_cleanup_potential_gb=total_cleanup_gb
+    )
+
+
+@storage_router.post("/cleanup/execute")
+async def execute_storage_cleanup(
+    background_tasks: BackgroundTasks,
+    image_age_days: int = 1,
+    dry_run: bool = False
+):
+    """Execute storage cleanup in background"""
+    
+    def _run_cleanup():
+        """Run the actual cleanup"""
+        import subprocess
+        import sys
+        
+        try:
+            # Run our cleanup script
+            cmd = [sys.executable, "bin/storage_cleanup.py"]
+            if not dry_run:
+                cmd.append("--execute")
+            if image_age_days != 1:
+                cmd.extend(["--max-age", str(image_age_days)])
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, cwd=".")
+            
+            # Save result
+            cleanup_result = {
+                "timestamp": datetime.now().isoformat(),
+                "dry_run": dry_run,
+                "image_age_days": image_age_days,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "return_code": result.returncode,
+                "success": result.returncode == 0
+            }
+            
+            os.makedirs("logs", exist_ok=True)
+            with open("logs/last_storage_cleanup.json", "w") as f:
+                json.dump(cleanup_result, f, indent=2)
+                
+        except Exception as e:
+            logger.error(f"Cleanup execution error: {e}")
+            cleanup_result = {
+                "timestamp": datetime.now().isoformat(),
+                "error": str(e),
+                "success": False
+            }
+            
+            os.makedirs("logs", exist_ok=True)
+            with open("logs/last_storage_cleanup.json", "w") as f:
+                json.dump(cleanup_result, f, indent=2)
+    
+    background_tasks.add_task(_run_cleanup)
+    
+    return {
+        "status": "started",
+        "message": f"Storage cleanup {'preview' if dry_run else 'execution'} started in background",
+        "dry_run": dry_run,
+        "image_age_days": image_age_days
+    }
+
+
+@storage_router.get("/cleanup/status")
+async def get_cleanup_status():
+    """Get status of last cleanup operation"""
+    try:
+        with open("logs/last_storage_cleanup.json", "r") as f:
+            result = json.load(f)
+        return {"status": "found", "result": result}
+    except FileNotFoundError:
+        return {"status": "not_found", "message": "No cleanup history found"}
+    except Exception as e:
+        logger.error(f"Error reading cleanup status: {e}")
+        return {"status": "error", "message": str(e)}

@@ -23,18 +23,23 @@
 }
 
 .camera-status-indicator.online {
-    background: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+    background: var(--status-online);
+    box-shadow: 0 0 8px var(--status-online-bg);
 }
 
 .camera-status-indicator.offline {
-    background: #ef4444;
-    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+    background: var(--status-offline);
+    box-shadow: 0 0 8px var(--status-offline-bg);
+}
+
+.camera-status-indicator.error {
+    background: var(--status-error);
+    box-shadow: 0 0 8px var(--status-error-bg);
 }
 
 .camera-status-indicator.orphaned {
-    background: #fb923c;
-    box-shadow: 0 0 8px rgba(251, 146, 60, 0.4);
+    background: var(--status-warning);
+    box-shadow: 0 0 8px var(--status-warning-bg);
 }
 
 /* Recording Badge Styles */
@@ -51,15 +56,17 @@
 }
 
 .recording-badge.active {
-    background: rgba(34, 197, 94, 0.1);
-    color: #22c55e;
-    border: 1px solid rgba(34, 197, 94, 0.2);
+    background: var(--status-online-bg);
+    color: var(--status-online);
+    border: 1px solid var(--status-online);
+    border-opacity: 0.2;
 }
 
 .recording-badge.orphaned {
-    background: rgba(251, 146, 60, 0.1);
-    color: #fb923c;
-    border: 1px solid rgba(251, 146, 60, 0.2);
+    background: var(--status-warning-bg);
+    color: var(--status-warning);
+    border: 1px solid var(--status-warning);
+    border-opacity: 0.2;
 }
 
 .recording-badge i {
@@ -68,28 +75,35 @@
 
 /* Orphaned Camera Card Styles */
 .camera-card.orphaned-card {
-    border: 1px solid rgba(251, 146, 60, 0.3);
-    background: rgba(251, 146, 60, 0.02);
+    border: 1px solid var(--status-warning);
+    border-opacity: 0.3;
+    background: var(--status-warning-bg);
+    background-opacity: 0.02;
 }
 
 .camera-card.orphaned-card .camera-card-header {
-    background: rgba(251, 146, 60, 0.05);
+    background: var(--status-warning-bg);
+    background-opacity: 0.05;
 }
 
-/* Dark mode adjustments */
+/* Dark mode adjustments - now handled automatically by variables */
 [data-theme="dark"] .recording-badge.active {
-    background: rgba(34, 197, 94, 0.15);
-    border-color: rgba(34, 197, 94, 0.3);
+    background: var(--status-online-bg);
+    border-color: var(--status-online);
+    border-opacity: 0.3;
 }
 
 [data-theme="dark"] .recording-badge.orphaned {
-    background: rgba(251, 146, 60, 0.15);
-    border-color: rgba(251, 146, 60, 0.3);
+    background: var(--status-warning-bg);
+    border-color: var(--status-warning);
+    border-opacity: 0.3;
 }
 
 [data-theme="dark"] .camera-card.orphaned-card {
-    border-color: rgba(251, 146, 60, 0.2);
-    background: rgba(251, 146, 60, 0.01);
+    border-color: var(--status-warning);
+    border-opacity: 0.2;
+    background: var(--status-warning-bg);
+    background-opacity: 0.01;
 }
 
 /* Header Actions */

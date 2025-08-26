@@ -1856,25 +1856,28 @@
 }
 
 .detail-value.status-online {
-    color: #10b981;
-    background: rgba(16, 185, 129, 0.1);
-    border-color: rgba(16, 185, 129, 0.2);
+    color: var(--status-online);
+    background: var(--status-online-bg);
+    border-color: var(--status-online);
+    border-opacity: 0.2;
 }
 
 .detail-value.status-offline {
-    color: #ef4444;
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.2);
+    color: var(--status-offline);
+    background: var(--status-offline-bg);
+    border-color: var(--status-offline);
+    border-opacity: 0.2;
 }
 
 .detail-value.status-warning {
-    color: #f59e0b;
-    background: rgba(245, 158, 11, 0.1);
-    border-color: rgba(245, 158, 11, 0.2);
+    color: var(--status-warning);
+    background: var(--status-warning-bg);
+    border-color: var(--status-warning);
+    border-opacity: 0.2;
 }
 
 .detail-value.health-score.excellent {
-    color: #10b981;
+    color: var(--status-online);
     font-weight: 600;
 }
 

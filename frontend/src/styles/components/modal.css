@@ -9,7 +9,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: var(--surface-overlay);
     z-index: var(--z-modal-backdrop);
     display: flex;
     align-items: center;
@@ -42,7 +42,7 @@
 /* Modal Container - Standardized Widths */
 .modal-container {
     background: var(--bg-primary);
-    border-radius: 12px; /* Standardized border radius */
+    border-radius: var(--radius-card); /* Consistent with cards */
     box-shadow: var(--shadow-xl);
     max-height: 90vh;
     overflow: hidden;

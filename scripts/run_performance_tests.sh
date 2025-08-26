@@ -1,0 +1,206 @@
+#!/bin/bash
+
+# LPR Performance Testing Script
+# Runs Lighthouse audits on all application pages and generates reports
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+BASE_URL="http://localhost:8080"
+REPORT_DIR="docs/performance"
+DATE=$(date +%m%d%Y)
+
+echo -e "${BLUE}🚀 LPR Performance Testing Suite${NC}"
+echo -e "${BLUE}=================================${NC}"
+
+# Check if Lighthouse is installed
+if ! command -v lighthouse &> /dev/null; then
+    echo -e "${RED}❌ Lighthouse not found. Installing...${NC}"
+    npm install -g lighthouse
+fi
+
+# Check if server is running
+if ! curl -s "${BASE_URL}/health" &> /dev/null; then
+    echo -e "${RED}❌ Server not running at ${BASE_URL}${NC}"
+    echo -e "${YELLOW}💡 Please start the server first:${NC}"
+    echo -e "   python3 bin/start_lpr.py"
+    echo -e "   ./.venv/bin/python3 frontend_server.py"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Server is running${NC}"
+
+# Create reports directory
+mkdir -p "${REPORT_DIR}"
+
+# Pages to test
+declare -A PAGES=(
+    ["dashboard"]="#dashboard"
+    ["cameras"]="#cameras" 
+    ["recordings"]="#recordings"
+    ["detections"]="#detections"
+    ["settings"]="#settings"
+)
+
+echo -e "${BLUE}🔍 Running Lighthouse audits...${NC}"
+
+# Run audits for each page
+for page_name in "${!PAGES[@]}"; do
+    url_fragment="${PAGES[$page_name]}"
+    full_url="${BASE_URL}/${url_fragment}"
+    report_file="${REPORT_DIR}/${page_name}_report_${DATE}.json"
+    
+    echo -e "${YELLOW}📊 Testing ${page_name} page...${NC}"
+    
+    # Run Lighthouse audit
+    lighthouse "${full_url}" \
+        --output=json \
+        --output-path="${report_file}" \
+        --chrome-flags="--headless --no-sandbox --disable-gpu" \
+        --quiet \
+        --throttling-method=devtools \
+        --emulated-form-factor=desktop
+    
+    if [ -f "${report_file}" ]; then
+        # Extract performance score
+        score=$(cat "${report_file}" | jq -r '.categories.performance.score * 100 | floor')
+        echo -e "${GREEN}✅ ${page_name}: ${score}% performance score${NC}"
+    else
+        echo -e "${RED}❌ Failed to generate report for ${page_name}${NC}"
+    fi
+done
+
+echo -e "${BLUE}📈 Generating performance summary...${NC}"
+
+# Generate summary report
+summary_file="${REPORT_DIR}/performance_summary_${DATE}.md"
+
+cat > "${summary_file}" << EOF
+# Performance Test Results - $(date '+%B %d, %Y')
+
+## Test Configuration
+- **Date**: $(date)
+- **Base URL**: ${BASE_URL}
+- **Lighthouse Version**: $(lighthouse --version)
+- **Test Environment**: Desktop, DevTools throttling
+
+## Results
+
+| Page | Performance Score | Status |
+|------|------------------|--------|
+EOF
+
+# Add results to summary
+for page_name in "${!PAGES[@]}"; do
+    report_file="${REPORT_DIR}/${page_name}_report_${DATE}.json"
+    if [ -f "${report_file}" ]; then
+        score=$(cat "${report_file}" | jq -r '.categories.performance.score * 100 | floor')
+        
+        # Determine status based on score
+        if [ "$score" -ge 75 ]; then
+            status="🟢 Good"
+        elif [ "$score" -ge 50 ]; then
+            status="🟡 Needs Improvement" 
+        else
+            status="🔴 Poor"
+        fi
+        
+        echo "| ${page_name^} | ${score}% | ${status} |" >> "${summary_file}"
+    fi
+done
+
+cat >> "${summary_file}" << EOF
+
+## Core Web Vitals Summary
+
+EOF
+
+# Extract Core Web Vitals for each page
+for page_name in "${!PAGES[@]}"; do
+    report_file="${REPORT_DIR}/${page_name}_report_${DATE}.json"
+    if [ -f "${report_file}" ]; then
+        echo "### ${page_name^} Page" >> "${summary_file}"
+        
+        # Extract FCP
+        fcp=$(cat "${report_file}" | jq -r '.audits."first-contentful-paint".displayValue // "N/A"')
+        echo "- **First Contentful Paint**: ${fcp}" >> "${summary_file}"
+        
+        # Extract LCP  
+        lcp=$(cat "${report_file}" | jq -r '.audits."largest-contentful-paint".displayValue // "N/A"')
+        echo "- **Largest Contentful Paint**: ${lcp}" >> "${summary_file}"
+        
+        # Extract CLS
+        cls=$(cat "${report_file}" | jq -r '.audits."cumulative-layout-shift".displayValue // "N/A"')
+        echo "- **Cumulative Layout Shift**: ${cls}" >> "${summary_file}"
+        
+        echo "" >> "${summary_file}"
+    fi
+done
+
+cat >> "${summary_file}" << EOF
+## Recommendations
+
+Based on the audit results, consider the following optimizations:
+
+### High Priority
+- If any page scores below 75%, review render-blocking resources
+- Check for unused CSS/JavaScript (look for "remove-unused" audits)
+- Verify image optimization and lazy loading
+
+### Medium Priority  
+- Implement service worker for caching
+- Add resource hints (preload, prefetch)
+- Optimize critical rendering path
+
+### Low Priority
+- Consider HTTP/2 server push
+- Implement advanced image formats (WebP, AVIF)
+- Fine-tune cache strategies
+
+---
+*Report generated by LPR Performance Testing Suite*
+EOF
+
+echo -e "${GREEN}📊 Performance summary saved to: ${summary_file}${NC}"
+
+# Display results
+echo -e "\n${BLUE}📊 Performance Test Results${NC}"
+echo -e "${BLUE}===========================${NC}"
+
+for page_name in "${!PAGES[@]}"; do
+    report_file="${REPORT_DIR}/${page_name}_report_${DATE}.json"
+    if [ -f "${report_file}" ]; then
+        score=$(cat "${report_file}" | jq -r '.categories.performance.score * 100 | floor')
+        
+        # Color code based on score
+        if [ "$score" -ge 75 ]; then
+            color=$GREEN
+        elif [ "$score" -ge 50 ]; then
+            color=$YELLOW
+        else
+            color=$RED
+        fi
+        
+        echo -e "${color}- ${page_name^}: ${score}% performance score${NC}"
+    fi
+done
+
+echo -e "\n${GREEN}✅ Performance testing completed!${NC}"
+echo -e "${BLUE}📁 Reports saved in: ${REPORT_DIR}/${NC}"
+echo -e "${BLUE}📋 Summary: ${summary_file}${NC}"
+
+# Check if we should open results
+if command -v code &> /dev/null; then
+    echo -e "\n${YELLOW}💡 Open results in VS Code? (y/n)${NC}"
+    read -r response
+    if [[ "$response" =~ ^[Yy]$ ]]; then
+        code "${summary_file}"
+    fi
+fi

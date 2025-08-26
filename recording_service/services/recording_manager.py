@@ -65,6 +65,83 @@ class CameraRecorder:
         
         return f"rtsp://{auth}{ip_address}:{port}{stream_path}"
     
+    def _apply_user_video_settings(self):
+        """Apply user-configured video settings to camera capture"""
+        if not self.current_capture:
+            return
+        
+        # Get user video settings from camera config
+        resolution_width = self.camera_config.get('resolution_width', 1920)
+        resolution_height = self.camera_config.get('resolution_height', 1080)
+        max_fps = self.camera_config.get('max_fps', 30)
+        video_quality = self.camera_config.get('video_quality', 'medium')
+        low_latency = self.camera_config.get('low_latency', True)
+        
+        logger.info(f"Applying video settings for {self.name}: {resolution_width}x{resolution_height} @ {max_fps}fps, quality: {video_quality}")
+        
+        try:
+            # Apply resolution settings
+            self.current_capture.set(cv2.CAP_PROP_FRAME_WIDTH, resolution_width)
+            self.current_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, resolution_height)
+            
+            # Apply FPS settings
+            self.current_capture.set(cv2.CAP_PROP_FPS, max_fps)
+            
+            # Apply low latency settings
+            if low_latency:
+                # Minimize buffer for lower latency
+                self.current_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            else:
+                # Allow larger buffer for stability
+                self.current_capture.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+            
+            # Apply quality settings if available
+            self._apply_quality_settings(video_quality)
+            
+            logger.info(f"Successfully applied video settings for {self.name}")
+            
+        except Exception as e:
+            logger.warning(f"Failed to apply some video settings for {self.name}: {e}")
+    
+    def _apply_quality_settings(self, video_quality):
+        """Apply video quality settings"""
+        if not self.current_capture:
+            return
+        
+        # Map quality levels to compression settings
+        quality_map = {
+            'low': {
+                'compression': 0.5,  # Higher compression, lower quality
+                'bitrate_factor': 0.7
+            },
+            'medium': {
+                'compression': 0.7,  # Balanced compression
+                'bitrate_factor': 1.0
+            },
+            'high': {
+                'compression': 0.9,  # Lower compression, higher quality  
+                'bitrate_factor': 1.3
+            }
+        }
+        
+        settings = quality_map.get(video_quality, quality_map['medium'])
+        
+        try:
+            # Apply quality settings where supported by OpenCV
+            # Note: Some settings may not be available depending on camera/driver
+            
+            # Set JPEG quality (0-100) if available
+            jpeg_quality = int(settings['compression'] * 100)
+            try:
+                self.current_capture.set(cv2.CAP_PROP_JPEG_QUALITY, jpeg_quality)
+            except:
+                pass  # Not all cameras/codecs support this
+            
+            logger.debug(f"Applied quality settings for {self.name}: {video_quality} (compression: {settings['compression']})")
+            
+        except Exception as e:
+            logger.debug(f"Some quality settings not applied for {self.name}: {e}")
+
     async def start_recording(self):
         """Start continuous recording"""
         if self.is_recording:
@@ -131,8 +208,9 @@ class CameraRecorder:
                         frame_count += 1
                         self.last_frame_time = datetime.now()
                     
-                    # Small delay to prevent overwhelming CPU
-                    await asyncio.sleep(1/30)  # ~30 FPS
+                    # Small delay based on user-configured FPS
+                    user_fps = self.camera_config.get('max_fps', 30)
+                    await asyncio.sleep(1/user_fps)
                 
                 # Finish current segment
                 await self._finish_current_segment()
@@ -165,7 +243,9 @@ class CameraRecorder:
             os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp'
             
             self.current_capture = cv2.VideoCapture(self.rtsp_url)
-            self.current_capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+            
+            # Apply user video settings
+            self._apply_user_video_settings()
             
             # Set reasonable timeouts for RTSP
             self.current_capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 10000)  # 10 seconds
@@ -209,24 +289,38 @@ class CameraRecorder:
         filename = f"camera_{self.camera_id}_{now.strftime('%Y%m%d_%H%M%S')}_600.mp4"
         self.current_segment_path = date_path / filename
         
-        # Get actual frame dimensions from the camera stream
+        # Use user-configured resolution settings
         if not self.current_capture:
             logger.error(f"No capture available for {self.name}")
             return
             
-        # Read a test frame to get dimensions
+        # Get user video settings from camera config
+        user_width = self.camera_config.get('resolution_width', 1920)
+        user_height = self.camera_config.get('resolution_height', 1080)
+        user_fps = self.camera_config.get('max_fps', 30)
+        
+        # Test if camera can provide the requested resolution
         ret, test_frame = self.current_capture.read()
         if not ret or test_frame is None:
-            logger.error(f"Failed to read test frame for resolution detection from {self.name}")
-            # Fallback to common sub stream resolution
-            frame_height, frame_width = 360, 640
+            logger.error(f"Failed to read test frame from {self.name}")
+            # Use user settings as fallback
+            frame_width, frame_height = user_width, user_height
+            logger.info(f"Using user-configured resolution for {self.name}: {frame_width}x{frame_height}")
         else:
-            frame_height, frame_width = test_frame.shape[:2]
-            logger.info(f"Detected resolution for {self.name}: {frame_width}x{frame_height}")
+            # Check if the actual frame matches user settings
+            actual_height, actual_width = test_frame.shape[:2]
+            
+            # Use user-configured resolution (preferred)
+            frame_width, frame_height = user_width, user_height
+            
+            logger.info(f"Recording {self.name} at user-configured resolution: {frame_width}x{frame_height} @ {user_fps}fps")
+            if actual_width != user_width or actual_height != user_height:
+                logger.info(f"Note: Camera native resolution is {actual_width}x{actual_height}, scaling to {frame_width}x{frame_height}")
         
-        # Store dimensions for database record
+        # Store dimensions and FPS for database record
         self.current_frame_width = frame_width
         self.current_frame_height = frame_height
+        self.current_fps = user_fps
         
         # Initialize video writer with actual dimensions
         # Try H264 codec first for browser compatibility
@@ -243,8 +337,8 @@ class CameraRecorder:
         self.current_writer = cv2.VideoWriter(
             str(self.current_segment_path),
             fourcc,
-            30.0,  # FPS
-            (frame_width, frame_height)  # Actual resolution
+            float(user_fps),  # Use user-configured FPS
+            (frame_width, frame_height)  # User-configured resolution
         )
         
         if not self.current_writer.isOpened():
@@ -290,7 +384,7 @@ class CameraRecorder:
                 video_codec='h264',
                 video_width=getattr(self, 'current_frame_width', 640),
                 video_height=getattr(self, 'current_frame_height', 360),
-                video_fps=30,
+                video_fps=getattr(self, 'current_fps', 30),
                 is_compressed=True,
                 has_audio=False
             )

@@ -61,6 +61,94 @@ class FFmpegCameraRecorder:
         else:
             return f"rtsp://{ip_address}:{port}{stream_path}"
     
+    def _build_ffmpeg_command_with_user_settings(self, output_pattern: str) -> list:
+        """Build FFmpeg command with user-configured video settings"""
+        # Get user video settings from camera config
+        resolution_width = self.camera_config.get('resolution_width', 1920)
+        resolution_height = self.camera_config.get('resolution_height', 1080)
+        max_fps = self.camera_config.get('max_fps', 30)
+        video_quality = self.camera_config.get('video_quality', 'medium')
+        low_latency = self.camera_config.get('low_latency', True)
+        
+        logger.info(f"Building FFmpeg command for {self.name} with user settings:")
+        logger.info(f"  Resolution: {resolution_width}x{resolution_height}")
+        logger.info(f"  FPS: {max_fps}")
+        logger.info(f"  Quality: {video_quality}")
+        logger.info(f"  Low Latency: {low_latency}")
+        
+        # Base command
+        cmd = [
+            'ffmpeg',
+            '-y',  # Overwrite output files
+            
+            # Input options
+            '-rtsp_transport', 'tcp',  # Use TCP for RTSP (more reliable)
+        ]
+        
+        # Add low latency options if enabled
+        if low_latency:
+            cmd.extend([
+                '-fflags', 'nobuffer',
+                '-flags', 'low_delay',
+                '-avioflags', 'direct'
+            ])
+        
+        cmd.extend([
+            '-i', self.rtsp_url,  # Input RTSP stream
+        ])
+        
+        # Video encoding settings based on user preferences
+        if video_quality == 'low':
+            # Fast encoding, lower quality
+            cmd.extend([
+                '-c:v', 'libx264',
+                '-preset', 'ultrafast',
+                '-crf', '28',  # Higher CRF = lower quality, smaller files
+                '-maxrate', '1M',
+                '-bufsize', '2M'
+            ])
+        elif video_quality == 'high':
+            # Slower encoding, higher quality
+            cmd.extend([
+                '-c:v', 'libx264',
+                '-preset', 'medium',
+                '-crf', '18',  # Lower CRF = higher quality, larger files
+                '-maxrate', '5M',
+                '-bufsize', '10M'
+            ])
+        else:  # medium quality (default)
+            cmd.extend([
+                '-c:v', 'libx264',
+                '-preset', 'fast',
+                '-crf', '23',  # Balanced quality
+                '-maxrate', '3M',
+                '-bufsize', '6M'
+            ])
+        
+        # Apply user resolution and frame rate
+        cmd.extend([
+            '-s', f'{resolution_width}x{resolution_height}',  # Scale to user resolution
+            '-r', str(max_fps),  # Set output frame rate
+        ])
+        
+        # Audio settings - copy audio stream without re-encoding for compatibility
+        cmd.extend([
+            '-c:a', 'aac',  # Use AAC audio codec for better compatibility
+            '-b:a', '128k',  # Audio bitrate
+        ])
+        
+        # Segmentation settings
+        cmd.extend([
+            '-f', 'segment',  # Use segment muxer
+            '-segment_time', str(self.segment_duration),  # 10-minute segments
+            '-segment_format', 'mp4',  # MP4 format for segments
+            '-reset_timestamps', '1',  # Reset timestamps for each segment
+            '-strftime', '1',  # Enable strftime in output pattern
+            output_pattern  # Output pattern
+        ])
+        
+        return cmd
+
     async def start_recording(self) -> bool:
         """Start FFmpeg recording process"""
         if self.is_recording:
@@ -83,29 +171,8 @@ class FFmpegCameraRecorder:
             # Generate output filename pattern with strftime support
             output_pattern = str(self.current_output_dir / f"camera_{self.camera_id}_%Y%m%d_%H%M%S.mp4")
             
-            # FFmpeg command for segmented recording (simplified and working)
-            cmd = [
-                'ffmpeg',
-                '-y',  # Overwrite output files
-                
-                # Input options
-                '-rtsp_transport', 'tcp',  # Use TCP for RTSP (more reliable)
-                '-i', self.rtsp_url,       # Input RTSP stream
-                
-                # Video settings - copy stream directly (no re-encoding for stability)
-                '-c:v', 'copy',            # Copy video stream (no re-encoding)
-                '-c:a', 'copy',            # Copy audio stream (no re-encoding)
-                
-                # Segmentation settings (simplified)
-                '-f', 'segment',           # Use segment muxer
-                '-segment_time', str(self.segment_duration),  # 10-minute segments  
-                '-segment_format', 'mp4',  # MP4 format for segments
-                '-reset_timestamps', '1',   # Reset timestamps for each segment
-                '-strftime', '1',          # Enable strftime in output pattern
-                
-                # Output pattern
-                output_pattern
-            ]
+            # Build FFmpeg command with user video settings
+            cmd = self._build_ffmpeg_command_with_user_settings(output_pattern)
             
             logger.info(f"Starting FFmpeg recording for {self.name}")
             logger.debug(f"RTSP URL: {self.rtsp_url.split('@')[0]}@***")  # Hide credentials
@@ -269,9 +336,9 @@ class FFmpegCameraRecorder:
                         duration_seconds=metadata['duration'],
                         file_size_bytes=file_stats.st_size,
                         video_codec='h264',  # Converted to H.264 for browser compatibility
-                        video_width=1920,    # 1080p width (scaled down)
-                        video_height=1080,   # 1080p height (scaled down)
-                        video_fps=15,        # 15 FPS (reduced for stability)
+                        video_width=self.camera_config.get('resolution_width', 1920),
+                        video_height=self.camera_config.get('resolution_height', 1080),
+                        video_fps=self.camera_config.get('max_fps', 30),
                         is_compressed=True,
                         has_audio=True,      # FFmpeg records audio
                         has_detections=False,

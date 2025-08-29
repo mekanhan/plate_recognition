@@ -101,7 +101,8 @@ async def get_object_types(
             query += " WHERE active = TRUE"
         query += " ORDER BY priority ASC"
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             result = await conn.execute(text(query))
             rows = result.fetchall()
         
@@ -186,7 +187,8 @@ async def search_detections(
             {where_clause}
         """
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             count_result = await conn.execute(text(count_query), params)
             total_count = count_result.fetchone().total
         
@@ -202,7 +204,8 @@ async def search_detections(
         
         params.update({"limit": limit, "offset": offset})
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             result = await conn.execute(text(search_query), params)
             rows = result.fetchall()
         
@@ -332,6 +335,67 @@ async def smart_search_detections(
         raise HTTPException(status_code=500, detail="Failed to perform smart search")
 
 
+@router.get("/license-plates/recent")
+async def get_recent_license_plates(
+    limit: int = Query(100, ge=1, le=500),
+    camera_id: Optional[str] = Query(None),
+    db: DatabaseService = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_user)
+):
+    """Get recent license plate detections specifically"""
+    try:
+        from sqlalchemy import text
+        import json
+        
+        # Build query for license plates
+        conditions = ["object_type = 'vehicle'", "metadata LIKE '%plate_text%'"]
+        params = {"limit": limit}
+        
+        if camera_id:
+            conditions.append("camera_id = :camera_id")
+            params["camera_id"] = camera_id
+        
+        where_clause = "WHERE " + " AND ".join(conditions)
+        
+        query = f"""
+            SELECT id, camera_id, confidence, detected_at,
+                   metadata, object_image_path, frame_path
+            FROM universal_detections
+            {where_clause}
+            ORDER BY detected_at DESC
+            LIMIT :limit
+        """
+        
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
+            result = await conn.execute(text(query), params)
+            rows = result.fetchall()
+        
+        detections = []
+        for row in rows:
+            metadata = json.loads(row.metadata) if row.metadata else {}
+            detections.append({
+                "id": row.id,
+                "camera_id": row.camera_id,
+                "plate_text": metadata.get('plate_text', 'unknown'),
+                "confidence": row.confidence,
+                "vehicle_type": metadata.get('vehicle_type', 'unknown'),
+                "detected_at": row.detected_at.isoformat() if hasattr(row.detected_at, 'isoformat') else str(row.detected_at),
+                "plate_image": row.object_image_path,
+                "frame_image": row.frame_path,
+                "ocr_confidence": metadata.get('ocr_confidence')
+            })
+        
+        return {
+            "total": len(detections),
+            "detections": detections
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting recent license plates: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get recent license plates")
+
+
 @router.get("/detections/{detection_id}")
 async def get_detection_details(
     detection_id: str,
@@ -349,7 +413,8 @@ async def get_detection_details(
             WHERE ud.id = :detection_id
         """
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             result = await conn.execute(text(query), {"detection_id": detection_id})
             row = result.fetchone()
         
@@ -462,7 +527,8 @@ async def update_detection(
             WHERE id = :detection_id
         """
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             result = await conn.execute(text(query), params)
         
         if result.rowcount == 0:
@@ -520,7 +586,8 @@ async def get_detection_statistics(
             {where_clause}
         """
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             stats_result = await conn.execute(text(stats_query), params)
             stats_row = stats_result.fetchone()
         
@@ -538,7 +605,8 @@ async def get_detection_statistics(
             ORDER BY count DESC
         """
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             type_result = await conn.execute(text(type_query), params)
             type_rows = type_result.fetchall()
         
@@ -554,7 +622,8 @@ async def get_detection_statistics(
             ORDER BY hour
         """
         
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             hourly_result = await conn.execute(text(hourly_query), params)
             hourly_rows = hourly_result.fetchall()
         

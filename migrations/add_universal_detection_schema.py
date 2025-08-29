@@ -102,7 +102,8 @@ async def migrate_existing_detections(db: DatabaseService):
     """Migrate existing license plate detections to universal format"""
     try:
         # Check if there are existing detections to migrate
-        async with db.engine.begin() as conn:
+        engine = await db.get_engine()
+        async with engine.begin() as conn:
             result = await conn.execute(text("SELECT COUNT(*) as count FROM detections"))
             row = result.fetchone()
             count = row[0] if row else 0
@@ -124,7 +125,7 @@ async def migrate_existing_detections(db: DatabaseService):
                 ORDER BY created_at 
                 LIMIT {batch_size} OFFSET {offset}
             """
-            async with db.engine.begin() as conn:
+            async with engine.begin() as conn:
                 result = await conn.execute(text(query))
                 detections = [row._asdict() for row in result.fetchall()]
             
@@ -186,7 +187,7 @@ async def migrate_existing_detections(db: DatabaseService):
                              :bbox, :frame_path, :object_image_path, :video_clip_id,
                              :metadata, :status, :created_at)
                 """
-                async with db.engine.begin() as conn:
+                async with engine.begin() as conn:
                     await conn.execute(text(insert_query), batch_data)
             
             offset += batch_size
@@ -205,25 +206,28 @@ async def run_migration():
     try:
         logger.info("🚀 Starting Universal Detection Schema Migration...")
         
+        # Get engine once
+        engine = await db.get_engine()
+        
         # Create object_types table
         logger.info("Creating object_types table...")
-        async with db.engine.begin() as conn:
+        async with engine.begin() as conn:
             await conn.execute(text(CREATE_OBJECT_TYPES_TABLE))
         
         # Create universal_detections table
         logger.info("Creating universal_detections table...")
-        async with db.engine.begin() as conn:
+        async with engine.begin() as conn:
             await conn.execute(text(CREATE_UNIVERSAL_DETECTIONS_TABLE))
         
         # Create indexes
         logger.info("Creating indexes for performance...")
-        async with db.engine.begin() as conn:
+        async with engine.begin() as conn:
             for index_query in CREATE_INDEXES:
                 await conn.execute(text(index_query))
         
         # Insert default object types
         logger.info("Inserting default object types...")
-        async with db.engine.begin() as conn:
+        async with engine.begin() as conn:
             await conn.execute(text(INSERT_OBJECT_TYPES))
         
         # Migrate existing detections
@@ -233,13 +237,13 @@ async def run_migration():
         logger.info("Verifying migration...")
         
         # Check object types
-        async with db.engine.begin() as conn:
+        async with engine.begin() as conn:
             types_result = await conn.execute(text("SELECT COUNT(*) as count FROM object_types"))
             types_count = types_result.fetchone()[0]
             logger.info(f"✅ Object types created: {types_count}")
         
         # Check universal detections
-        async with db.engine.begin() as conn:
+        async with engine.begin() as conn:
             detections_result = await conn.execute(text("SELECT COUNT(*) as count FROM universal_detections"))
             detections_count = detections_result.fetchone()[0]
             logger.info(f"✅ Universal detections: {detections_count}")
@@ -248,7 +252,7 @@ async def run_migration():
         
         # Display object types
         logger.info("\n📋 Available Object Types:")
-        async with db.engine.begin() as conn:
+        async with engine.begin() as conn:
             types_result = await conn.execute(text("SELECT type_code, display_name, icon, color FROM object_types ORDER BY priority"))
             types = [row._asdict() for row in types_result.fetchall()]
             for obj_type in types:

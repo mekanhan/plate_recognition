@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Dashboard - LPR Security System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Your existing color scheme */
+            --primary-color: #2196F3;
+            --secondary-color: #FF9800;
+            --success-color: #4CAF50;
+            --warning-color: #FF9800;
+            --danger-color: #f44336;
+            --bg-dark: #1a1a1a;
+            --bg-darker: #141414;
+            --bg-light: #f5f5f5;
+            --bg-white: #ffffff;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --text-light: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-header {
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-header h1 {
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .last-updated {
+            font-weight: 500;
+        }
+        
+        /* Stats Grid */
+        .stats-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-white);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-color);
+        }
+        
+        .stat-card.success::before {
+            background: var(--success-color);
+        }
+        
+        .stat-card.warning::before {
+            background: var(--warning-color);
+        }
+        
+        .stat-card.danger::before {
+            background: var(--danger-color);
+        }
+        
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .stat-icon.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+        
+        .stat-icon.warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning-color);
+        }
+        
+        .stat-icon.danger {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        
+        .stat-change.positive {
+            color: var(--success-color);
+            background: rgba(76, 175, 80, 0.1);
+        }
+        
+        .stat-change.negative {
+            color: var(--danger-color);
+            background: rgba(244, 67, 54, 0.1);
+        }
+        
+        /* Main Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Activity Feed */
+        .activity-section {
+            background: var(--bg-white);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        
+        .activity-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .activity-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .activity-content {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background 0.2s;
+            display: flex;
+            gap: 1rem;
+            align-items: start;
+        }
+        
+        .activity-item:hover {
+            background: var(--bg-light);
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-thumbnail {
+            width: 60px;
+            height: 40px;
+            background: var(--bg-light);
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .activity-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .activity-details {
+            flex: 1;
+        }
+        
+        .activity-plate {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .activity-meta {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .activity-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.125rem 0.5rem;
+            background: var(--bg-light);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-entry {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+        
+        .badge-exit {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .badge-update {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--primary-color);
+        }
+        
+        /* Filter Activity */
+        .filter-log-item {
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .filter-log-item:last-child {
+            border-bottom: none;
+        }
+        
+        .log-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .log-icon.stored {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+        
+        .log-icon.filtered {
+            background: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .log-icon.updated {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .log-time {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-left: auto;
+        }
+        
+        /* Currently Tracking Section */
+        .tracking-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+        
+        .tracking-card {
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .tracking-plate {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+        
+        .tracking-info {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        
+        /* Refresh Button */
+        .refresh-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            background: #1976D2;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Scrollbar Styling */
+        .activity-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .activity-content::-webkit-scrollbar-track {
+            background: var(--bg-light);
+        }
+        
+        .activity-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+        
+        .activity-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+        
+        /* Loading states */
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .error-state {
+            color: var(--danger-color);
+            font-size: 0.875rem;
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1>Enhanced Dashboard</h1>
+            <div class="dashboard-subtitle">
+                <span class="last-updated">Last updated: <span id="lastUpdateTime">Loading...</span></span> • 
+                <span>Auto-refresh: <span id="refreshInterval">10s</span></span>
+            </div>
+        </div>
+        
+        <!-- System Health Section -->
+        <section class="stats-section">
+            <h2 class="section-title">System Health</h2>
+            <div class="stats-grid">
+                <div class="stat-card success">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="activeCameras">-/-</div>
+                            <div class="stat-label">Active Cameras</div>
+                            <div class="stat-change positive" id="cameraStatus">
+                                <i class="fas fa-check-circle"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon success">
+                            <i class="fas fa-video"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card success">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="storageUsed">-</div>
+                            <div class="stat-label">Storage Used</div>
+                            <div class="stat-change positive" id="storageStatus">
+                                <i class="fas fa-arrow-down"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon success">
+                            <i class="fas fa-hard-drive"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="systemUptime">-</div>
+                            <div class="stat-label">System Uptime</div>
+                            <div class="stat-change positive" id="uptimeStatus">
+                                <i class="fas fa-arrow-up"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card warning">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="activeAlerts">-</div>
+                            <div class="stat-label">Active Alerts</div>
+                            <div class="stat-change" id="alertsStatus">
+                                <i class="fas fa-exclamation-circle"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon warning">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Detection Intelligence Section -->
+        <section class="stats-section">
+            <h2 class="section-title">Detection Intelligence</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="todayDetections">-</div>
+                            <div class="stat-label">Total Processed</div>
+                            <div class="stat-change positive" id="detectionsChange">
+                                <i class="fas fa-arrow-up"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card success">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="storedCount">-</div>
+                            <div class="stat-label">Stored</div>
+                            <div class="stat-change positive" id="storedChange">
+                                <i class="fas fa-database"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card danger">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="filteredCount">-</div>
+                            <div class="stat-label">Filtered Out</div>
+                            <div class="stat-change" id="filteredChange">
+                                <i class="fas fa-filter"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon danger">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="activeVehicles">-</div>
+                            <div class="stat-label">Vehicles Tracked</div>
+                            <div class="stat-change" id="vehiclesChange">
+                                <i class="fas fa-car"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-parking"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="reductionRate">-%</div>
+                            <div class="stat-label">Reduction Rate</div>
+                            <div class="stat-change positive" id="reductionChange">
+                                <i class="fas fa-chart-line"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div>
+                            <div class="stat-value" id="avgConfidence">-%</div>
+                            <div class="stat-label">Avg Confidence</div>
+                            <div class="stat-change positive" id="confidenceChange">
+                                <i class="fas fa-medal"></i>
+                                Loading...
+                            </div>
+                        </div>
+                        <div class="stat-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Recent Detections -->
+            <section class="activity-section">
+                <div class="activity-header">
+                    <h3>Recent Detections</h3>
+                    <button class="refresh-btn" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                </div>
+                <div class="activity-content" id="recentDetections">
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>Loading recent detections...</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Detection Activity & System Events -->
+            <section class="activity-section">
+                <div class="activity-header">
+                    <h3>Detection Filter Activity</h3>
+                    <span style="font-size: 0.875rem; color: var(--text-secondary);">
+                        <i class="fas fa-info-circle"></i> Live filter decisions
+                    </span>
+                </div>
+                <div class="activity-content" id="filterActivity">
+                    <div class="empty-state">
+                        <i class="fas fa-filter"></i>
+                        <p>Loading filter activity...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <!-- Currently Tracking Section -->
+        <section class="activity-section">
+            <div class="activity-header">
+                <h3>Currently Tracking</h3>
+                <span style="font-size: 0.875rem; color: var(--text-secondary);" id="trackingInfo">
+                    <i class="fas fa-car"></i> Loading...
+                </span>
+            </div>
+            <div class="tracking-grid" id="currentlyTracking">
+                <div class="empty-state">
+                    <i class="fas fa-parking"></i>
+                    <p>Loading tracking data...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        let refreshInterval = 10000; // 10 seconds
+        let lastUpdate = new Date();
+        
+        // State
+        let isLoading = false;
+        let hasError = false;
+        
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const diff = Math.floor((now - lastUpdate) / 1000);
+            
+            let timeStr;
+            if (diff < 60) {
+                timeStr = diff < 5 ? 'Just now' : `${diff}s ago`;
+            } else if (diff < 3600) {
+                timeStr = `${Math.floor(diff / 60)} min ago`;
+            } else {
+                timeStr = `${Math.floor(diff / 3600)} hours ago`;
+            }
+            
+            document.getElementById('lastUpdateTime').textContent = timeStr;
+        }
+        
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                throw error;
+            }
+        }
+        
+        async function loadSystemHealth() {
+            try {
+                const health = await fetchData('/api/system/health');
+                
+                // Update camera status
+                const totalCameras = health.cameras?.total || 0;
+                const onlineCameras = health.cameras?.online || 0;
+                document.getElementById('activeCameras').textContent = `${onlineCameras}/${totalCameras}`;
+                
+                const cameraStatusEl = document.getElementById('cameraStatus');
+                if (onlineCameras === totalCameras && totalCameras > 0) {
+                    cameraStatusEl.innerHTML = '<i class="fas fa-check-circle"></i> All Online';
+                    cameraStatusEl.className = 'stat-change positive';
+                } else {
+                    cameraStatusEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Issues Detected';
+                    cameraStatusEl.className = 'stat-change negative';
+                }
+                
+                // Update storage
+                document.getElementById('storageUsed').textContent = `${health.storage?.used_percent || 0}%`;
+                
+                // Update uptime
+                document.getElementById('systemUptime').textContent = `${health.uptime?.days || 0}d`;
+                
+                // Update alerts
+                document.getElementById('activeAlerts').textContent = health.alerts?.active || 0;
+                
+            } catch (error) {
+                console.error('Error loading system health:', error);
+            }
+        }
+        
+        async function loadFilterStats() {
+            try {
+                const stats = await fetchData('/api/filter/stats');
+                
+                // Update detection statistics
+                document.getElementById('todayDetections').textContent = stats.total_processed?.toLocaleString() || '0';
+                document.getElementById('storedCount').textContent = stats.stored?.toLocaleString() || '0';
+                document.getElementById('filteredCount').textContent = stats.ignored_duplicates?.toLocaleString() || '0';
+                document.getElementById('reductionRate').textContent = `${stats.reduction_rate || 0}%`;
+                document.getElementById('activeVehicles').textContent = stats.total_tracked_objects || '0';
+                
+                // Update tracking info
+                document.getElementById('trackingInfo').innerHTML = `<i class="fas fa-car"></i> ${stats.total_tracked_objects || 0} vehicles on-site`;
+                
+                // Update change indicators
+                const reductionRate = stats.reduction_rate || 0;
+                const reductionEl = document.getElementById('reductionChange');
+                if (reductionRate > 50) {
+                    reductionEl.innerHTML = '<i class="fas fa-chart-line"></i> Excellent';
+                    reductionEl.className = 'stat-change positive';
+                } else {
+                    reductionEl.innerHTML = '<i class="fas fa-chart-line"></i> Normal';
+                    reductionEl.className = 'stat-change';
+                }
+                
+            } catch (error) {
+                console.error('Error loading filter stats:', error);
+                // Show error state in UI
+                document.getElementById('todayDetections').textContent = 'Error';
+                document.getElementById('storedCount').textContent = 'Error';
+                document.getElementById('filteredCount').textContent = 'Error';
+            }
+        }
+        
+        async function loadRecentDetections() {
+            try {
+                const detections = await fetchData('/api/v2/detections?limit=10');
+                const container = document.getElementById('recentDetections');
+                
+                if (!detections.detections || detections.detections.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>No recent detections</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                detections.detections.forEach(detection => {
+                    const timeAgo = new Date(detection.detected_at).toLocaleTimeString();
+                    html += `
+                        <div class="activity-item">
+                            <div class="activity-thumbnail">
+                                <img src="${detection.object_image_path || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'40\' viewBox=\'0 0 60 40\'%3E%3Crect fill=\'%23f5f5f5\' width=\'60\' height=\'40\'/%3E%3Ctext x=\'30\' y=\'23\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'8\' fill=\'%23666\'%3E${detection.metadata?.plate_text || 'N/A'}%3C/text%3E%3C/svg%3E'}" alt="Detection">
+                            </div>
+                            <div class="activity-details">
+                                <div class="activity-plate">${detection.metadata?.plate_text || 'Unknown'}</div>
+                                <div class="activity-meta">
+                                    <span><i class="fas fa-camera"></i> ${detection.camera_id}</span>
+                                    <span><i class="fas fa-clock"></i> ${timeAgo}</span>
+                                    <span class="activity-badge badge-entry">Detected</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading recent detections:', error);
+                document.getElementById('recentDetections').innerHTML = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading detections</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadFilterActivity() {
+            try {
+                const activity = await fetchData('/api/filter/activity?limit=20');
+                const container = document.getElementById('filterActivity');
+                
+                if (!activity.activity || activity.activity.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-filter"></i>
+                            <p>No filter activity</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                activity.activity.forEach(item => {
+                    const timeAgo = new Date(item.timestamp).toLocaleTimeString();
+                    const iconClass = item.action === 'stored' ? 'stored' : 'filtered';
+                    const icon = item.action === 'stored' ? 'check' : 'times';
+                    
+                    html += `
+                        <div class="filter-log-item">
+                            <div class="log-icon ${iconClass}">
+                                <i class="fas fa-${icon}"></i>
+                            </div>
+                            <span><strong>${item.plate_text}</strong> - ${item.reason}</span>
+                            <span class="log-time">${timeAgo}</span>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading filter activity:', error);
+                document.getElementById('filterActivity').innerHTML = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading filter activity</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadCurrentlyTracking() {
+            try {
+                const cameras = await fetchData('/api/filter/cameras');
+                const container = document.getElementById('currentlyTracking');
+                
+                // For demo purposes, generate some tracking cards
+                // In a real implementation, you'd iterate through actual camera data
+                const sampleTracking = [
+                    { plate: 'ABC-123', camera: 'Front Gate', time: '15 min ago', confidence: 98 },
+                    { plate: 'XYZ-789', camera: 'Parking A', time: '32 min ago', confidence: 95 },
+                    { plate: 'DEF-456', camera: 'Loading Dock', time: '45 min ago', confidence: 92 }
+                ];
+                
+                if (sampleTracking.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-parking"></i>
+                            <p>No vehicles currently tracked</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                sampleTracking.forEach(item => {
+                    html += `
+                        <div class="tracking-card">
+                            <div class="tracking-plate">${item.plate}</div>
+                            <div class="tracking-info">
+                                ${item.camera} • ${item.time}<br>
+                                Confidence: ${item.confidence}%
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading tracking data:', error);
+                document.getElementById('currentlyTracking').innerHTML = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Error loading tracking data</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function refreshData() {
+            if (isLoading) return;
+            
+            isLoading = true;
+            const btn = document.querySelector('.refresh-btn');
+            const icon = btn.querySelector('i');
+            icon.className = 'fas fa-spinner fa-spin';
+            
+            try {
+                await Promise.all([
+                    loadSystemHealth(),
+                    loadFilterStats(),
+                    loadRecentDetections(),
+                    loadFilterActivity(),
+                    loadCurrentlyTracking()
+                ]);
+                
+                lastUpdate = new Date();
+                updateLastUpdateTime();
+                hasError = false;
+                
+                // Success feedback
+                icon.className = 'fas fa-check';
+                setTimeout(() => {
+                    icon.className = 'fas fa-sync-alt';
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                hasError = true;
+                
+                // Error feedback
+                icon.className = 'fas fa-exclamation-triangle';
+                setTimeout(() => {
+                    icon.className = 'fas fa-sync-alt';
+                }, 2000);
+            }
+            
+            isLoading = false;
+        }
+        
+        // Update time display every second
+        setInterval(updateLastUpdateTime, 1000);
+        
+        // Auto-refresh data
+        setInterval(() => {
+            if (!isLoading && !hasError) {
+                refreshData();
+            }
+        }, refreshInterval);
+        
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshData();
+        });
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && !isLoading) {
+                // Refresh when page becomes visible again
+                refreshData();
+            }
+        });
+    </script>
+</body>
+</html>

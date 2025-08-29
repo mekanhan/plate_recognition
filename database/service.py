@@ -17,6 +17,12 @@ class DatabaseService:
         # Use hardened database configuration
         self.db_config = db_config
         self.logger = logging.getLogger("DatabaseService")
+    
+    async def get_engine(self):
+        """Get the database engine"""
+        if self.db_config._engine is None:
+            await self.db_config.init_engine()
+        return self.db_config._engine
         
     async def init_db(self):
         """Initialize database and create tables"""
@@ -72,7 +78,7 @@ class DatabaseService:
             return detection.id
     
     async def get_recent_detections(self, limit: int = 100, camera_id: Optional[str] = None) -> List[Detection]:
-        """Get recent detections"""
+        """Get recent detections from the original detections table"""
         async with self.db_config.get_session() as session:
             query = select(Detection).order_by(desc(Detection.detected_at)).limit(limit)
             
@@ -81,6 +87,75 @@ class DatabaseService:
             
             result = await session.execute(query)
             return result.scalars().all()
+    
+    async def get_recent_universal_detections(self, limit: int = 100, camera_id: Optional[str] = None):
+        """Get recent universal detections with plate data"""
+        async with self.db_config.get_session() as session:
+            from sqlalchemy import text
+            import json
+            
+            # Query universal detections - filter for vehicles with plate_text
+            where_clauses = ["object_type = 'vehicle'", "metadata LIKE '%plate_text%'"]
+            params = {"limit": limit}
+            
+            if camera_id:
+                where_clauses.append("camera_id = :camera_id")
+                params["camera_id"] = camera_id
+            
+            where_clause = "WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+            
+            query = f"""
+                SELECT id, camera_id, object_type, confidence, detected_at,
+                       bbox, frame_path, object_image_path, metadata,
+                       status, flagged, model_version
+                FROM universal_detections 
+                {where_clause}
+                ORDER BY detected_at DESC 
+                LIMIT :limit
+            """
+            
+            result = await session.execute(text(query), params)
+            rows = result.fetchall()
+            
+            # Convert to Detection-like objects for compatibility
+            detections = []
+            for row in rows:
+                try:
+                    # Parse metadata to get plate info
+                    metadata = json.loads(row.metadata) if row.metadata else {}
+                    plate_text = metadata.get('plate_text', 'unknown')
+                    vehicle_type = metadata.get('vehicle_type', 'unknown')
+                    
+                    # Parse bbox 
+                    bbox = json.loads(row.bbox) if row.bbox else {}
+                    
+                    # Create a simple object that mimics Detection model
+                    class UniversalDetectionProxy:
+                        def __init__(self, **kwargs):
+                            for k, v in kwargs.items():
+                                setattr(self, k, v)
+                    
+                    detection = UniversalDetectionProxy(
+                        id=row.id,
+                        camera_id=row.camera_id,
+                        plate_text=plate_text,
+                        confidence=row.confidence,
+                        vehicle_type=vehicle_type,
+                        detected_at=row.detected_at,
+                        plate_image_path=row.object_image_path,
+                        frame_path=row.frame_path,
+                        video_clip_id=None,  # Universal detections don't have video clips yet
+                        bbox=bbox,
+                        metadata=metadata
+                    )
+                    detections.append(detection)
+                    
+                except Exception as e:
+                    # Skip malformed records
+                    self.logger.warning(f"Skipping malformed detection record {row.id}: {e}")
+                    continue
+            
+            return detections
     
     async def get_detection_by_id(self, detection_id: str) -> Optional[Detection]:
         """Get detection by ID"""
@@ -530,6 +605,111 @@ class DatabaseService:
             last_time = result.scalar()
             return last_time.isoformat() if last_time else None
     
+    async def create_universal_detection(self, detection_data: Dict[str, Any]) -> str:
+        """Create a universal detection record"""
+        import uuid
+        
+        async with self.db_config.get_session() as session:
+            try:
+                # Generate unique ID
+                detection_id = str(uuid.uuid4())
+                
+                # Prepare SQL insert statement
+                from sqlalchemy import text
+                insert_sql = """
+                INSERT INTO universal_detections (
+                    id, camera_id, object_type, confidence, detected_at,
+                    bbox, frame_path, object_image_path, metadata,
+                    status, flagged, tags, processing_time_ms, model_version,
+                    created_at, updated_at
+                ) VALUES (
+                    :id, :camera_id, :object_type, :confidence, :detected_at,
+                    :bbox, :frame_path, :object_image_path, :metadata,
+                    :status, :flagged, :tags, :processing_time_ms, :model_version,
+                    :created_at, :updated_at
+                )
+                """
+                
+                # Convert datetime objects to ISO strings if needed
+                detected_at = detection_data.get('detected_at')
+                if isinstance(detected_at, datetime):
+                    detected_at = detected_at.isoformat()
+                
+                created_at = datetime.now().isoformat()
+                
+                # Prepare parameters
+                params = {
+                    'id': detection_id,
+                    'camera_id': detection_data.get('camera_id'),
+                    'object_type': detection_data.get('object_type', 'license_plate'),
+                    'confidence': detection_data.get('confidence', 0.0),
+                    'detected_at': detected_at,
+                    'bbox': json.dumps(detection_data.get('bbox', {})),
+                    'frame_path': detection_data.get('frame_path'),
+                    'object_image_path': detection_data.get('object_image_path'),
+                    'metadata': json.dumps(detection_data.get('metadata', {})),
+                    'status': detection_data.get('status', 'unreviewed'),
+                    'flagged': detection_data.get('flagged', False),
+                    'tags': json.dumps(detection_data.get('tags', [])),
+                    'processing_time_ms': detection_data.get('processing_time_ms'),
+                    'model_version': detection_data.get('model_version'),
+                    'created_at': created_at,
+                    'updated_at': created_at
+                }
+                
+                # Execute the insert
+                await session.execute(text(insert_sql), params)
+                await session.commit()
+                
+                self.logger.info(f"Created universal detection: {detection_id}")
+                return detection_id
+                
+            except Exception as e:
+                await session.rollback()
+                self.logger.error(f"Error creating universal detection: {e}")
+                raise
+    
+    async def save_universal_detection(self, detection_data: Dict):
+        """Save detection to universal_detections table"""
+        from sqlalchemy import text
+        
+        query = """
+            INSERT INTO universal_detections (
+                id, camera_id, object_type, confidence, detected_at,
+                bbox, frame_path, object_image_path, video_clip_id,
+                video_thumbnail_path, metadata, status, processing_time_ms,
+                model_version, created_at, updated_at
+            ) VALUES (
+                :id, :camera_id, :object_type, :confidence, :detected_at,
+                :bbox, :frame_path, :object_image_path, :video_clip_id,
+                :video_thumbnail_path, :metadata, :status, :processing_time_ms,
+                :model_version, :created_at, :updated_at
+            )
+        """
+        
+        params = {
+            'id': detection_data['id'],
+            'camera_id': detection_data['camera_id'],
+            'object_type': detection_data['object_type'],
+            'confidence': detection_data['confidence'],
+            'detected_at': detection_data['detected_at'],
+            'bbox': json.dumps(detection_data['bbox']),
+            'frame_path': detection_data.get('frame_path', ''),
+            'object_image_path': detection_data.get('object_image_path', ''),
+            'video_clip_id': detection_data.get('video_clip_id', ''),
+            'video_thumbnail_path': detection_data.get('video_thumbnail_path', ''),
+            'metadata': json.dumps(detection_data.get('metadata', {})),
+            'status': detection_data.get('status', 'unverified'),
+            'processing_time_ms': detection_data.get('processing_time_ms', 0),
+            'model_version': detection_data.get('model_version', '2.0'),
+            'created_at': datetime.now(),
+            'updated_at': datetime.now()
+        }
+        
+        async with self.db_config.get_session() as session:
+            await session.execute(text(query), params)
+            await session.commit()
+
     async def close(self):
         """Close database connection"""
         await self.db_config.close()

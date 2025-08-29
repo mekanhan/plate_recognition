@@ -8,7 +8,7 @@ import time
 
 print("🌐 Testing API Endpoints...\n")
 
-API_BASE = "http://localhost:8000"
+API_BASE = "http://localhost:8001"  # Updated to correct port
 
 def check_api_running():
     """Check if API server is running"""

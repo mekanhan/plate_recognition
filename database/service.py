@@ -2,7 +2,7 @@
 Database service for async SQLite operations with enhanced configuration
 """
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, func, desc
+from sqlalchemy import select, and_, func, desc, text
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 import json
@@ -17,11 +17,14 @@ class DatabaseService:
         # Use hardened database configuration
         self.db_config = db_config
         self.logger = logging.getLogger("DatabaseService")
+        self._engine_initialized = False
     
     async def get_engine(self):
         """Get the database engine"""
         if self.db_config._engine is None:
             await self.db_config.init_engine()
+            # Ensure metadata is bound to engine
+            Base.metadata.bind = self.db_config._engine
         return self.db_config._engine
         
     async def init_db(self):
@@ -375,15 +378,18 @@ class DatabaseService:
     
     async def add_camera(self, camera_data: Dict) -> str:
         """Add a new camera"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
             camera = Camera(**camera_data)
             session.add(camera)
             await session.commit()
             await session.refresh(camera)
-            return camera.id
+            camera_id = camera.id
+            return camera_id
     
     async def get_all_cameras(self) -> List[Camera]:
         """Get all cameras with connection validation"""
+        await self.get_engine()  # Ensure engine and metadata binding
         max_retries = 3
         retry_delay = 0.5
         
@@ -404,6 +410,7 @@ class DatabaseService:
     
     async def get_camera(self, camera_id: str) -> Optional[Camera]:
         """Get camera by ID"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
@@ -412,6 +419,7 @@ class DatabaseService:
     
     async def update_camera(self, camera_id: str, camera_data: Dict) -> bool:
         """Update camera configuration"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
@@ -428,20 +436,29 @@ class DatabaseService:
             return False
     
     async def delete_camera(self, camera_id: str) -> bool:
-        """Delete camera"""
+        """Delete camera using raw SQL to avoid ORM binding issues"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
+            # Check if camera exists using raw SQL
             result = await session.execute(
-                select(Camera).where(Camera.camera_id == camera_id)
+                text("SELECT COUNT(*) FROM cameras WHERE camera_id = :camera_id"),
+                {"camera_id": camera_id}
             )
-            camera = result.scalar_one_or_none()
-            if camera:
-                await session.delete(camera)
-                await session.commit()
-                return True
-            return False
+            count = result.scalar()
+            if count == 0:
+                return False
+                
+            # Delete using raw SQL
+            await session.execute(
+                text("DELETE FROM cameras WHERE camera_id = :camera_id"),
+                {"camera_id": camera_id}
+            )
+            await session.commit()
+            return True
     
     async def update_camera_status(self, camera_id: str, status: str):
         """Update camera status"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
@@ -454,6 +471,7 @@ class DatabaseService:
 
     async def get_cameras_by_status(self, status: str) -> List[Camera]:
         """Get all cameras with a specific status"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.status == status)
@@ -462,6 +480,7 @@ class DatabaseService:
     
     async def update_camera_test_result(self, camera_id: str, test_result: str):
         """Update camera test result"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(Camera).where(Camera.camera_id == camera_id)
@@ -596,6 +615,7 @@ class DatabaseService:
     
     async def get_last_detection_time(self, camera_id: str) -> Optional[str]:
         """Get last detection time for a camera"""
+        await self.get_engine()  # Ensure engine and metadata binding
         async with self.db_config.get_session() as session:
             result = await session.execute(
                 select(func.max(Detection.detected_at)).where(

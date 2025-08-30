@@ -126,6 +126,7 @@ curl http://localhost:8002/health
 - Real-time health monitoring
 - Automated storage cleanup (10GB default)
 - Complete playback API with timeline
+- **License plate detection with database storage** (Fixed 2025-08-29)
 
 ## System Status ✅ All Healthy
 - Main API: Camera management, snapshots, detection
@@ -148,6 +149,68 @@ curl http://localhost:8002/health
 - Run integrity checks after schema changes
 - Test both session patterns for compatibility
 
+## Detection System Architecture ✅ Fixed
+
+### Current State (2025-08-29)
+- **Detection Processing**: Uses `FilteredDetectionProcessor` with deduplication
+- **Database Storage**: Saves to original `detections` table (NOT universal_detections)
+- **API Endpoints**: `/api/detections/recent`, `/api/detections/search` fully functional
+- **Real-time Processing**: Active detection every few seconds with database storage
+
+### Detection Data Flow
+1. Camera streams processed by AI pipeline
+2. `FilteredDetectionProcessor` applies deduplication filtering
+3. Valid detections saved using `db_service.save_detection()`
+4. Images stored in `detections/plates/` and `detections/frames/`
+5. Database records accessible via API endpoints
+
+### Critical Lessons Learned (2025-08-29)
+
+#### **Root Cause of Detection Failure**
+- System had TWO detection tables: `detections` (working) and `universal_detections` (broken)
+- Detection processor was using broken `create_universal_detection()` method
+- Fix: Use proven `save_detection()` method with original table
+
+#### **Why Systems Break During "Improvements"**
+1. **Incomplete Migration**: Someone started universal detection system but never finished
+2. **Feature Flag Confusion**: Multiple detection approaches active simultaneously  
+3. **Over-Engineering**: Trying to force new architecture instead of fixing existing
+4. **Missing Documentation**: No clear migration plan or rollback strategy
+
+#### **Debugging Best Practices Applied**
+1. **Follow the Data**: 3000+ images saved but 0 database records = database insertion problem
+2. **Fix First, Improve Later**: Get working system before adding features
+3. **Use Working Patterns**: `save_detection()` worked, so use it
+4. **Minimal Viable Fix**: Change only the broken component
+
+#### **Key Debugging Rules**
+- When debugging, check what WAS working recently
+- Look for incomplete feature rollouts  
+- Test simplest fix first
+- Don't rebuild working components
+- **Fix first, optimize later**
+
+### What's Still Missing & Next Steps
+
+#### **Detection System Gaps**
+- [ ] Detection statistics endpoint returns 0 (needs investigation)
+- [ ] Camera names not showing in detection results (shows camera_id)
+- [ ] No detection history visualization in frontend
+- [ ] Universal detection system incomplete (should complete or remove)
+
+#### **Documentation Needed**
+- [ ] Detection API endpoint documentation
+- [ ] Filter configuration guide
+- [ ] Detection troubleshooting guide
+- [ ] Migration strategy documentation
+
+#### **System Improvements**
+- [ ] Add detection rate monitoring
+- [ ] Implement detection quality scoring
+- [ ] Add detection export functionality
+- [ ] Create detection analytics dashboard
+
 ### Future Phases
 - Phase 3: Security hardening (auth, encryption, HTTPS)
 - Phase 4: Deployment hardening (containers, monitoring)
+- **Phase 5**: Complete detection system cleanup and optimization

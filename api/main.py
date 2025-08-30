@@ -949,22 +949,22 @@ async def get_camera(camera_id: str, db_service: DatabaseService = Depends(get_d
 async def delete_camera(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
     """Delete a camera"""
     try:
-        # Check if camera exists
-        existing_camera = await db_service.get_camera(camera_id)
-        if not existing_camera:
-            raise HTTPException(404, "Camera not found")
-        
-        # Delete from database
+        # Delete from database (will return False if camera doesn't exist)
         success = await db_service.delete_camera(camera_id)
         
         if not success:
-            raise HTTPException(500, "Failed to delete camera")
+            raise HTTPException(404, "Camera not found")
         
-        # Reload camera manager to remove deleted camera
-        await reload_cameras()
+        # Remove from camera manager
+        if camera_id in camera_manager.cameras:
+            del camera_manager.cameras[camera_id]
+            logging.info(f"Removed camera {camera_id} from camera manager")
         
-        # Notify recording service to stop recording for deleted camera
-        await notify_recording_service_camera_deleted(camera_id)
+        # Notify recording service to stop recording for deleted camera (fire and forget)
+        try:
+            await notify_recording_service_camera_deleted(camera_id)
+        except Exception as e:
+            logging.warning(f"Could not notify recording service about camera deletion: {e}")
         
         return {"message": f"Camera {camera_id} deleted successfully"}
     except HTTPException:
@@ -1578,34 +1578,56 @@ async def get_recent_detections(
     } for d in detections]
 
 @app.get("/api/detections/search")  
-async def search_detections_fixed(
+async def search_detections(
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     sort_by: Optional[str] = Query("detected_at", description="Field to sort by"),
-    sort_direction: Optional[str] = Query("desc", regex="^(asc|desc)$", description="Sort direction")
+    sort_direction: Optional[str] = Query("desc", regex="^(asc|desc)$", description="Sort direction"),
+    plate_text: Optional[str] = Query(None, description="Filter by plate text"),
+    camera_id: Optional[str] = Query(None, description="Filter by camera ID"),
+    db_service: DatabaseService = Depends(get_database_service)
 ):
-    """Simplified search endpoint - returns mock data for now to fix CORS issues"""
+    """Search detections with real database queries"""
     
-    # Return mock data structure that matches what frontend expects
-    mock_results = [
-        {
-            "id": "mock_detection_1",
-            "camera_id": "camera_fc46b5a01ef2",
-            "camera_name": "Entrance Gate",
-            "plate_text": "ABC123",
-            "confidence": 0.85,
-            "vehicle_type": "car",
-            "object_type": "vehicle",
-            "detected_at": "2025-08-29T01:30:00.000Z",
-            "plate_image": None,
-            "frame_image": None,
-            "status": "unverified",
-            "has_video": False,
-            "video_clip_id": None
-        }
-    ] if offset == 0 else []  # Only return data for first page
-    
-    return {"results": mock_results}
+    try:
+        # Get recent detections (primary table)
+        all_detections = await db_service.get_recent_detections(limit + offset, camera_id)
+        
+        # Apply text filtering if specified
+        if plate_text:
+            all_detections = [d for d in all_detections if plate_text.upper() in d.plate_text.upper()]
+        
+        # Apply offset and limit
+        if offset > 0:
+            detections = all_detections[offset:offset + limit] if len(all_detections) > offset else []
+        else:
+            detections = all_detections[:limit]
+        
+        # Format results
+        results = []
+        for d in detections:
+            results.append({
+                "id": d.id,
+                "camera_id": d.camera_id,
+                "camera_name": d.camera_id,  # Will be enhanced later with camera names
+                "plate_text": d.plate_text,
+                "confidence": d.confidence,
+                "vehicle_type": d.vehicle_type or "vehicle",
+                "object_type": d.vehicle_type or "vehicle",
+                "detected_at": d.detected_at.isoformat() if hasattr(d.detected_at, 'isoformat') else str(d.detected_at),
+                "plate_image": d.plate_image_path,
+                "frame_image": d.frame_path,
+                "status": getattr(d, 'status', 'unverified'),
+                "has_video": d.video_clip_id is not None,
+                "video_clip_id": d.video_clip_id
+            })
+        
+        return {"results": results}
+        
+    except Exception as e:
+        logger.error(f"Search endpoint error: {e}")
+        # Return empty results with error logged, don't crash
+        return {"results": [], "error": "Database query failed"}
 
 
 @app.get("/api/detections/similar/{plate_text}")
@@ -1635,23 +1657,6 @@ async def get_plate_history(plate_text: str):
 async def get_detection_stats():
     """Get detection statistics - simplified"""
     return {"total": 0, "today": 0, "week": 0, "month": 0}
-
-@app.get("/api/detections/similar/{plate_text}")
-async def get_similar_plates(plate_text: str, limit: int = Query(10, ge=1, le=50), db_service: DatabaseService = Depends(get_database_service)):
-    """Find plates similar to the given text"""
-    similar_detections = await db_service.get_similar_plates(plate_text, limit)
-    
-    return [{
-        "id": d.id,
-        "camera_id": d.camera_id,
-        "plate_text": d.plate_text,
-        "confidence": d.confidence,
-        "vehicle_type": d.vehicle_type,
-        "detected_at": d.detected_at.isoformat(),
-        "plate_image": d.plate_image_path if d.plate_image_path else None,
-        "frame_image": d.frame_path if d.frame_path else None,
-        "similarity_score": _calculate_similarity_score(plate_text, d.plate_text)
-    } for d in similar_detections]
 
 @app.get("/api/detections/history/{plate_text}")
 async def get_plate_history(
@@ -2092,6 +2097,17 @@ async def get_camera_diagnostics(camera_id: str, db_service: DatabaseService = D
             'error': str(e),
             'message': 'Failed to run diagnostics'
         }
+
+@app.get("/api/debug/raw-cameras")
+async def get_cameras_raw_sql(db_service: DatabaseService = Depends(get_database_service)):
+    """Debug endpoint: Get cameras using raw SQL"""
+    try:
+        async with db_service.db_config.get_session() as session:
+            result = await session.execute(text("SELECT * FROM cameras LIMIT 5"))
+            cameras = [dict(row._mapping) for row in result.fetchall()]
+            return {"success": True, "cameras": cameras, "count": len(cameras)}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.get("/api/system/health")
 async def get_system_health():

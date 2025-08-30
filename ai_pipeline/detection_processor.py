@@ -118,33 +118,29 @@ class FilteredDetectionProcessor:
         try:
             db_service = DatabaseService()
             
-            # Prepare detection data for universal detections table
+            # Prepare detection data for original detections table
             detection_data = {
                 'camera_id': camera_id,
-                'object_type': 'vehicle',  # Changed to match existing data
+                'plate_text': detection.plate_text.upper(),  # Ensure uppercase for consistency
                 'confidence': detection.confidence,
+                'vehicle_type': detection.vehicle_type,
                 'detected_at': timestamp or datetime.now(),
-                'bbox': {
-                    'plate_bbox': detection.plate_bbox,
-                    'vehicle_bbox': detection.vehicle_bbox
-                },
-                'frame_path': detection.frame_path if hasattr(detection, 'frame_path') else '',
-                'object_image_path': detection.plate_image_path if hasattr(detection, 'plate_image_path') else '',
-                'metadata': {
-                    'plate_text': detection.plate_text,
-                    'vehicle_type': detection.vehicle_type,
-                    'ocr_confidence': detection.ocr_confidence,
+                'vehicle_bbox': detection.vehicle_bbox,
+                'plate_bbox': detection.plate_bbox,
+                'frame_path': getattr(detection, 'frame_path', ''),
+                'plate_image_path': getattr(detection, 'plate_image_path', ''),
+                'ocr_confidence': detection.ocr_confidence,
+                'meta_data': {
                     'filter_reason': filter_reason,
                     'processing_time': getattr(detection, 'processing_time', 0),
                     'model_version': getattr(detection, 'model_version', '2.0')
-                },
-                'status': 'unreviewed',
-                'flagged': False,
-                'tags': []
+                }
             }
             
             # Save using the database service
-            detection_id = await db_service.create_universal_detection(detection_data)
+            detection_id = await db_service.save_detection(detection_data)
+            
+            logger.debug(f"Successfully saved detection {detection_id} to database")
             
             return detection_id
             

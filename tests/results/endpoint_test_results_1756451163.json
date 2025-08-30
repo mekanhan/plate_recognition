@@ -1,0 +1,513 @@
+{
+  "passed": 27,
+  "failed": 14,
+  "errors": [
+    "GET /api/cameras/test_camera_123 returned 500, expected 404",
+    "DELETE /api/cameras/test_camera_123 returned 500, expected 404",
+    "POST /api/cameras/test_camera_123/test returned 500, expected 404",
+    "POST /api/cameras/test_camera_123/start returned 500, expected 404",
+    "POST /api/cameras/test_camera_123/stop returned 500, expected 404",
+    "POST /api/cameras/test_camera_123/restart returned 500, expected 404",
+    "GET /api/cameras/test_camera_123/diagnostics returned 500, expected 404",
+    "POST /api/onvif/discover - Exception: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=5)",
+    "POST /api/onvif/add/192.168.1.100 returned 422, expected 404",
+    "GET /api/detections/recent returned 500, expected 200",
+    "GET /api/detections/test_detection_123 returned 500, expected 404",
+    "GET /api/detections/test_detection_123/quality returned 500, expected 404",
+    "GET /api/analytics/overview returned 401, expected 200",
+    "GET /api/quality/metrics returned 500, expected 200"
+  ],
+  "endpoint_results": {
+    "/health": {
+      "method": "GET",
+      "endpoint": "/health",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Basic health check",
+      "response_size": 96,
+      "response_keys": [
+        "status",
+        "timestamp",
+        "cameras",
+        "database"
+      ]
+    },
+    "/api/system/health": {
+      "method": "GET",
+      "endpoint": "/api/system/health",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "System health check",
+      "response_size": 354,
+      "response_keys": [
+        "api_status",
+        "database_status",
+        "camera_manager_status",
+        "total_cameras",
+        "processing_loop_status",
+        "ai_models_loaded",
+        "storage",
+        "cameras"
+      ]
+    },
+    "/ws/status": {
+      "method": "GET",
+      "endpoint": "/ws/status",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "WebSocket status",
+      "response_size": 84,
+      "response_keys": [
+        "total_connections",
+        "subscriptions",
+        "history_size",
+        "heartbeat_active"
+      ]
+    },
+    "/debug/cameras": {
+      "method": "GET",
+      "endpoint": "/debug/cameras",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Debug camera info",
+      "response_size": 31,
+      "response_keys": [
+        "camera_count",
+        "cameras"
+      ]
+    },
+    "/api/config/features": {
+      "method": "GET",
+      "endpoint": "/api/config/features",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Feature configuration",
+      "response_size": 280,
+      "response_keys": [
+        "enabled_detection_features",
+        "enabled_api_features",
+        "enabled_processing_features",
+        "config_path"
+      ]
+    },
+    "/api/cameras": {
+      "method": "GET",
+      "endpoint": "/api/cameras",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Get all cameras",
+      "response_size": 2,
+      "response_items": 0
+    },
+    "/api/cameras/list": {
+      "method": "GET",
+      "endpoint": "/api/cameras/list",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Basic camera list",
+      "response_size": 2,
+      "response_items": 0
+    },
+    "/api/cameras/test_camera_123": {
+      "method": "DELETE",
+      "endpoint": "/api/cameras/test_camera_123",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Delete camera (404 expected)",
+      "response_size": 863,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/test": {
+      "method": "POST",
+      "endpoint": "/api/cameras/test_camera_123/test",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Test camera connection (404 expected)",
+      "response_size": 861,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/start": {
+      "method": "POST",
+      "endpoint": "/api/cameras/test_camera_123/start",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Start camera (404 expected)",
+      "response_size": 865,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/stop": {
+      "method": "POST",
+      "endpoint": "/api/cameras/test_camera_123/stop",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Stop camera (404 expected)",
+      "response_size": 864,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/restart": {
+      "method": "POST",
+      "endpoint": "/api/cameras/test_camera_123/restart",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Restart camera (404 expected)",
+      "response_size": 872,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/health": {
+      "method": "GET",
+      "endpoint": "/api/cameras/test_camera_123/health",
+      "status_code": 404,
+      "expected_status": 404,
+      "success": true,
+      "description": "Camera health (404 expected)",
+      "response_size": 29,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/snapshot": {
+      "method": "GET",
+      "endpoint": "/api/cameras/test_camera_123/snapshot",
+      "status_code": 404,
+      "expected_status": 404,
+      "success": true,
+      "description": "Camera snapshot (404 expected)",
+      "response_size": 29,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/recording/quality": {
+      "method": "GET",
+      "endpoint": "/api/cameras/test_camera_123/recording/quality",
+      "status_code": 404,
+      "expected_status": 404,
+      "success": true,
+      "description": "Recording quality (404 expected)",
+      "response_size": 29,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/test_camera_123/diagnostics": {
+      "method": "GET",
+      "endpoint": "/api/cameras/test_camera_123/diagnostics",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Camera diagnostics (404 expected)",
+      "response_size": 21
+    },
+    "/api/cameras/test_camera_123/open-vlc": {
+      "method": "POST",
+      "endpoint": "/api/cameras/test_camera_123/open-vlc",
+      "status_code": 404,
+      "expected_status": 404,
+      "success": true,
+      "description": "Open VLC (404 expected)",
+      "response_size": 29,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/cameras/health/summary": {
+      "method": "GET",
+      "endpoint": "/api/cameras/health/summary",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Camera health summary",
+      "response_size": 142,
+      "response_keys": [
+        "total_cameras",
+        "healthy_cameras",
+        "unhealthy_cameras",
+        "cameras",
+        "summary"
+      ]
+    },
+    "/api/cameras/health/detailed": {
+      "method": "GET",
+      "endpoint": "/api/cameras/health/detailed",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Detailed camera health",
+      "response_size": 338,
+      "response_keys": [
+        "total_cameras",
+        "healthy_cameras",
+        "unhealthy_cameras",
+        "cameras",
+        "summary",
+        "system_metrics"
+      ]
+    },
+    "/api/cameras/restart/all": {
+      "method": "POST",
+      "endpoint": "/api/cameras/restart/all",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Restart all cameras",
+      "response_size": 64,
+      "response_keys": [
+        "success",
+        "message",
+        "results"
+      ]
+    },
+    "/api/onvif/discovered": {
+      "method": "GET",
+      "endpoint": "/api/onvif/discovered",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Get discovered cameras",
+      "response_size": 1205,
+      "response_keys": [
+        "success",
+        "cached",
+        "cameras"
+      ]
+    },
+    "/api/onvif/brands": {
+      "method": "GET",
+      "endpoint": "/api/onvif/brands",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Supported brands",
+      "response_size": 834,
+      "response_keys": [
+        "brands"
+      ]
+    },
+    "/api/onvif/add/192.168.1.100": {
+      "method": "POST",
+      "endpoint": "/api/onvif/add/192.168.1.100",
+      "status_code": 422,
+      "expected_status": 404,
+      "success": false,
+      "description": "Add camera (404 expected)",
+      "response_size": 82,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/detections/recent": {
+      "method": "GET",
+      "endpoint": "/api/detections/recent",
+      "status_code": 500,
+      "expected_status": 200,
+      "success": false,
+      "description": "Recent detections",
+      "response_size": 21
+    },
+    "/api/detections/search": {
+      "method": "GET",
+      "endpoint": "/api/detections/search",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Search detections",
+      "response_size": 328,
+      "response_keys": [
+        "results"
+      ]
+    },
+    "/api/detections/object-types": {
+      "method": "GET",
+      "endpoint": "/api/detections/object-types",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Object types",
+      "response_size": 392,
+      "response_items": 4
+    },
+    "/api/detections/stats": {
+      "method": "GET",
+      "endpoint": "/api/detections/stats",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Detection statistics",
+      "response_size": 40,
+      "response_keys": [
+        "total",
+        "today",
+        "week",
+        "month"
+      ]
+    },
+    "/api/detections/test_detection_123": {
+      "method": "GET",
+      "endpoint": "/api/detections/test_detection_123",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Get detection (404 expected)",
+      "response_size": 21
+    },
+    "/api/detections/similar/TEST123": {
+      "method": "GET",
+      "endpoint": "/api/detections/similar/TEST123",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Similar plates",
+      "response_size": 2,
+      "response_items": 0
+    },
+    "/api/detections/history/TEST123": {
+      "method": "GET",
+      "endpoint": "/api/detections/history/TEST123",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Plate history",
+      "response_size": 2,
+      "response_items": 0
+    },
+    "/api/detections/test_detection_123/quality": {
+      "method": "GET",
+      "endpoint": "/api/detections/test_detection_123/quality",
+      "status_code": 500,
+      "expected_status": 404,
+      "success": false,
+      "description": "Detection quality (404 expected)",
+      "response_size": 715,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/analytics/overview": {
+      "method": "GET",
+      "endpoint": "/api/analytics/overview",
+      "status_code": 401,
+      "expected_status": 200,
+      "success": false,
+      "description": "Analytics overview",
+      "response_size": 36,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/quality/metrics": {
+      "method": "GET",
+      "endpoint": "/api/quality/metrics",
+      "status_code": 500,
+      "expected_status": 200,
+      "success": false,
+      "description": "Quality metrics",
+      "response_size": 730,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/quality/thresholds": {
+      "method": "GET",
+      "endpoint": "/api/quality/thresholds",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Quality thresholds",
+      "response_size": 444,
+      "response_keys": [
+        "pop_thresholds",
+        "quality_score_weights",
+        "minimum_quality_threshold",
+        "recommended_ocr_threshold",
+        "description"
+      ]
+    },
+    "/api/quality/filter": {
+      "method": "POST",
+      "endpoint": "/api/quality/filter",
+      "status_code": 422,
+      "expected_status": 422,
+      "success": true,
+      "description": "Quality filter (422 expected - no data)",
+      "response_size": 82,
+      "response_keys": [
+        "detail"
+      ]
+    },
+    "/api/storage/stats": {
+      "method": "GET",
+      "endpoint": "/api/storage/stats",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Storage statistics",
+      "response_size": 532,
+      "response_keys": [
+        "storage",
+        "deduplication"
+      ]
+    },
+    "/api/storage/cleanup": {
+      "method": "POST",
+      "endpoint": "/api/storage/cleanup",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Storage cleanup",
+      "response_size": 374,
+      "response_keys": [
+        "success",
+        "cleanup_stats",
+        "storage_after"
+      ]
+    },
+    "/api/storage/emergency-cleanup": {
+      "method": "POST",
+      "endpoint": "/api/storage/emergency-cleanup",
+      "status_code": 200,
+      "expected_status": 200,
+      "success": true,
+      "description": "Emergency cleanup",
+      "response_size": 363,
+      "response_keys": [
+        "success",
+        "cleanup_stats",
+        "storage_after"
+      ]
+    },
+    "/api/video/clip/test_clip_123": {
+      "method": "GET",
+      "endpoint": "/api/video/clip/test_clip_123",
+      "status_code": 404,
+      "expected_status": 404,
+      "success": true,
+      "description": "Get video clip (404 expected)",
+      "response_size": 33,
+      "response_keys": [
+        "detail"
+      ]
+    }
+  }
+}

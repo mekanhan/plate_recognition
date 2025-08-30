@@ -1541,32 +1541,17 @@ async def get_recent_detections(
     camera_id: Optional[str] = None,
     db_service: DatabaseService = Depends(get_database_service)
 ):
-    """Get recent detections - tries universal first, falls back to old table"""
-    try:
-        # Try to get from universal detections first (where new detections are stored)
-        detections = await db_service.get_recent_universal_detections(limit, camera_id)
-        if detections and len(detections) > 0:
-            return [{
-                "id": d.id,
-                "camera_id": d.camera_id,
-                "plate_text": d.plate_text,
-                "confidence": d.confidence,
-                "vehicle_type": d.vehicle_type,
-                "detected_at": d.detected_at.isoformat() if hasattr(d.detected_at, 'isoformat') else str(d.detected_at),
-                "plate_image": d.plate_image_path if hasattr(d, 'plate_image_path') else None,
-                "frame_image": d.frame_path if hasattr(d, 'frame_path') else None,
-                "has_video": False,
-                "video_clip_id": None
-            } for d in detections]
-    except Exception as e:
-        logger.warning(f"Failed to get universal detections: {e}")
-    
-    # Fall back to old detections table
+    """Get recent license plate detections"""
+    # Get detections from the working detections table
     detections = await db_service.get_recent_detections(limit, camera_id)
+    
+    # Get camera names mapping
+    camera_names = await _get_camera_names(db_service)
     
     return [{
         "id": d.id,
         "camera_id": d.camera_id,
+        "camera_name": camera_names.get(d.camera_id, d.camera_id),
         "plate_text": d.plate_text,
         "confidence": d.confidence,
         "vehicle_type": d.vehicle_type,
@@ -1603,13 +1588,16 @@ async def search_detections(
         else:
             detections = all_detections[:limit]
         
+        # Get camera names mapping
+        camera_names = await _get_camera_names(db_service)
+        
         # Format results
         results = []
         for d in detections:
             results.append({
                 "id": d.id,
                 "camera_id": d.camera_id,
-                "camera_name": d.camera_id,  # Will be enhanced later with camera names
+                "camera_name": camera_names.get(d.camera_id, d.camera_id),
                 "plate_text": d.plate_text,
                 "confidence": d.confidence,
                 "vehicle_type": d.vehicle_type or "vehicle",
@@ -1653,10 +1641,7 @@ async def get_plate_history(plate_text: str):
     return []  # Temporarily return empty
 
 
-@app.get("/api/detections/stats")
-async def get_detection_stats():
-    """Get detection statistics - simplified"""
-    return {"total": 0, "today": 0, "week": 0, "month": 0}
+# Removed duplicate stats endpoint - using the real one below
 
 @app.get("/api/detections/history/{plate_text}")
 async def get_plate_history(
@@ -1680,13 +1665,58 @@ async def get_plate_history(
 
 @app.get("/api/detections/stats")
 async def get_detection_statistics(
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
     db_service: DatabaseService = Depends(get_database_service)
 ):
-    """Get detection statistics for analysis"""
-    stats = await db_service.get_detection_stats(start_date, end_date)
-    return stats
+    """Get detection statistics - simplified for UI"""
+    try:
+        # Get total count from recent detections
+        all_detections = await db_service.get_recent_detections(limit=10000)
+        total_count = len(all_detections)
+        
+        logger.info(f"Stats endpoint: found {total_count} total detections")
+        
+        if total_count == 0:
+            return {"total": 0, "today": 0, "week": 0, "month": 0}
+        
+        # Calculate time-based counts
+        from datetime import timedelta
+        now = datetime.now()
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        week_ago = now - timedelta(days=7)
+        month_ago = now - timedelta(days=30)
+        
+        today_count = 0
+        week_count = 0
+        month_count = 0
+        
+        for detection in all_detections:
+            detection_time = detection.detected_at
+            if detection_time >= today:
+                today_count += 1
+            if detection_time >= week_ago:
+                week_count += 1
+            if detection_time >= month_ago:
+                month_count += 1
+        
+        return {
+            "total": total_count,
+            "today": today_count,
+            "week": week_count,
+            "month": month_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting detection stats: {e}")
+        return {"total": 0, "today": 0, "week": 0, "month": 0}
+
+async def _get_camera_names(db_service: DatabaseService) -> Dict[str, str]:
+    """Get mapping of camera_id to camera name"""
+    try:
+        cameras = await db_service.get_all_cameras()
+        return {camera.camera_id: camera.name for camera in cameras}
+    except Exception as e:
+        logger.error(f"Failed to get camera names: {e}")
+        return {}
 
 def _calculate_similarity_score(target: str, candidate: str) -> float:
     """Calculate simple similarity score between two plate texts"""

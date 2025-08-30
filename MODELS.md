@@ -41,8 +41,10 @@ ai_pipeline/train/models/pretrained/
 ├── yolov8m.pt           # YOLOv8 medium
 └── yolov8n.pt           # YOLOv8 nano
 
-# Root directory
-yolov8m.pt               # Main detection model
+# AI Pipeline models directory
+ai_pipeline/models/
+├── yolov8m.pt           # Main detection model
+└── yolov8n.pt           # Lightweight testing model
 ```
 
 ## Model Usage in Code
@@ -54,7 +56,7 @@ from ultralytics import YOLO
 model = YOLO("ai_pipeline/train/models/pretrained/yolo11m_best.pt")
 
 # Or load fallback model
-model = YOLO("yolov8m.pt")
+model = YOLO("ai_pipeline/models/yolov8m.pt")
 ```
 
 ## Security Notes
@@ -91,7 +93,7 @@ If you see import errors about missing models:
 3. **Verify downloads:**
    ```bash
    ls -la ai_pipeline/train/models/pretrained/
-   ls -la *.pt
+   ls -la ai_pipeline/models/
    ```
 
 ## Custom Models

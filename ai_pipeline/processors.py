@@ -30,7 +30,7 @@ class LicensePlateDetector:
     """
     
     def __init__(self, 
-                 vehicle_model_path: str = "yolov8m.pt",
+                 vehicle_model_path: str = "ai_pipeline/models/yolov8m.pt",
                  plate_model_path: str = "yolo11m_best.pt",
                  device: str = None):
         

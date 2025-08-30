@@ -14,7 +14,7 @@ This document describes the testing infrastructure for the License Plate Recogni
 ```bash
 python3 tests/unit/test_all_endpoints.py
 # OR
-python3 test_endpoints.py  # Convenience wrapper
+python3 tests/integration/test_endpoints.py  # Convenience wrapper
 ```
 
 **Coverage**:

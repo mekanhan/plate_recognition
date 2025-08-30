@@ -24,7 +24,11 @@ class FFmpegCameraRecorder:
         self.camera_id = camera_config['camera_id']
         self.name = camera_config['name']
         self.rtsp_url = self._build_rtsp_url()
-        self.storage_path = Path(storage_path) / f"camera_{self.camera_id}"
+        
+        # Use stable_camera_id for recording folder if available, otherwise fall back to camera_id
+        recording_folder_id = camera_config.get('stable_camera_id') or self.camera_id
+        self.storage_path = Path(storage_path) / recording_folder_id
+        
         self.db_service = db_service
         
         # Recording state
@@ -45,6 +49,7 @@ class FFmpegCameraRecorder:
         self.storage_path.mkdir(parents=True, exist_ok=True)
         
         logger.info(f"FFmpeg camera recorder initialized: {self.name} ({self.camera_id})")
+        logger.info(f"Recording folder: {self.storage_path} (using {'stable_camera_id' if camera_config.get('stable_camera_id') else 'camera_id'})")
     
     def _build_rtsp_url(self) -> str:
         """Build RTSP URL from camera configuration"""
@@ -597,6 +602,7 @@ class FFmpegRecordingManager:
                     camera_config = {
                         'camera_id': row.camera_id,  # Use the simpler camera_id field, not the UUID
                         'name': row.name,
+                        'stable_camera_id': row.stable_camera_id,  # For recording folder names
                         'ip_address': row.ip_address,
                         'port': row.port,
                         'username': row.username,

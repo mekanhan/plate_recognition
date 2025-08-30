@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     default_rtsp_port: int = 554
     
     # AI Models
-    vehicle_model_path: str = "yolov8m.pt"
+    vehicle_model_path: str = "ai_pipeline/models/yolov8m.pt"
     plate_model_path: str = "yolo11m_best.pt"
     ocr_languages: List[str] = ["en"]
     ai_device: str = "auto"  # auto, cpu, cuda

@@ -110,9 +110,9 @@ lighthouse http://localhost:8080/#settings --output=json --output-path=docs/perf
 
 ### Production Frontend Server
 The optimized frontend server includes:
-- **File**: `frontend_server.py`
+- **File**: `frontend/build/frontend_server.py`
 - **Features**: GZip compression, cache headers, preload support
-- **Usage**: `python3 frontend_server.py` (instead of basic Python server)
+- **Usage**: `python3 frontend/build/frontend_server.py` (instead of basic Python server)
 
 ```python
 # Key features of optimized server:
@@ -128,7 +128,7 @@ The optimized frontend server includes:
 pkill -f "python.*http.server"
 
 # Start optimized server with compression
-./.venv/bin/python3 frontend_server.py
+./.venv/bin/python3 frontend/build/frontend_server.py
 ```
 
 ## Performance Monitoring
@@ -160,7 +160,7 @@ curl -H "Accept-Encoding: gzip" -I http://localhost:8080/src/styles/main.min.css
 # Should show: content-encoding: gzip
 ```
 
-**Solution**: Ensure `frontend_server.py` is running, not basic Python server
+**Solution**: Ensure `frontend/build/frontend_server.py` is running, not basic Python server
 
 #### 2. CSS Files Loading Multiple Times
 **Symptoms**: Network tab shows duplicate CSS requests

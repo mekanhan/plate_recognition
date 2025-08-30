@@ -21,23 +21,59 @@ class PlaybackService:
     def __init__(self, db_service, recordings_path: str):
         self.db_service = db_service
         self.recordings_path = Path(recordings_path)
+        self._camera_path_cache = {}  # Cache camera_id to recording path mapping
         logger.info("Playback Service initialized")
+    
+    async def _resolve_camera_recording_path(self, camera_id: str) -> Optional[Path]:
+        """Resolve camera_id to actual recording directory path, handling stable_camera_id"""
+        # Check cache first
+        if camera_id in self._camera_path_cache:
+            return self._camera_path_cache[camera_id]
+        
+        # List of potential paths to check
+        potential_paths = []
+        
+        # 1. Try direct camera_id path
+        potential_paths.append(self.recordings_path / camera_id)
+        
+        # 2. Try with camera_ prefix
+        if not camera_id.startswith('camera_'):
+            potential_paths.append(self.recordings_path / f"camera_{camera_id}")
+        
+        # 3. Check database for stable_camera_id mapping
+        if self.db_service:
+            try:
+                async with self.db_service.get_session() as session:
+                    # Look up camera by camera_id to get stable_camera_id
+                    result = await session.execute(
+                        text("SELECT stable_camera_id FROM cameras WHERE camera_id = :camera_id"),
+                        {"camera_id": camera_id}
+                    )
+                    row = result.fetchone()
+                    if row and row[0]:  # stable_camera_id exists
+                        stable_id = row[0]
+                        potential_paths.insert(0, self.recordings_path / stable_id)  # Prioritize stable ID
+                        logger.info(f"Found stable_camera_id '{stable_id}' for camera '{camera_id}'")
+            except Exception as e:
+                logger.warning(f"Could not query database for stable_camera_id: {e}")
+        
+        # Check which path actually exists
+        for path in potential_paths:
+            if path.exists() and path.is_dir():
+                logger.info(f"Found recordings for camera '{camera_id}' at path: {path}")
+                self._camera_path_cache[camera_id] = path
+                return path
+        
+        logger.warning(f"No recordings directory found for camera '{camera_id}'. Tried paths: {potential_paths}")
+        return None
     
     async def get_calendar_data(self, camera_id: str, year: int, month: int) -> Dict:
         """Get recording availability for calendar display - File-based approach"""
         try:
-            # Scan filesystem for recordings instead of using database
-            # Handle both formats: direct camera_id and prefixed camera_camera_id
-            if camera_id.startswith('camera_'):
-                camera_path = self.recordings_path / camera_id
-            else:
-                camera_path = self.recordings_path / f"camera_{camera_id}"
-                
-            if not camera_path.exists():
-                logger.warning(f"No recordings directory for camera {camera_id} at path {camera_path}")
+            # Resolve camera_id to actual recording path
+            camera_path = await self._resolve_camera_recording_path(camera_id)
+            if not camera_path:
                 return {"days": {}, "total_size": 0, "total_duration": 0}
-                
-            logger.info(f"Found camera directory at {camera_path}")
             
             # Build month path
             month_path = camera_path / str(year) / str(month).zfill(2)
@@ -111,12 +147,19 @@ class PlaybackService:
             # Parse date string (YYYY-MM-DD)
             year, month, day = date_str.split('-')
             
+            # Resolve camera_id to actual recording path
+            camera_path = await self._resolve_camera_recording_path(camera_id)
+            if not camera_path:
+                return {
+                    "segments": [],
+                    "total_duration": 0,
+                    "total_size": 0,
+                    "coverage_percentage": 0.0,
+                    "date": date_str
+                }
+            
             # Build path to recordings for this date
-            # Handle both formats: direct camera_id and prefixed camera_camera_id
-            if camera_id.startswith('camera_'):
-                date_path = self.recordings_path / camera_id / year / month / day
-            else:
-                date_path = self.recordings_path / f"camera_{camera_id}" / year / month / day
+            date_path = camera_path / year / month / day
             
             if not date_path.exists():
                 logger.info(f"No recordings for {camera_id} on {date_str} at {date_path}")
@@ -563,7 +606,7 @@ class PlaybackService:
             # Find the file by scanning all camera directories
             file_path = None
             for camera_dir in self.recordings_path.iterdir():
-                if camera_dir.is_dir() and camera_dir.name.startswith("camera_"):
+                if camera_dir.is_dir():
                     # Search through the directory tree
                     for year_dir in camera_dir.iterdir():
                         if year_dir.is_dir():

@@ -15,6 +15,7 @@ class Camera(Base):
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     camera_id = Column(String(50), unique=True, nullable=False)
+    stable_camera_id = Column(String(100), unique=True, nullable=True)  # New: stable ID for recordings
     name = Column(String(100), nullable=False)
     ip_address = Column(String(45), nullable=False)
     port = Column(Integer, default=80)

@@ -151,7 +151,7 @@ class VehicleDetector(BaseDetector):
 class PersonDetector(BaseDetector):
     """Person detection using YOLOv8"""
     
-    def __init__(self, model_path='yolov8n.pt'):
+    def __init__(self, model_path='ai_pipeline/models/yolov8n.pt'):
         self.logger = logging.getLogger("PersonDetector")
         self.model = None
         self.model_path = model_path
@@ -224,7 +224,7 @@ class PersonDetector(BaseDetector):
 class PackageDetector(BaseDetector):
     """Package detection using custom or pre-trained models"""
     
-    def __init__(self, model_path='yolov8n.pt'):
+    def __init__(self, model_path='ai_pipeline/models/yolov8n.pt'):
         self.logger = logging.getLogger("PackageDetector")
         self.model = None
         self.model_path = model_path

@@ -100,7 +100,7 @@ cat docs/performance/performance_summary_*.md | tail -n 50
 #### Tests Fail - Server Not Running
 ```bash
 # Start the optimized server
-./.venv/bin/python3 frontend_server.py
+./.venv/bin/python3 frontend/build/frontend_server.py
 ```
 
 #### Compression Not Working

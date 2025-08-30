@@ -62,20 +62,28 @@ class RecordingDiscoveryService:
                     cameras = await self.db_service.get_all_cameras()
                     # Convert Camera objects to dictionaries
                     for cam in cameras:
-                        # Handle both possible camera directory formats
-                        camera_key1 = f"camera_{cam.id}"
-                        camera_key2 = f"camera_camera_{cam.id}"
-                        
                         camera_data = {
                             'id': cam.id,
+                            'camera_id': cam.camera_id,  # The actual working camera_id
                             'name': cam.name,
                             'ip_address': cam.ip_address,
                             'status': cam.status
                         }
                         
-                        # Add both possible formats to handle legacy naming
+                        # Handle all possible camera directory formats:
+                        # 1. Legacy formats with camera prefix
+                        camera_key1 = f"camera_{cam.id}"
+                        camera_key2 = f"camera_camera_{cam.id}"
                         active_cameras[camera_key1] = camera_data
                         active_cameras[camera_key2] = camera_data
+                        
+                        # 2. Direct camera_id (if different from above)
+                        if cam.id not in [camera_key1, camera_key2]:
+                            active_cameras[cam.id] = camera_data
+                        
+                        # 3. Stable camera ID (most important for new system)
+                        if hasattr(cam, 'stable_camera_id') and cam.stable_camera_id:
+                            active_cameras[cam.stable_camera_id] = camera_data
                 except Exception as e:
                     logger.error(f"Failed to get cameras from database: {e}")
             
@@ -110,14 +118,22 @@ class RecordingDiscoveryService:
                 # Add camera metadata if available
                 if camera_id in active_cameras:
                     cam = active_cameras[camera_id]
-                    source['display_name'] = cam.get('name', 'Entrance Gate')  # Default to meaningful name
+                    source['display_name'] = cam.get('name', f'Camera {camera_id[:8]}')
                     source['ip_address'] = cam.get('ip_address', '')
                     source['camera_status'] = cam.get('status', 'unknown')
+                    # Include original database camera_id for frontend matching
+                    source['database_camera_id'] = cam.get('camera_id')
                 else:
-                    # For archived cameras, use meaningful default name
-                    source['display_name'] = 'Entrance Gate'
+                    # For archived cameras, generate name from camera_id
+                    if camera_id.startswith('camera_'):
+                        # Remove camera_ prefix for display
+                        display_id = camera_id.replace('camera_', '')
+                        source['display_name'] = f'Archived Camera {display_id[:8]}'
+                    else:
+                        source['display_name'] = f'Archived Camera {camera_id[:8]}'
                     source['ip_address'] = ''
                     source['camera_status'] = 'deleted'
+                    source['database_camera_id'] = None
                 
                 sources.append(source)
             

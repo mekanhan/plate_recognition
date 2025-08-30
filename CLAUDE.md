@@ -127,6 +127,7 @@ curl http://localhost:8002/health
 - Automated storage cleanup (10GB default)
 - Complete playback API with timeline
 - **License plate detection with database storage** (Fixed 2025-08-29)
+- **Stable camera ID system** (Implemented 2025-08-30)
 
 ## System Status ✅ All Healthy
 - Main API: Camera management, snapshots, detection
@@ -210,7 +211,32 @@ curl http://localhost:8002/health
 - [ ] Add detection export functionality
 - [ ] Create detection analytics dashboard
 
+### Phantom Camera Prevention ✅ Implemented (2025-08-30)
+
+#### **Problem Solved**
+- Orphaned recording folders created phantom camera entries in UI
+- When cameras were deleted, their 200GB+ recording folders remained
+- UI scanned folders and displayed them as fake camera cards
+- Users saw "Entrance Gate" and "Entrance Gate (3)" that weren't real cameras
+
+#### **Solution Implemented**
+1. **Stable Camera ID System**: Cameras now use stable IDs like "reolink_camera" instead of dynamic IDs
+2. **Recording Migration**: Existing recordings moved from `camera_a171d280fdc7` to `reolink_camera`  
+3. **Orphan Cleanup**: Removed 183.6GB of orphaned recordings from deleted cameras
+4. **Prevention**: Future cameras will use location-based stable IDs for recording folders
+
+#### **Scripts Available**
+- `scripts/cleanup_orphaned_recordings.py` - Remove orphaned recording folders
+- `scripts/migrate_to_stable_ids.py` - Migrate existing recordings to stable IDs
+- `scripts/debug_cameras.py` - Debug camera vs recording folder mismatches
+
+#### **Benefits**
+- **No more phantom cameras**: Recording folders won't create fake camera entries
+- **Recording continuity**: Replace camera hardware without losing recording history
+- **Clean UI**: Only real, active cameras appear in camera management
+- **Future-proof**: Location-based naming (e.g., "front_entrance", "parking_lot_1")
+
 ### Future Phases
 - Phase 3: Security hardening (auth, encryption, HTTPS)
 - Phase 4: Deployment hardening (containers, monitoring)
-- **Phase 5**: Complete detection system cleanup and optimization
+- **Phase 5**: Complete camera UI integration with stable ID selection

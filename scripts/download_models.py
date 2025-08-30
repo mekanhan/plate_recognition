@@ -13,7 +13,7 @@ from typing import Dict, Tuple
 
 # Model configurations with download URLs and checksums
 MODELS = {
-    "yolov8m.pt": {
+    "ai_pipeline/models/yolov8m.pt": {
         "url": "https://github.com/ultralytics/assets/releases/download/v0.0.0/yolov8m.pt",
         "sha256": "c84cc6d0e9b5b0e3c5f3a0b8c9c0c9c0c9c0c9c0c9c0c9c0c9c0c9c0c9c0c9c0",  # Placeholder
         "size": "50MB",

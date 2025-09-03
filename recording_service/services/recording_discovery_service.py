@@ -284,7 +284,7 @@ class RecordingDiscoveryService:
         sources = await self.get_all_recording_sources(include_deleted=True)
         
         for source in sources:
-            if camera_id and source['camera_id'] != camera_id:
+            if camera_id and source['camera_id'] != camera_id and source.get('database_camera_id') != camera_id:
                 continue
             
             storage_mb = source['storage_used_mb']

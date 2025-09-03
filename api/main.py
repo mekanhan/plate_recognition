@@ -468,8 +468,9 @@ async def load_cameras():
         for camera in cameras:
             if camera.status in ['active', 'online']:
                 # Create CameraConfig from database data
+                # Use the actual database ID, not the generated camera_id field
                 config = CameraConfig(
-                    camera_id=camera.camera_id,
+                    camera_id=camera.id,  # Use database UUID instead of generated ID
                     name=camera.name,
                     ip_address=camera.ip_address,
                     username=camera.username or "admin",
@@ -482,7 +483,7 @@ async def load_cameras():
                 
                 # Add to camera manager
                 camera_manager.add_camera(config)
-                logging.info(f"Loaded camera from database: {camera.name} ({camera.camera_id})")
+                logging.info(f"Loaded camera from database: {camera.name} ({camera.id})")
         
         logging.info(f"Loaded {len([c for c in cameras if c.status in ['active', 'online']])} active cameras from database")
         
@@ -1713,7 +1714,8 @@ async def _get_camera_names(db_service: DatabaseService) -> Dict[str, str]:
     """Get mapping of camera_id to camera name"""
     try:
         cameras = await db_service.get_all_cameras()
-        return {camera.camera_id: camera.name for camera in cameras}
+        # Use camera.id (database UUID) instead of camera.camera_id (generated ID)
+        return {camera.id: camera.name for camera in cameras}
     except Exception as e:
         logger.error(f"Failed to get camera names: {e}")
         return {}

@@ -183,7 +183,7 @@ async def search_detections(
         # Count total results
         count_query = f"""
             SELECT COUNT(*) as total
-            FROM universal_detections
+            FROM detections
             {where_clause}
         """
         
@@ -194,9 +194,8 @@ async def search_detections(
         
         # Get paginated results
         search_query = f"""
-            SELECT ud.*, ot.display_name as object_type_name, ot.icon, ot.color
-            FROM universal_detections ud
-            LEFT JOIN object_types ot ON ud.object_type = ot.type_code
+            SELECT d.*, 'License Plate' as object_type_name, 'car' as icon, '#4CAF50' as color
+            FROM detections d
             {where_clause}
             ORDER BY ud.detected_at DESC
             LIMIT :limit OFFSET :offset
@@ -359,8 +358,8 @@ async def get_recent_license_plates(
         
         query = f"""
             SELECT id, camera_id, confidence, detected_at,
-                   metadata, object_image_path, frame_path
-            FROM universal_detections
+                   metadata, plate_image_path as object_image_path, frame_image_path as frame_path
+            FROM detections
             {where_clause}
             ORDER BY detected_at DESC
             LIMIT :limit
@@ -407,9 +406,8 @@ async def get_detection_details(
         from sqlalchemy import text
         
         query = """
-            SELECT ud.*, ot.display_name as object_type_name, ot.icon, ot.color
-            FROM universal_detections ud
-            LEFT JOIN object_types ot ON ud.object_type = ot.type_code
+            SELECT d.*, 'License Plate' as object_type_name, 'car' as icon, '#4CAF50' as color
+            FROM detections d
             WHERE ud.id = :detection_id
         """
         
@@ -522,7 +520,7 @@ async def update_detection(
         params["updated_at"] = datetime.now()
         
         query = f"""
-            UPDATE universal_detections
+            UPDATE detections
             SET {', '.join(update_fields)}
             WHERE id = :detection_id
         """
@@ -575,14 +573,14 @@ async def get_detection_statistics(
         if conditions:
             where_clause = "WHERE " + " AND ".join(conditions)
         
-        # Get overall statistics
+        # Get overall statistics from detections table
         stats_query = f"""
             SELECT 
                 COUNT(*) as total_detections,
                 COUNT(DISTINCT camera_id) as unique_cameras,
                 AVG(confidence) as avg_confidence,
-                COUNT(CASE WHEN flagged = true THEN 1 END) as flagged_count
-            FROM universal_detections
+                0 as flagged_count
+            FROM detections
             {where_clause}
         """
         
@@ -591,17 +589,16 @@ async def get_detection_statistics(
             stats_result = await conn.execute(text(stats_query), params)
             stats_row = stats_result.fetchone()
         
-        # Get object type distribution
+        # Get vehicle type distribution from detections table
         type_query = f"""
             SELECT 
-                ud.object_type,
-                ot.display_name,
-                ot.color,
+                vehicle_type as object_type,
+                vehicle_type as display_name,
+                '#4CAF50' as color,
                 COUNT(*) as count
-            FROM universal_detections ud
-            LEFT JOIN object_types ot ON ud.object_type = ot.type_code
+            FROM detections
             {where_clause}
-            GROUP BY ud.object_type, ot.display_name, ot.color
+            GROUP BY vehicle_type
             ORDER BY count DESC
         """
         
@@ -615,7 +612,7 @@ async def get_detection_statistics(
             SELECT 
                 strftime('%H', detected_at) as hour,
                 COUNT(*) as count
-            FROM universal_detections
+            FROM detections
             WHERE detected_at >= datetime('now', '-24 hours')
             {' AND ' + ' AND '.join(conditions) if conditions else ''}
             GROUP BY strftime('%H', detected_at)

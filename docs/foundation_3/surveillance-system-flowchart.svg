@@ -1,0 +1,288 @@
+<svg viewBox="0 0 1400 1600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Title -->
+  <text x="700" y="30" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">AI Video Surveillance System - Camera Stream Flow</text>
+  
+  <!-- Camera Layer -->
+  <g id="camera-layer">
+    <rect x="50" y="70" width="1300" height="200" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="10"/>
+    <text x="700" y="100" font-size="18" font-weight="bold" text-anchor="middle" fill="#1976d2">Camera Layer</text>
+    
+    <!-- IP Cameras -->
+    <rect x="100" y="130" width="200" height="100" fill="#fff" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="200" y="160" font-size="14" text-anchor="middle">IP Camera 1</text>
+    <text x="200" y="180" font-size="12" text-anchor="middle">Reolink RLC-811A</text>
+    <text x="200" y="200" font-size="11" text-anchor="middle" fill="#666">RTSP Stream</text>
+    <text x="200" y="215" font-size="11" text-anchor="middle" fill="#666">H.264/H.265</text>
+    
+    <rect x="350" y="130" width="200" height="100" fill="#fff" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="450" y="160" font-size="14" text-anchor="middle">IP Camera 2</text>
+    <text x="450" y="180" font-size="12" text-anchor="middle">Hikvision DS-2CD</text>
+    <text x="450" y="200" font-size="11" text-anchor="middle" fill="#666">RTSP/ONVIF</text>
+    <text x="450" y="215" font-size="11" text-anchor="middle" fill="#666">H.265+</text>
+    
+    <rect x="600" y="130" width="200" height="100" fill="#fff" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="700" y="160" font-size="14" text-anchor="middle">IP Camera N</text>
+    <text x="700" y="180" font-size="12" text-anchor="middle">Dahua/Axis/Amcrest</text>
+    <text x="700" y="200" font-size="11" text-anchor="middle" fill="#666">Multi-Protocol</text>
+    <text x="700" y="215" font-size="11" text-anchor="middle" fill="#666">Edge Storage</text>
+    
+    <!-- Edge Processing -->
+    <rect x="900" y="130" width="400" height="100" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+    <text x="1100" y="160" font-size="14" text-anchor="middle" font-weight="bold">Edge Processing (Optional)</text>
+    <text x="1100" y="180" font-size="12" text-anchor="middle">• Motion Detection</text>
+    <text x="1100" y="195" font-size="12" text-anchor="middle">• Basic Analytics</text>
+    <text x="1100" y="210" font-size="12" text-anchor="middle">• Compression</text>
+  </g>
+  
+  <!-- Network Layer -->
+  <g id="network-layer">
+    <rect x="50" y="300" width="1300" height="120" fill="#fff8e1" stroke="#fbc02d" stroke-width="2" rx="10"/>
+    <text x="700" y="330" font-size="18" font-weight="bold" text-anchor="middle" fill="#f57c00">Network Infrastructure</text>
+    
+    <rect x="200" y="350" width="300" height="50" fill="#fff" stroke="#fbc02d" stroke-width="2" rx="5"/>
+    <text x="350" y="380" font-size="12" text-anchor="middle">VLAN Segmentation</text>
+    
+    <rect x="550" y="350" width="300" height="50" fill="#fff" stroke="#fbc02d" stroke-width="2" rx="5"/>
+    <text x="700" y="380" font-size="12" text-anchor="middle">Load Balancer / API Gateway</text>
+    
+    <rect x="900" y="350" width="300" height="50" fill="#fff" stroke="#fbc02d" stroke-width="2" rx="5"/>
+    <text x="1050" y="380" font-size="12" text-anchor="middle">Security / Firewall</text>
+  </g>
+  
+  <!-- Core Services Layer -->
+  <g id="services-layer">
+    <rect x="50" y="450" width="1300" height="600" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="10"/>
+    <text x="700" y="480" font-size="18" font-weight="bold" text-anchor="middle" fill="#7b1fa2">Core Services (Microservices Architecture)</text>
+    
+    <!-- Stream Ingestion Service -->
+    <rect x="100" y="510" width="250" height="150" fill="#e8f5e9" stroke="#388e3c" stroke-width="2" rx="5"/>
+    <text x="225" y="540" font-size="14" font-weight="bold" text-anchor="middle">Stream Ingestion Service</text>
+    <text x="225" y="560" font-size="11" text-anchor="middle">• RTSP/HTTP Connection Pool</text>
+    <text x="225" y="575" font-size="11" text-anchor="middle">• Protocol Normalization</text>
+    <text x="225" y="590" font-size="11" text-anchor="middle">• Stream Health Monitoring</text>
+    <text x="225" y="605" font-size="11" text-anchor="middle">• Retry Logic (Exponential)</text>
+    <text x="225" y="620" font-size="11" text-anchor="middle">• Connection Management</text>
+    <text x="225" y="640" font-size="10" text-anchor="middle" fill="#666">FFmpeg/GStreamer</text>
+    
+    <!-- Recording Service -->
+    <rect x="400" y="510" width="250" height="150" fill="#e8f5e9" stroke="#388e3c" stroke-width="2" rx="5"/>
+    <text x="525" y="540" font-size="14" font-weight="bold" text-anchor="middle">Recording Service</text>
+    <text x="525" y="560" font-size="11" text-anchor="middle">• 24/7 Continuous Recording</text>
+    <text x="525" y="575" font-size="11" text-anchor="middle">• 10-min Segment Creation</text>
+    <text x="525" y="590" font-size="11" text-anchor="middle">• Storage Management</text>
+    <text x="525" y="605" font-size="11" text-anchor="middle">• Retention Policies</text>
+    <text x="525" y="620" font-size="11" text-anchor="middle">• Edge Failover</text>
+    <text x="525" y="640" font-size="10" text-anchor="middle" fill="#666">H.264/H.265 Encoding</text>
+    
+    <!-- AI Processing Service -->
+    <rect x="700" y="510" width="250" height="150" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="5"/>
+    <text x="825" y="540" font-size="14" font-weight="bold" text-anchor="middle">AI Processing Service</text>
+    <text x="825" y="560" font-size="11" text-anchor="middle">• Object Detection (YOLO)</text>
+    <text x="825" y="575" font-size="11" text-anchor="middle">• License Plate Recognition</text>
+    <text x="825" y="590" font-size="11" text-anchor="middle">• Behavior Analytics</text>
+    <text x="825" y="605" font-size="11" text-anchor="middle">• People Counting</text>
+    <text x="825" y="620" font-size="11" text-anchor="middle">• GPU Acceleration</text>
+    <text x="825" y="640" font-size="10" text-anchor="middle" fill="#666">TensorRT/CUDA</text>
+    
+    <!-- Event Processing -->
+    <rect x="1000" y="510" width="250" height="150" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="5"/>
+    <text x="1125" y="540" font-size="14" font-weight="bold" text-anchor="middle">Event Processing</text>
+    <text x="1125" y="560" font-size="11" text-anchor="middle">• Motion Detection</text>
+    <text x="1125" y="575" font-size="11" text-anchor="middle">• Alert Generation</text>
+    <text x="1125" y="590" font-size="11" text-anchor="middle">• Notification Queue</text>
+    <text x="1125" y="605" font-size="11" text-anchor="middle">• Event Correlation</text>
+    <text x="1125" y="620" font-size="11" text-anchor="middle">• Deduplication</text>
+    <text x="1125" y="640" font-size="10" text-anchor="middle" fill="#666">Apache Kafka</text>
+    
+    <!-- Camera Management -->
+    <rect x="100" y="700" width="250" height="130" fill="#fce4ec" stroke="#c2185b" stroke-width="2" rx="5"/>
+    <text x="225" y="730" font-size="14" font-weight="bold" text-anchor="middle">Camera Management</text>
+    <text x="225" y="750" font-size="11" text-anchor="middle">• ONVIF Discovery</text>
+    <text x="225" y="765" font-size="11" text-anchor="middle">• Configuration API</text>
+    <text x="225" y="780" font-size="11" text-anchor="middle">• Health Monitoring</text>
+    <text x="225" y="795" font-size="11" text-anchor="middle">• PTZ Control</text>
+    <text x="225" y="810" font-size="11" text-anchor="middle">• Firmware Updates</text>
+    
+    <!-- API Service -->
+    <rect x="400" y="700" width="250" height="130" fill="#e8eaf6" stroke="#3f51b5" stroke-width="2" rx="5"/>
+    <text x="525" y="730" font-size="14" font-weight="bold" text-anchor="middle">API Service</text>
+    <text x="525" y="750" font-size="11" text-anchor="middle">• REST/GraphQL APIs</text>
+    <text x="525" y="765" font-size="11" text-anchor="middle">• WebSocket Events</text>
+    <text x="525" y="780" font-size="11" text-anchor="middle">• Authentication (JWT)</text>
+    <text x="525" y="795" font-size="11" text-anchor="middle">• Rate Limiting</text>
+    <text x="525" y="810" font-size="11" text-anchor="middle">• API Gateway</text>
+    
+    <!-- Streaming Service -->
+    <rect x="700" y="700" width="250" height="130" fill="#e0f2f1" stroke="#00796b" stroke-width="2" rx="5"/>
+    <text x="825" y="730" font-size="14" font-weight="bold" text-anchor="middle">Streaming Service</text>
+    <text x="825" y="750" font-size="11" text-anchor="middle">• HLS Packaging</text>
+    <text x="825" y="765" font-size="11" text-anchor="middle">• WebRTC Gateway</text>
+    <text x="825" y="780" font-size="11" text-anchor="middle">• Transcoding</text>
+    <text x="825" y="795" font-size="11" text-anchor="middle">• Adaptive Bitrate</text>
+    <text x="825" y="810" font-size="11" text-anchor="middle">• CDN Distribution</text>
+    
+    <!-- Analytics Service -->
+    <rect x="1000" y="700" width="250" height="130" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="5"/>
+    <text x="1125" y="730" font-size="14" font-weight="bold" text-anchor="middle">Analytics Service</text>
+    <text x="1125" y="750" font-size="11" text-anchor="middle">• Business Intelligence</text>
+    <text x="1125" y="765" font-size="11" text-anchor="middle">• Heat Maps</text>
+    <text x="1125" y="780" font-size="11" text-anchor="middle">• Traffic Patterns</text>
+    <text x="1125" y="795" font-size="11" text-anchor="middle">• Reports Generation</text>
+    <text x="1125" y="810" font-size="11" text-anchor="middle">• ML Model Training</text>
+    
+    <!-- Message Queue -->
+    <rect x="450" y="880" width="500" height="80" fill="#fff9c4" stroke="#f57f17" stroke-width="2" rx="5"/>
+    <text x="700" y="910" font-size="14" font-weight="bold" text-anchor="middle">Message Queue / Event Bus</text>
+    <text x="700" y="930" font-size="11" text-anchor="middle">Apache Kafka | RabbitMQ | Redis Streams</text>
+    <text x="700" y="945" font-size="10" text-anchor="middle" fill="#666">Event-Driven Architecture</text>
+  </g>
+  
+  <!-- Data Layer -->
+  <g id="data-layer">
+    <rect x="50" y="1080" width="1300" height="200" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2" rx="10"/>
+    <text x="700" y="1110" font-size="18" font-weight="bold" text-anchor="middle" fill="#2e7d32">Data Storage Layer</text>
+    
+    <!-- Database -->
+    <rect x="100" y="1140" width="280" height="100" fill="#fff" stroke="#2e7d32" stroke-width="2" rx="5"/>
+    <text x="240" y="1165" font-size="14" font-weight="bold" text-anchor="middle">PostgreSQL + TimescaleDB</text>
+    <text x="240" y="1185" font-size="11" text-anchor="middle">• Camera Metadata</text>
+    <text x="240" y="1200" font-size="11" text-anchor="middle">• Events & Detections</text>
+    <text x="240" y="1215" font-size="11" text-anchor="middle">• Time-Series Data</text>
+    <text x="240" y="1230" font-size="11" text-anchor="middle">• User Management</text>
+    
+    <!-- Object Storage -->
+    <rect x="430" y="1140" width="280" height="100" fill="#fff" stroke="#2e7d32" stroke-width="2" rx="5"/>
+    <text x="570" y="1165" font-size="14" font-weight="bold" text-anchor="middle">Object Storage</text>
+    <text x="570" y="1185" font-size="11" text-anchor="middle">• Video Segments (S3/MinIO)</text>
+    <text x="570" y="1200" font-size="11" text-anchor="middle">• Snapshots & Thumbnails</text>
+    <text x="570" y="1215" font-size="11" text-anchor="middle">• ML Model Storage</text>
+    <text x="570" y="1230" font-size="11" text-anchor="middle">• Backup Archives</text>
+    
+    <!-- Cache -->
+    <rect x="760" y="1140" width="280" height="100" fill="#fff" stroke="#2e7d32" stroke-width="2" rx="5"/>
+    <text x="900" y="1165" font-size="14" font-weight="bold" text-anchor="middle">Redis Cache</text>
+    <text x="900" y="1185" font-size="11" text-anchor="middle">• Session Management</text>
+    <text x="900" y="1200" font-size="11" text-anchor="middle">• Live Event Cache</text>
+    <text x="900" y="1215" font-size="11" text-anchor="middle">• API Response Cache</text>
+    <text x="900" y="1230" font-size="11" text-anchor="middle">• Pub/Sub Events</text>
+    
+    <!-- File System -->
+    <rect x="1090" y="1140" width="210" height="100" fill="#fff" stroke="#2e7d32" stroke-width="2" rx="5"/>
+    <text x="1195" y="1165" font-size="14" font-weight="bold" text-anchor="middle">Local Storage</text>
+    <text x="1195" y="1185" font-size="11" text-anchor="middle">• Temp Processing</text>
+    <text x="1195" y="1200" font-size="11" text-anchor="middle">• Buffer Cache</text>
+    <text x="1195" y="1215" font-size="11" text-anchor="middle">• Edge Recording</text>
+    <text x="1195" y="1230" font-size="11" text-anchor="middle">• ZFS/Btrfs</text>
+  </g>
+  
+  <!-- Frontend Layer -->
+  <g id="frontend-layer">
+    <rect x="50" y="1310" width="1300" height="200" fill="#ffebee" stroke="#d32f2f" stroke-width="2" rx="10"/>
+    <text x="700" y="1340" font-size="18" font-weight="bold" text-anchor="middle" fill="#d32f2f">Frontend & Client Applications</text>
+    
+    <!-- Web Dashboard -->
+    <rect x="100" y="1370" width="250" height="100" fill="#fff" stroke="#d32f2f" stroke-width="2" rx="5"/>
+    <text x="225" y="1395" font-size="14" font-weight="bold" text-anchor="middle">Web Dashboard</text>
+    <text x="225" y="1415" font-size="11" text-anchor="middle">• React/Vue.js SPA</text>
+    <text x="225" y="1430" font-size="11" text-anchor="middle">• Live Camera Grid</text>
+    <text x="225" y="1445" font-size="11" text-anchor="middle">• Analytics Dashboard</text>
+    <text x="225" y="1460" font-size="11" text-anchor="middle">• WebSocket Updates</text>
+    
+    <!-- Mobile Apps -->
+    <rect x="400" y="1370" width="250" height="100" fill="#fff" stroke="#d32f2f" stroke-width="2" rx="5"/>
+    <text x="525" y="1395" font-size="14" font-weight="bold" text-anchor="middle">Mobile Apps</text>
+    <text x="525" y="1415" font-size="11" text-anchor="middle">• iOS/Android Native</text>
+    <text x="525" y="1430" font-size="11" text-anchor="middle">• Push Notifications</text>
+    <text x="525" y="1445" font-size="11" text-anchor="middle">• Live Streaming</text>
+    <text x="525" y="1460" font-size="11" text-anchor="middle">• Offline Mode</text>
+    
+    <!-- API Clients -->
+    <rect x="700" y="1370" width="250" height="100" fill="#fff" stroke="#d32f2f" stroke-width="2" rx="5"/>
+    <text x="825" y="1395" font-size="14" font-weight="bold" text-anchor="middle">Third-Party Integration</text>
+    <text x="825" y="1415" font-size="11" text-anchor="middle">• REST API Clients</text>
+    <text x="825" y="1430" font-size="11" text-anchor="middle">• Webhook Receivers</text>
+    <text x="825" y="1445" font-size="11" text-anchor="middle">• POS Integration</text>
+    <text x="825" y="1460" font-size="11" text-anchor="middle">• Access Control</text>
+    
+    <!-- Admin Portal -->
+    <rect x="1000" y="1370" width="250" height="100" fill="#fff" stroke="#d32f2f" stroke-width="2" rx="5"/>
+    <text x="1125" y="1395" font-size="14" font-weight="bold" text-anchor="middle">Admin Portal</text>
+    <text x="1125" y="1415" font-size="11" text-anchor="middle">• System Configuration</text>
+    <text x="1125" y="1430" font-size="11" text-anchor="middle">• User Management</text>
+    <text x="1125" y="1445" font-size="11" text-anchor="middle">• Camera Setup</text>
+    <text x="1125" y="1460" font-size="11" text-anchor="middle">• ML Model Config</text>
+  </g>
+  
+  <!-- Flow Arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+      <polygon points="0 0, 10 5, 0 10" fill="#666"/>
+    </marker>
+  </defs>
+  
+  <!-- Stream Flow Arrows -->
+  <g id="flow-arrows" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)">
+    <!-- Camera to Ingestion -->
+    <path d="M 200 230 L 225 510"/>
+    <path d="M 450 230 L 225 510"/>
+    <path d="M 700 230 L 225 510"/>
+    
+    <!-- Ingestion to Recording -->
+    <path d="M 350 585 L 400 585"/>
+    
+    <!-- Ingestion to AI -->
+    <path d="M 350 585 L 700 585"/>
+    
+    <!-- AI to Event Processing -->
+    <path d="M 950 585 L 1000 585"/>
+    
+    <!-- Event to Message Queue -->
+    <path d="M 1125 660 L 700 880"/>
+    
+    <!-- Services to API -->
+    <path d="M 525 660 L 525 700"/>
+    <path d="M 825 660 L 525 700"/>
+    
+    <!-- API to Streaming -->
+    <path d="M 650 765 L 700 765"/>
+    
+    <!-- Services to Data Layer -->
+    <path d="M 225 830 L 240 1140"/>
+    <path d="M 525 830 L 570 1140"/>
+    <path d="M 825 830 L 570 1140"/>
+    <path d="M 1125 830 L 900 1140"/>
+    
+    <!-- Message Queue to Services -->
+    <path d="M 700 960 L 825 700" stroke-dasharray="5,5"/>
+    <path d="M 700 960 L 1125 700" stroke-dasharray="5,5"/>
+    
+    <!-- Data to Frontend -->
+    <path d="M 525 1050 L 225 1370"/>
+    <path d="M 525 1050 L 525 1370"/>
+    <path d="M 525 1050 L 825 1370"/>
+    
+    <!-- API to Frontend -->
+    <path d="M 525 830 L 225 1370" stroke="#e91e63" stroke-width="3"/>
+    <path d="M 525 830 L 525 1370" stroke="#e91e63" stroke-width="3"/>
+    
+    <!-- Streaming to Frontend -->
+    <path d="M 825 830 L 225 1370" stroke="#00bcd4" stroke-width="3"/>
+    <path d="M 825 830 L 525 1370" stroke="#00bcd4" stroke-width="3"/>
+  </g>
+  
+  <!-- Legend -->
+  <g id="legend" transform="translate(50, 1540)">
+    <text x="0" y="0" font-size="14" font-weight="bold">Data Flow Legend:</text>
+    <line x1="0" y1="20" x2="50" y2="20" stroke="#666" stroke-width="2" marker-end="url(#arrowhead)"/>
+    <text x="60" y="25" font-size="12">Standard Data Flow</text>
+    
+    <line x1="200" y1="20" x2="250" y2="20" stroke="#666" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowhead)"/>
+    <text x="260" y="25" font-size="12">Event/Message Flow</text>
+    
+    <line x1="450" y1="20" x2="500" y2="20" stroke="#e91e63" stroke-width="3" marker-end="url(#arrowhead)"/>
+    <text x="510" y="25" font-size="12">API Requests</text>
+    
+    <line x1="700" y1="20" x2="750" y2="20" stroke="#00bcd4" stroke-width="3" marker-end="url(#arrowhead)"/>
+    <text x="760" y="25" font-size="12">Video Streaming</text>
+  </g>
+</svg>

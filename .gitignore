@@ -326,3 +326,9 @@ htmlcov/
 
 # Specific camera recordings (keep structure, ignore content)
 recordings/camera_*/
+# Build artifacts and minified files
+*.min.js
+*.min.css
+frontend/src/*.min.js
+frontend/src/*.min.css
+

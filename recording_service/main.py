@@ -18,7 +18,7 @@ import uvicorn
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from database.service import DatabaseService
+from database.foundation_service import get_foundation_database_service
 from recording_service.services.ffmpeg_recording_manager import FFmpegRecordingManager
 from recording_service.services.playback_service import PlaybackService
 from recording_service.services.storage_manager import StorageManager
@@ -50,9 +50,8 @@ async def lifespan(app: FastAPI):
     
     logger.info("Starting 24/7 Recording Service...")
     
-    # Initialize services
-    db_service = DatabaseService()
-    await db_service.init_db()
+    # Initialize Foundation Database Service
+    db_service = await get_foundation_database_service()
     
     storage_manager = StorageManager(
         recordings_path="recordings",

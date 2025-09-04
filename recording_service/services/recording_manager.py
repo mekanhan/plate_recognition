@@ -470,32 +470,32 @@ class RecordingManager:
             
             camera_configs = []
             for camera in cameras:
-                logger.info(f"DEBUG: Camera {camera.name} ({camera.camera_id}) has status: {camera.status}")
-                # Skip inactive cameras
-                if camera.status != 'active':
+                logger.info(f"DEBUG: Camera {camera['name']} ({camera['camera_id']}) has status: {camera['status']}")
+                # Skip inactive cameras (both 'active' and 'online' are considered active)
+                if camera['status'] not in ['active', 'online']:
                     continue
                 
                 # Build camera configuration
                 camera_config = {
-                    'camera_id': camera.camera_id,
-                    'name': camera.name,
-                    'ip_address': camera.ip_address,
-                    'port': camera.port or 554,
-                    'connection_type': camera.connection_type or 'rtsp',
-                    'stream_path': camera.stream_path or '/h264Preview_01_main',
-                    'username': camera.username or 'admin',
-                    'password': camera.password or '',
-                    'location': camera.location or '',
+                    'camera_id': camera['camera_id'],
+                    'name': camera['name'],
+                    'ip_address': camera['ip_address'],
+                    'port': camera.get('port') or 554,
+                    'connection_type': camera.get('connection_type') or 'rtsp',
+                    'stream_path': camera.get('stream_path') or '/h264Preview_01_main',
+                    'username': camera.get('username') or 'admin',
+                    'password': camera.get('password') or '',
+                    'location': camera.get('location') or '',
                     # Video settings
-                    'resolution_width': camera.resolution_width or 1920,
-                    'resolution_height': camera.resolution_height or 1080,
-                    'max_fps': camera.max_fps or 30,
-                    'video_quality': camera.video_quality or 'medium',
-                    'low_latency': camera.low_latency if camera.low_latency is not None else True
+                    'resolution_width': camera.get('resolution_width') or 1920,
+                    'resolution_height': camera.get('resolution_height') or 1080,
+                    'max_fps': camera.get('max_fps') or 30,
+                    'video_quality': camera.get('video_quality') or 'medium',
+                    'low_latency': camera.get('low_latency', True)
                 }
                 camera_configs.append(camera_config)
                 
-                logger.info(f"Loaded camera config: {camera.name} ({camera.camera_id}) at {camera.ip_address}:{camera.port}")
+                logger.info(f"Loaded camera config: {camera['name']} ({camera['camera_id']}) at {camera['ip_address']}:{camera.get('port', 554)}")
             
             logger.info(f"Loaded {len(camera_configs)} active camera configurations from database")
             return camera_configs

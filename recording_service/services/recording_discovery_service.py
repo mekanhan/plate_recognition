@@ -60,30 +60,30 @@ class RecordingDiscoveryService:
             if self.db_service:
                 try:
                     cameras = await self.db_service.get_all_cameras()
-                    # Convert Camera objects to dictionaries
+                    # Cameras are now dictionaries from Foundation Database Service
                     for cam in cameras:
                         camera_data = {
-                            'id': cam.id,
-                            'camera_id': cam.camera_id,  # The actual working camera_id
-                            'name': cam.name,
-                            'ip_address': cam.ip_address,
-                            'status': cam.status
+                            'id': cam.get('id'),
+                            'camera_id': cam['camera_id'],  # The actual working camera_id
+                            'name': cam['name'],
+                            'ip_address': cam.get('ip_address'),
+                            'status': cam['status']
                         }
                         
                         # Handle all possible camera directory formats:
                         # 1. Legacy formats with camera prefix
-                        camera_key1 = f"camera_{cam.id}"
-                        camera_key2 = f"camera_camera_{cam.id}"
+                        camera_key1 = f"camera_{cam.get('id')}"
+                        camera_key2 = f"camera_camera_{cam.get('id')}"
                         active_cameras[camera_key1] = camera_data
                         active_cameras[camera_key2] = camera_data
                         
                         # 2. Direct camera_id (if different from above)
-                        if cam.id not in [camera_key1, camera_key2]:
-                            active_cameras[cam.id] = camera_data
+                        if cam.get('id') not in [camera_key1, camera_key2]:
+                            active_cameras[cam.get('id')] = camera_data
                         
                         # 3. Stable camera ID (most important for new system)
-                        if hasattr(cam, 'stable_camera_id') and cam.stable_camera_id:
-                            active_cameras[cam.stable_camera_id] = camera_data
+                        if cam.get('stable_camera_id'):
+                            active_cameras[cam['stable_camera_id']] = camera_data
                 except Exception as e:
                     logger.error(f"Failed to get cameras from database: {e}")
             

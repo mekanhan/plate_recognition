@@ -28,7 +28,7 @@ from ai_pipeline.camera_manager import CameraManager, CameraConfig
 from ai_pipeline.processors import LicensePlateDetector, ProcessingPipeline
 from ai_features.vehicle.detection.pipeline import EnhancedProcessingPipeline
 from ai_pipeline.filtered_pipeline import FilteredProcessingPipeline, get_filtered_pipeline
-from database.service import DatabaseService
+from database.foundation_service import get_foundation_database_service
 from utils.camera_utils import generate_camera_id, validate_camera_id, CameraValidation, CameraDisplayUtils
 from utils.feature_flags import feature_flags, is_license_plate_detection_enabled, is_continuous_processing_enabled
 try:
@@ -250,10 +250,9 @@ async def lifespan(app: FastAPI):
     if not is_license_plate_detection_enabled():
         logging.warning("License plate detection disabled - detection will not function")
     
-    db = DatabaseService()
+    db = await get_foundation_database_service()
     
-    # Create database tables
-    await db.create_tables()
+    # Database tables are created during initialization
     
     # Create directories
     os.makedirs("detections", exist_ok=True)
@@ -327,17 +326,14 @@ async def lifespan(app: FastAPI):
     logging.info("LPR System shutdown complete")
 
 # Database dependency
-async def get_database_service() -> DatabaseService:
+async def get_database_service():
     """FastAPI dependency to get a database service instance"""
-    db_service = DatabaseService()
+    db_service = await get_foundation_database_service()
     try:
         yield db_service
     finally:
-        try:
-            await db_service.close()
-        except Exception as e:
-            logger.error(f"Error closing database service: {e}")
-            # Continue anyway, don't let cleanup errors crash the request
+        # Foundation service manages its own lifecycle
+        pass
 
 app = FastAPI(
     title="LPR System API",
@@ -458,7 +454,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 async def load_cameras():
     """Load camera configurations from database"""
-    startup_db = DatabaseService()
+    startup_db = await get_foundation_database_service()
     try:
         logging.info("Loading cameras from database...")
         # Get all active cameras from database
@@ -514,7 +510,7 @@ async def reload_cameras():
 # PERIODIC CAMERA RECOVERY TASK
 async def camera_recovery_task():
     """Periodic task to recover offline cameras"""
-    recovery_db = DatabaseService()
+    recovery_db = await get_foundation_database_service()
     
     while True:
         try:
@@ -540,9 +536,8 @@ async def camera_recovery_task():
 async def save_universal_detection(detection_data: Dict):
     """Save detection to universal_detections table"""
     try:
-        db_service = DatabaseService()
+        db_service = await get_foundation_database_service()
         await db_service.save_universal_detection(detection_data)
-        await db_service.close()
             
     except Exception as e:
         logging.error(f"Error saving universal detection: {e}")
@@ -564,7 +559,7 @@ async def processing_loop():
         logging.info("Starting processing loop with LICENSE PLATE DETECTION enabled")
     
     # Create a dedicated database service for the processing loop
-    loop_db = DatabaseService()
+    loop_db = await get_foundation_database_service()
     
     while True:
         try:
@@ -681,7 +676,7 @@ async def get_feature_configuration():
     return get_detection_config_summary()
 
 @app.get("/api/cameras/list")
-async def get_cameras_list(db_service: DatabaseService = Depends(get_database_service)):
+async def get_cameras_list(db_service = Depends(get_database_service)):
     """Get simplified camera list for dropdown filters and selection"""
     try:
         cameras = await db_service.get_all_cameras()
@@ -702,7 +697,7 @@ async def get_cameras_list(db_service: DatabaseService = Depends(get_database_se
         raise HTTPException(500, f"Failed to get camera list: {str(e)}")
 
 @app.get("/api/detections/object-types")
-async def get_object_types(db_service: DatabaseService = Depends(get_database_service)):
+async def get_object_types(db_service = Depends(get_database_service)):
     """Get available object types for filtering (dynamic configuration)"""
     try:
         # Get unique object types from database
@@ -749,7 +744,7 @@ async def get_object_types(db_service: DatabaseService = Depends(get_database_se
         ]
 
 @app.get("/api/cameras")
-async def get_cameras(db_service: DatabaseService = Depends(get_database_service)):
+async def get_cameras(db_service = Depends(get_database_service)):
     """Get all cameras with real-time connection status"""
     cameras = await db_service.get_all_cameras()
     
@@ -790,7 +785,7 @@ async def get_cameras(db_service: DatabaseService = Depends(get_database_service
     return result
 
 @app.post("/api/cameras")
-async def create_camera(camera_data: CameraCreate, db_service: DatabaseService = Depends(get_database_service)):
+async def create_camera(camera_data: CameraCreate, db_service = Depends(get_database_service)):
     """Create a new camera"""
     try:
         # Generate unique camera ID using utility function
@@ -863,7 +858,7 @@ async def create_camera(camera_data: CameraCreate, db_service: DatabaseService =
         raise HTTPException(500, f"Failed to create camera: {str(e)}")
 
 @app.put("/api/cameras/{camera_id}")
-async def update_camera(camera_id: str, camera_data: CameraUpdate, db_service: DatabaseService = Depends(get_database_service)):
+async def update_camera(camera_id: str, camera_data: CameraUpdate, db_service = Depends(get_database_service)):
     """Update an existing camera"""
     try:
         # Check if camera exists
@@ -910,7 +905,7 @@ async def update_camera(camera_id: str, camera_data: CameraUpdate, db_service: D
         raise HTTPException(500, f"Failed to update camera: {str(e)}")
 
 @app.get("/api/cameras/{camera_id}")
-async def get_camera(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def get_camera(camera_id: str, db_service = Depends(get_database_service)):
     """Get a specific camera by ID"""
     try:
         camera = await db_service.get_camera(camera_id)
@@ -947,7 +942,7 @@ async def get_camera(camera_id: str, db_service: DatabaseService = Depends(get_d
         raise HTTPException(500, f"Failed to get camera: {str(e)}")
 
 @app.delete("/api/cameras/{camera_id}")
-async def delete_camera(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def delete_camera(camera_id: str, db_service = Depends(get_database_service)):
     """Delete a camera"""
     try:
         # Delete from database (will return False if camera doesn't exist)
@@ -975,7 +970,7 @@ async def delete_camera(camera_id: str, db_service: DatabaseService = Depends(ge
         raise HTTPException(500, f"Failed to delete camera: {str(e)}")
 
 @app.post("/api/cameras/{camera_id}/test")
-async def test_camera_connection(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def test_camera_connection(camera_id: str, db_service = Depends(get_database_service)):
     """Test connection to a specific camera"""
     try:
         # Get camera from database
@@ -1004,7 +999,7 @@ async def test_camera_connection(camera_id: str, db_service: DatabaseService = D
         raise HTTPException(500, f"Failed to test camera: {str(e)}")
 
 @app.post("/api/cameras/{camera_id}/start")
-async def start_camera_recording(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def start_camera_recording(camera_id: str, db_service = Depends(get_database_service)):
     """Start recording for a specific camera"""
     try:
         # Get camera from database
@@ -1037,7 +1032,7 @@ async def start_camera_recording(camera_id: str, db_service: DatabaseService = D
         raise HTTPException(500, f"Failed to start recording: {str(e)}")
 
 @app.post("/api/cameras/{camera_id}/stop")
-async def stop_camera_recording(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def stop_camera_recording(camera_id: str, db_service = Depends(get_database_service)):
     """Stop recording for a specific camera"""
     try:
         # Get camera from database
@@ -1209,7 +1204,7 @@ async def discover_onvif_cameras(
     show_existing: bool = Query(False, description="Show cameras already in system (for testing)"),
     username: Optional[str] = Query(None, description="ONVIF username for authenticated discovery"),
     password: Optional[str] = Query(None, description="ONVIF password for authenticated discovery"),
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """
     Discover ONVIF cameras on the network
@@ -1298,7 +1293,7 @@ async def get_discovered_cameras():
 async def add_onvif_camera(
     camera_ip: str,
     credentials: Dict[str, str] = Body(..., description="Camera credentials"),
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """Add a discovered ONVIF camera to the system"""
     try:
@@ -1540,7 +1535,7 @@ async def get_camera_snapshot(
 async def get_recent_detections(
     limit: int = Query(100, ge=1, le=500),
     camera_id: Optional[str] = None,
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """Get recent license plate detections"""
     # Get detections from the working detections table
@@ -1571,7 +1566,7 @@ async def search_detections(
     sort_direction: Optional[str] = Query("desc", regex="^(asc|desc)$", description="Sort direction"),
     plate_text: Optional[str] = Query(None, description="Filter by plate text"),
     camera_id: Optional[str] = Query(None, description="Filter by camera ID"),
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """Search detections with real database queries"""
     
@@ -1648,7 +1643,7 @@ async def get_plate_history(plate_text: str):
 async def get_plate_history(
     plate_text: str,
     days: int = Query(30, ge=1, le=365),
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """Get complete history for a specific plate number"""
     history = await db_service.get_plate_history(plate_text, days)
@@ -1666,7 +1661,7 @@ async def get_plate_history(
 
 @app.get("/api/detections/stats")
 async def get_detection_statistics(
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """Get detection statistics - simplified for UI"""
     try:
@@ -1710,7 +1705,7 @@ async def get_detection_statistics(
         logger.error(f"Error getting detection stats: {e}")
         return {"total": 0, "today": 0, "week": 0, "month": 0}
 
-async def _get_camera_names(db_service: DatabaseService) -> Dict[str, str]:
+async def _get_camera_names(db_service) -> Dict[str, str]:
     """Get mapping of camera_id to camera name"""
     try:
         cameras = await db_service.get_all_cameras()
@@ -1744,7 +1739,7 @@ def _calculate_similarity_score(target: str, candidate: str) -> float:
     return intersection / union if union > 0 else 0.0
 
 @app.get("/api/detections/{detection_id}")
-async def get_detection(detection_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def get_detection(detection_id: str, db_service = Depends(get_database_service)):
     """Get specific detection details"""
     detection = await db_service.get_detection_by_id(detection_id)
     
@@ -1770,7 +1765,7 @@ async def get_detection(detection_id: str, db_service: DatabaseService = Depends
     }
 
 @app.get("/api/cameras/{camera_id}/health")
-async def get_camera_health(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def get_camera_health(camera_id: str, db_service = Depends(get_database_service)):
     """
     Get comprehensive camera health status with enhanced diagnostics
     """
@@ -1818,7 +1813,7 @@ async def get_cameras_health_summary():
     return health_report
 
 @app.post("/api/cameras/{camera_id}/restart")
-async def restart_camera(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def restart_camera(camera_id: str, db_service = Depends(get_database_service)):
     """Restart a specific camera connection"""
     try:
         # Check if camera exists in database
@@ -1854,7 +1849,7 @@ async def restart_camera(camera_id: str, db_service: DatabaseService = Depends(g
         raise HTTPException(500, f"Internal error restarting camera: {str(e)}")
 
 @app.post("/api/cameras/restart/all")
-async def restart_all_cameras(db_service: DatabaseService = Depends(get_database_service)):
+async def restart_all_cameras(db_service = Depends(get_database_service)):
     """Restart all cameras"""
     try:
         results = {}
@@ -1882,7 +1877,7 @@ async def restart_all_cameras(db_service: DatabaseService = Depends(get_database
         raise HTTPException(500, f"Internal error restarting cameras: {str(e)}")
 
 @app.get("/api/cameras/health/detailed")
-async def get_detailed_health_status(db_service: DatabaseService = Depends(get_database_service)):
+async def get_detailed_health_status(db_service = Depends(get_database_service)):
     """Get detailed health status including network and performance metrics"""
     try:
         health_report = camera_manager.get_system_health()
@@ -2031,7 +2026,7 @@ async def set_recording_quality(camera_id: str, quality_settings: dict):
         }
 
 @app.get("/api/cameras/{camera_id}/diagnostics")
-async def get_camera_diagnostics(camera_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def get_camera_diagnostics(camera_id: str, db_service = Depends(get_database_service)):
     """
     Run comprehensive diagnostics for a specific camera
     Returns detailed connection analysis and recommendations
@@ -2131,7 +2126,7 @@ async def get_camera_diagnostics(camera_id: str, db_service: DatabaseService = D
         }
 
 @app.get("/api/debug/raw-cameras")
-async def get_cameras_raw_sql(db_service: DatabaseService = Depends(get_database_service)):
+async def get_cameras_raw_sql(db_service = Depends(get_database_service)):
     """Debug endpoint: Get cameras using raw SQL"""
     try:
         async with db_service.db_config.get_session() as session:
@@ -2237,7 +2232,7 @@ async def emergency_cleanup():
     }
 
 @app.get("/api/analytics/overview")
-async def get_analytics_overview(db_service: DatabaseService = Depends(get_database_service)):
+async def get_analytics_overview(db_service = Depends(get_database_service)):
     """Get dashboard analytics"""
     return await db_service.get_analytics_overview()
 
@@ -2247,7 +2242,7 @@ async def get_quality_metrics(
     end_date: Optional[datetime] = None,
     camera_id: Optional[str] = None,
     limit: int = Query(100, ge=1, le=1000),
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """Get POP quality metrics and statistics for detections"""
     try:
@@ -2407,7 +2402,7 @@ async def get_quality_thresholds():
 async def filter_detections_by_quality(
     filter_request: dict = Body(...),
     limit: int = Query(100, ge=1, le=1000),
-    db_service: DatabaseService = Depends(get_database_service)
+    db_service = Depends(get_database_service)
 ):
     """Filter detections based on quality criteria
     
@@ -2521,7 +2516,7 @@ async def filter_detections_by_quality(
         raise HTTPException(500, f"Failed to filter detections: {str(e)}")
 
 @app.get("/api/detections/{detection_id}/quality")
-async def get_detection_quality_details(detection_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def get_detection_quality_details(detection_id: str, db_service = Depends(get_database_service)):
     """Get detailed quality metrics for a specific detection"""
     try:
         # Get detection from database
@@ -2585,7 +2580,7 @@ async def open_vlc(camera_id: str):
     }
 
 @app.get("/api/video/clip/{clip_id}")
-async def get_video_clip(clip_id: str, db_service: DatabaseService = Depends(get_database_service)):
+async def get_video_clip(clip_id: str, db_service = Depends(get_database_service)):
     """Serve video clip for playback"""
     clip = await db_service.get_video_clip(clip_id)
     if not clip:

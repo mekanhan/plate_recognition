@@ -205,6 +205,9 @@ class FoundationDatabaseService:
                     'status': camera.status,
                     'enabled': camera.status in ['active', 'online'],
                     'stable_camera_id': getattr(camera, 'stable_camera_id', None),
+                    'brand': camera.brand,
+                    'model': camera.model,
+                    'location': camera.location,
                     'resolution_width': camera.resolution_width,
                     'resolution_height': camera.resolution_height,
                     'max_fps': camera.max_fps,
@@ -238,9 +241,12 @@ class FoundationDatabaseService:
                     'password': camera.password,
                     'stream_path': camera.stream_path,
                     'connection_type': camera.connection_type or 'rtsp',
+                    'location': camera.location,
                     'status': camera.status,
                     'enabled': camera.status in ['active', 'online'],
                     'stable_camera_id': getattr(camera, 'stable_camera_id', None),
+                    'brand': camera.brand,
+                    'model': camera.model,
                     'resolution_width': camera.resolution_width,
                     'resolution_height': camera.resolution_height,
                     'max_fps': camera.max_fps,
@@ -250,6 +256,46 @@ class FoundationDatabaseService:
                     'updated_at': camera.updated_at
                 }
             return None
+        
+        return await self.execute_with_retry(operation)
+    
+    async def get_cameras_by_status(self, status: str) -> List[Dict[str, Any]]:
+        """Get cameras filtered by status"""
+        async def operation(session):
+            result = await session.execute(
+                select(Camera).where(Camera.status == status)
+            )
+            cameras = result.scalars().all()
+            
+            camera_list = []
+            for camera in cameras:
+                camera_dict = {
+                    'id': camera.id,
+                    'camera_id': camera.camera_id,
+                    'name': camera.name,
+                    'ip_address': camera.ip_address,
+                    'port': camera.port,
+                    'username': camera.username,
+                    'password': camera.password,
+                    'stream_path': camera.stream_path,
+                    'connection_type': camera.connection_type or 'rtsp',
+                    'location': camera.location,
+                    'status': camera.status,
+                    'enabled': camera.status in ['active', 'online'],
+                    'stable_camera_id': getattr(camera, 'stable_camera_id', None),
+                    'brand': camera.brand,
+                    'model': camera.model,
+                    'resolution_width': camera.resolution_width,
+                    'resolution_height': camera.resolution_height,
+                    'max_fps': camera.max_fps,
+                    'video_quality': camera.video_quality,
+                    'low_latency': camera.low_latency,
+                    'created_at': camera.created_at,
+                    'updated_at': camera.updated_at
+                }
+                camera_list.append(camera_dict)
+            
+            return camera_list
         
         return await self.execute_with_retry(operation)
     
@@ -267,6 +313,166 @@ class FoundationDatabaseService:
                 await session.commit()
                 return True
             return False
+        
+        return await self.execute_with_retry(operation)
+    
+    async def update_camera(self, camera_id: str, updates: Dict[str, Any]) -> bool:
+        """Update camera fields with provided data"""
+        async def operation(session):
+            result = await session.execute(
+                select(Camera).where(Camera.camera_id == camera_id)
+            )
+            camera = result.scalar_one_or_none()
+            
+            if camera:
+                # Update allowed fields
+                allowed_fields = {
+                    'name', 'ip_address', 'port', 'connection_type', 'stream_path', 
+                    'location', 'username', 'password', 'brand', 'model',
+                    'resolution_width', 'resolution_height', 'max_fps', 'video_quality',
+                    'low_latency', 'onvif_service_url', 'onvif_port', 'manufacturer',
+                    'discovered_via', 'hardware_id', 'onvif_scopes', 'status',
+                    'last_test_at', 'last_test_result', 'config'
+                }
+                
+                for field, value in updates.items():
+                    if field in allowed_fields and hasattr(camera, field):
+                        setattr(camera, field, value)
+                
+                camera.updated_at = datetime.utcnow()
+                await session.commit()
+                return True
+            return False
+        
+        return await self.execute_with_retry(operation)
+    
+    async def get_recent_detections(self, limit: int = 100, camera_id: str = None) -> List[Dict[str, Any]]:
+        """Get recent detections from the database"""
+        async def operation(session):
+            query = select(Detection).order_by(desc(Detection.detected_at))
+            
+            if camera_id:
+                query = query.where(Detection.camera_id == camera_id)
+            
+            query = query.limit(limit)
+            result = await session.execute(query)
+            detections = result.scalars().all()
+            
+            return [
+                {
+                    'id': d.id,
+                    'camera_id': d.camera_id,
+                    'plate_text': d.plate_text,
+                    'confidence': d.confidence,
+                    'vehicle_type': d.vehicle_type,
+                    'detected_at': d.detected_at,
+                    'vehicle_bbox': d.vehicle_bbox,
+                    'plate_bbox': d.plate_bbox,
+                    'frame_path': d.frame_path,
+                    'plate_image_path': d.plate_image_path,
+                    'video_clip_id': d.video_clip_id,
+                    'meta_data': d.meta_data,
+                    'created_at': d.created_at
+                }
+                for d in detections
+            ]
+        
+        return await self.execute_with_retry(operation)
+    
+    async def get_detection_by_id(self, detection_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific detection by ID"""
+        async def operation(session):
+            result = await session.execute(
+                select(Detection).where(Detection.id == detection_id)
+            )
+            detection = result.scalar_one_or_none()
+            
+            if detection:
+                return {
+                    'id': detection.id,
+                    'camera_id': detection.camera_id,
+                    'plate_text': detection.plate_text,
+                    'confidence': detection.confidence,
+                    'vehicle_type': detection.vehicle_type,
+                    'detected_at': detection.detected_at,
+                    'vehicle_bbox': detection.vehicle_bbox,
+                    'plate_bbox': detection.plate_bbox,
+                    'frame_path': detection.frame_path,
+                    'plate_image_path': detection.plate_image_path,
+                    'video_clip_id': detection.video_clip_id,
+                    'meta_data': detection.meta_data,
+                    'created_at': detection.created_at
+                }
+            return None
+        
+        return await self.execute_with_retry(operation)
+    
+    async def get_plate_history(self, plate_text: str, days: int = 30) -> List[Dict[str, Any]]:
+        """Get detection history for a specific plate"""
+        async def operation(session):
+            from datetime import timedelta
+            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            
+            result = await session.execute(
+                select(Detection)
+                .where(Detection.plate_text == plate_text)
+                .where(Detection.detected_at >= cutoff_date)
+                .order_by(desc(Detection.detected_at))
+            )
+            detections = result.scalars().all()
+            
+            return [
+                {
+                    'id': d.id,
+                    'camera_id': d.camera_id,
+                    'plate_text': d.plate_text,
+                    'confidence': d.confidence,
+                    'vehicle_type': d.vehicle_type,
+                    'detected_at': d.detected_at,
+                    'vehicle_bbox': d.vehicle_bbox,
+                    'plate_bbox': d.plate_bbox,
+                    'frame_path': d.frame_path,
+                    'plate_image_path': d.plate_image_path,
+                    'video_clip_id': d.video_clip_id,
+                    'meta_data': d.meta_data,
+                    'created_at': d.created_at
+                }
+                for d in detections
+            ]
+        
+        return await self.execute_with_retry(operation)
+    
+    async def save_detection(self, detection_data: Dict[str, Any]) -> str:
+        """Save a new detection to the database"""
+        async def operation(session):
+            # Create detection record
+            detection = Detection(
+                id=detection_data.get('id', str(__import__('uuid').uuid4())),
+                camera_id=detection_data['camera_id'],
+                plate_text=detection_data['plate_text'],
+                confidence=detection_data['confidence'],
+                vehicle_type=detection_data['vehicle_type'],
+                detected_at=detection_data['detected_at'],
+                vehicle_bbox=detection_data.get('vehicle_bbox'),
+                plate_bbox=detection_data.get('plate_bbox'),
+                frame_path=detection_data.get('frame_path', ''),
+                plate_image_path=detection_data.get('plate_image_path', ''),
+                video_clip_id=detection_data.get('video_clip_id'),
+                meta_data=detection_data.get('meta_data'),
+                group_id=detection_data.get('group_id'),
+                is_best_shot=detection_data.get('is_best_shot', False),
+                duplicate_of=detection_data.get('duplicate_of'),
+                track_id=detection_data.get('track_id'),
+                ocr_confidence=detection_data.get('ocr_confidence', 0.0),
+                image_saved=detection_data.get('image_saved', True),
+                created_at=detection_data.get('created_at', datetime.utcnow())
+            )
+            
+            session.add(detection)
+            await session.commit()
+            await session.refresh(detection)
+            
+            return detection.id
         
         return await self.execute_with_retry(operation)
     

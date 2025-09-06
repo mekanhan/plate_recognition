@@ -7,7 +7,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import aiohttp
-from database.service import DatabaseService
+from database.foundation_service import get_foundation_database_service
 try:
     from .websocket_manager import broadcast_camera_status, broadcast_recording_status, websocket_manager
 except ImportError:
@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 class BackgroundMonitor:
     """Background service for monitoring camera and recording status"""
     
-    def __init__(self, db_service: DatabaseService):
-        self.db = db_service
+    def __init__(self):
+        self.db = None  # Will be initialized async
         self.monitoring_tasks = {}
         self.is_running = False
         self.camera_status_cache = {}
@@ -40,6 +40,7 @@ class BackgroundMonitor:
             return
         
         self.is_running = True
+        self.db = await get_foundation_database_service()
         self.session = aiohttp.ClientSession()
         
         # Start monitoring tasks
@@ -90,35 +91,45 @@ class BackgroundMonitor:
                     continue
                 
                 for camera in cameras:
+                    # Handle both dict and object formats for backwards compatibility
+                    camera_enabled = camera.get('enabled', True) if isinstance(camera, dict) else getattr(camera, 'enabled', True)
+                    
                     # Check if camera should be monitored (default to True if no enabled attribute)
-                    if not getattr(camera, 'enabled', True):
+                    if not camera_enabled:
                         continue
+                    
+                    # Get camera fields
+                    camera_id = camera.get('camera_id') if isinstance(camera, dict) else camera.camera_id
+                    camera_name = camera.get('name') if isinstance(camera, dict) else camera.name
+                    camera_ip = camera.get('ip_address') if isinstance(camera, dict) else camera.ip_address
+                    camera_conn_type = camera.get('connection_type') if isinstance(camera, dict) else camera.connection_type
+                    camera_status = camera.get('status') if isinstance(camera, dict) else camera.status
                     
                     # Check camera status
                     current_status = await self._check_camera_connection(camera)
-                    previous_status = self.camera_status_cache.get(camera.camera_id)
+                    previous_status = self.camera_status_cache.get(camera_id)
                     
                     # Broadcast if status changed
                     if current_status != previous_status:
                         await broadcast_camera_status(
-                            camera_id=camera.camera_id,
+                            camera_id=camera_id,
                             status=current_status,
                             details={
-                                "name": camera.name,
-                                "ip_address": camera.ip_address,
-                                "connection_type": camera.connection_type,
+                                "name": camera_name,
+                                "ip_address": camera_ip,
+                                "connection_type": camera_conn_type,
                                 "last_check": datetime.now().isoformat()
                             }
                         )
                         
                         # Update database status if significantly different
-                        if current_status != camera.status:
-                            await self.db.update_camera_status(camera.camera_id, current_status)
+                        if current_status != camera_status:
+                            await self.db.update_camera_status(camera_id, current_status)
                         
-                        logger.info(f"Camera {camera.name} status changed: {previous_status} -> {current_status}")
+                        logger.info(f"Camera {camera_name} status changed: {previous_status} -> {current_status}")
                     
                     # Update cache
-                    self.camera_status_cache[camera.camera_id] = current_status
+                    self.camera_status_cache[camera_id] = current_status
                 
             except Exception as e:
                 logger.error(f"Error in camera status monitoring: {e}")
@@ -177,13 +188,18 @@ class BackgroundMonitor:
     async def _check_camera_connection(self, camera) -> str:
         """Check if camera is accessible via network ping or connection test"""
         try:
+            # Handle both dict and object formats for backwards compatibility
+            camera_ip = camera.get('ip_address') if isinstance(camera, dict) else camera.ip_address
+            camera_port = camera.get('port') if isinstance(camera, dict) else camera.port
+            camera_id = camera.get('camera_id') if isinstance(camera, dict) else getattr(camera, 'camera_id', 'unknown')
+            
             # Simple connection test - try to connect to camera port
             import socket
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)  # 5 second timeout
             
             try:
-                result = sock.connect_ex((camera.ip_address, camera.port or 554))
+                result = sock.connect_ex((camera_ip, camera_port or 554))
                 sock.close()
                 
                 if result == 0:
@@ -194,7 +210,7 @@ class BackgroundMonitor:
                 return 'offline'
             
         except Exception as e:
-            logger.debug(f"Error checking camera {camera.camera_id}: {e}")
+            logger.debug(f"Error checking camera {camera_id}: {e}")
             return 'error'
     
     async def _get_recording_statuses(self) -> Dict[str, Any]:
@@ -312,12 +328,12 @@ class BackgroundMonitor:
 # Global instance
 background_monitor: Optional[BackgroundMonitor] = None
 
-async def start_background_monitoring(db_service: DatabaseService):
+async def start_background_monitoring(db_service=None):
     """Start background monitoring service"""
     global background_monitor
     
     if background_monitor is None:
-        background_monitor = BackgroundMonitor(db_service)
+        background_monitor = BackgroundMonitor()
     
     await background_monitor.start()
     return background_monitor

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Network Values Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #1a2332; 
+            color: #e8eaed; 
+        }
+        .test-result { 
+            margin: 10px 0; 
+            padding: 10px; 
+            border-radius: 5px; 
+        }
+        .success { 
+            background: rgba(34, 197, 94, 0.15); 
+            color: #22c55e; 
+        }
+        .error { 
+            background: rgba(239, 68, 68, 0.15); 
+            color: #ef4444; 
+        }
+        .info { 
+            background: rgba(59, 130, 246, 0.15); 
+            color: #3b82f6; 
+        }
+        .code {
+            background: rgba(15, 20, 25, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Network Values Integration Test</h1>
+    
+    <div id="results"></div>
+    
+    <script type="module">
+        const results = document.getElementById('results');
+        
+        try {
+            const response = await fetch('/src/pages/EnhancedCamerasPage.js');
+            if (!response.ok) throw new Error('Cannot load EnhancedCamerasPage.js');
+            
+            const content = await response.text();
+            
+            // Test enhanced data merging
+            const hasEnhancedMerging = content.includes('stream_path: dbCamera.stream_path') && 
+                                     content.includes('username: dbCamera.username') && 
+                                     content.includes('password: dbCamera.password');
+                                     
+            const hasNetworkFields = content.includes('ip_address: camera.ip_address') &&
+                                   content.includes('stream_path: camera.stream_path') &&
+                                   content.includes('username: camera.username');
+                                   
+            const hasAPIFallback = content.includes('fetch(config.buildApiUrl') &&
+                                  content.includes('showCameraSettingsWithMergedData');
+                                  
+            const hasResolutionParsing = content.includes('resolution_width: camera.resolution_width') &&
+                                       content.includes('resolution_height: camera.resolution_height');
+                                       
+            const hasVideoSettings = content.includes('video_quality: camera.video_quality') &&
+                                    content.includes('low_latency: camera.low_latency');
+
+            results.innerHTML = `
+                <div class="test-result ${hasEnhancedMerging ? 'success' : 'error'}">
+                    ${hasEnhancedMerging ? '✅' : '❌'} Enhanced Data Merging: ${hasEnhancedMerging}
+                </div>
+                <div class="test-result ${hasNetworkFields ? 'success' : 'error'}">
+                    ${hasNetworkFields ? '✅' : '❌'} Network Fields Mapping: ${hasNetworkFields}
+                </div>
+                <div class="test-result ${hasAPIFallback ? 'success' : 'error'}">
+                    ${hasAPIFallback ? '✅' : '❌'} API Fallback System: ${hasAPIFallback}
+                </div>
+                <div class="test-result ${hasResolutionParsing ? 'success' : 'error'}">
+                    ${hasResolutionParsing ? '✅' : '❌'} Resolution Values: ${hasResolutionParsing}
+                </div>
+                <div class="test-result ${hasVideoSettings ? 'success' : 'error'}">
+                    ${hasVideoSettings ? '✅' : '❌'} Video Settings: ${hasVideoSettings}
+                </div>
+            `;
+
+            if (hasEnhancedMerging && hasNetworkFields && hasAPIFallback) {
+                results.innerHTML += `
+                    <div class="test-result success">
+                        🎯 <strong>Network Values Fixed!</strong>
+                    </div>
+                    <div class="test-result info">
+                        📋 <strong>Now Available in Settings Modal:</strong>
+                        <div class="code">✅ IP Address: camera.ip_address (from database)
+✅ Port: camera.port (from database)  
+✅ Connection Type: camera.connection_type (rtsp/http)
+✅ Stream Path: camera.stream_path (e.g., /h264Preview_01_main)
+✅ Username: camera.username (e.g., admin)
+✅ Password: camera.password (if saved)
+✅ Brand & Model: camera.brand, camera.model
+✅ Location: camera.location  
+✅ Resolution: camera.resolution_width x camera.resolution_height
+✅ FPS: camera.fps (max_fps from database)
+✅ Video Quality: camera.video_quality (high/medium/low)
+✅ Low Latency: camera.low_latency (boolean)
+✅ Enabled Status: camera.enabled</div>
+                    </div>
+                    <div class="test-result info">
+                        🔄 <strong>Two-Tier Data Loading:</strong>
+                        <div class="code">1. Primary: Fetch complete data from /api/cameras/{id}
+2. Fallback: Use enhanced merged data if API fails
+3. All network values preserved from database</div>
+                    </div>
+                `;
+            } else {
+                results.innerHTML += `
+                    <div class="test-result error">
+                        ❌ <strong>Some network values still missing</strong>
+                    </div>
+                `;
+            }
+            
+        } catch (error) {
+            results.innerHTML += `
+                <div class="test-result error">
+                    ❌ Error: ${error.message}
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

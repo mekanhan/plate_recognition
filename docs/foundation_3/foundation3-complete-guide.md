@@ -3159,7 +3159,7 @@ Based on SMB needs, prioritize:
    - After-hours activity
    - Removed object detection
 
-2. **Customer Analytics** (Week 11-12)
+2. **Multi-Object Detection Framework** (Week 11-12)
    - Foot traffic patterns
    - Queue management
    - Heat mapping

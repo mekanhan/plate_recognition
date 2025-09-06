@@ -462,33 +462,26 @@ async def load_cameras():
         logging.info(f"Found {len(cameras)} cameras in database")
         
         for camera in cameras:
-            # Handle both dict and object formats for backwards compatibility
-            camera_status = camera.get('status') if isinstance(camera, dict) else getattr(camera, 'status', None)
-            camera_enabled = camera.get('enabled', True) if isinstance(camera, dict) else getattr(camera, 'enabled', True)
-            
-            if camera_status in ['active', 'online'] and camera_enabled:
+            if camera.status in ['active', 'online']:
                 # Create CameraConfig from database data
                 # Use the actual database ID, not the generated camera_id field
                 config = CameraConfig(
-                    camera_id=camera.get('id') if isinstance(camera, dict) else camera.id,
-                    name=camera.get('name') if isinstance(camera, dict) else camera.name,
-                    ip_address=camera.get('ip_address') if isinstance(camera, dict) else camera.ip_address,
-                    username=(camera.get('username') or "admin") if isinstance(camera, dict) else (camera.username or "admin"),
-                    password=(camera.get('password') or "") if isinstance(camera, dict) else (camera.password or ""),
-                    port=(camera.get('port') or 554) if isinstance(camera, dict) else (camera.port or 554),
-                    protocol=(camera.get('connection_type') or "rtsp") if isinstance(camera, dict) else (camera.connection_type or "rtsp"),
-                    stream_path=(camera.get('stream_path') or "/stream") if isinstance(camera, dict) else (camera.stream_path or "/stream"),
-                    location=(camera.get('location') or "Unknown") if isinstance(camera, dict) else (camera.location or "Unknown")
+                    camera_id=camera.id,  # Use database UUID instead of generated ID
+                    name=camera.name,
+                    ip_address=camera.ip_address,
+                    username=camera.username or "admin",
+                    password=camera.password or "",
+                    port=camera.port or 554,
+                    protocol=camera.connection_type or "rtsp",
+                    stream_path=camera.stream_path or "/stream",
+                    location=camera.location or "Unknown"
                 )
                 
                 # Add to camera manager
                 camera_manager.add_camera(config)
-                camera_id = camera.get('id') if isinstance(camera, dict) else camera.id
-                camera_name = camera.get('name') if isinstance(camera, dict) else camera.name
-                logging.info(f"Loaded camera from database: {camera_name} ({camera_id})")
+                logging.info(f"Loaded camera from database: {camera.name} ({camera.id})")
         
-        active_count = len([c for c in cameras if (c.get('status') if isinstance(c, dict) else getattr(c, 'status', None)) in ['active', 'online'] and (c.get('enabled', True) if isinstance(c, dict) else getattr(c, 'enabled', True))])
-        logging.info(f"Loaded {active_count} active cameras from database")
+        logging.info(f"Loaded {len([c for c in cameras if c.status in ['active', 'online']])} active cameras from database")
         
     except Exception as e:
         logging.error(f"Failed to load cameras from database: {e}")
@@ -751,89 +744,45 @@ async def get_object_types(db_service = Depends(get_database_service)):
         ]
 
 @app.get("/api/cameras")
-async def get_cameras():
-    """Get all cameras with real-time connection status - Simplified for frontend compatibility"""
-    try:
-        db_service = await get_foundation_database_service()
-        cameras = await db_service.get_all_cameras()
-        
-        if not cameras:
-            return []
-        
-        result = []
-        for c in cameras:
-            # Handle both dict and object formats for backward compatibility
-            if isinstance(c, dict):
-                # Camera data is a dictionary
-                connection_status = c.get('status', 'offline') if c.get('status') else "offline"
-                camera_id = c.get('camera_id', '')
-                
-                result.append({
-                    "id": camera_id,
-                    "camera_id": camera_id,
-                    "name": c.get('name', ''),
-                    "display_name": c.get('name', ''),
-                    "short_id": camera_id[-8:] if camera_id else '',
-                    "location": c.get('location', '') or "",
-                    "status": connection_status,
-                    "ip_address": c.get('ip_address', ''),
-                    "port": c.get('port', 80),
-                    "connection_type": c.get('connection_type', 'http'),
-                    "stream_path": c.get('stream_path', '/mjpeg'),
-                    "username": c.get('username', 'admin'),
-                    "password": c.get('password', ''),
-                    "enabled": c.get('status') == 'active',
-                    "brand": c.get('brand', ''),
-                    "model": c.get('model', ''),
-                    "resolution_width": c.get('resolution_width', 1920),
-                    "resolution_height": c.get('resolution_height', 1080),
-                    "max_fps": c.get('max_fps', 30),
-                    "video_quality": c.get('video_quality', 'medium'),
-                    "low_latency": c.get('low_latency', True),
-                    "created_at": c.get('created_at').isoformat() if c.get('created_at') else None,
-                    "updated_at": c.get('updated_at').isoformat() if c.get('updated_at') else None,
-                    "last_detection": None,  # TODO: Implement get_last_detection_time in FoundationDatabaseService
-                    "last_test_result": c.get('last_test_result', ''),
-                    "last_test_at": c.get('last_test_at').isoformat() if c.get('last_test_at') else None
-                })
-            else:
-                # Camera data is an object (original format)
-                connection_status = c.status if c.status else "offline"
-                
-                result.append({
-                    "id": c.camera_id,
-                    "camera_id": c.camera_id,
-                    "name": c.name,
-                    "display_name": c.name,
-                    "short_id": c.camera_id[-8:],
-                    "location": c.location or "",
-                    "status": connection_status,
-                    "ip_address": c.ip_address,
-                    "port": c.port,
-                    "connection_type": c.connection_type,
-                    "stream_path": c.stream_path,
-                    "username": c.username,
-                    "password": c.password,
-                    "enabled": c.status == 'active',
-                    "brand": c.brand,
-                    "model": c.model,
-                    "resolution_width": c.resolution_width,
-                    "resolution_height": c.resolution_height,
-                    "max_fps": c.max_fps,
-                    "video_quality": c.video_quality,
-                    "low_latency": c.low_latency,
-                    "created_at": c.created_at.isoformat() if c.created_at else None,
-                    "updated_at": c.updated_at.isoformat() if c.updated_at else None,
-                    "last_detection": None,  # TODO: Implement get_last_detection_time in FoundationDatabaseService
-                    "last_test_result": c.last_test_result,
-                    "last_test_at": c.last_test_at.isoformat() if c.last_test_at else None
-                })
-        
-        return result
+async def get_cameras(db_service = Depends(get_database_service)):
+    """Get all cameras with real-time connection status"""
+    cameras = await db_service.get_all_cameras()
     
-    except Exception as e:
-        logger.error(f"Error getting cameras: {e}")
-        return []
+    result = []
+    for c in cameras:
+        # Simple status based on database status
+        connection_status = c.status if c.status else "offline"
+        
+        result.append({
+            "id": c.camera_id,
+            "camera_id": c.camera_id,
+            "name": c.name,
+            "display_name": c.name,
+            "short_id": c.camera_id[-8:],
+            "location": c.location or "",
+            "status": connection_status,
+            "ip_address": c.ip_address,
+            "port": c.port,
+            "connection_type": c.connection_type,
+            "stream_path": c.stream_path,
+            "username": c.username,
+            "password": c.password,
+            "enabled": c.status == 'active',
+            "brand": c.brand,
+            "model": c.model,
+            "resolution_width": c.resolution_width,
+            "resolution_height": c.resolution_height,
+            "max_fps": c.max_fps,
+            "video_quality": c.video_quality,
+            "low_latency": c.low_latency,
+            "created_at": c.created_at.isoformat() if c.created_at else None,
+            "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+            "last_detection": await db_service.get_last_detection_time(c.camera_id),
+            "last_test_result": c.last_test_result,
+            "last_test_at": c.last_test_at.isoformat() if c.last_test_at else None
+        })
+    
+    return result
 
 @app.post("/api/cameras")
 async def create_camera(camera_data: CameraCreate, db_service = Depends(get_database_service)):
@@ -939,22 +888,15 @@ async def update_camera(camera_id: str, camera_data: CameraUpdate, db_service = 
         await notify_recording_service_camera_updated(camera_id)
         
         return {
-            "id": updated_camera.get("camera_id") if isinstance(updated_camera, dict) else updated_camera.camera_id,
-            "name": updated_camera.get("name") if isinstance(updated_camera, dict) else updated_camera.name,
-            "ip_address": updated_camera.get("ip_address") if isinstance(updated_camera, dict) else updated_camera.ip_address,
-            "port": updated_camera.get("port") if isinstance(updated_camera, dict) else updated_camera.port,
-            "connection_type": updated_camera.get("connection_type") if isinstance(updated_camera, dict) else updated_camera.connection_type,
-            "stream_path": updated_camera.get("stream_path") if isinstance(updated_camera, dict) else updated_camera.stream_path,
-            "location": updated_camera.get("location") if isinstance(updated_camera, dict) else updated_camera.location,
-            "brand": updated_camera.get("brand") if isinstance(updated_camera, dict) else getattr(updated_camera, 'brand', None),
-            "model": updated_camera.get("model") if isinstance(updated_camera, dict) else getattr(updated_camera, 'model', None),
-            "resolution_width": updated_camera.get("resolution_width") if isinstance(updated_camera, dict) else getattr(updated_camera, 'resolution_width', None),
-            "resolution_height": updated_camera.get("resolution_height") if isinstance(updated_camera, dict) else getattr(updated_camera, 'resolution_height', None),
-            "max_fps": updated_camera.get("max_fps") if isinstance(updated_camera, dict) else getattr(updated_camera, 'max_fps', None),
-            "video_quality": updated_camera.get("video_quality") if isinstance(updated_camera, dict) else getattr(updated_camera, 'video_quality', None),
-            "low_latency": updated_camera.get("low_latency") if isinstance(updated_camera, dict) else getattr(updated_camera, 'low_latency', None),
-            "status": updated_camera.get("status") if isinstance(updated_camera, dict) else updated_camera.status,
-            "updated_at": (updated_camera.get("updated_at").isoformat() if isinstance(updated_camera.get("updated_at"), datetime) else updated_camera.get("updated_at")) if isinstance(updated_camera, dict) else updated_camera.updated_at.isoformat()
+            "id": updated_camera.camera_id,
+            "name": updated_camera.name,
+            "ip_address": updated_camera.ip_address,
+            "port": updated_camera.port,
+            "connection_type": updated_camera.connection_type,
+            "stream_path": updated_camera.stream_path,
+            "location": updated_camera.location,
+            "status": updated_camera.status,
+            "updated_at": updated_camera.updated_at.isoformat()
         }
     except HTTPException:
         raise
@@ -970,45 +912,28 @@ async def get_camera(camera_id: str, db_service = Depends(get_database_service))
         if not camera:
             raise HTTPException(404, f"Camera {camera_id} not found")
         
-        # Handle both dict and object formats for backwards compatibility
-        def get_field(field_name, default=None):
-            if isinstance(camera, dict):
-                return camera.get(field_name, default)
-            else:
-                return getattr(camera, field_name, default)
-        
-        def format_datetime(dt_value):
-            if dt_value is None:
-                return None
-            if isinstance(dt_value, str):
-                return dt_value
-            if hasattr(dt_value, 'isoformat'):
-                return dt_value.isoformat()
-            return str(dt_value)
-        
-        camera_status = get_field('status')
         return {
-            "id": get_field('camera_id'),
-            "camera_id": get_field('camera_id'),
-            "name": get_field('name'),
-            "ip_address": get_field('ip_address'),
-            "port": get_field('port'),
-            "connection_type": get_field('connection_type'),
-            "stream_path": get_field('stream_path'),
-            "location": get_field('location'),
-            "username": get_field('username'),
-            "password": get_field('password'),
-            "status": camera_status,
-            "enabled": camera_status in ['active', 'online'] if camera_status else False,
-            "brand": get_field('brand'),
-            "model": get_field('model'),
-            "resolution_width": get_field('resolution_width'),
-            "resolution_height": get_field('resolution_height'),
-            "max_fps": get_field('max_fps'),
-            "video_quality": get_field('video_quality'),
-            "low_latency": get_field('low_latency'),
-            "created_at": format_datetime(get_field('created_at')),
-            "updated_at": format_datetime(get_field('updated_at'))
+            "id": camera.camera_id,
+            "camera_id": camera.camera_id,
+            "name": camera.name,
+            "ip_address": camera.ip_address,
+            "port": camera.port,
+            "connection_type": camera.connection_type,
+            "stream_path": camera.stream_path,
+            "location": camera.location,
+            "username": camera.username,
+            "password": camera.password,
+            "status": camera.status,
+            "enabled": camera.status in ['active', 'online'],
+            "brand": camera.brand,
+            "model": camera.model,
+            "resolution_width": camera.resolution_width,
+            "resolution_height": camera.resolution_height,
+            "max_fps": camera.max_fps,
+            "video_quality": camera.video_quality,
+            "low_latency": camera.low_latency,
+            "created_at": camera.created_at.isoformat() if camera.created_at else None,
+            "updated_at": camera.updated_at.isoformat() if camera.updated_at else None
         }
     except HTTPException:
         raise
@@ -1620,17 +1545,17 @@ async def get_recent_detections(
     camera_names = await _get_camera_names(db_service)
     
     return [{
-        "id": d.get('id') if isinstance(d, dict) else d.id,
-        "camera_id": d.get('camera_id') if isinstance(d, dict) else d.camera_id,
-        "camera_name": camera_names.get(d.get('camera_id') if isinstance(d, dict) else d.camera_id, d.get('camera_id') if isinstance(d, dict) else d.camera_id),
-        "plate_text": d.get('plate_text') if isinstance(d, dict) else d.plate_text,
-        "confidence": d.get('confidence') if isinstance(d, dict) else d.confidence,
-        "vehicle_type": d.get('vehicle_type') if isinstance(d, dict) else d.vehicle_type,
-        "detected_at": (d.get('detected_at') if isinstance(d, dict) else d.detected_at).isoformat(),
-        "plate_image": (d.get('plate_image_path') if isinstance(d, dict) else d.plate_image_path) if (d.get('plate_image_path') if isinstance(d, dict) else d.plate_image_path) else None,
-        "frame_image": (d.get('frame_path') if isinstance(d, dict) else d.frame_path) if (d.get('frame_path') if isinstance(d, dict) else d.frame_path) else None,
-        "has_video": (d.get('video_clip_id') if isinstance(d, dict) else d.video_clip_id) is not None,
-        "video_clip_id": d.get('video_clip_id') if isinstance(d, dict) else d.video_clip_id
+        "id": d.id,
+        "camera_id": d.camera_id,
+        "camera_name": camera_names.get(d.camera_id, d.camera_id),
+        "plate_text": d.plate_text,
+        "confidence": d.confidence,
+        "vehicle_type": d.vehicle_type,
+        "detected_at": d.detected_at.isoformat(),
+        "plate_image": d.plate_image_path if d.plate_image_path else None,
+        "frame_image": d.frame_path if d.frame_path else None,
+        "has_video": d.video_clip_id is not None,
+        "video_clip_id": d.video_clip_id
     } for d in detections]
 
 @app.get("/api/detections/search")  
@@ -1784,8 +1709,8 @@ async def _get_camera_names(db_service) -> Dict[str, str]:
     """Get mapping of camera_id to camera name"""
     try:
         cameras = await db_service.get_all_cameras()
-        # Handle both dict and object formats
-        return {(camera.get('id') if isinstance(camera, dict) else camera.id): (camera.get('name') if isinstance(camera, dict) else camera.name) for camera in cameras}
+        # Use camera.id (database UUID) instead of camera.camera_id (generated ID)
+        return {camera.id: camera.name for camera in cameras}
     except Exception as e:
         logger.error(f"Failed to get camera names: {e}")
         return {}

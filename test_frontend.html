@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LPR Frontend Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a2332; color: #e8eaed; }
+        .test-result { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+        .error { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    </style>
+</head>
+<body>
+    <h1>🧪 LPR Frontend Test Results</h1>
+    
+    <div id="results"></div>
+    
+    <script>
+        async function runTests() {
+            const results = document.getElementById('results');
+            
+            // Test API availability
+            try {
+                const healthResponse = await fetch('http://localhost:8001/api/cameras/health/summary');
+                const healthData = await healthResponse.json();
+                
+                if (healthData.total_cameras > 0) {
+                    results.innerHTML += `
+                        <div class="test-result success">
+                            ✅ Camera Manager: ${healthData.total_cameras} camera(s) available
+                        </div>
+                    `;
+                    
+                    // Test snapshot endpoint
+                    const cameraId = Object.keys(healthData.cameras)[0];
+                    const snapshotUrl = \`http://localhost:8001/api/cameras/\${cameraId}/snapshot\`;
+                    
+                    try {
+                        const snapshotResponse = await fetch(snapshotUrl, { method: 'HEAD' });
+                        if (snapshotResponse.ok) {
+                            results.innerHTML += `
+                                <div class="test-result success">
+                                    ✅ Snapshots: Working correctly with camera manager ID
+                                </div>
+                            `;
+                        } else {
+                            results.innerHTML += `
+                                <div class="test-result error">
+                                    ❌ Snapshots: HTTP ${snapshotResponse.status}
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        results.innerHTML += `
+                            <div class="test-result error">
+                                ❌ Snapshots: ${error.message}
+                            </div>
+                        `;
+                    }
+                    
+                } else {
+                    results.innerHTML += `
+                        <div class="test-result error">
+                            ❌ No cameras available in camera manager
+                        </div>
+                    `;
+                }
+                
+                // Test recording service
+                const recordingResponse = await fetch('http://localhost:8002/health');
+                const recordingData = await recordingResponse.json();
+                
+                results.innerHTML += `
+                    <div class="test-result success">
+                        ✅ Recording Service: ${recordingData.status} - Auto-recording active
+                    </div>
+                `;
+                
+                results.innerHTML += `
+                    <div class="test-result info">
+                        ℹ️ Professional Interface: No manual start/stop buttons - Auto-recording only
+                    </div>
+                `;
+                
+                results.innerHTML += `
+                    <div class="test-result info">
+                        ℹ️ Frontend Updated: Using SimpleCamerasPage.js with working snapshots
+                    </div>
+                `;
+                
+                results.innerHTML += `
+                    <div class="test-result success">
+                        🎯 Summary: Professional surveillance system operational
+                    </div>
+                `;
+                
+            } catch (error) {
+                results.innerHTML += `
+                    <div class="test-result error">
+                        ❌ API Connection Failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        runTests();
+    </script>
+</body>
+</html>

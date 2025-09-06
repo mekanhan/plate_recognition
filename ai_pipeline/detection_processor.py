@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional, List
 import time
 
 from ai_features.core.types import Detection
-from database.service import DatabaseService
+from database.foundation_service import get_foundation_database_service
 from .detection_filter import get_detection_filter
 
 logger = logging.getLogger(__name__)
@@ -114,9 +114,8 @@ class FilteredDetectionProcessor:
     ) -> str:
         """Save detection to database with filter metadata."""
         
-        db_service = None
         try:
-            db_service = DatabaseService()
+            db_service = await get_foundation_database_service()
             
             # Prepare detection data for original detections table
             detection_data = {
@@ -137,7 +136,7 @@ class FilteredDetectionProcessor:
                 }
             }
             
-            # Save using the database service
+            # Save using the foundation database service
             detection_id = await db_service.save_detection(detection_data)
             
             logger.debug(f"Successfully saved detection {detection_id} to database")
@@ -147,13 +146,6 @@ class FilteredDetectionProcessor:
         except Exception as e:
             logger.error(f"Error saving detection to database: {e}")
             raise
-        finally:
-            # Ensure database connection is closed
-            if db_service:
-                try:
-                    await db_service.close()
-                except Exception as close_error:
-                    logger.error(f"Error closing database connection: {close_error}")
     
     def get_filter_stats(self) -> Dict[str, Any]:
         """Get filtering statistics."""

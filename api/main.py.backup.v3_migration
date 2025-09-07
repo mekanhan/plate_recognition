@@ -255,9 +255,9 @@ async def lifespan(app: FastAPI):
     # Database tables are created during initialization
     
     # Create directories
-    os.makedirs("data/detections", exist_ok=True)
-    os.makedirs("data/detections/frames", exist_ok=True)
-    os.makedirs("data/detections/plates", exist_ok=True)
+    os.makedirs("detections", exist_ok=True)
+    os.makedirs("detections/frames", exist_ok=True)
+    os.makedirs("detections/plates", exist_ok=True)
     os.makedirs("static", exist_ok=True)
     os.makedirs("config", exist_ok=True)
     
@@ -394,16 +394,7 @@ async def websocket_status():
     """Get WebSocket connection statistics"""
     return websocket_manager.get_connection_stats()
 
-# Include consolidated v3 router
-try:
-    from api.v3.router import v3_router
-    app.include_router(v3_router)
-    logger.info("API v3 consolidated endpoints enabled at /api/v3/")
-except ImportError as e:
-    logger.error(f"Failed to load v3 router: {e}")
-
-# Backward compatibility - keep existing router patterns
-# Legacy /api routes (v1/v2 style - will be deprecated)
+# Include routers
 app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api") 
 app.include_router(monitoring_router)
@@ -458,7 +449,7 @@ except ImportError:
     logging.warning("Detection filter endpoints not available")
 
 # Mount static files for images
-app.mount("/images", StaticFiles(directory="data/detections"), name="images")
+app.mount("/images", StaticFiles(directory="detections"), name="images")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 async def load_cameras():

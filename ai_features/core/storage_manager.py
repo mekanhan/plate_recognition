@@ -19,9 +19,9 @@ class StorageManager:
         
         # Default configuration
         self.config = {
-            'max_storage_gb': 10.0,
-            'cleanup_threshold_gb': 9.0,
-            'min_free_space_gb': 1.0,
+            'max_storage_gb': 200.0,
+            'cleanup_threshold_gb': 180.0,
+            'min_free_space_gb': 20.0,
             'detection_dirs': {
                 'frames': 'detections/frames',
                 'plates': 'detections/plates'
@@ -29,6 +29,19 @@ class StorageManager:
             'cleanup_strategy': 'oldest_first',  # oldest_first, lowest_confidence
             'retention_days': 30,  # Keep detections for max 30 days
         }
+        
+        # Load from config file if no config provided
+        if config is None:
+            try:
+                config_path = Path('config/storage_config.json')
+                if config_path.exists():
+                    with open(config_path, 'r') as f:
+                        storage_config = json.load(f)
+                        if 'storage_manager' in storage_config:
+                            config = storage_config['storage_manager']
+                            self.logger.info(f"Loaded storage config from file: max_storage_gb={config.get('max_storage_gb', 'not set')}")
+            except Exception as e:
+                self.logger.warning(f"Failed to load storage config from file: {e}, using defaults")
         
         # Update with provided config
         if config:

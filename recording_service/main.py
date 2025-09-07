@@ -54,22 +54,22 @@ async def lifespan(app: FastAPI):
     db_service = await get_foundation_database_service()
     
     storage_manager = StorageManager(
-        recordings_path="recordings",
-        storage_limit_gb=10  # Configurable
+        recordings_path="data/recordings",
+        storage_limit_gb=200  # Updated to handle current data volume
     )
     
     recording_manager = FFmpegRecordingManager(
         db_service=db_service,
-        storage_path="recordings"
+        storage_path="data/recordings"
     )
     
     playback_service = PlaybackService(
         db_service=db_service,
-        recordings_path="recordings"
+        recordings_path="data/recordings"
     )
     
     discovery_service = RecordingDiscoveryService(
-        recordings_dir="recordings",
+        recordings_dir="data/recordings",
         db_service=db_service
     )
     
@@ -297,7 +297,7 @@ async def get_available_cameras():
     
     try:
         # Scan recording directories to find all cameras with recordings
-        recordings_path = Path("recordings")
+        recordings_path = Path("data/recordings")
         cameras = []
         
         if recordings_path.exists():

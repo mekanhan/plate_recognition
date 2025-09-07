@@ -1,0 +1,153 @@
+/* Header Alignment Fix - Ensures all page headers are left-aligned */
+
+/* Global page header rules with maximum specificity */
+.content-section .page-header,
+#dashboard .page-header,
+#cameras .page-header,
+#detections .page-header,
+#alerts .page-header,
+#analytics .page-header,
+#reports .page-header,
+#settings .page-header,
+#recordings .page-header,
+#universal-detections .page-header,
+.cameras-page .page-header,
+.detections-page .page-header,
+.alerts-page .page-header,
+.analytics-page .page-header,
+.reports-page .page-header,
+.settings-page .page-header,
+.recordings-page .page-header,
+.page-header {
+    text-align: left !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+/* Page title rules with maximum specificity - Ultra high specificity */
+html body .app-layout .main-content .content-section .page-title,
+html body .app-layout .main-content #dashboard .page-title,
+html body .app-layout .main-content #cameras .page-title,
+html body .app-layout .main-content #detections .page-title,
+html body .app-layout .main-content #alerts .page-title,
+html body .app-layout .main-content #analytics .page-title,
+html body .app-layout .main-content #reports .page-title,
+html body .app-layout .main-content #settings .page-title,
+html body .app-layout .main-content #recordings .page-title,
+html body .app-layout .main-content #universal-detections .page-title,
+html body .app-layout .main-content .cameras-page .page-title,
+html body .app-layout .main-content .detections-page .page-title,
+html body .app-layout .main-content .alerts-page .page-title,
+html body .app-layout .main-content .analytics-page .page-title,
+html body .app-layout .main-content .reports-page .page-title,
+html body .app-layout .main-content .settings-page .page-title,
+html body .app-layout .main-content .recordings-page .page-title,
+html body .app-layout .main-content .page-header .page-title,
+html body .app-layout .main-content .page-header h1,
+.content-section .page-title,
+#dashboard .page-title,
+#cameras .page-title,
+#detections .page-title,
+#alerts .page-title,
+#analytics .page-title,
+#reports .page-title,
+#settings .page-title,
+#recordings .page-title,
+#universal-detections .page-title,
+.cameras-page .page-title,
+.detections-page .page-title,
+.alerts-page .page-title,
+.analytics-page .page-title,
+.reports-page .page-title,
+.settings-page .page-title,
+.recordings-page .page-title,
+.page-header .page-title,
+.page-header h1,
+h1.page-title,
+h1[class*="page-title"],
+.page-title {
+    text-align: left !important;
+    font-size: var(--font-size-3xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+/* Page subtitle rules with maximum specificity */
+.content-section .page-subtitle,
+#dashboard .page-subtitle,
+#cameras .page-subtitle,
+#detections .page-subtitle,
+#alerts .page-subtitle,
+#analytics .page-subtitle,
+#reports .page-subtitle,
+#settings .page-subtitle,
+#recordings .page-subtitle,
+#universal-detections .page-subtitle,
+.cameras-page .page-subtitle,
+.detections-page .page-subtitle,
+.alerts-page .page-subtitle,
+.analytics-page .page-subtitle,
+.reports-page .page-subtitle,
+.settings-page .page-subtitle,
+.recordings-page .page-subtitle,
+.page-header .page-subtitle,
+.page-header p,
+.page-subtitle {
+    text-align: left !important;
+    font-size: var(--font-size-lg);
+    color: var(--text-secondary);
+}
+
+/* Override any inline styles that might be centering headers */
+[style*="text-align: center"] .page-header,
+[style*="text-align: center"] .page-title,
+[style*="text-align: center"] .page-subtitle {
+    text-align: left !important;
+}
+
+/* Ultimate override for any centering */
+* .page-title,
+*[class*="center"] .page-title,
+*[style*="center"] .page-title,
+.text-center .page-title {
+    text-align: left !important;
+}
+
+/* Force left alignment on all page headers regardless of parent */
+.page-header,
+.page-title,
+h1.page-title {
+    text-align: left !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+/* Ensure parent containers don't center the headers */
+.content-section,
+.main-content,
+.app-layout .main-content {
+    text-align: initial !important;
+}
+
+.content-section .page-header,
+.main-content .page-header {
+    text-align: left !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+/* System status badges should stay inline */
+.page-header .system-status {
+    display: inline-block;
+    margin-left: 1rem;
+}
+
+/* Ensure consistent left padding for all page headers */
+.page-header {
+    padding-left: 0 !important;
+    margin-left: 0 !important;
+}

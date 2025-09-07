@@ -42,10 +42,7 @@ class EnhancedCamerasPage {
             <div class="cameras-page">
                 <!-- Page Header -->
                 <div class="page-header">
-                    <h1 class="page-title">
-                        <i class="fas fa-video"></i>
-                        Camera Management
-                    </h1>
+                    <h1 class="page-title">Camera Management</h1>
                     <p class="page-subtitle">Professional 24/7 Auto-Recording Surveillance System</p>
                     <div class="system-status">
                         <div class="status-badge auto-recording">
@@ -131,7 +128,7 @@ class EnhancedCamerasPage {
                 }
                 
                 .page-header {
-                    text-align: center;
+                    text-align: left;
                     margin-bottom: 30px;
                     padding: 20px;
                     background: rgba(26, 35, 50, 0.8);
@@ -704,8 +701,10 @@ class EnhancedCamerasPage {
         Object.entries(healthData.cameras || {}).forEach(([managerId, health]) => {
             let dbCamera = null;
             
-            // Try multiple matching strategies
-            const extractedIp = this.extractIpFromHealth(health.connection_url);
+            // Enhanced connection info extraction
+            const connectionInfo = this.extractConnectionInfo(health.connection_url);
+            const extractedIp = connectionInfo.ip;
+            const extractedPort = connectionInfo.port;
             
             // Strategy 1: Match by IP address
             if (extractedIp) {
@@ -718,43 +717,62 @@ class EnhancedCamerasPage {
             }
             
             // Strategy 3: Match by name similarity (if available)
-            if (!dbCamera) {
-                // This could be enhanced with name matching logic
+            if (!dbCamera && health.camera_name) {
+                dbCamera = dbCameras.find(db => 
+                    db.name && db.name.toLowerCase().includes(health.camera_name.toLowerCase())
+                );
             }
             
             if (dbCamera) {
                 usedDbCameras.add(dbCamera);
             }
             
-            // Use database data as primary source, health data as secondary
+            // Database-first priority: Use database values as primary, health data for status/metrics only
             cameras.push({
                 id: managerId,
                 manager_id: managerId,
                 database_id: dbCamera?.camera_id || dbCamera?.id || null,
-                name: dbCamera?.name || `Camera ${managerId.substring(0, 8)}`,
+                
+                // Display Information (Database First)
+                name: dbCamera?.name || (health.camera_name || `Camera ${managerId.substring(0, 8)}`),
                 location: dbCamera?.location || 'Unknown',
+                
+                // Connection Information (Database First, Health Secondary)
                 ip_address: dbCamera?.ip_address || extractedIp || 'Unknown',
-                port: dbCamera?.port || 554,
-                model: dbCamera?.model || 'Unknown',
-                brand: dbCamera?.brand || 'Unknown', 
-                connection_type: dbCamera?.connection_type || 'rtsp',
-                stream_path: dbCamera?.stream_path || '/h264Preview_01_main',
+                port: dbCamera?.port || extractedPort || 554,
+                connection_type: dbCamera?.connection_type || 'RTSP',
+                stream_path: dbCamera?.stream_path || health.stream_path || '/h264Preview_01_main',
                 username: dbCamera?.username || 'admin',
                 password: dbCamera?.password || '',
-                resolution: `${dbCamera?.resolution_width || 1920}x${dbCamera?.resolution_height || 1080}`,
+                
+                // Hardware Information (Database Only)
+                model: dbCamera?.model || 'Unknown',
+                brand: dbCamera?.brand || 'Unknown',
+                
+                // Resolution & Quality (Database First, Health Secondary)
+                resolution: dbCamera?.resolution_width && dbCamera?.resolution_height ? 
+                    `${dbCamera.resolution_width}x${dbCamera.resolution_height}` : 
+                    (health.resolution || '1920x1080'),
                 resolution_width: dbCamera?.resolution_width || 1920,
                 resolution_height: dbCamera?.resolution_height || 1080,
-                fps: dbCamera?.max_fps || 30,
+                fps: dbCamera?.max_fps || health.fps || 30,
+                
+                // Settings (Database Only)
                 video_quality: dbCamera?.video_quality || 'medium',
                 low_latency: dbCamera?.low_latency !== undefined ? dbCamera.low_latency : true,
                 enabled: dbCamera?.enabled !== undefined ? dbCamera.enabled : true,
+                
+                // Health & Status Information (Health Data Only)
                 status: health.is_healthy ? 'online' : 'offline',
-                is_recording: health.capture_active,
-                last_frame_age: health.last_frame_age,
-                error_count: health.error_count,
-                buffer_size: health.buffer_size,
-                // Keep original database record for complete access
-                _dbRecord: dbCamera
+                is_recording: health.capture_active || false,
+                last_frame_age: health.last_frame_age || 0,
+                error_count: health.error_count || 0,
+                buffer_size: health.buffer_size || 0,
+                max_buffer_size: health.max_buffer_size || 30,
+                
+                // Keep original records for complete access
+                _dbRecord: dbCamera,
+                _healthRecord: health
             });
         });
 
@@ -795,27 +813,38 @@ class EnhancedCamerasPage {
         return cameras;
     }
 
-    extractIpFromHealth(connectionUrl) {
-        if (!connectionUrl) return null;
+    extractConnectionInfo(connectionUrl) {
+        if (!connectionUrl) return { ip: null, port: null };
         try {
-            // Handle different URL formats: rtsp://user:pass@IP:port/path
+            // Handle different RTSP URL formats: rtsp://user:pass@IP:port/path
             const patterns = [
-                /\/\/[^:]*:[^@]*@([^:]+):/,  // rtsp://user:pass@IP:port
-                /\/\/[^@]*@([^:]+):/,        // rtsp://user@IP:port  
-                /\/\/([^:]+):/               // rtsp://IP:port
+                /\/\/[^:]*:[^@]*@([^:]+):(\d+)/,  // rtsp://user:pass@IP:port
+                /\/\/[^@]*@([^:]+):(\d+)/,        // rtsp://user@IP:port  
+                /\/\/([^:]+):(\d+)/,               // rtsp://IP:port
+                /\/\/[^:]*:[^@]*@([^:\/]+)/,      // rtsp://user:pass@IP (no port)
+                /\/\/[^@]*@([^:\/]+)/,            // rtsp://user@IP (no port)
+                /\/\/([^:\/]+)/                   // rtsp://IP (no port)
             ];
             
             for (const pattern of patterns) {
                 const match = connectionUrl.match(pattern);
                 if (match) {
-                    return match[1];
+                    return {
+                        ip: match[1],
+                        port: match[2] ? parseInt(match[2]) : 554  // Default RTSP port
+                    };
                 }
             }
             
-            return null;
+            return { ip: null, port: null };
         } catch {
-            return null;
+            return { ip: null, port: null };
         }
+    }
+
+    // Backward compatibility
+    extractIpFromHealth(connectionUrl) {
+        return this.extractConnectionInfo(connectionUrl).ip;
     }
 
     applyFilters() {
@@ -858,47 +887,54 @@ class EnhancedCamerasPage {
     }
 
     renderCameraCard(camera) {
-        const modelBrand = [camera.brand, camera.model].filter(Boolean).join(' ') || 'Unknown';
+        // Format model/brand properly (avoid "Unknown Unknown")
+        const modelDisplay = camera.model !== 'Unknown' ? 
+            (camera.brand !== 'Unknown' ? `${camera.brand} ${camera.model}` : camera.model) : 
+            (camera.brand !== 'Unknown' ? camera.brand : 'Unknown');
+        
+        // Format IP display - handle cases where IP might be "Unknown"  
+        const ipDisplay = camera.ip_address !== 'Unknown' ? camera.ip_address : 'Unknown';
+        const portDisplay = camera.port && camera.port !== 554 ? `:${camera.port}` : ':554';
+        const connectionDisplay = ipDisplay !== 'Unknown' ? `${ipDisplay}${portDisplay}` : 'Unknown:554';
+        
+        // Health status for overlay
+        const healthStatus = camera.status === 'online' ? 'REC' : 'OFF';
+        const errorCount = camera.error_count || 0;
+        const bufferSize = camera.buffer_size || 0;
+        const maxBuffer = camera.max_buffer_size || 30;
         
         return `
             <div class="camera-card" data-camera-id="${camera.id}">
+                <!-- Camera Header - Demo Style -->
                 <div class="camera-header">
-                    <div class="camera-info">
-                        <h3>${camera.name}</h3>
-                        <div class="camera-location">${this.capitalizeFirst(camera.location)}</div>
+                    <div class="camera-title">
+                        <span class="recording-dot ${camera.status === 'online' ? 'pulsing' : ''}"></span>
+                        <h3 class="camera-name">${camera.name}</h3>
                     </div>
-                    <div class="camera-actions">
-                        <div class="camera-status ${camera.status}">
-                            <i class="fas ${camera.status === 'online' ? 'fa-circle' : 'fa-times-circle'}"></i>
-                            ${camera.status.toUpperCase()}
-                        </div>
-                        <button class="settings-btn" data-action="settings" data-camera-id="${camera.id}">
+                    <div class="header-actions">
+                        <button class="action-btn settings" data-action="settings" data-camera-id="${camera.id}" title="Settings">
                             <i class="fas fa-cog"></i>
                         </button>
                         <div class="kebab-wrapper">
-                            <button class="kebab-btn" data-camera-id="${camera.id}">
-                                <div class="kebab-dots">
-                                    <div class="kebab-dot"></div>
-                                    <div class="kebab-dot"></div>
-                                    <div class="kebab-dot"></div>
-                                </div>
+                            <button class="action-btn kebab-btn" data-camera-id="${camera.id}" title="More actions">
+                                <span class="kebab-dots">•••</span>
                             </button>
                             <div class="kebab-menu" id="kebab-menu-${camera.id}">
                                 <button class="menu-item" data-action="snapshot" data-camera-id="${camera.id}">
-                                    <span>📸</span>
+                                    <i class="fas fa-camera"></i>
                                     <span>Take Snapshot</span>
                                 </button>
                                 <button class="menu-item" data-action="test" data-camera-id="${camera.id}">
-                                    <span>🔌</span>
+                                    <i class="fas fa-network-wired"></i>
                                     <span>Test Connection</span>
                                 </button>
                                 <button class="menu-item" data-action="restart" data-camera-id="${camera.id}">
-                                    <span>↻</span>
+                                    <i class="fas fa-redo"></i>
                                     <span>Restart Camera</span>
                                 </button>
                                 <div class="menu-divider"></div>
                                 <button class="menu-item danger" data-action="delete" data-camera-id="${camera.id}">
-                                    <span>🗑</span>
+                                    <i class="fas fa-trash"></i>
                                     <span>Remove Camera</span>
                                 </button>
                             </div>
@@ -906,51 +942,73 @@ class EnhancedCamerasPage {
                     </div>
                 </div>
 
+                <!-- Camera Preview with Health Overlay -->
                 <div class="camera-preview">
                     <img class="camera-snapshot" 
                          id="snapshot-${camera.id}" 
-                         alt="${camera.name} snapshot"
+                         alt="${camera.name} preview"
                          style="display: none;">
-                    <div class="snapshot-overlay" id="overlay-${camera.id}">
+                    <div class="preview-loading" id="loading-${camera.id}">
                         <i class="fas fa-spinner fa-spin"></i>
-                        <div>Loading preview...</div>
+                        <span>Loading...</span>
+                    </div>
+                    <!-- Professional Health Overlay -->
+                    <div class="health-overlay" id="health-${camera.id}">
+                        <span class="health-status">●${healthStatus} E:${errorCount} B:${bufferSize}/${maxBuffer}</span>
                     </div>
                 </div>
 
-                <div class="camera-details">
-                    <div class="detail-section">
-                        <h4>Connection</h4>
-                        <div class="detail-item">
-                            <span class="detail-label">IP Address:</span>
-                            <a href="http://${camera.ip_address}:${camera.port}" target="_blank" 
-                               class="detail-value link">${camera.ip_address}:${camera.port}</a>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Protocol:</span>
-                            <span class="detail-value">${camera.connection_type.toUpperCase()}</span>
-                        </div>
+                <!-- Demo-Style Information List -->
+                <div class="camera-info-list">
+                    <div class="info-row">
+                        <span class="info-label">IP ADDRESS</span>
+                        <span class="info-value">${connectionDisplay}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">CONNECTION</span>
+                        <span class="info-value ${camera.status}">${camera.status === 'online' ? 'Online' : 'Offline'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">RECORDING</span>
+                        <span class="info-value">${camera.is_recording ? 'Recording' : 'Not Recording'}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">LOCATION</span>
+                        <span class="info-value">${camera.location || 'Unknown'}</span>
                     </div>
                     
-                    <div class="detail-section">
-                        <h4>Hardware</h4>
-                        <div class="detail-item">
-                            <span class="detail-label">Model:</span>
-                            <span class="detail-value">${modelBrand}</span>
+                    <!-- Expandable More Details -->
+                    <div class="more-details" data-camera-id="${camera.id}">
+                        <div class="details-toggle">
+                            <span class="toggle-label">MORE DETAILS</span>
+                            <span class="toggle-icon">▶</span>
                         </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Resolution:</span>
-                            <span class="detail-value">${camera.resolution} @ ${camera.fps}fps</span>
+                        <div class="details-content">
+                            <div class="info-row">
+                                <span class="info-label">MODEL</span>
+                                <span class="info-value">${modelDisplay}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">RESOLUTION</span>
+                                <span class="info-value">${camera.resolution_width || 1920}x${camera.resolution_height || 1080}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">FPS</span>
+                                <span class="info-value">${camera.fps || 30}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">BITRATE</span>
+                                <span class="info-value">${camera._healthRecord?.bitrate || '--'}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">PROTOCOL</span>
+                                <span class="info-value">${camera.connection_type.toUpperCase()}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">LAST SEEN</span>
+                                <span class="info-value">${this.formatLastSeen(camera)}</span>
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                <div class="recording-status">
-                    <div class="recording-info">
-                        <div class="recording-dot"></div>
-                        <div class="recording-text">Auto-Recording Active</div>
-                    </div>
-                    <div class="recording-stats">
-                        Errors: ${camera.error_count || 0} | Buffer: ${camera.buffer_size || 0}/30
                     </div>
                 </div>
             </div>
@@ -976,17 +1034,19 @@ class EnhancedCamerasPage {
 
     loadCameraSnapshot(camera) {
         const img = document.getElementById(`snapshot-${camera.id}`);
-        const overlay = document.getElementById(`overlay-${camera.id}`);
+        const loading = document.getElementById(`loading-${camera.id}`);
+        const healthOverlay = document.getElementById(`health-${camera.id}`);
         
-        if (!img || !overlay) return;
+        if (!img || !loading) return;
 
         // Only try to load snapshot if camera has manager_id (is online in camera manager)
         if (!camera.manager_id) {
-            overlay.innerHTML = `
+            loading.innerHTML = `
                 <i class="fas fa-camera-slash"></i>
-                <div>Camera offline</div>
-                <div style="font-size: 0.8rem; color: #6b7280;">Not connected to camera manager</div>
+                <span>Camera offline</span>
             `;
+            // Hide health overlay for offline cameras
+            if (healthOverlay) healthOverlay.style.display = 'none';
             return;
         }
 
@@ -994,18 +1054,42 @@ class EnhancedCamerasPage {
         
         img.onload = () => {
             img.style.display = 'block';
-            overlay.classList.add('hidden');
+            loading.style.display = 'none';
+            // Show health overlay when snapshot loads
+            if (healthOverlay) healthOverlay.style.display = 'block';
         };
         
         img.onerror = () => {
-            overlay.innerHTML = `
+            loading.innerHTML = `
                 <i class="fas fa-exclamation-triangle"></i>
-                <div>Snapshot failed</div>
-                <div style="font-size: 0.8rem; color: #6b7280;">Check camera connection</div>
+                <span>Snapshot failed</span>
             `;
+            // Hide health overlay on error
+            if (healthOverlay) healthOverlay.style.display = 'none';
         };
         
         img.src = snapshotUrl;
+    }
+
+    formatLastSeen(camera) {
+        if (camera.status === 'online') {
+            return 'Just now';
+        }
+        
+        if (camera.last_frame_age && camera.last_frame_age > 0) {
+            const hours = Math.floor(camera.last_frame_age / 3600);
+            const minutes = Math.floor((camera.last_frame_age % 3600) / 60);
+            
+            if (hours > 0) {
+                return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            } else if (minutes > 0) {
+                return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            } else {
+                return 'Just now';
+            }
+        }
+        
+        return camera._healthRecord?.last_seen || 'Unknown';
     }
 
     attachEventListeners() {
@@ -1044,18 +1128,33 @@ class EnhancedCamerasPage {
             this.refreshCameras();
         });
 
-        // Camera actions
+        // Camera actions with improved event delegation
         document.addEventListener('click', (e) => {
-            if (e.target.closest('.kebab-btn')) {
+            // Check for kebab button click (including child elements)
+            const kebabBtn = e.target.closest('.kebab-btn');
+            if (kebabBtn) {
                 this.toggleKebabMenu(e);
-            } else if (e.target.closest('[data-action]')) {
-                this.handleCameraAction(e);
-            } else {
-                // Close all kebab menus when clicking outside
-                document.querySelectorAll('.kebab-menu').forEach(menu => {
-                    menu.classList.remove('show');
-                });
+                return;
             }
+            
+            // Check for details toggle click (including child elements)
+            const detailsToggle = e.target.closest('.details-toggle');
+            if (detailsToggle) {
+                this.toggleMoreDetails(e);
+                return;
+            }
+            
+            // Check for menu item actions
+            const actionElement = e.target.closest('[data-action]');
+            if (actionElement) {
+                this.handleCameraAction(e);
+                return;
+            }
+            
+            // Close all kebab menus when clicking outside
+            document.querySelectorAll('.kebab-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
         });
     }
 
@@ -1086,8 +1185,11 @@ class EnhancedCamerasPage {
 
     toggleKebabMenu(e) {
         e.stopPropagation();
-        const cameraId = e.target.closest('.kebab-btn').dataset.cameraId;
+        e.preventDefault();
+        const kebabBtn = e.target.closest('.kebab-btn');
+        const cameraId = kebabBtn.dataset.cameraId;
         const menu = document.getElementById(`kebab-menu-${cameraId}`);
+        if (!menu) return;
         
         // Close other menus
         document.querySelectorAll('.kebab-menu').forEach(m => {
@@ -1095,6 +1197,36 @@ class EnhancedCamerasPage {
         });
         
         menu.classList.toggle('show');
+    }
+
+    toggleMoreDetails(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        
+        const detailsToggle = e.target.closest('.details-toggle');
+        if (!detailsToggle) return;
+        
+        const moreDetails = detailsToggle.closest('.more-details');
+        if (!moreDetails) return;
+        
+        const toggleIcon = moreDetails.querySelector('.toggle-icon');
+        const detailsContent = moreDetails.querySelector('.details-content');
+        
+        if (!toggleIcon || !detailsContent) return;
+        
+        const isExpanded = moreDetails.classList.contains('expanded');
+        
+        if (isExpanded) {
+            // Collapse
+            moreDetails.classList.remove('expanded');
+            toggleIcon.textContent = '▶';
+            detailsContent.style.display = 'none';
+        } else {
+            // Expand
+            moreDetails.classList.add('expanded');
+            toggleIcon.textContent = '▼';
+            detailsContent.style.display = 'block';
+        }
     }
 
     handleCameraAction(e) {

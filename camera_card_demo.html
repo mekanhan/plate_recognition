@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Camera Card Demo</title>
+    <style>
+        /* Include the relevant styles from AutoCamerasPage.css */
+        body {
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 50%, #0f1419 100%);
+            color: #e8eaed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .demo-title {
+            text-align: center;
+            color: #6366f1;
+            margin-bottom: 30px;
+        }
+
+        .cameras-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .camera-card {
+            background: rgba(26, 35, 50, 0.9);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .camera-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            opacity: 0.7;
+        }
+
+        .camera-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        /* Camera Header - Screenshot Style */
+        .camera-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+        }
+
+        .camera-name {
+            margin: 0;
+            font-size: 1.4rem;
+            color: #e8eaed;
+            font-weight: 400;
+            display: flex;
+            align-items: baseline;
+        }
+
+        .camera-name .name-suffix {
+            color: #9ca3af;
+            font-weight: 300;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.online {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-badge.offline {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(55, 65, 81, 0.6);
+            color: #9ca3af;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(55, 65, 81, 0.9);
+            color: #e8eaed;
+        }
+
+        /* Camera Preview - Screenshot Style */
+        .camera-preview {
+            position: relative;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid rgba(55, 65, 81, 0.3);
+        }
+
+        .camera-snapshot {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .preview-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 8px;
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+
+        .preview-loading i {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        /* Professional Health Overlay */
+        .health-overlay {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .health-status {
+            white-space: nowrap;
+            color: #22c55e; /* Green for recording */
+        }
+
+        /* Two-Column Info Grid - Screenshot Style */
+        .camera-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: rgba(15, 20, 25, 0.4);
+            border-radius: 8px;
+            border: 1px solid rgba(55, 65, 81, 0.2);
+        }
+
+        .info-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .column-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(55, 65, 81, 0.3);
+        }
+
+        .info-field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .info-field label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        .info-value {
+            font-size: 0.9rem;
+            color: #e8eaed;
+            font-weight: 500;
+            background: rgba(31, 41, 55, 0.6);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(55, 65, 81, 0.3);
+            min-height: 16px;
+        }
+
+        .info-value.connection-detail {
+            color: #3b82f6;
+            font-weight: 600;
+            background: rgba(59, 130, 246, 0.1);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .info-value.unknown-value {
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .ip-link {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .ip-link:hover {
+            color: #60a5fa;
+            text-decoration: underline;
+        }
+
+        /* Recording Status Bar - Screenshot Style */
+        .recording-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px;
+            background: rgba(15, 20, 25, 0.8);
+            border-radius: 0 0 16px 16px;
+            margin: 0 -20px -20px -20px;
+            border-top: 1px solid rgba(55, 65, 81, 0.3);
+        }
+
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #22c55e;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .recording-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        .recording-stats {
+            color: #6b7280;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .demo-note {
+            text-align: center;
+            color: #9ca3af;
+            margin-top: 30px;
+            font-size: 0.9rem;
+        }
+
+        /* FontAwesome placeholder */
+        .fas::before {
+            content: "●";
+            font-style: normal;
+        }
+        .fa-circle::before { content: "●"; }
+        .fa-cog::before { content: "⚙"; }
+        .fa-ellipsis-v::before { content: "⋮"; }
+    </style>
+</head>
+<body>
+    <h1 class="demo-title">📹 Enhanced Camera Card Design Demo</h1>
+    
+    <div class="cameras-grid">
+        <!-- Example 1: Online Camera with Real Data -->
+        <div class="camera-card">
+            <!-- Camera Name Header -->
+            <div class="camera-header">
+                <h3 class="camera-name">Camera<span class="name-suffix">Reolink Camera</span></h3>
+                <div class="header-actions">
+                    <div class="status-badge online">
+                        <i class="fas fa-circle"></i>
+                        <span>ONLINE</span>
+                    </div>
+                    <button class="action-btn settings" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="action-btn kebab" title="More actions">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Camera Preview with Health Overlay -->
+            <div class="camera-preview">
+                <div style="width: 100%; height: 100%; background: linear-gradient(45deg, #1f2937, #374151); display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 1.2rem;">
+                    📹 Live Preview Area
+                </div>
+                <!-- Professional Health Overlay -->
+                <div class="health-overlay">
+                    <span class="health-status">●REC E:0 B:28/30</span>
+                </div>
+            </div>
+
+            <!-- Two-Column Info Layout (Match Screenshot) -->
+            <div class="camera-info-grid">
+                <div class="info-column">
+                    <h4 class="column-title">CONNECTION</h4>
+                    <div class="info-field">
+                        <label>IP Address:</label>
+                        <div class="info-value">
+                            <a href="http://10.0.0.181:554" target="_blank" class="ip-link">10.0.0.181</a>
+                        </div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value connection-detail">10.0.0.181:554</div>
+                    </div>
+                    <div class="info-field">
+                        <label>Protocol:</label>
+                        <div class="info-value protocol">RTSP</div>
+                    </div>
+                </div>
+                
+                <div class="info-column">
+                    <h4 class="column-title">HARDWARE</h4>
+                    <div class="info-field">
+                        <label>Model:</label>
+                        <div class="info-value model">Reolink RLC-811A</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value model-detail">4K Ultra HD</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value model-detail">PoE Camera</div>
+                    </div>
+                    <div class="info-field">
+                        <label>Resolution:</label>
+                        <div class="info-value resolution">1920x1080 @ 30fps</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recording Status Bar -->
+            <div class="recording-status">
+                <div class="recording-indicator">
+                    <i class="fas fa-circle recording-dot"></i>
+                    <span>AUTO-RECORDING ACTIVE</span>
+                </div>
+                <div class="recording-stats">
+                    Errors: 0 | Buffer: 28/30
+                </div>
+            </div>
+        </div>
+
+        <!-- Example 2: Offline Camera -->
+        <div class="camera-card">
+            <div class="camera-header">
+                <h3 class="camera-name">Camera<span class="name-suffix">Entrance Gate</span></h3>
+                <div class="header-actions">
+                    <div class="status-badge offline">
+                        <i class="fas fa-circle"></i>
+                        <span>OFFLINE</span>
+                    </div>
+                    <button class="action-btn settings" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="action-btn kebab" title="More actions">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="camera-preview">
+                <div class="preview-loading">
+                    <i>📵</i>
+                    <span>Camera offline</span>
+                </div>
+            </div>
+
+            <div class="camera-info-grid">
+                <div class="info-column">
+                    <h4 class="column-title">CONNECTION</h4>
+                    <div class="info-field">
+                        <label>IP Address:</label>
+                        <div class="info-value">
+                            <a href="http://10.0.0.182:554" target="_blank" class="ip-link">10.0.0.182</a>
+                        </div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value connection-detail">10.0.0.182:554</div>
+                    </div>
+                    <div class="info-field">
+                        <label>Protocol:</label>
+                        <div class="info-value protocol">RTSP</div>
+                    </div>
+                </div>
+                
+                <div class="info-column">
+                    <h4 class="column-title">HARDWARE</h4>
+                    <div class="info-field">
+                        <label>Model:</label>
+                        <div class="info-value model">Hikvision DS-2CD2142FWD</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value model-detail">4MP Dome</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value model-detail">IR Night Vision</div>
+                    </div>
+                    <div class="info-field">
+                        <label>Resolution:</label>
+                        <div class="info-value resolution">2560x1440 @ 25fps</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recording-status">
+                <div class="recording-indicator">
+                    <i class="fas fa-circle recording-dot" style="background: #ef4444; animation: none;"></i>
+                    <span style="color: #ef4444;">AUTO-RECORDING INACTIVE</span>
+                </div>
+                <div class="recording-stats">
+                    Errors: 5 | Buffer: 0/30
+                </div>
+            </div>
+        </div>
+
+        <!-- Example 3: Unknown Data Scenario -->
+        <div class="camera-card">
+            <div class="camera-header">
+                <h3 class="camera-name">Camera<span class="name-suffix">Unknown</span></h3>
+                <div class="header-actions">
+                    <div class="status-badge online">
+                        <i class="fas fa-circle"></i>
+                        <span>ONLINE</span>
+                    </div>
+                    <button class="action-btn settings" title="Settings">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button class="action-btn kebab" title="More actions">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="camera-preview">
+                <div style="width: 100%; height: 100%; background: linear-gradient(45deg, #1f2937, #374151); display: flex; align-items: center; justify-content: center; color: #6b7280; font-size: 1.2rem;">
+                    📹 No Snapshot Available
+                </div>
+                <div class="health-overlay">
+                    <span class="health-status">●REC E:2 B:30/30</span>
+                </div>
+            </div>
+
+            <div class="camera-info-grid">
+                <div class="info-column">
+                    <h4 class="column-title">CONNECTION</h4>
+                    <div class="info-field">
+                        <label>IP Address:</label>
+                        <div class="info-value unknown-value">Unknown</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value connection-detail">Unknown:554</div>
+                    </div>
+                    <div class="info-field">
+                        <label>Protocol:</label>
+                        <div class="info-value protocol">RTSP</div>
+                    </div>
+                </div>
+                
+                <div class="info-column">
+                    <h4 class="column-title">HARDWARE</h4>
+                    <div class="info-field">
+                        <label>Model:</label>
+                        <div class="info-value unknown-value">Unknown</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value unknown-value">Unknown</div>
+                    </div>
+                    <div class="info-field">
+                        <div class="info-value unknown-value">Unknown</div>
+                    </div>
+                    <div class="info-field">
+                        <label>Resolution:</label>
+                        <div class="info-value resolution">1920x1080 @ 30fps</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recording-status">
+                <div class="recording-indicator">
+                    <i class="fas fa-circle recording-dot"></i>
+                    <span>AUTO-RECORDING ACTIVE</span>
+                </div>
+                <div class="recording-stats">
+                    Errors: 2 | Buffer: 30/30
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="demo-note">
+        <p><strong>✅ Features Demonstrated:</strong></p>
+        <ul style="text-align: left; display: inline-block;">
+            <li>Professional camera name display (not "CameraUnknown")</li>
+            <li>Real-time status badges (Online/Offline)</li>
+            <li>Health data overlay on video preview (●REC E:0 B:28/30)</li>
+            <li>Two-column CONNECTION and HARDWARE layout matching screenshot</li>
+            <li>Proper IP address display with clickable links</li>
+            <li>Model/brand information display</li>
+            <li>Recording status bar with animated indicators</li>
+            <li>Settings and kebab menu buttons</li>
+            <li>Graceful handling of unknown/missing data</li>
+        </ul>
+        <p><em>This demonstrates the enhanced camera card design with all functionality integrated.</em></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Card Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #111827;
+            color: #f3f4f6;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            color: #fff;
+        }
+
+        /* Camera Grid */
+        .cameras-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Camera Card */
+        .camera-card {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            width: 100%;
+            max-width: 380px;
+        }
+
+        .camera-card:hover {
+            border-color: #4b5563;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Card Header */
+        .camera-card-header {
+            padding: 1rem;
+            border-bottom: 1px solid #374151;
+        }
+
+        .camera-title-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .camera-status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .camera-status-indicator.online {
+            background: #10b981;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+        }
+
+        .camera-status-indicator.offline {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        .camera-card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #f3f4f6;
+            flex: 1;
+        }
+
+        .recording-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .recording-badge.active {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .icon-btn {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-btn:hover {
+            color: #f3f4f6;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Kebab Menu */
+        .kebab-wrapper {
+            position: relative;
+        }
+
+        .kebab-horizontal {
+            display: flex;
+            flex-direction: row;
+            gap: 2px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .kebab-dot {
+            width: 3px;
+            height: 3px;
+            background: currentColor;
+            border-radius: 50%;
+        }
+
+        .kebab-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: #2d3748;
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+        }
+
+        .kebab-menu.show {
+            display: block;
+        }
+
+        .menu-item {
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #f3f4f6;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .menu-item-icon {
+            width: 16px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .menu-divider {
+            height: 1px;
+            background: #4b5563;
+            margin: 4px 0;
+        }
+
+        .menu-item.danger {
+            color: #ef4444;
+        }
+
+        /* Camera Body */
+        .camera-card-body {
+            padding: 0;
+        }
+
+        .camera-card-preview {
+            position: relative;
+            aspect-ratio: 16/9;
+            background: #111827;
+            overflow: hidden;
+        }
+
+        .preview-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+        }
+
+        .camera-snapshot {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Status Grid */
+        .status-grid {
+            padding: 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .status-item {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .status-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .status-icon.recording {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .status-icon.connection {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-icon.connection.online {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+
+        .status-icon.connection.offline {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+
+        .status-icon.motion {
+            background: rgba(156, 163, 175, 0.1);
+            color: #9ca3af;
+        }
+
+        .status-icon.analytics {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+        }
+
+        .status-details {
+            flex: 1;
+        }
+
+        .status-label {
+            font-size: 0.625rem;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: 0.05em;
+        }
+
+        .status-value {
+            font-size: 0.875rem;
+            color: #f3f4f6;
+            font-weight: 500;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .info-label {
+            color: #6b7280;
+            font-size: 0.75rem;
+        }
+
+        .info-value {
+            color: #f3f4f6;
+        }
+
+        /* Camera Info */
+        .camera-card-info {
+            padding: 1rem;
+            border-top: 1px solid #374151;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+
+        .info-row .info-label {
+            color: #6b7280;
+        }
+
+        .info-row .info-value {
+            color: #f3f4f6;
+            font-family: monospace;
+        }
+
+        .ip-link {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .ip-link:hover {
+            text-decoration: underline;
+        }
+
+        /* More Details Section */
+        .more-details {
+            border-top: 1px solid #374151;
+        }
+
+        .more-details summary {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #6b7280;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .more-details summary:hover {
+            color: #9ca3af;
+        }
+
+        .more-details summary::after {
+            content: '▼';
+            font-size: 0.625rem;
+            transition: transform 0.2s;
+        }
+
+        .more-details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .more-details-content {
+            padding: 0.75rem 1rem;
+            font-size: 0.75rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .detail-label {
+            color: #6b7280;
+        }
+
+        .detail-value {
+            color: #f3f4f6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .camera-card {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div class="cameras-grid">
+
+            <!-- Camera Card 2 - Offline -->
+            <div class="camera-card" data-camera-id="cam_002">
+                <div class="camera-card-header">
+                    <div class="camera-title-row">
+                        <div class="camera-status-indicator offline" title="Offline"></div>
+                        <h4 class="camera-card-title">Parking Lot Camera</h4>
+                        <div class="header-actions">
+                            <button class="icon-btn settings-btn" title="Settings" data-action="settings" data-camera-id="cam_002">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <div class="kebab-wrapper">
+                                <button class="icon-btn kebab-btn" title="More options" data-camera-id="cam_002">
+                                    <span class="kebab-horizontal">
+                                        <span class="kebab-dot"></span>
+                                        <span class="kebab-dot"></span>
+                                        <span class="kebab-dot"></span>
+                                    </span>
+                                </button>
+                                <div class="kebab-menu" id="kebab-menu-cam_002">
+                                    <button class="menu-item" data-action="vlc" data-camera-id="cam_002">
+                                        <span class="menu-item-icon">▶</span>
+                                        <span>Open in VLC</span>
+                                    </button>
+                                    <button class="menu-item" data-action="playback" data-camera-id="cam_002">
+                                        <span class="menu-item-icon">⏮</span>
+                                        <span>Playback</span>
+                                    </button>
+                                    <button class="menu-item" data-action="snapshot" data-camera-id="cam_002">
+                                        <span class="menu-item-icon">📸</span>
+                                        <span>Take Snapshot</span>
+                                    </button>
+                                    <div class="menu-divider"></div>
+                                    <button class="menu-item" data-action="test" data-camera-id="cam_002">
+                                        <span class="menu-item-icon">🔌</span>
+                                        <span>Test Connection</span>
+                                    </button>
+                                    <button class="menu-item" data-action="restart" data-camera-id="cam_002">
+                                        <span class="menu-item-icon">↻</span>
+                                        <span>Restart Camera</span>
+                                    </button>
+                                    <div class="menu-divider"></div>
+                                    <button class="menu-item danger" data-action="delete" data-camera-id="cam_002">
+                                        <span class="menu-item-icon">🗑</span>
+                                        <span>Remove Camera</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="camera-card-body">
+                    <div class="camera-card-preview">
+                        <div class="preview-container" id="preview-container-cam_002">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6b7280;">
+                                <i class="fas fa-wifi-slash" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                                <p style="font-size: 1.125rem; margin-bottom: 0.25rem;">Camera Offline</p>
+                                <p style="font-size: 0.875rem; color: #4b5563;">Check connection</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="camera-card-info">
+                        <div class="info-row">
+                            <span class="info-label">IP ADDRESS</span>
+                            <span class="info-value ip-address">10.0.0.182:554</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">CONNECTION</span>
+                            <span class="info-value" style="color: #ef4444;">Offline</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">RECORDING</span>
+                            <span class="info-value">Not Recording</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">LOCATION</span>
+                            <span class="info-value">Parking</span>
+                        </div>
+                        
+                        <details class="more-details">
+                            <summary>
+                                <i class="fas fa-caret-right"></i> MORE DETAILS
+                            </summary>
+                            <div class="more-details-content">
+                                <div class="info-row">
+                                    <span class="info-label">MODEL</span>
+                                    <span class="info-value">DS-2CD2385G1</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">RESOLUTION</span>
+                                    <span class="info-value">1920x1080</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">FPS</span>
+                                    <span class="info-value">25</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">BITRATE</span>
+                                    <span class="info-value">--</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">PROTOCOL</span>
+                                    <span class="info-value">RTSP</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">LAST SEEN</span>
+                                    <span class="info-value">2 hours ago</span>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Kebab menu toggle
+        document.querySelectorAll('.kebab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const cameraId = btn.dataset.cameraId;
+                const menu = document.getElementById(`kebab-menu-${cameraId}`);
+                
+                // Close other menus
+                document.querySelectorAll('.kebab-menu').forEach(m => {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                
+                menu.classList.toggle('show');
+            });
+        });
+
+        // Close menus when clicking outside
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.kebab-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        });
+
+        // Menu item actions
+        document.querySelectorAll('.menu-item, .settings-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = btn.dataset.action;
+                const cameraId = btn.dataset.cameraId;
+                
+                // Close kebab menu
+                document.querySelectorAll('.kebab-menu').forEach(menu => {
+                    menu.classList.remove('show');
+                });
+                
+                console.log(`Action: ${action}, Camera: ${cameraId}`);
+                
+                // Handle actions
+                switch(action) {
+                    case 'settings':
+                        alert(`Opening settings for camera ${cameraId}`);
+                        break;
+                    case 'vlc':
+                        alert(`Opening VLC for camera ${cameraId}`);
+                        break;
+                    case 'playback':
+                        alert(`Opening playback for camera ${cameraId}`);
+                        break;
+                    case 'snapshot':
+                        alert(`Taking snapshot for camera ${cameraId}`);
+                        break;
+                    case 'test':
+                        alert(`Testing connection for camera ${cameraId}`);
+                        break;
+                    case 'restart':
+                        alert(`Restarting camera ${cameraId}`);
+                        break;
+                    case 'delete':
+                        if (confirm(`Are you sure you want to remove camera ${cameraId}?`)) {
+                            alert(`Removing camera ${cameraId}`);
+                        }
+                        break;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

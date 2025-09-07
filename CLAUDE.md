@@ -7,6 +7,7 @@ This file provides guidance to Claude Code when working with this repository.
 - **Remove barriers**: Focus on core functionality, avoid adding complexity
 - **24/7 streaming**: Auto-connect cameras, real-time status display
 - **Test thoroughly**: Verify all changes work before claiming success
+- **Readable code**: Maintain traditional, well-formatted code structure
 
 ## Testing Requirements
 
@@ -86,6 +87,69 @@ Never say "fixed" or "complete" without proof. Always say "testing confirms..." 
 - Add one feature at a time
 - Test immediately after each change
 - Get user approval before next feature
+
+## Code Formatting Standards
+
+**CRITICAL**: All JavaScript code must follow traditional, readable formatting.
+
+### JavaScript Formatting Rules
+- ✅ **Proper indentation**: Use 2-4 spaces consistently
+- ✅ **Line breaks**: Each statement on its own line
+- ✅ **Spacing**: Proper spacing around operators (=, +, -, etc.)
+- ✅ **Method formatting**: Each method properly separated with blank lines
+- ✅ **Object formatting**: Multi-line objects with proper indentation
+- ✅ **Import formatting**: One import per line with proper spacing
+
+### Good Example:
+```javascript
+class Dashboard {
+    constructor() {
+        this.data = {
+            metrics: {
+                cameras: 12,
+                detections: 1247
+            }
+        };
+        this.init();
+    }
+
+    async loadData() {
+        try {
+            const response = await fetch('/api/data');
+            this.data = await response.json();
+        } catch (error) {
+            console.error('Failed to load data:', error);
+        }
+    }
+}
+```
+
+### Bad Example (FORBIDDEN):
+```javascript
+class Dashboard{constructor(){this.data={metrics:{cameras:12,detections:1247}};this.init();}async loadData(){try{const response=await fetch('/api/data');this.data=await response.json();}catch(error){console.error('Failed to load data:',error);}}}
+```
+
+### Enforcement Rules
+- **NEVER write minified JavaScript code**
+- **ALWAYS format code for human readability**
+- **Check existing files match formatting standards**
+- **When editing files, maintain consistent formatting**
+- **If you find minified code, reformat it immediately**
+
+### File Types That Must Follow Standards
+- All `.js` files in `frontend/src/`
+- Page components in `frontend/src/pages/`
+- Service files in `frontend/src/services/`
+- Component files in `frontend/src/components/`
+
+### Prevention Checklist
+Before committing any JavaScript code:
+- [ ] Code is properly indented
+- [ ] Methods are on separate lines
+- [ ] Objects have proper formatting
+- [ ] Imports are clearly separated
+- [ ] No single-line function declarations
+- [ ] Consistent spacing throughout
 
 ## Commands
 

@@ -61,7 +61,7 @@ class SimpleCamerasPage {
                 }
                 
                 .page-header {
-                    text-align: center;
+                    text-align: left;
                     margin-bottom: 30px;
                     padding: 20px;
                     background: rgba(26, 35, 50, 0.8);

@@ -9,16 +9,17 @@
 > (10-minute segments, automatic storage management), and a web dashboard for cameras, playback and
 > live monitoring.
 >
-> **The intended setup:** one powerful local machine with many cameras attached, everything running
-> on site for privacy and security.
+> **The direction (decided 2026-10-20): open source and local only.** People run it on their own
+> machine with their own cameras, and reach the dashboard over their own Wi-Fi if they want to. No
+> cloud and no hosted service: nothing leaves their network.
 >
 > **To make it a polished open-source product, the open items are:**
 > - promote `foundation_v3_phase_1` to `main` and retire the older branches;
 > - keep model weights out of git (`*.pt` files are committed here) and fetch them with the download script;
 > - a clean install path and a short "run it with N cameras" guide;
 > - tests for the detection and recording services;
-> - **cloud sync / redundancy: an idea only, not designed yet.** It would need its own design
->   (what syncs, when, and how the local machine keeps working without it).
+> - simple camera onboarding (add an IP/ONVIF camera from the dashboard) and LAN access
+>   (open the dashboard from a phone on the same Wi-Fi), with a login.
 
 # License Plate Recognition Framework
 

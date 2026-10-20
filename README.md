@@ -1,3 +1,25 @@
+> ## Project status: paused (notes for picking it back up)
+>
+> **The latest work is not on `main`.** It is on the branch
+> **[`foundation_v3_phase_1`](https://github.com/mekanhan/plate_recognition/tree/foundation_v3_phase_1)**
+> (September 2025). `main` below is the early version: detection scripts and Android-camera streaming.
+>
+> **What `foundation_v3_phase_1` has:** three local services on one machine. A FastAPI detection
+> API (YOLO, camera management, ONVIF IP cameras, several cameras at once), a 24/7 recording service
+> (10-minute segments, automatic storage management), and a web dashboard for cameras, playback and
+> live monitoring.
+>
+> **The intended setup:** one powerful local machine with many cameras attached, everything running
+> on site for privacy and security.
+>
+> **To make it a polished open-source product, the open items are:**
+> - promote `foundation_v3_phase_1` to `main` and retire the older branches;
+> - keep model weights out of git (`*.pt` files are committed here) and fetch them with the download script;
+> - a clean install path and a short "run it with N cameras" guide;
+> - tests for the detection and recording services;
+> - **cloud sync / redundancy: an idea only, not designed yet.** It would need its own design
+>   (what syncs, when, and how the local machine keeps working without it).
+
 # License Plate Recognition Framework
 
 ## Overview
